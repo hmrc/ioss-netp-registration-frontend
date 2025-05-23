@@ -47,3 +47,10 @@ signedOut.guidance = We did not save your answers.
 
 unauthorised.title = You can’t access this service with this account
 unauthorised.heading = You can’t access this service with this account
+
+website.title = website
+website.heading = website
+website.checkYourAnswersLabel = website
+website.error.required = Enter website
+website.error.length = Website must be 100 characters or less
+website.change.hidden = Website
