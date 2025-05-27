@@ -5,6 +5,7 @@ import forms.$className$FormProvider
 import javax.inject.Inject
 import models.Mode
 import pages.$className$Page
+import pages.{Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import repositories.SessionRepository
