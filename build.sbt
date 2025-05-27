@@ -18,7 +18,9 @@ lazy val microservice = (project in file("."))
     name := appName,
     RoutesKeys.routesImport ++= Seq(
       "models._",
-      "uk.gov.hmrc.play.bootstrap.binders.RedirectUrl"
+      "uk.gov.hmrc.play.bootstrap.binders.RedirectUrl",
+      "pages.Waypoints",
+      "pages.EmptyWaypoints"
     ),
     TwirlKeys.templateImports ++= Seq(
       "play.twirl.api.HtmlFormat",
