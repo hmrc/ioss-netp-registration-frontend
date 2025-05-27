@@ -16,8 +16,8 @@
 
 package models
 
-import play.api.libs.json._
-import queries.{Gettable, Settable}
+import play.api.libs.json.*
+import queries.{Derivable, Gettable, Settable}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.Instant
@@ -32,6 +32,13 @@ final case class UserAnswers(
   def get[A](page: Gettable[A])(implicit rds: Reads[A]): Option[A] =
     Reads.optionNoError(Reads.at(page.path)).reads(data).getOrElse(None)
 
+  def get[A, B](derivable: Derivable[A, B])(implicit rds: Reads[A]): Option[B] = {
+    Reads.optionNoError(Reads.at(derivable.path))
+      .reads(data)
+      .getOrElse(None)
+      .map(derivable.derive)
+  }
+  
   def set[A](page: Settable[A], value: A)(implicit writes: Writes[A]): Try[UserAnswers] = {
 
     val updatedData = data.setObject(page.path, Json.toJson(value)) match {
@@ -91,7 +98,7 @@ object UserAnswers {
       (__ \ "_id").write[String] and
       (__ \ "data").write[JsObject] and
       (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
-    ) (ua => (ua.id, ua.data, ua.lastUpdated))
+    ) (userAnswers => Tuple.fromProductTyped(userAnswers))
   }
 
   implicit val format: OFormat[UserAnswers] = OFormat(reads, writes)
