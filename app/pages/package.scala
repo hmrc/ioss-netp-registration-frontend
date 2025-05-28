@@ -14,19 +14,11 @@
  * limitations under the License.
  */
 
-package pages
+package object pages {
 
-import org.scalatest.OptionValues
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers
+  implicit class RecoveryOps(val a: Option[Page]) {
 
-class WaypointSpec extends AnyFreeSpec with Matchers with OptionValues {
-
-  // TODO once authenticated journey initiates with loop journeys
-  "fromString" - {
-
-    "must return Check Your Answers when given its waypoint" in {
-      Waypoint.fromString("anything") mustBe None
-    }
+    def orRecover: Page =
+      a.getOrElse(JourneyRecoveryPage)
   }
 }
