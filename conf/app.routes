@@ -20,7 +20,5 @@ GET         /account/signed-out                          controllers.auth.Signed
 
 GET         /unauthorised                                controllers.UnauthorisedController.onPageLoad()
 
-GET        /website                        controllers.website.WebsiteController.onPageLoad(mode: Mode = NormalMode)
-POST       /website                        controllers.website.WebsiteController.onSubmit(mode: Mode = NormalMode)
-GET        /changeWebsite                  controllers.website.WebsiteController.onPageLoad(mode: Mode = CheckMode)
-POST       /changeWebsite                  controllers.website.WebsiteController.onSubmit(mode: Mode = CheckMode)
+GET        /website-address/:index                       controllers.website.WebsiteController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
+POST       /website-address/:index                       controllers.website.WebsiteController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, index: Index)

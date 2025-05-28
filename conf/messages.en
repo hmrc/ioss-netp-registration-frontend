@@ -48,9 +48,9 @@ signedOut.guidance = We did not save your answers.
 unauthorised.title = You can’t access this service with this account
 unauthorised.heading = You can’t access this service with this account
 
-website.title = website
-website.heading = website
-website.checkYourAnswersLabel = website
-website.error.required = Enter website
-website.error.length = Website must be 100 characters or less
-website.change.hidden = Website
+website.title = Enter a website your client uses to sell goods
+website.heading = Enter a website your client uses to sell goods
+website.checkYourAnswersLabel = Website address
+website.error.required = Enter a website address
+website.error.length = Website address must be 250 characters or less
+website.change.hidden = website address
