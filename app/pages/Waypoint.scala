@@ -14,8 +14,24 @@
  * limitations under the License.
  */
 
-package generators
+package pages
 
+import models.Mode
 
-trait ModelGenerators {
+case class Waypoint(
+                     page: WaypointPage,
+                     mode: Mode,
+                     urlFragment: String
+                   )
+
+object Waypoint {
+
+  // TODO Add journey loop pages - url fragments
+  private val fragments: Map[String, Waypoint] =
+    Map(
+
+    )
+
+  def fromString(s: String): Option[Waypoint] =
+    fragments.get(s)
 }

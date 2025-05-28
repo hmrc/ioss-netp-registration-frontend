@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package navigation
+package object pages {
 
-import play.api.mvc.Call
-import pages._
-import models.{Mode, UserAnswers}
+  implicit class RecoveryOps(val a: Option[Page]) {
 
-class FakeNavigator(desiredRoute: Call) extends Navigator {
-
-  override def nextPage(page: Page, mode: Mode, userAnswers: UserAnswers): Call =
-    desiredRoute
+    def orRecover: Page =
+      a.getOrElse(JourneyRecoveryPage)
+  }
 }
