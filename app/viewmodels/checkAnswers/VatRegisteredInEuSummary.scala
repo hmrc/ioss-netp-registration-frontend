@@ -18,15 +18,19 @@ package viewmodels.checkAnswers
 
 import controllers.routes
 import models.{CheckMode, UserAnswers}
-import pages.VatRegisteredInEuPage
+import pages.{CheckAnswersPage, VatRegisteredInEuPage, Waypoints}
 import play.api.i18n.Messages
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
-import viewmodels.govuk.summarylist._
-import viewmodels.implicits._
+import viewmodels.govuk.summarylist.*
+import viewmodels.implicits.*
 
 object VatRegisteredInEuSummary  {
 
-  def row(answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] =
+  def row(
+           answers: UserAnswers,
+           waypoints: Waypoints,
+           sourcePage: CheckAnswersPage,
+         )(implicit messages: Messages): Option[SummaryListRow] =
     answers.get(VatRegisteredInEuPage).map {
       answer =>
 
@@ -36,7 +40,7 @@ object VatRegisteredInEuSummary  {
           key     = "vatRegisteredInEu.checkYourAnswersLabel",
           value   = ValueViewModel(value),
           actions = Seq(
-            ActionItemViewModel("site.change", routes.VatRegisteredInEuController.onPageLoad(CheckMode).url)
+            ActionItemViewModel("site.change", VatRegisteredInEuPage.changeLink(waypoints, sourcePage).url)
               .withVisuallyHiddenText(messages("vatRegisteredInEu.change.hidden"))
           )
         )
