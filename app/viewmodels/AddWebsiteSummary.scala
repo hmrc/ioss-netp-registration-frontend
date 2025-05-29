@@ -1,12 +1,12 @@
-package viewmodels.checkAnswers
+package viewmodels
 
 import controllers.routes
 import models.{CheckMode, UserAnswers}
-import pages.AddWebsitePage
+import pages.website.AddWebsitePage
 import play.api.i18n.Messages
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
-import viewmodels.govuk.summarylist._
-import viewmodels.implicits._
+import viewmodels.govuk.summarylist.*
+import viewmodels.implicits.*
 
 object AddWebsiteSummary  {
 

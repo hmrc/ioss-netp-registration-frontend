@@ -1,16 +1,17 @@
-package controllers
+package controllers.website
 
 import base.SpecBase
+import controllers.routes
 import forms.AddWebsiteFormProvider
 import models.{NormalMode, UserAnswers}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.mockito.MockitoSugar
-import pages.AddWebsitePage
+import pages.website.AddWebsitePage
 import play.api.inject.bind
 import play.api.mvc.Call
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import repositories.SessionRepository
 import views.html.AddWebsiteView
 

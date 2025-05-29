@@ -1,5 +1,6 @@
-package pages
+package pages.website
 
+import pages.QuestionPage
 import play.api.libs.json.JsPath
 
 case object AddWebsitePage extends QuestionPage[Boolean] {
