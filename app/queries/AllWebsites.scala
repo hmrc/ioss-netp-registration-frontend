@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package pages
+package queries
 
-trait AddToListSection
+import models.Website
+import play.api.libs.json.JsPath
 
-object WebsiteSection extends AddToListSection
+case object AllWebsites extends Gettable[List[Website]] with Settable[List[Website]] {
+
+  override def path: JsPath = JsPath \ "websites"
+}

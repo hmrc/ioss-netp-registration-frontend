@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package pages
+package models
 
-trait AddToListSection
+import play.api.libs.json.{Json, OFormat}
 
-object WebsiteSection extends AddToListSection
+case class Website(site: String)
+
+object Website {
+  implicit lazy val format: OFormat[Website] = Json.format[Website]
+}
