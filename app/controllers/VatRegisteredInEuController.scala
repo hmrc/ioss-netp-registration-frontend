@@ -16,7 +16,7 @@
 
 package controllers
 
-import controllers.actions.{AuthenticatedControllerComponents, *}
+import controllers.actions.{DataRequiredAction, DataRetrievalAction, IdentifierAction}
 import forms.VatRegisteredInEuFormProvider
 
 import javax.inject.Inject
@@ -33,7 +33,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class VatRegisteredInEuController @Inject()(
                                          override val messagesApi: MessagesApi,
-                                         cc: AuthenticatedControllerComponents,
                                          sessionRepository: SessionRepository,
                                          identify: IdentifierAction,
                                          getData: DataRetrievalAction,
@@ -43,31 +42,31 @@ class VatRegisteredInEuController @Inject()(
                                          view: VatRegisteredInEuView
                                  )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
-  val form = formProvider()
+val form = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.authAndGetData(waypoints.registrationModificationMode) {
-    implicit request =>
+def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData) {
+  implicit request =>
 
-      val preparedForm = request.userAnswers.get(VatRegisteredInEuPage) match {
-        case None => form
-        case Some(value) => form.fill(value)
-      }
+    val preparedForm = request.userAnswers.get(VatRegisteredInEuPage) match {
+      case None => form
+      case Some(value) => form.fill(value)
+    }
 
-      Ok(view(preparedForm, waypoints))
-  }
+    Ok(view(preparedForm, waypoints))
+}
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
-    implicit request =>
+def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  implicit request =>
 
-      form.bindFromRequest().fold(
-        formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, waypoints))),
+    form.bindFromRequest().fold(
+      formWithErrors =>
+        Future.successful(BadRequest(view(formWithErrors, waypoints))),
 
-        value =>
-          for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(VatRegisteredInEuPage, value))
-            _              <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(VatRegisteredInEuPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
-      )
-  }
+      value =>
+        for {
+          updatedAnswers <- Future.fromTry(request.userAnswers.set(VatRegisteredInEuPage, value))
+          _ <- sessionRepository.set(updatedAnswers)
+        } yield Redirect(VatRegisteredInEuPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+    )
+}
 }
