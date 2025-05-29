@@ -22,3 +22,8 @@ GET         /unauthorised                                controllers.Unauthorise
 
 GET        /website-address/:index                       controllers.website.WebsiteController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
 POST       /website-address/:index                       controllers.website.WebsiteController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
+
+GET        /addWebsite                        controllers.AddWebsiteController.onPageLoad(mode: Mode = NormalMode)
+POST       /addWebsite                        controllers.AddWebsiteController.onSubmit(mode: Mode = NormalMode)
+GET        /changeAddWebsite                  controllers.AddWebsiteController.onPageLoad(mode: Mode = CheckMode)
+POST       /changeAddWebsite                  controllers.AddWebsiteController.onSubmit(mode: Mode = CheckMode)

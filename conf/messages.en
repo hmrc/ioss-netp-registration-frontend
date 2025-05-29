@@ -54,3 +54,9 @@ website.checkYourAnswersLabel = Website address
 website.error.required = Enter a website address
 website.error.length = Website address must be 250 characters or less
 website.change.hidden = website address
+
+addWebsite.title = addWebsite
+addWebsite.heading = addWebsite
+addWebsite.checkYourAnswersLabel = addWebsite
+addWebsite.error.required = Select yes if addWebsite
+addWebsite.change.hidden = AddWebsite
