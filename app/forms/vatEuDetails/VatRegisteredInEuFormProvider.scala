@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-package pages
+package forms.vatEuDetails
 
-import play.api.libs.json.JsPath
-import play.api.mvc.Call
-import controllers.routes
+import forms.mappings.Mappings
+import play.api.data.Form
 
-case object VatRegisteredInEuPage extends QuestionPage[Boolean] {
+import javax.inject.Inject
 
-  override def path: JsPath = JsPath \ toString
+class VatRegisteredInEuFormProvider @Inject() extends Mappings {
 
-  override def toString: String = "vatRegisteredInEu"
-
-  override def route(waypoints: Waypoints): Call =
-    routes.VatRegisteredInEuController.onPageLoad(waypoints)
+  def apply(): Form[Boolean] =
+    Form(
+      "value" -> boolean("vatRegisteredInEu.error.required")
+    )
 }
