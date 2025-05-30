@@ -139,3 +139,6 @@ POST       /remove-registration/:index                                  controll
 GET        /remove-all-previous-registrations                           controllers.previousRegistrations.DeleteAllPreviousRegistrationsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST       /remove-all-previous-registrations                           controllers.previousRegistrations.DeleteAllPreviousRegistrationsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
+
+GET         /vat-in-eu                                   controllers.VatRegisteredInEuController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /vat-in-eu                                   controllers.VatRegisteredInEuController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
