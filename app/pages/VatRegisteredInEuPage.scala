@@ -17,10 +17,15 @@
 package pages
 
 import play.api.libs.json.JsPath
+import play.api.mvc.Call
+import controllers.routes
 
 case object VatRegisteredInEuPage extends QuestionPage[Boolean] {
 
   override def path: JsPath = JsPath \ toString
 
   override def toString: String = "vatRegisteredInEu"
+
+  override def route(waypoints: Waypoints): Call =
+    routes.VatRegisteredInEuController.onPageLoad(waypoints)
 }
