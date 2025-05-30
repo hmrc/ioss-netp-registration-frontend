@@ -14,6 +14,9 @@
  * limitations under the License.
  *@
 
+@import pages.VatRegisteredInEuPage
+@import pages.Waypoints
+
 @this(
     layout: templates.Layout,
     formHelper: FormWithCSRF,
@@ -22,11 +25,11 @@
     govukButton: GovukButton
 )
 
-@(form: Form[_], mode: Mode)(implicit request: Request[_], messages: Messages)
+@(form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = title(form, messages("vatRegisteredInEu.title"))) {
 
-    @formHelper(action = routes.VatRegisteredInEuController.onSubmit(mode), Symbol("autoComplete") -> "off") {
+    @formHelper(action = routes.VatRegisteredInEuController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
 
         @if(form.errors.nonEmpty) {
             @govukErrorSummary(ErrorSummaryViewModel(form))
