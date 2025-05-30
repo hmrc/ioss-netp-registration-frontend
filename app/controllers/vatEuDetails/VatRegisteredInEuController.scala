@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-package controllers
+package controllers.vatEuDetails
 
 import controllers.actions.{DataRequiredAction, DataRetrievalAction, IdentifierAction}
-import forms.VatRegisteredInEuFormProvider
-
-import javax.inject.Inject
+import forms.vatEuDetails.VatRegisteredInEuFormProvider
 import models.UserAnswers
-import pages.VatRegisteredInEuPage
+import pages.vatEuDetails.VatRegisteredInEuPage
 import pages.{Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.VatRegisteredInEuView
+import views.html.vatEuDetails.VatRegisteredInEuView
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class VatRegisteredInEuController @Inject()(

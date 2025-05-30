@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package viewmodels.checkAnswers
+package viewmodels.checkAnswers.vatEuDetails
 
 import controllers.routes
 import models.{CheckMode, UserAnswers}
-import pages.{CheckAnswersPage, VatRegisteredInEuPage, Waypoints}
+import pages.vatEuDetails.VatRegisteredInEuPage
+import pages.{CheckAnswersPage, Waypoints}
 import play.api.i18n.Messages
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.govuk.summarylist.*

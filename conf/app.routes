@@ -20,5 +20,5 @@ GET         /account/signed-out                          controllers.auth.Signed
 
 GET         /unauthorised                                controllers.UnauthorisedController.onPageLoad()
 
-GET         /vat-in-eu                                   controllers.VatRegisteredInEuController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-POST        /vat-in-eu                                   controllers.VatRegisteredInEuController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+GET         /vat-in-eu                                   controllers.vatEuDetails.VatRegisteredInEuController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /vat-in-eu                                   controllers.vatEuDetails.VatRegisteredInEuController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
