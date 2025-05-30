@@ -54,7 +54,7 @@ class VatRegisteredInEuController @Inject()(
       Ok(view(preparedForm, waypoints))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData).async {
     implicit request =>
 
       form.bindFromRequest().fold(
@@ -62,10 +62,12 @@ class VatRegisteredInEuController @Inject()(
           Future.successful(BadRequest(view(formWithErrors, waypoints))),
 
         value =>
+          val originalAnswers: UserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
+          
           for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(VatRegisteredInEuPage, value))
+            updatedAnswers <- Future.fromTry(originalAnswers.set(VatRegisteredInEuPage, value))
             _ <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(VatRegisteredInEuPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+          } yield Redirect(VatRegisteredInEuPage.navigate(waypoints, originalAnswers, updatedAnswers).route)
       )
   }
 }
