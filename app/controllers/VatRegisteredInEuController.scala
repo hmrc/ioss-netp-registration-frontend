@@ -20,7 +20,7 @@ import controllers.actions.{DataRequiredAction, DataRetrievalAction, IdentifierA
 import forms.VatRegisteredInEuFormProvider
 
 import javax.inject.Inject
-import models.Mode
+import models.UserAnswers
 import pages.VatRegisteredInEuPage
 import pages.{Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -44,10 +44,10 @@ class VatRegisteredInEuController @Inject()(
 
 val form = formProvider()
 
-def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData) {
+def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData) {
   implicit request =>
 
-    val preparedForm = request.userAnswers.get(VatRegisteredInEuPage) match {
+    val preparedForm = request.userAnswers.getOrElse(UserAnswers(request.userId)).get(VatRegisteredInEuPage) match {
       case None => form
       case Some(value) => form.fill(value)
     }
