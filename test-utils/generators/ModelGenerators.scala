@@ -16,8 +16,11 @@
 
 package generators
 
+import models.domain.ModelHelpers.normaliseSpaces
+import models.{Country, DesAddress}
 import org.scalacheck.Gen.{choose, listOfN}
 import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.Arbitrary.arbitrary
 
 import java.time.{Instant, LocalDate, ZoneOffset}
 
@@ -42,6 +45,8 @@ trait ModelGenerators {
     }
   }
 
+  private val maxFieldLength: Int = 35
+  
   private def commonFieldString(maxLength: Int): Gen[String] = (for {
     length <- choose(1, maxLength)
     chars <- listOfN(length, commonFieldSafeInputs)
@@ -61,4 +66,26 @@ trait ModelGenerators {
     Gen.const(' '),
     Gen.const('\'')
   )
+
+  implicit lazy val arbitraryDesAddress: Arbitrary[DesAddress] = {
+    Arbitrary {
+      for {
+        line1 <- commonFieldString(maxFieldLength)
+        line2 <- Gen.option(commonFieldString(maxFieldLength))
+        line3 <- Gen.option(commonFieldString(maxFieldLength))
+        line4 <- Gen.option(commonFieldString(maxFieldLength))
+        line5 <- Gen.option(commonFieldString(maxFieldLength))
+        postCode <- Gen.option(arbitrary[String])
+        country <- Gen.oneOf(Country.internationalCountries.map(_.code))
+      } yield DesAddress(
+        normaliseSpaces(line1),
+        normaliseSpaces(line2),
+        normaliseSpaces(line3),
+        normaliseSpaces(line4),
+        normaliseSpaces(line5),
+        normaliseSpaces(postCode),
+        country
+      )
+    }
+  }
 }
