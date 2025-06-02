@@ -16,6 +16,28 @@
 
 package generators
 
+import org.scalacheck.{Arbitrary, Gen}
+
+import java.time.{Instant, LocalDate, ZoneOffset}
+
 
 trait ModelGenerators {
+
+  implicit lazy val arbitraryDate: Arbitrary[LocalDate] = {
+    Arbitrary {
+      datesBetween(LocalDate.of(2021, 7, 1), LocalDate.of(2023, 12, 31))
+    }
+  }
+
+  def datesBetween(min: LocalDate, max: LocalDate): Gen[LocalDate] = {
+
+    def toMillis(date: LocalDate): Long = {
+      date.atStartOfDay.atZone(ZoneOffset.UTC).toInstant.toEpochMilli
+    }
+
+    Gen.choose(toMillis(min), toMillis(max)).map {
+      millis =>
+        Instant.ofEpochMilli(millis).atOffset(ZoneOffset.UTC).toLocalDate
+    }
+  }
 }
