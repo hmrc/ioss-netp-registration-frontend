@@ -17,6 +17,7 @@
 package models
 
 import logging.Logging
+import models.CountryWithValidationDetails.logger
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.select.SelectItem
 import viewmodels.govuk.select.*
@@ -77,7 +78,7 @@ object Country {
             text = country.name
           )
       }
-    
+
   val allCountries: Seq[Country] = Seq(
     Country("AF", "Afghanistan"),
     Country("AL", "Albania"),
@@ -352,5 +353,5 @@ object CountryWithValidationDetails extends Logging {
   private val swedenVatNumberRegex = """^SE[0-9]{12}$"""
   private val sloveniaVatNumberRegex = """^SI[0-9]{8}$"""
   private val slovakiaVatNumberRegex = """^SK[0-9]{10}$"""
-  
+
 }
