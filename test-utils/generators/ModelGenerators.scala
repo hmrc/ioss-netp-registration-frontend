@@ -46,4 +46,19 @@ trait ModelGenerators {
     length <- choose(1, maxLength)
     chars <- listOfN(length, commonFieldSafeInputs)
   } yield chars.mkString).retryUntil(_.trim.nonEmpty)
+
+  private def commonFieldSafeInputs: Gen[Char] = Gen.oneOf(
+    Gen.alphaNumChar,
+    Gen.oneOf('À' to 'ÿ'),
+    Gen.const('.'),
+    Gen.const(','),
+    Gen.const('/'),
+    Gen.const('’'),
+    Gen.const('\''),
+    Gen.const('"'),
+    Gen.const('_'),
+    Gen.const('&'),
+    Gen.const(' '),
+    Gen.const('\'')
+  )
 }
