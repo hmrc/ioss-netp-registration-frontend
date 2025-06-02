@@ -16,6 +16,7 @@
 
 package generators
 
+import org.scalacheck.Gen.{choose, listOfN}
 import org.scalacheck.{Arbitrary, Gen}
 
 import java.time.{Instant, LocalDate, ZoneOffset}
@@ -40,4 +41,9 @@ trait ModelGenerators {
         Instant.ofEpochMilli(millis).atOffset(ZoneOffset.UTC).toLocalDate
     }
   }
+
+  private def commonFieldString(maxLength: Int): Gen[String] = (for {
+    length <- choose(1, maxLength)
+    chars <- listOfN(length, commonFieldSafeInputs)
+  } yield chars.mkString).retryUntil(_.trim.nonEmpty)
 }
