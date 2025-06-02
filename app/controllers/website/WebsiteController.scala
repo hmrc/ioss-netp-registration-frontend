@@ -18,7 +18,7 @@ package controllers.website
 
 import controllers.actions.*
 import forms.WebsiteFormProvider
-import models.{Index, Website}
+import models.{Index, UserAnswers, Website}
 import pages.Waypoints
 import pages.website.WebsitePage
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -36,18 +36,19 @@ class WebsiteController @Inject()(
                                         sessionRepository: SessionRepository,
                                         identify: IdentifierAction,
                                         getData: DataRetrievalAction,
-                                        requireData: DataRequiredAction,
                                         formProvider: WebsiteFormProvider,
                                         val controllerComponents: MessagesControllerComponents,
                                         view: WebsiteView
                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
 
-  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen requireData) {
+  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData) {
     implicit request =>
-      val form = formProvider(index, request.userAnswers.get(AllWebsites).getOrElse(Seq.empty).map(_.site))
+      val userAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
 
-      val preparedForm = request.userAnswers.get(WebsitePage(index)) match {
+      val form = formProvider(index, userAnswers.get(AllWebsites).getOrElse(Seq.empty).map(_.site))
+
+      val preparedForm = userAnswers.get(WebsitePage(index)) match {
         case None => form
         case Some(value) => form.fill(value.site)
       }
@@ -55,20 +56,21 @@ class WebsiteController @Inject()(
       Ok(view(preparedForm, waypoints, index))
   }
 
-  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData).async {
     implicit request =>
 
-      val form = formProvider(index, request.userAnswers.get(AllWebsites).getOrElse(Seq.empty).map(_.site))
+      val form = formProvider(index, request.userAnswers.getOrElse(UserAnswers(request.userId)).get(AllWebsites).getOrElse(Seq.empty).map(_.site))
 
       form.bindFromRequest().fold(
         formWithErrors =>
           Future.successful(BadRequest(view(formWithErrors, waypoints, index))),
 
         value =>
+          val originalAnswers: UserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
           for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(WebsitePage(index), Website(value)))
+            updatedAnswers <- Future.fromTry(originalAnswers.set(WebsitePage(index), Website(value)))
             _              <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(WebsitePage(index).navigate(waypoints, updatedAnswers, updatedAnswers).route)
+          } yield Redirect(WebsitePage(index).navigate(waypoints, originalAnswers, updatedAnswers).route)
       )
   }
 }

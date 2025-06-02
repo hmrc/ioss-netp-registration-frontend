@@ -17,15 +17,22 @@
 package controllers.website
 
 import base.SpecBase
-import controllers.routes
 import forms.WebsiteFormProvider
-import models.Index
+import models.{Index, UserAnswers, Website}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
+import pages.website.WebsitePage
 import pages.{EmptyWaypoints, Waypoints}
+import play.api.inject
 import play.api.mvc.Call
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import repositories.SessionRepository
 import views.html.WebsiteView
+
+import scala.concurrent.Future
 
 
 class WebsiteControllerSpec extends SpecBase with MockitoSugar {
@@ -41,6 +48,67 @@ class WebsiteControllerSpec extends SpecBase with MockitoSugar {
   private lazy val websiteRoute = controllers.website.routes.WebsiteController.onPageLoad(waypoints, index).url
 
   "Website Controller" - {
+
+    "must return OK and the correct view for a GET" in {
+
+      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
+
+      running(application) {
+        val request = FakeRequest(GET, websiteRoute)
+
+        val result = route(application, request).value
+
+        val view = application.injector.instanceOf[WebsiteView]
+
+        status(result) mustEqual OK
+        contentAsString(result) mustEqual view(form, waypoints, index)(request, messages(application)).toString
+      }
+    }
+
+    "must populate the view correctly on a GET when the question has previously been answered" in {
+
+      val userAnswers = UserAnswers(userAnswersId).set(WebsitePage(index), Website("answer")).success.value
+
+      val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
+
+      running(application) {
+        val request = FakeRequest(GET, websiteRoute)
+
+        val view = application.injector.instanceOf[WebsiteView]
+
+        val result = route(application, request).value
+
+        status(result) mustEqual OK
+        contentAsString(result) mustEqual view(form.fill("answer"), waypoints, index)(request, messages(application)).toString
+      }
+    }
+
+    "must redirect to the next page when valid data is submitted" in {
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
+
+      val application =
+        applicationBuilder(userAnswers = Some(emptyUserAnswers))
+          .overrides(
+            inject.bind[SessionRepository].toInstance(mockSessionRepository)
+          )
+          .build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, websiteRoute)
+            .withFormUrlEncodedBody(("value", "https://www.example.com"))
+
+        val result = route(application, request).value
+        val expectedAnswers = emptyUserAnswers.set(WebsitePage(index), Website("https://www.example.com")).success.value
+        
+        status(result) mustEqual SEE_OTHER
+        redirectLocation(result).value mustEqual WebsitePage(index).navigate(waypoints, emptyUserAnswers, expectedAnswers).url
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
+      }
+    }
 
     "must return a Bad Request and errors when invalid data is submitted" in {
 
@@ -62,36 +130,5 @@ class WebsiteControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
-    "must redirect to Journey Recovery for a GET if no existing data is found" in {
-
-      val application = applicationBuilder(userAnswers = None).build()
-
-      running(application) {
-        val request = FakeRequest(GET, websiteRoute)
-
-        val result = route(application, request).value
-
-        status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
-      }
-    }
-
-    "must redirect to Journey Recovery for a POST if no existing data is found" in {
-
-      val application = applicationBuilder(userAnswers = None).build()
-
-      running(application) {
-        val request =
-          FakeRequest(POST, websiteRoute)
-            .withFormUrlEncodedBody(("value", "answer"))
-
-        val result = route(application, request).value
-
-        status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
-      }
-    }
   }
-
-
 }
