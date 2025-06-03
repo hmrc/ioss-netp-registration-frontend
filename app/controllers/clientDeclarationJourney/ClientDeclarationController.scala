@@ -41,6 +41,7 @@ class ClientDeclarationController @Inject()(
                                              cc: AuthenticatedControllerComponents,
                                              sessionRepository: SessionRepository,
                                              formProvider: ClientDeclarationFormProvider,
+                                             clientValidationFilter: ClientValidationFilterProvider,
                                              registrationService: RegistrationService,
                                              view: ClientDeclarationView
                                            )(implicit ec: ExecutionContext)
@@ -50,7 +51,7 @@ class ClientDeclarationController @Inject()(
 
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (cc.clientIdentify andThen cc.clientGetData).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (cc.clientIdentify andThen cc.clientGetData andThen clientValidationFilter.apply()).async {
     implicit request =>
 
       getClientCompanyName(waypoints, request.userAnswers) { clientCompanyName =>

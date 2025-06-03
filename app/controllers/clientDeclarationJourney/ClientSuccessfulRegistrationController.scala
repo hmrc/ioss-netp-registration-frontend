@@ -28,13 +28,16 @@ import views.html.clientDeclarationJourney.ClientSuccessfulRegistrationView
 import javax.inject.Inject
 
 class ClientSuccessfulRegistrationController @Inject()(
+                                                        override val messagesApi: MessagesApi,
+                                                        clientIdentify: ClientIdentifierAction,
+                                                        clientDeclarationFilterProvider: ClientDeclarationFilterProvider,
                                                         cc: AuthenticatedControllerComponents,
                                                         view: ClientSuccessfulRegistrationView
                                                       ) extends FrontendBaseController with I18nSupport with Logging {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(): Action[AnyContent] = (cc.clientIdentify andThen cc.clientGetData) {
+  def onPageLoad(): Action[AnyContent] = (clientIdentify andThen clientDeclarationFilterProvider.apply()) {
     implicit request =>
       (for {
         etmpEnrolmentResponse <- request.userAnswers.get(EtmpEnrolmentResponseQuery)

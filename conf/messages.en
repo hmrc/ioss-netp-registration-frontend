@@ -484,11 +484,16 @@ clientDeclaration.information.p2 = I understand that we are joint and severally 
 clientDeclaration.checkbox.text = I agree to register my business.
 clientDeclaration.error.required = Agree to the declaration to continue
 clientDeclaration.change.hidden = ClientDeclaration
+
 clientSuccessfulRegistration.title = Registration successful
 clientSuccessfulRegistration.heading = Registration successful
 clientSuccessfulRegistration.text = Your IOSS number is
 clientSuccessfulRegistration.info.1 = We have let your intermediary know.
 clientSuccessfulRegistration.info.2 = They must now complete your monthly IOSS VAT returns and pay any VAT due.
+
+clientJourneyRecovery.startAgain.title = Sorry, there is a problem with the service
+clientJourneyRecovery.startAgain.heading = Sorry, there is a problem with the service
+clientJourneyRecovery.startAgain.guidance = [Add content to explain why the user needs to start again.]
 
 errorSubmittingRegistration.title = We have a problem with our service right now
 errorSubmittingRegistration.heading = Your registration is not submitted

@@ -130,6 +130,8 @@ trait SpecBase
         bind[DataRetrievalAction].toInstance(new FakeDataRetrievalAction(userAnswers)),
         bind[ClientDataRetrievalAction].toInstance(new FakeClientDataRetrievalAction(userAnswers)),
         bind[ClientIdentifierAction].to[FakeClientIdentifierAction],
+        bind[ClientValidationFilterProvider].to[FakeClientValidationFilterProvider],
+        bind[ClientDeclarationFilterProvider].to[FakeClientDeclarationFilterProvider],
         bind[Clock].toInstance(clockToBind),
       )
   }
