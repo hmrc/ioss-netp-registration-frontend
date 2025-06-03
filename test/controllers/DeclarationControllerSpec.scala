@@ -59,6 +59,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
   val formProvider = new DeclarationFormProvider()
   val form: Form[Boolean] = formProvider()
 
+  val declarationRoute = routes.DeclarationController.onPageLoad(waypoints).url
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockRegistrationConnector)

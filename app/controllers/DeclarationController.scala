@@ -111,6 +111,7 @@ class DeclarationController @Inject()(
           }
         }
       }
+
   }
   
   private def getIntermediaryName()(implicit hc: HeaderCarrier): Future[Option[String]] = {

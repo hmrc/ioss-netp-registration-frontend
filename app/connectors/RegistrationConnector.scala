@@ -55,9 +55,14 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
       .execute[SavedPendingRegistrationResponse]
   }
 
-  def getPendingRegistration(journeyId: String)(implicit hc: HeaderCarrier): Future[SavedPendingRegistrationResponse] = {
-    httpClientV2.get(url"$baseUrl/save-pending-registration/$journeyId")
+  def getPendingRegistration(journeyIdOrUrlCode: String)(implicit hc: HeaderCarrier): Future[SavedPendingRegistrationResponse] = {
+    httpClientV2.get(url"$baseUrl/save-pending-registration/$journeyIdOrUrlCode")
       .execute[SavedPendingRegistrationResponse]
+  }
+
+  def validateClientCode(uniqueUrlCode: String, activationCode: String)(implicit hc: HeaderCarrier): Future[validateClientCodeResponse] = {
+    httpClientV2.get(url"$baseUrl/validate-pending-registration/$uniqueUrlCode/$activationCode")
+      .execute[validateClientCodeResponse]
   }
 
   def getIossRegistration(iossNumber: String)(implicit hc: HeaderCarrier): Future[IossEtmpDisplayRegistrationResultResponse] = {

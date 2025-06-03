@@ -177,3 +177,13 @@ POST       /remove-all-tax-details                                      controll
 GET        /other-country-excluded-and-quarantined                      controllers.OtherCountryExcludedAndQuarantinedController.onPageLoad(countryCode: String, exclusionDate: String)
 
 GET        /client-already-registered                                   controllers.ClientAlreadyRegisteredController.onPageLoad()
+
+
+# Netp Declaration Section
+GET        /client-code-entry/:uniqueUrlCode                            controllers.clientDeclarationJourney.ClientCodeEntryController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, uniqueUrlCode: String)
+POST       /client-code-entry/:uniqueUrlCode                            controllers.clientDeclarationJourney.ClientCodeEntryController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, uniqueUrlCode: String)
+
+GET        /declaration-client                                          controllers.clientDeclarationJourney.ClientDeclarationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST       /declaration-client                                          controllers.clientDeclarationJourney.ClientDeclarationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+
+GET        /successful-registration                                     controllers.clientDeclarationJourney.ClientSuccessfulRegistrationController.onPageLoad()

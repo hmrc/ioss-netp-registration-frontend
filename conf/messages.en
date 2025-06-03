@@ -469,3 +469,25 @@ clientAlreadyRegistered.heading = You cannot add this trader
 clientAlreadyRegistered.p1 = Your client is already registered on the IOSS service.
 clientAlreadyRegistered.p1.companyName = {0} is already registered on the IOSS service.
 clientAlreadyRegistered.p2 = They will need to leave the service before you can add them as a client.
+
+clientCodeEntry.title = Enter your activation code
+clientCodeEntry.heading = Enter your activation code
+clientCodeEntry.hint = This is the 6-digit code we emailed to {0}.
+clientCodeEntry.checkYourAnswersLabel = The code you entered is incorrect. Check the code and try again.
+clientCodeEntry.error = The code you entered is incorrect. Check the code and try again.
+clientCodeEntry.change.hidden = The code you entered is incorrect. Check the code and try again.
+
+clientDeclaration.title = Declaration
+clientDeclaration.heading = Declaration
+clientDeclaration.information.p1 = I, {0}, wish to appoint {1} as my intermediary on the VAT Import One Stop Shop scheme.
+clientDeclaration.information.p2 = I understand that we are joint and severally liable for any debts that we may incur on my registration.
+clientDeclaration.checkbox.text = I agree to register my business.
+clientDeclaration.checkYourAnswersLabel = clientDeclaration
+clientDeclaration.error.required = Select clientDeclaration
+clientDeclaration.change.hidden = ClientDeclaration
+
+clientSuccessfulRegistration.title = Registration successful
+clientSuccessfulRegistration.heading = Registration successful
+clientSuccessfulRegistration.text = Your IOSS number is
+clientSuccessfulRegistration.info.1 = We have let your intermediary know.
+clientSuccessfulRegistration.info.2 = They must now complete your monthly IOSS VAT returns and pay any VAT due.

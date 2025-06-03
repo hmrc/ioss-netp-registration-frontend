@@ -19,6 +19,10 @@ package base
 import controllers.actions.*
 import generators.Generators
 import models.domain.VatCustomerInfo
+import models.{BusinessContactDetails, CheckMode, UserAnswers}
+import controllers.actions.*
+import generators.Generators
+import models.domain.VatCustomerInfo
 import models.{BusinessContactDetails, CheckMode, Index, UserAnswers}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec

@@ -32,6 +32,7 @@ trait GetClientCompanyName {
                           (implicit request: DataRequest[_]): Future[Result] = {
     request.userAnswers.vatInfo match {
       case Some(vatCustomerInfo) =>
+
         vatCustomerInfo.organisationName match {
           case Some(orgName) => block(orgName)
           case _ =>
