@@ -16,13 +16,11 @@
 
 package generators
 
-import java.time.{Instant, LocalDate, ZoneOffset}
-
 import org.scalacheck.Arbitrary._
 import org.scalacheck.Gen._
 import org.scalacheck.{Gen, Shrink}
 
-trait Generators extends ModelGenerators with UserAnswersGenerator {
+trait Generators extends ModelGenerators with UserAnswersGenerator with PageGenerators with UserAnswersEntryGenerators {
 
   implicit val dontShrink: Shrink[String] = Shrink.shrinkAny
 
@@ -87,7 +85,7 @@ trait Generators extends ModelGenerators with UserAnswersGenerator {
   def stringsWithMaxLength(maxLength: Int): Gen[String] =
     for {
       length <- choose(1, maxLength)
-      chars <- listOfN(length, arbitrary[Char])
+      chars <- listOfN(length, Gen.alphaNumChar)
     } yield chars.mkString
 
   def stringsLongerThan(minLength: Int): Gen[String] = for {
@@ -106,15 +104,50 @@ trait Generators extends ModelGenerators with UserAnswersGenerator {
       val vector = xs.toVector
       choose(0, vector.size - 1).flatMap(vector(_))
     }
+  
+  def unsafeInputs: Gen[Char] = Gen.oneOf(
+    Gen.const('<'),
+    Gen.const('>'),
+    Gen.const('='),
+    Gen.const('|')
+  )
 
-  def datesBetween(min: LocalDate, max: LocalDate): Gen[LocalDate] = {
-
-    def toMillis(date: LocalDate): Long =
-      date.atStartOfDay.atZone(ZoneOffset.UTC).toInstant.toEpochMilli
-
-    Gen.choose(toMillis(min), toMillis(max)).map {
-      millis =>
-        Instant.ofEpochMilli(millis).atOffset(ZoneOffset.UTC).toLocalDate
-    }
+  def unsafeInputsWithMaxLength(maxLength: Int): Gen[String] = {
+    (for {
+      length <- choose(2, maxLength)
+      invalidChar <- unsafeInputs
+      validChars <- listOfN(length - 1, unsafeInputs)
+    } yield (validChars :+ invalidChar).mkString).suchThat(_.trim.nonEmpty)
   }
+
+  def alphaNumStringWithLength(minLength: Int, maxLength: Int): Gen[String] = {
+    (
+      for {
+        length <- choose(minLength, maxLength)
+        chars <- listOfN(length, Gen.alphaNumChar)
+      } yield chars.mkString).suchThat(_.trim.nonEmpty)
+  }
+
+
+  def commonFieldString(maxLength: Int): Gen[String] = (for {
+    length <- choose(1, maxLength)
+    chars <- listOfN(length, commonFieldSafeInputs)
+  } yield chars.mkString).suchThat(_.trim.nonEmpty).retryUntil(_.matches(retryUntilString))
+
+  val retryUntilString = """^(?!^[’'"])(?:[A-Za-z0-9À-ÿ \!\)\(.,_/’'"&-])(?<![’'"]$)$"""
+
+  private def commonFieldSafeInputs: Gen[Char] = Gen.oneOf(
+    Gen.alphaNumChar,
+    Gen.oneOf('À' to 'ÿ'),
+    Gen.const('.'),
+    Gen.const(','),
+    Gen.const('/'),
+    Gen.const('’'),
+    Gen.const('\''),
+    Gen.const('"'),
+    Gen.const('_'),
+    Gen.const('&'),
+    Gen.const(' '),
+    Gen.const('\'')
+  )
 }

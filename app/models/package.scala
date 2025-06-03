@@ -138,6 +138,7 @@ package object models {
                 }
               }
           }
+        case _ => JsError("Unsupported path or value structure")
       }
     }
   }
