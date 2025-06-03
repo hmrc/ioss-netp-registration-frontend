@@ -30,7 +30,7 @@ import views.html.vatEuDetails.VatRegisteredInEuView
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class  v @Inject()(
+class VatRegisteredInEuController @Inject()(
                                              override val messagesApi: MessagesApi,
                                              sessionRepository: SessionRepository,
                                              identify: IdentifierAction,
