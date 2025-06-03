@@ -39,9 +39,8 @@ import views.html.ConfirmClientVatDetailsView
 import scala.concurrent.Future
 
 class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
-  
+
   private val waypoints: Waypoints = EmptyWaypoints
-  private val vatNumber: String = "123456789"
   private val utr: String = "1234567890"
   private val nino = "QQ 12 34 56 C"
   private val companyName: String = "Company name"
@@ -86,7 +85,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
   lazy val checkVatDetailsRoute: String = routes.CheckVatDetailsController.onPageLoad(waypoints).url
 
-  "ConfirmClientVatDetails Controller" - {
+  "CheckVatDetails Controller" - {
 
     "when Business Based in the UK is False" - {
       "must return OK and the correct view for a GET" in {
