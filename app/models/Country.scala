@@ -179,7 +179,7 @@ object Country {
     Country("MR", "Mauritania"),
     Country("MU", "Mauritius"),
     Country("MX", "Mexico"),
-    Country("FM", "Micronesia"),
+    Country("FM", "Federated States of Micronesia"),
     Country("MD", "Moldova"),
     Country("MC", "Monaco"),
     Country("MN", "Mongolia"),

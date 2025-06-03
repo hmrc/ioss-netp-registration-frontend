@@ -23,7 +23,7 @@ import models.UserAnswers
 
 import javax.inject.Inject
 import models.checkVatDetails.CheckVatDetails
-import pages.{CheckAnswersPage, CheckVatDetailsPage, ClientVatNumberPage, JourneyRecoveryPage, Waypoints}
+import pages.{BusinessBasedInUKPage, CheckAnswersPage, CheckVatDetailsPage, ClientHasVatNumberPage, ClientVatNumberPage, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -70,7 +70,7 @@ class CheckVatDetailsController @Inject()(
           val companyName = vatInfo.organisationName.getOrElse("")
 
           val summaryList = buildSummaryList(waypoints, userAnswers, sourcePage)
-          
+
           val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatInfo)
 
           Ok(view(preparedForm, waypoints, viewModel, summaryList, companyName)).toFuture
@@ -120,19 +120,24 @@ class CheckVatDetailsController @Inject()(
                                 userAnswers: UserAnswers,
                                 sourcePage: CheckAnswersPage)
                               (implicit messages: Messages): SummaryList = {
-    SummaryListViewModel(
-      rows = Seq(
-        BusinessBasedInUKSummary.row(waypoints, userAnswers, sourcePage),
-        ClientHasVatNumberSummary.row(waypoints, userAnswers, sourcePage),
-        ClientVatNumberSummary.row(waypoints, userAnswers, sourcePage),
-        ClientHasUtrNumberSummary.row(waypoints, userAnswers, sourcePage),
-        ClientUtrNumberSummary.row(waypoints, userAnswers, sourcePage),
-        ClientsNinoNumberSummary.row(waypoints, userAnswers, sourcePage),
-        ClientCountryBasedSummary.row(waypoints, userAnswers, sourcePage),
-        ClientTaxReferenceSummary.row(waypoints, userAnswers, sourcePage),
-        ClientBusinessAddressSummary.row(waypoints, userAnswers, sourcePage)
-      ).flatten
-    )
+
+    val hasUkVatNumber = userAnswers.get(ClientHasVatNumberPage).contains(true)
+    val isUKBased = userAnswers.get(BusinessBasedInUKPage).contains(true)
+
+    val rows = Seq(
+      BusinessBasedInUKSummary.row(waypoints, userAnswers, sourcePage),
+      if (isUKBased) ClientHasVatNumberSummary.row(waypoints, userAnswers, sourcePage) else None,
+      ClientVatNumberSummary.row(waypoints, userAnswers, sourcePage),
+      ClientBusinessNameSummary.row(waypoints, userAnswers, sourcePage),
+      if (isUKBased && !hasUkVatNumber) ClientHasUtrNumberSummary.row(waypoints, userAnswers, sourcePage) else None,
+      ClientUtrNumberSummary.row(waypoints, userAnswers, sourcePage),
+      ClientsNinoNumberSummary.row(waypoints, userAnswers, sourcePage),
+      ClientCountryBasedSummary.row(waypoints, userAnswers, sourcePage),
+      ClientTaxReferenceSummary.row(waypoints, userAnswers, sourcePage),
+      ClientBusinessAddressSummary.row(waypoints, userAnswers, sourcePage)
+    ).flatten
+
+    SummaryListViewModel(rows = rows)
   }
 
 }

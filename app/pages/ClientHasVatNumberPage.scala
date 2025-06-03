@@ -21,6 +21,8 @@ import models.UserAnswers
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
+import scala.util.Try
+
 case object ClientHasVatNumberPage extends QuestionPage[Boolean] {
 
   override def path: JsPath = JsPath \ toString
@@ -37,4 +39,21 @@ case object ClientHasVatNumberPage extends QuestionPage[Boolean] {
       case false =>
         ClientBusinessNamePage
     }.orRecover
+
+  override def cleanup(value: Option[Boolean], userAnswers: UserAnswers): Try[UserAnswers] = {
+     value match {
+       case Some(false) => for {
+         updatedUserAnswers <- userAnswers.remove(ClientVatNumberPage)
+       } yield updatedUserAnswers
+       case Some(true) => for {
+         removeHasUtrNumberAnswers <- userAnswers.remove(ClientHasUtrNumberPage)
+         removeUtrNumberAnswers <- removeHasUtrNumberAnswers.remove(ClientUtrNumberPage)
+         removeNinoNumberAnswers <- removeUtrNumberAnswers.remove(ClientsNinoNumberPage)
+         removeBusinessAddressAnswers <- removeNinoNumberAnswers.remove(ClientBusinessAddressPage)
+         updatedUserAnswers <- removeBusinessAddressAnswers.remove(ClientBusinessNamePage)
+       } yield updatedUserAnswers
+       case _ => super.cleanup(value, userAnswers)
+     }
+
+  }
 }

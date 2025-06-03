@@ -21,8 +21,7 @@ import forms.BusinessBasedInUKFormProvider
 import models.UserAnswers
 
 import javax.inject.Inject
-import pages.BusinessBasedInUKPage
-import pages.Waypoints
+import pages.*
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -30,6 +29,7 @@ import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.BusinessBasedInUKView
 
+import scala.util.Try
 import scala.concurrent.{ExecutionContext, Future}
 
 class BusinessBasedInUKController @Inject()(
@@ -67,8 +67,29 @@ class BusinessBasedInUKController @Inject()(
           
           for {
             updatedAnswers <- Future.fromTry(originalAnswers.set(BusinessBasedInUKPage, value))
-            _              <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(BusinessBasedInUKPage.navigate(waypoints, originalAnswers, updatedAnswers).route)
+            finalAnswers <- Future.fromTry(cleanup(value, updatedAnswers))
+            _              <- sessionRepository.set(finalAnswers)
+          } yield Redirect(BusinessBasedInUKPage.navigate(waypoints, originalAnswers, finalAnswers).route)
       )
+  }
+
+  private def cleanup(value: Boolean, userAnswers: UserAnswers): Try[UserAnswers] = {
+    if (value) {
+      for {
+        removeCountryBasedInAnswers <- userAnswers.remove(ClientCountryBasedPage)
+        removeBusinessName <- removeCountryBasedInAnswers.remove(ClientBusinessNamePage)
+        removeTaxReferenceAnswers <- removeBusinessName.remove(ClientTaxReferencePage)
+        updatedUserAnswers <- removeTaxReferenceAnswers.remove(ClientBusinessAddressPage)
+      } yield updatedUserAnswers
+    } else {
+      for {
+        removeClientVatNumberAnswers <- userAnswers.remove(ClientVatNumberPage)
+        removeHasClientVatNumberAnswers <- removeClientVatNumberAnswers.remove(ClientHasVatNumberPage)
+        removeUtrNumberAnswers <- removeHasClientVatNumberAnswers.remove(ClientUtrNumberPage)
+        removeNinoNumberAnswers <- removeUtrNumberAnswers.remove(ClientsNinoNumberPage)
+        removeBusinessAddressAnswers <- removeNinoNumberAnswers.remove(ClientBusinessAddressPage)
+        updatedUserAnswers <- removeBusinessAddressAnswers.remove(ClientBusinessNamePage)
+      } yield updatedUserAnswers
+    }
   }
 }

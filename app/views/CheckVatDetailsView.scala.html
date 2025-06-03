@@ -47,13 +47,16 @@
 
         <h1 class="govuk-heading-l">@messages("checkVatDetails.heading", companyName)</h1>
 
-        @govukSummaryList(summaryList)
-        <dl class="govuk-summary-list">
-            <div class="govuk-summary-list__row">
-                <dt class="govuk-summary-list__key govuk-!-width-one-half">@messages("checkVatDetails.address")</dt>
-                <dd class="govuk-summary-list__value govuk-!-width-one-half">@viewModel.formattedAddress</dd>
-            </div>
-        </dl>
+        @{
+            val extendedSummaryList = summaryList.copy(
+                rows = summaryList.rows :+ SummaryListRow(
+                    key = Key(content = Text(messages("checkVatDetails.address"))),
+                    value = Value(content = HtmlContent(viewModel.formattedAddress.body))
+                )
+            )
+
+            govukSummaryList(extendedSummaryList)
+        }
 
 
         @govukRadios(
@@ -63,6 +66,8 @@
                 items = CheckVatDetails.options
             )
         )
+
+        <p class="govuk-body">@messages("checkVatDetails.info.p1")</p>
 
         @govukButton(
             ButtonViewModel(messages("site.continue")).withAttribute("id", "continue")

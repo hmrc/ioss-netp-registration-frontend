@@ -105,6 +105,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
           val summaryList: SummaryList = SummaryListViewModel(
             rows = Seq(
               BusinessBasedInUKSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage),
+              ClientBusinessNameSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage),
               ClientCountryBasedSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage),
               ClientTaxReferenceSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage),
               ClientBusinessAddressSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage)
@@ -197,6 +198,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
                 rows = Seq(
                   BusinessBasedInUKSummary.row(waypoints, updatedAnswersUtr, checkVatDetailsPage),
                   ClientHasVatNumberSummary.row(waypoints, updatedAnswersUtr, checkVatDetailsPage),
+                  ClientBusinessNameSummary.row(waypoints, updatedAnswersUtr, checkVatDetailsPage),
                   ClientHasUtrNumberSummary.row(waypoints, updatedAnswersUtr, checkVatDetailsPage),
                   ClientUtrNumberSummary.row(waypoints, updatedAnswersUtr, checkVatDetailsPage),
                   ClientBusinessAddressSummary.row(waypoints, updatedAnswersUtr, checkVatDetailsPage)
@@ -283,6 +285,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
                 rows = Seq(
                   BusinessBasedInUKSummary.row(waypoints, updatedAnswersNino, checkVatDetailsPage),
                   ClientHasVatNumberSummary.row(waypoints, updatedAnswersNino, checkVatDetailsPage),
+                  ClientBusinessNameSummary.row(waypoints, updatedAnswersNino, checkVatDetailsPage),
                   ClientHasUtrNumberSummary.row(waypoints, updatedAnswersNino, checkVatDetailsPage),
                   ClientsNinoNumberSummary.row(waypoints, updatedAnswersNino, checkVatDetailsPage),
                   ClientBusinessAddressSummary.row(waypoints, updatedAnswersNino, checkVatDetailsPage)

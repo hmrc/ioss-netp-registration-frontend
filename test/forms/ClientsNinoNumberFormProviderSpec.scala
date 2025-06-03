@@ -22,7 +22,7 @@ import play.api.data.FormError
 
 class ClientsNinoNumberFormProviderSpec extends StringFieldBehaviours {
 
-  val requiredKey = "clientsNinoNumber.error.required"
+  val requiredKey = "clientsNinoNumber.error.nino.required"
   val lengthKey = "clientsNinoNumber.error.nino.length"
   val invalidKey = "clientsNinoNumber.error.nino.invalid"
   val specialCharKey = "clientsNinoNumber.error.nino.special.character"

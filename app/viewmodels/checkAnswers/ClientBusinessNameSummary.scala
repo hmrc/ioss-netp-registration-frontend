@@ -17,32 +17,28 @@
 package viewmodels.checkAnswers
 
 import models.UserAnswers
-import pages.{CheckAnswersPage, ClientCountryBasedPage, ClientTaxReferencePage, Waypoints}
+import pages.{CheckAnswersPage, ClientBusinessNamePage, Waypoints}
 import play.api.i18n.Messages
 import play.twirl.api.HtmlFormat
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.govuk.summarylist.*
 import viewmodels.implicits.*
 
-object ClientTaxReferenceSummary {
+object ClientBusinessNameSummary {
 
   def row(
            waypoints: Waypoints,
            answers: UserAnswers,
-           sourcePage: CheckAnswersPage,
+           sourcePage: CheckAnswersPage
          )(implicit messages: Messages): Option[SummaryListRow] = {
-
-    for {
-      taxRef <- answers.get(ClientTaxReferencePage)
-      country <- answers.get(ClientCountryBasedPage)
-    } yield {
+    answers.get(ClientBusinessNamePage).map { answer =>
 
       SummaryListRowViewModel(
-        key = messages("clientTaxReference.checkYourAnswersLabel", country.name),
-        value = ValueViewModel(HtmlFormat.escape(taxRef).toString),
+        key = "clientBusinessName.checkYourAnswersLabel",
+        value = ValueViewModel(HtmlFormat.escape(answer.name).toString),
         actions = Seq(
-          ActionItemViewModel("site.change", ClientTaxReferencePage.changeLink(waypoints, sourcePage).url)
-            .withVisuallyHiddenText(messages("clientTaxReference.change.hidden"))
+          ActionItemViewModel("site.change", ClientBusinessNamePage.changeLink(waypoints, sourcePage).url)
+            .withVisuallyHiddenText(messages("clientBusinessName.change.hidden"))
         )
       )
     }

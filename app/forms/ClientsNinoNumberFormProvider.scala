@@ -25,7 +25,7 @@ class ClientsNinoNumberFormProvider @Inject() extends Mappings {
 
   def apply(): Form[String] =
     Form(
-      "value" -> text("clientsNinoNumber.error.required")
+      "value" -> text("clientsNinoNumber.error.nino.required")
         .transform(_.replaceAll("\\s", "").toUpperCase, identity)
         .verifying(ninoConstraint)
     )
