@@ -19,6 +19,10 @@ package base
 import controllers.actions.*
 import generators.Generators
 import models.domain.VatCustomerInfo
+import models.{BusinessContactDetails, CheckMode, UserAnswers}
+import controllers.actions.*
+import generators.Generators
+import models.domain.VatCustomerInfo
 import models.{BusinessContactDetails, Index, CheckMode, UserAnswers}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
@@ -94,7 +98,7 @@ trait SpecBase
       deregistrationDecisionDate = None
     )
   }
-  
+
 
   val businessContactDetails: BusinessContactDetails =
     BusinessContactDetails(fullName = "name", telephoneNumber = "0111 2223334", emailAddress = "email@example.com")

@@ -99,6 +99,7 @@ class DeclarationController @Inject()(
           logger.error(s"Received an unexpected error when submitting the pending registration: ${error.body}")
           Redirect(ErrorSubmittingPendingRegistrationPage.route(waypoints).url).toFuture
       }
+
   }
 
   private def getIntermediaryName()(implicit hc: HeaderCarrier): Future[Option[String]] = {

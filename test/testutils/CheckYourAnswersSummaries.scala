@@ -42,8 +42,8 @@ object CheckYourAnswersSummaries extends SummaryListFluency {
     val clientTaxReferenceSummaryRow = ClientTaxReferenceSummary.row(waypoints, answers, sourcePage)
     val clientBusinessNameSummaryRow = ClientBusinessNameSummary.row(waypoints, answers, sourcePage)
     val clientsBusinessAddressSummaryRow = ClientBusinessAddressSummary.row(waypoints, answers, sourcePage)
-    
-    
+
+
     Seq(
       basedInUkSummaryRow,
       hasVatNumberSummaryRow,
@@ -57,7 +57,7 @@ object CheckYourAnswersSummaries extends SummaryListFluency {
       clientsBusinessAddressSummaryRow
     ).flatten
   }
-  
+
   def getCYASummaryList(waypoints: Waypoints, answers: UserAnswers, sourcePage: CheckAnswersPage)
                        (implicit msgs: Messages): Seq[SummaryListRow] = {
 

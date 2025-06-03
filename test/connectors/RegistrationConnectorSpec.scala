@@ -272,5 +272,76 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
         }
       }
     }
+
+    ".validateClientCode" - {
+
+      val uniqueUrlCode: String = savedPendingRegistration.uniqueUrlCode
+      val uniqueActivationCode: String = savedPendingRegistration.uniqueActivationCode
+
+      val url: String = s"/ioss-netp-registration/validate-pending-registration/$uniqueUrlCode/$uniqueActivationCode"
+
+      "must return a Right(true) for a matching urlCode and activationCode when the server returns true" in {
+
+        val responseBody = Json.toJson(true).toString
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[RegistrationConnector]
+
+          server.stubFor(
+            get(urlEqualTo(url))
+              .willReturn(ok()
+                .withBody(responseBody))
+          )
+
+          val result = connector.validateClientCode(uniqueUrlCode,uniqueActivationCode).futureValue
+
+          result `mustBe` Right(true)
+        }
+      }
+
+      "must return a Right(false) for a none matching urlCode and activationCode when the server returns false" in {
+
+        val responseBody = Json.toJson(false).toString
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[RegistrationConnector]
+
+          server.stubFor(
+            get(urlEqualTo(url))
+              .willReturn(ok()
+                .withBody(responseBody))
+          )
+
+          val result = connector.validateClientCode(uniqueUrlCode, uniqueActivationCode).futureValue
+
+          result `mustBe` Right(false)
+        }
+      }
+
+      otherErrorStatuses.foreach { status =>
+        s"must return Left(UnexpectedResponseStatus) when the server returns status: $status" in {
+
+          val response = UnexpectedResponseStatus(status, s"Unexpected response when trying to validate registration code, status $status returned")
+
+          running(application) {
+
+            val connector = application.injector.instanceOf[RegistrationConnector]
+
+            server.stubFor(
+              get(urlEqualTo(url))
+                .willReturn(aResponse()
+                  .withStatus(status))
+            )
+
+            val result = connector.validateClientCode(uniqueUrlCode, uniqueActivationCode).futureValue
+
+            result `mustBe` Left(response)
+          }
+        }
+      }
+    }
+
   }
 }

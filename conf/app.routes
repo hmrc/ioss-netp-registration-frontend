@@ -172,3 +172,12 @@ POST       /remove-tax-details/:countryIndex                            controll
 
 GET        /remove-all-tax-details                                      controllers.vatEuDetails.DeleteAllEuDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST       /remove-all-tax-details                                      controllers.vatEuDetails.DeleteAllEuDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+
+# Netp Declaration Section
+GET        /client-code-entry/:uniqueUrlCode                            controllers.clientDeclarationJourney.ClientCodeEntryController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, uniqueUrlCode: String)
+POST       /client-code-entry/:uniqueUrlCode                            controllers.clientDeclarationJourney.ClientCodeEntryController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, uniqueUrlCode: String)
+
+GET        /declaration-client                                          controllers.clientDeclarationJourney.ClientDeclarationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST       /declaration-client                                          controllers.clientDeclarationJourney.ClientDeclarationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+
+GET        /successful-registration                                     controllers.clientDeclarationJourney.ClientSuccessfulRegistrationController.onPageLoad()

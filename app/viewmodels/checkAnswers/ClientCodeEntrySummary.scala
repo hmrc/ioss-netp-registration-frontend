@@ -14,36 +14,35 @@
  * limitations under the License.
  */
 
-package viewmodels.previousRegistrations
+package viewmodels.checkAnswers
 
-import models.UserAnswers
-import pages.{CheckAnswersPage, Waypoints}
-import pages.previousRegistrations.PreviouslyRegisteredPage
+import controllers.routes
+import models.{CheckMode, UserAnswers}
+import pages.Waypoints
+import pages.clientDeclarationJourney.ClientCodeEntryPage
 import play.api.i18n.Messages
+import play.twirl.api.HtmlFormat
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.govuk.summarylist.*
 import viewmodels.implicits.*
 
-object PreviouslyRegisteredSummary  {
+object ClientCodeEntrySummary  {
 
   def row(
-           answers: UserAnswers,
            waypoints: Waypoints,
-           sourcePage: CheckAnswersPage
-         )(implicit messages: Messages): Option[SummaryListRow] =
-
-    answers.get(PreviouslyRegisteredPage).map {
-      answer =>
-
-        val value = if (answer) "site.yes" else "site.no"
+           answers: UserAnswers,
+           uniqueUrlCode: String
+         )(implicit messages: Messages): Option[SummaryListRow] = {
+    answers.get(ClientCodeEntryPage).map { answer =>
 
         SummaryListRowViewModel(
-          key     = "previouslyRegistered.checkYourAnswersLabel",
-          value   = ValueViewModel(value),
+          key     = "clientCodeEntry.checkYourAnswersLabel",
+          value   = ValueViewModel(HtmlFormat.escape(answer).toString),
           actions = Seq(
-            ActionItemViewModel("site.change", controllers.previousRegistrations.routes.PreviouslyRegisteredController.onPageLoad(waypoints).url)
-              .withVisuallyHiddenText(messages("previouslyRegistered.change.hidden"))
+            ActionItemViewModel("site.change", controllers.clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(waypoints, uniqueUrlCode).url)
+              .withVisuallyHiddenText(messages("clientCodeEntry.change.hidden"))
           )
         )
     }
+  }
 }
