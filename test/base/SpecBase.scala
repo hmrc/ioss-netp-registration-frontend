@@ -16,8 +16,9 @@
 
 package base
 
-import controllers.actions._
+import controllers.actions.*
 import models.UserAnswers
+import models.domain.VatCustomerInfo
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -39,6 +40,15 @@ trait SpecBase
   val userAnswersId: String = "id"
 
   def emptyUserAnswers : UserAnswers = UserAnswers(userAnswersId)
+
+  def emptyUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.copy(vatInfo = Some(vatCustomerInfo))
+
+  val vatCustomerInfo: VatCustomerInfo = {
+    VatCustomerInfo(
+      organisationName = Some("Company name"),
+      individualName = None,
+    )
+  }
 
   def messages(app: Application): Messages = app.injector.instanceOf[MessagesApi].preferred(FakeRequest())
 
