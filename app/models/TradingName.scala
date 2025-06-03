@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
-@this(govukButton: GovukButton)
+package models
 
-@(continueMessage: String, continueUrl: String, waypoints: Waypoints)(implicit messages: Messages)
+import play.api.libs.json.{Json, OFormat}
 
-<div class="govuk-button-group">
-  @govukButton(
-    ButtonViewModel(messages(continueMessage)).withAttribute(("id", "continue"))
-  )
-</div>
+case class TradingName(name: String)
+
+object TradingName {
+  implicit lazy val format: OFormat[TradingName] = Json.format[TradingName]
+}

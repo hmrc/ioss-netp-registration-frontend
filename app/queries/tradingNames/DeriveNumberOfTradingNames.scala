@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
-@this(govukButton: GovukButton)
+package queries.tradingNames
 
-@(continueMessage: String, continueUrl: String, waypoints: Waypoints)(implicit messages: Messages)
+import play.api.libs.json.{JsObject, JsPath}
+import queries.Derivable
 
-<div class="govuk-button-group">
-  @govukButton(
-    ButtonViewModel(messages(continueMessage)).withAttribute(("id", "continue"))
-  )
-</div>
+case object DeriveNumberOfTradingNames extends Derivable[Seq[JsObject], Int] {
+
+  override val derive: Seq[JsObject] => Int = _.size
+
+  override def path: JsPath = JsPath \ "tradingNames"
+}

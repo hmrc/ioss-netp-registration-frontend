@@ -14,12 +14,32 @@
  * limitations under the License.
  */
 
-package pages
+package forms.tradingNames
 
-trait AddToListSection
+import forms.behaviours.BooleanFieldBehaviours
+import play.api.data.FormError
 
-object TradingNameSection extends AddToListSection
+class HasTradingNameFormProviderSpec extends BooleanFieldBehaviours {
 
-object WebsiteSection extends AddToListSection
+  val requiredKey = "hasTradingName.error.required"
+  val invalidKey = "error.boolean"
 
-object ClientBusinessNameSection extends AddToListSection
+  val form = new HasTradingNameFormProvider()()
+
+  ".value" - {
+
+    val fieldName = "value"
+
+    behave like booleanField(
+      form,
+      fieldName,
+      invalidError = FormError(fieldName, invalidKey)
+    )
+
+    behave like mandatoryField(
+      form,
+      fieldName,
+      requiredError = FormError(fieldName, requiredKey)
+    )
+  }
+}
