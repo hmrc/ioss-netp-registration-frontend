@@ -19,12 +19,13 @@ package controllers.vatEuDetails
 import base.SpecBase
 import forms.vatEuDetails.VatRegisteredInEuFormProvider
 import org.scalatestplus.mockito.MockitoSugar
+import pages.vatEuDetails.VatRegisteredInEuPage
 import pages.{EmptyWaypoints, Waypoints}
 import play.api.data.Form
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET, contentAsString, route, running, status}
 import views.html.vatEuDetails.VatRegisteredInEuView
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 
 class VatRegisteredInEuControllerSpec extends SpecBase with MockitoSugar {
 
@@ -52,4 +53,23 @@ class VatRegisteredInEuControllerSpec extends SpecBase with MockitoSugar {
         contentAsString(result) `mustBe` view(form, waypoints)(request, messages(application)).toString
       }
     }
-}}
+
+    "must populate the view correctly on a GET when the question has previously been answered" in {
+
+      val userAnswers = emptyUserAnswersWithVatInfo.set(VatRegisteredInEuPage, true).success.value
+
+      val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
+
+      running(application) {
+        val request = FakeRequest(GET, vatRegisteredInEuRoute)
+
+        val view = application.injector.instanceOf[VatRegisteredInEuView]
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` OK
+        contentAsString(result) `mustBe` view(form.fill(true), waypoints)(request, messages(application)).toString
+      }
+    }
+  }
+}
