@@ -19,14 +19,13 @@ package controllers.website
 import base.SpecBase
 import forms.WebsiteFormProvider
 import models.{Index, UserAnswers, Website}
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.ArgumentMatchers.eq as eqTo
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.website.WebsitePage
 import pages.{EmptyWaypoints, Waypoints}
 import play.api.inject
-import play.api.mvc.Call
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
@@ -36,8 +35,6 @@ import scala.concurrent.Future
 
 
 class WebsiteControllerSpec extends SpecBase with MockitoSugar {
-
-  def onwardRoute = Call("GET", "/foo")
 
   private val index = Index(0)
   private val waypoints: Waypoints = EmptyWaypoints
@@ -127,6 +124,49 @@ class WebsiteControllerSpec extends SpecBase with MockitoSugar {
 
         status(result) mustEqual BAD_REQUEST
         contentAsString(result) mustEqual view(boundForm, waypoints, index)(request, messages(application)).toString
+      }
+    }
+
+    "must return NOT_FOUND for a GET with an index of position 10 or greater" in {
+
+      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
+
+      running(application) {
+
+        val request = FakeRequest(GET, controllers.website.routes.WebsiteController.onPageLoad(waypoints, Index(10)).url)
+
+        val result = route(application, request).value
+
+        status(result) mustEqual NOT_FOUND
+      }
+    }
+
+    "must return NOT_FOUND for a POST with an index of position 10 or greater" in {
+
+      val answers =
+        emptyUserAnswers
+          .set(WebsitePage(Index(0)), Website("foo1")).success.value
+          .set(WebsitePage(Index(1)), Website("foo2")).success.value
+          .set(WebsitePage(Index(2)), Website("foo3")).success.value
+          .set(WebsitePage(Index(3)), Website("foo4")).success.value
+          .set(WebsitePage(Index(4)), Website("foo5")).success.value
+          .set(WebsitePage(Index(5)), Website("foo6")).success.value
+          .set(WebsitePage(Index(6)), Website("foo7")).success.value
+          .set(WebsitePage(Index(7)), Website("foo8")).success.value
+          .set(WebsitePage(Index(8)), Website("foo9")).success.value
+          .set(WebsitePage(Index(9)), Website("foo10")).success.value
+
+      val application = applicationBuilder(userAnswers = Some(answers)).build()
+
+      running(application) {
+
+        val request =
+          FakeRequest(POST, controllers.website.routes.WebsiteController.onSubmit(waypoints, Index(10)).url)
+            .withFormUrlEncodedBody(("value", "answer"))
+
+        val result = route(application, request).value
+
+        status(result) mustEqual NOT_FOUND
       }
     }
 

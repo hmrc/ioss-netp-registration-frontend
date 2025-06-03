@@ -16,6 +16,7 @@
 
 package controllers.website
 
+import config.Constants
 import controllers.actions.*
 import forms.WebsiteFormProvider
 import models.{Index, UserAnswers, Website}
@@ -31,18 +32,19 @@ import views.html.WebsiteView
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class WebsiteController @Inject()(
+  class WebsiteController @Inject()(
                                         override val messagesApi: MessagesApi,
                                         sessionRepository: SessionRepository,
                                         identify: IdentifierAction,
                                         getData: DataRetrievalAction,
+                                        limitIndex: MaximumIndexFilterProvider,
                                         formProvider: WebsiteFormProvider,
                                         val controllerComponents: MessagesControllerComponents,
                                         view: WebsiteView
                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
 
-  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData) {
+  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen limitIndex(index, Constants.maxWebsites)) {
     implicit request =>
       val userAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
 
@@ -56,7 +58,7 @@ class WebsiteController @Inject()(
       Ok(view(preparedForm, waypoints, index))
   }
 
-  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData).async {
+  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen limitIndex(index, Constants.maxWebsites)).async {
     implicit request =>
 
       val form = formProvider(index, request.userAnswers.getOrElse(UserAnswers(request.userId)).get(AllWebsites).getOrElse(Seq.empty).map(_.site))
