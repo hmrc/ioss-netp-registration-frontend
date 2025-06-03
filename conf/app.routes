@@ -76,3 +76,19 @@ GET         /cannot-use-this-service             controllers.CannotUseNotAnInter
 # Business Contact Details section
 GET         /business-contact-details           controllers.BusinessContactDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST        /business-contact-details           controllers.BusinessContactDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+
+# Trading name section
+GET         /have-uk-trading-name                        controllers.tradingNames.HasTradingNameController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /have-uk-trading-name                        controllers.tradingNames.HasTradingNameController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+
+GET         /uk-trading-name/:index                                         controllers.tradingNames.TradingNameController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints,  index: Index)
+POST        /uk-trading-name/:index                                         controllers.tradingNames.TradingNameController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints,  index: Index)
+
+GET         /add-uk-trading-name                                            controllers.tradingNames.AddTradingNameController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /add-uk-trading-name                                            controllers.tradingNames.AddTradingNameController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+
+GET         /remove-uk-trading-name/:index                                  controllers.tradingNames.DeleteTradingNameController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
+POST        /remove-uk-trading-name/:index                                  controllers.tradingNames.DeleteTradingNameController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
+
+GET         /remove-all-trading-names                                       controllers.tradingNames.DeleteAllTradingNamesController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /remove-all-trading-names                                       controllers.tradingNames.DeleteAllTradingNamesController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
