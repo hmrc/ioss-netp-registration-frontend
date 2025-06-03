@@ -47,3 +47,10 @@ signedOut.guidance = We did not save your answers.
 
 unauthorised.title = You can’t access this service with this account
 unauthorised.heading = You can’t access this service with this account
+
+hasTradingName.title = Does your business trade using a name that is different from {0}?
+hasTradingName.heading = Does your business trade using a name that is different from {0}?
+hasTradingName.checkYourAnswersLabel = Have a different UK trading name
+hasTradingName.error.required = Select yes if you use a different trading name
+hasTradingName.change.hidden = if you have a different trading name
+

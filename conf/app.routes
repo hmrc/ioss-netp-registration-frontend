@@ -19,3 +19,7 @@ GET         /account/sign-out                            controllers.auth.AuthCo
 GET         /account/signed-out                          controllers.auth.SignedOutController.onPageLoad()
 
 GET         /unauthorised                                controllers.UnauthorisedController.onPageLoad()
+
+# Trading name section
+GET         /have-uk-trading-name                        controllers.tradingNames.HasTradingNameController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /have-uk-trading-name                        controllers.tradingNames.HasTradingNameController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)

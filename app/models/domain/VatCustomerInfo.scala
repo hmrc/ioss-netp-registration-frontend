@@ -18,8 +18,6 @@ package models.domain
 
 import play.api.libs.json.{Json, OFormat}
 
-import java.time.LocalDate
-
 case class VatCustomerInfo(
                             organisationName: Option[String],
                             individualName: Option[String]
