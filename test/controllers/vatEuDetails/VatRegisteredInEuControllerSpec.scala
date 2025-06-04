@@ -18,14 +18,20 @@ package controllers.vatEuDetails
 
 import base.SpecBase
 import forms.vatEuDetails.VatRegisteredInEuFormProvider
+import models.UserAnswers
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.vatEuDetails.VatRegisteredInEuPage
 import pages.{EmptyWaypoints, Waypoints}
 import play.api.data.Form
+import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET, contentAsString, route, running, status}
 import views.html.vatEuDetails.VatRegisteredInEuView
 import play.api.test.Helpers.*
+import repositories.AuthenticatedUserAnswersRepository
+import utils.FutureSyntax.FutureOps
 
 class VatRegisteredInEuControllerSpec extends SpecBase with MockitoSugar {
 
@@ -69,6 +75,35 @@ class VatRegisteredInEuControllerSpec extends SpecBase with MockitoSugar {
 
         status(result) `mustBe` OK
         contentAsString(result) `mustBe` view(form.fill(true), waypoints)(request, messages(application)).toString
+      }
+    }
+
+    "must save the answer and redirect to the next page when valid data is submitted" in {
+
+      val mockSessionRepository = mock[AuthenticatedUserAnswersRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+
+      val application =
+        applicationBuilder(userAnswers = Some(emptyUserAnswersWithVatInfo))
+          .overrides(
+            bind[AuthenticatedUserAnswersRepository].toInstance(mockSessionRepository)
+          )
+          .build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, vatRegisteredInEuRoute)
+            .withFormUrlEncodedBody(("value", "true"))
+
+        val result = route(application, request).value
+
+        val expectedAnswers: UserAnswers = emptyUserAnswersWithVatInfo
+          .set(VatRegisteredInEuPage, true).success.value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` VatRegisteredInEuPage.navigate(waypoints, emptyUserAnswersWithVatInfo, expectedAnswers).url
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }
   }
