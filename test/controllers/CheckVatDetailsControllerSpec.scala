@@ -20,6 +20,7 @@ import base.SpecBase
 import connectors.RegistrationConnector
 import forms.CheckVatDetailsFormProvider
 import models.checkVatDetails.CheckVatDetails
+import models.responses.VatCustomerNotFound
 import models.{ClientBusinessName, Country, InternationalAddress, responses}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.when
@@ -395,6 +396,26 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
             status(result) mustEqual OK
             contentAsString(result) mustEqual view(form, waypoints, viewModel, summaryList, companyName)(request, messages(application)).toString
+          }
+        }
+
+        "must return Not Found error when not Found VAT information" in {
+          val mockRegistrationConnector = mock[RegistrationConnector]
+          val failureResponse = VatCustomerNotFound
+
+          val application = applicationBuilder(userAnswers = Some(updatedAnswersUkVatNumber))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+            .build()
+
+          when(mockRegistrationConnector.getVatCustomerInfo(eqTo(vatNumber))(any()))
+            .thenReturn(Future.successful(Left(failureResponse)))
+
+          running(application) {
+            val request = FakeRequest(GET, checkVatDetailsRoute)
+            val result = route(application, request).value
+
+            status(result) `mustBe` SEE_OTHER
+            redirectLocation(result).value `mustBe` UkVatNumberNotFoundPage.route(waypoints).url
           }
         }
 

@@ -18,7 +18,7 @@ package connectors
 
 import logging.Logging
 import models.domain.VatCustomerInfo
-import models.responses.{ErrorResponse, InvalidJson, NotFound, UnexpectedResponseStatus}
+import models.responses.{ErrorResponse, InvalidJson, UnexpectedResponseStatus, VatCustomerNotFound}
 import play.api.http.Status.{NOT_FOUND, OK}
 import play.api.libs.json.{JsError, JsSuccess}
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
@@ -42,7 +42,7 @@ object VatCustomerInfoHttpParser extends Logging {
 
         case NOT_FOUND =>
           logger.error(s"not found vat customer info")
-          Left(NotFound)
+          Left(VatCustomerNotFound)
 
         case status =>
           logger.error(s"There was error getting vat info status: $status with body: ${response.body}")

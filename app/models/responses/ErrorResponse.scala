@@ -46,6 +46,10 @@ case object ReceivedErrorFromCore extends ErrorResponse {
   override val body: String = "Received an error when submitting to core"
 }
 
+case object VatCustomerNotFound extends ErrorResponse {
+  override val body: String = "Not found"
+}
+
 case class EisError(eisErrorResponse: EisErrorResponse) extends ErrorResponse {
   override val body: String =
     s"${eisErrorResponse.timestamp} " +

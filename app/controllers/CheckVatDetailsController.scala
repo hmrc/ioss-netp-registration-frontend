@@ -19,8 +19,9 @@ package controllers
 import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.CheckVatDetailsFormProvider
+import logging.Logging
 import models.UserAnswers
-
+import models.responses.VatCustomerNotFound
 import javax.inject.Inject
 import models.checkVatDetails.CheckVatDetails
 import pages.*
@@ -49,7 +50,7 @@ class CheckVatDetailsController @Inject()(
                                          val controllerComponents: MessagesControllerComponents,
                                          view: CheckVatDetailsView,
                                          nonUkVatNumberView: ConfirmClientVatDetailsView
-                                 )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetClientCompanyName {
+                                 )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetClientCompanyName with Logging {
 
   val form: Form[CheckVatDetails] = formProvider()
 
@@ -77,7 +78,10 @@ class CheckVatDetailsController @Inject()(
 
               Ok(view(preparedForm, waypoints, viewModel, summaryList, companyName)).toFuture
 
-            case _ =>
+            case Left(VatCustomerNotFound) =>
+              Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
+
+            case Left(_) =>
               Redirect(VatApiDownPage.route(waypoints).url).toFuture
           }
 
@@ -118,6 +122,9 @@ class CheckVatDetailsController @Inject()(
                     _              <- sessionRepository.set(updatedAnswers)
                   } yield Redirect(CheckVatDetailsPage().navigate(waypoints, request.userAnswers, updatedAnswers).route)
               )
+
+            case Left(VatCustomerNotFound) =>
+              Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
 
             case _ =>
               Redirect(VatApiDownPage.route(waypoints)).toFuture

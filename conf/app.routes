@@ -57,3 +57,5 @@ POST       /confirm-vat-details                         controllers.CheckVatDeta
 GET        /register-different-business                 controllers.UseOtherAccountController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 
 GET        /registration-service-error                  controllers.VatApiDownController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+
+GET        /vat-number-not-found                        controllers.UkVatNumberNotFoundController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
