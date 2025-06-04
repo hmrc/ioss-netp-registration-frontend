@@ -355,3 +355,5 @@ deleteAllPreviousRegistrations.heading = Remove all your previous registrations 
 deleteAllPreviousRegistrations.warning = This will delete all your previous registrations you have added.
 deleteAllPreviousRegistrations.error.required = Select yes if you want to remove all your previous registrations from this scheme
 
+vatRegisteredInEu.title = Is your business registered for tax in EU countries?
+vatRegisteredInEu.heading = Is your business registered for tax in EU countries?
