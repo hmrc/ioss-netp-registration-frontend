@@ -47,3 +47,6 @@ signedOut.guidance = We did not save your answers.
 
 unauthorised.title = You can’t access this service with this account
 unauthorised.heading = You can’t access this service with this account
+
+vatRegisteredInEu.title = Is your business registered for tax in EU countries?
+vatRegisteredInEu.heading = Is your business registered for tax in EU countries?
