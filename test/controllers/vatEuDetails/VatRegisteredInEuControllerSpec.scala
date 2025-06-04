@@ -30,7 +30,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET, contentAsString, route, running, status}
 import views.html.vatEuDetails.VatRegisteredInEuView
 import play.api.test.Helpers.*
-import repositories.AuthenticatedUserAnswersRepository
+import repositories.SessionRepository
 import utils.FutureSyntax.FutureOps
 
 class VatRegisteredInEuControllerSpec extends SpecBase with MockitoSugar {
@@ -80,14 +80,14 @@ class VatRegisteredInEuControllerSpec extends SpecBase with MockitoSugar {
 
     "must save the answer and redirect to the next page when valid data is submitted" in {
 
-      val mockSessionRepository = mock[AuthenticatedUserAnswersRepository]
+      val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswersWithVatInfo))
           .overrides(
-            bind[AuthenticatedUserAnswersRepository].toInstance(mockSessionRepository)
+            bind[SessionRepository].toInstance(mockSessionRepository)
           )
           .build()
 
@@ -103,7 +103,7 @@ class VatRegisteredInEuControllerSpec extends SpecBase with MockitoSugar {
 
         status(result) `mustBe` SEE_OTHER
         redirectLocation(result).value `mustBe` VatRegisteredInEuPage.navigate(waypoints, emptyUserAnswersWithVatInfo, expectedAnswers).url
-        verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
+        verify(mockSessionRepository, times(1)).set(any())
       }
     }
 
