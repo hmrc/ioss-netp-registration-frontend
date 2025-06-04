@@ -106,5 +106,25 @@ class VatRegisteredInEuControllerSpec extends SpecBase with MockitoSugar {
         verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }
+
+    "must return a Bad Request and errors when invalid data is submitted" in {
+
+      val application = applicationBuilder(userAnswers = Some(emptyUserAnswersWithVatInfo)).build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, vatRegisteredInEuRoute)
+            .withFormUrlEncodedBody(("value", ""))
+
+        val boundForm = form.bind(Map("value" -> ""))
+
+        val view = application.injector.instanceOf[VatRegisteredInEuView]
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` BAD_REQUEST
+        contentAsString(result) `mustBe` view(boundForm, waypoints)(request, messages(application)).toString
+      }
+    }
   }
 }
