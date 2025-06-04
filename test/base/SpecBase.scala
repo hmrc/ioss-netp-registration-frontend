@@ -50,7 +50,8 @@ trait SpecBase
 
   val arbitraryInstant: Instant = arbitraryDate.arbitrary.sample.value.atStartOfDay(ZoneId.systemDefault()).toInstant
   val stubClockAtArbitraryDate: Clock = Clock.fixed(arbitraryInstant, ZoneId.systemDefault())
-  
+
+  val vatNumber = "GB123456789"
   val vatCustomerInfo: VatCustomerInfo =
     VatCustomerInfo(
       registrationDate = LocalDate.now(stubClockAtArbitraryDate),

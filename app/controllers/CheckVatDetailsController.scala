@@ -23,7 +23,7 @@ import models.UserAnswers
 
 import javax.inject.Inject
 import models.checkVatDetails.CheckVatDetails
-import pages.{BusinessBasedInUKPage, CheckAnswersPage, CheckVatDetailsPage, ClientHasVatNumberPage, ClientVatNumberPage, JourneyRecoveryPage, Waypoints}
+import pages.*
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -57,62 +57,76 @@ class CheckVatDetailsController @Inject()(
     implicit request =>
       
       val userAnswers = request.userAnswers
-      val ukVatNumber = userAnswers.get(ClientVatNumberPage).getOrElse("")
+      val ukVatNumber = userAnswers.get(ClientVatNumberPage)
       val sourcePage = CheckVatDetailsPage()
-      
-      registrationConnector.getVatCustomerInfo(ukVatNumber).flatMap {
-        case Right(vatInfo) =>
-          val preparedForm = userAnswers.get(CheckVatDetailsPage()) match {
-            case None => form
-            case Some(value) => form.fill(value)
+
+      ukVatNumber match {
+        case Some(ukVatNumber) =>
+          registrationConnector.getVatCustomerInfo(ukVatNumber).flatMap {
+            case Right(vatInfo) =>
+              val preparedForm = userAnswers.get(CheckVatDetailsPage()) match {
+                case None => form
+                case Some(value) => form.fill(value)
+              }
+
+              val companyName = vatInfo.organisationName.getOrElse("")
+
+              val summaryList = buildSummaryList(waypoints, userAnswers, sourcePage)
+
+              val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatInfo)
+
+              Ok(view(preparedForm, waypoints, viewModel, summaryList, companyName)).toFuture
+
+            case _ =>
+              Redirect(VatApiDownPage.route(waypoints).url).toFuture
           }
 
-          val companyName = vatInfo.organisationName.getOrElse("")
-
-          val summaryList = buildSummaryList(waypoints, userAnswers, sourcePage)
-
-          val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatInfo)
-
-          Ok(view(preparedForm, waypoints, viewModel, summaryList, companyName)).toFuture
-
-        case _ =>
+        case None =>
           getClientCompanyName(waypoints) { companyName =>
             val summaryList = buildSummaryList(waypoints, userAnswers, sourcePage)
             Ok(nonUkVatNumberView(waypoints, summaryList, companyName.name)).toFuture
           }
+
       }
   }
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
 
-      val ukVatNumber = request.userAnswers.get(ClientVatNumberPage).getOrElse("")
+      val ukVatNumber = request.userAnswers.get(ClientVatNumberPage)
 
-      registrationConnector.getVatCustomerInfo(ukVatNumber).flatMap {
-        case Right(vatInfo) =>
-          form.bindFromRequest().fold(
-            formWithErrors => {
-              val companyName = vatInfo.organisationName.getOrElse("")
 
-              val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatInfo)
-              val sourcePage = CheckVatDetailsPage()
+      ukVatNumber match {
+        case Some(ukVatNumber) =>
+          registrationConnector.getVatCustomerInfo(ukVatNumber).flatMap {
+            case Right(vatInfo) =>
+              form.bindFromRequest().fold(
+                formWithErrors => {
+                  val companyName = vatInfo.organisationName.getOrElse("")
 
-              val summaryList = buildSummaryList(waypoints, request.userAnswers, sourcePage)
+                  val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatInfo)
+                  val sourcePage = CheckVatDetailsPage()
 
-              BadRequest(view(formWithErrors, waypoints, viewModel, summaryList, companyName)).toFuture
-            },
+                  val summaryList = buildSummaryList(waypoints, request.userAnswers, sourcePage)
 
-            value =>
-              for {
-                updatedAnswers <- Future.fromTry(request.userAnswers.set(CheckVatDetailsPage(), value))
-                _              <- sessionRepository.set(updatedAnswers)
-              } yield Redirect(CheckVatDetailsPage().navigate(waypoints, request.userAnswers, updatedAnswers).route)
-          )
+                  BadRequest(view(formWithErrors, waypoints, viewModel, summaryList, companyName)).toFuture
+                },
 
-        case _ =>
-          Redirect(JourneyRecoveryPage.route(waypoints)).toFuture
+                value =>
+                  for {
+                    updatedAnswers <- Future.fromTry(request.userAnswers.set(CheckVatDetailsPage(), value))
+                    _              <- sessionRepository.set(updatedAnswers)
+                  } yield Redirect(CheckVatDetailsPage().navigate(waypoints, request.userAnswers, updatedAnswers).route)
+              )
+
+            case _ =>
+              Redirect(VatApiDownPage.route(waypoints)).toFuture
+          }
+        case None =>
+          Redirect(CheckVatDetailsPage().navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
       }
-      
+
+
   }
 
   private def buildSummaryList(

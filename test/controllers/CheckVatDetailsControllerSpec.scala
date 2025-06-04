@@ -17,10 +17,11 @@
 package controllers
 
 import base.SpecBase
+import connectors.RegistrationConnector
 import forms.CheckVatDetailsFormProvider
 import models.checkVatDetails.CheckVatDetails
-import models.{ClientBusinessName, Country, InternationalAddress}
-import org.mockito.ArgumentMatchers.any
+import models.{ClientBusinessName, Country, InternationalAddress, responses}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.when
 import org.scalacheck.Gen
 import org.scalatestplus.mockito.MockitoSugar
@@ -32,9 +33,10 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
+import viewmodels.CheckVatDetailsViewModel
 import viewmodels.checkAnswers.*
 import viewmodels.govuk.all.SummaryListViewModel
-import views.html.ConfirmClientVatDetailsView
+import views.html.{CheckVatDetailsView, ConfirmClientVatDetailsView}
 
 import scala.concurrent.Future
 
@@ -83,6 +85,11 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
     .set(ClientsNinoNumberPage, nino).success.value
     .set(ClientBusinessAddressPage, businessAddress).success.value
 
+  private val updatedAnswersUkVatNumber = emptyUserAnswersWithVatInfo
+    .set(BusinessBasedInUKPage, true).success.value
+    .set(ClientHasVatNumberPage, true).success.value
+    .set(ClientVatNumberPage, vatNumber).success.value
+
   lazy val checkVatDetailsRoute: String = routes.CheckVatDetailsController.onPageLoad(waypoints).url
 
   "CheckVatDetails Controller" - {
@@ -114,6 +121,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
           status(result) `mustBe` OK
           contentAsString(result) mustBe view(waypoints, summaryList, companyName)(request, messages(application)).toString
+
         }
       }
 
@@ -353,6 +361,62 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
           }
         }
 
+      }
+
+      "and the client has a UK vat number" - {
+
+        "must return OK and the correct view for a GET" in {
+          val mockRegistrationConnector = mock[RegistrationConnector]
+          val mockSessionRepository = mock[SessionRepository]
+
+          when(mockRegistrationConnector.getVatCustomerInfo(eqTo(vatNumber))(any())).thenReturn(Future.successful(Right(vatCustomerInfo)))
+          when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
+
+          val application = applicationBuilder(userAnswers = Some(updatedAnswersUkVatNumber))
+            .overrides(
+              bind[RegistrationConnector].toInstance(mockRegistrationConnector)
+            ).build()
+
+          running(application) {
+            implicit val msgs: Messages = messages(application)
+            val request = FakeRequest(GET, checkVatDetailsRoute)
+            val result = route(application, request).value
+
+            val view = application.injector.instanceOf[CheckVatDetailsView]
+            val summaryList = SummaryListViewModel(
+              rows = Seq(
+                BusinessBasedInUKSummary.row(waypoints, updatedAnswersUkVatNumber, checkVatDetailsPage),
+                ClientHasVatNumberSummary.row(waypoints, updatedAnswersUkVatNumber, checkVatDetailsPage),
+                ClientVatNumberSummary.row(waypoints, updatedAnswersUkVatNumber, checkVatDetailsPage)
+              ).flatten
+            )
+            val viewModel = CheckVatDetailsViewModel(vatNumber, vatCustomerInfo)
+            val companyName = vatCustomerInfo.organisationName.get
+
+            status(result) mustEqual OK
+            contentAsString(result) mustEqual view(form, waypoints, viewModel, summaryList, companyName)(request, messages(application)).toString
+          }
+        }
+
+        "must return Internal Server Error when VAT API call fails" in {
+          val mockRegistrationConnector = mock[RegistrationConnector]
+          val failureResponse = responses.UnexpectedResponseStatus(INTERNAL_SERVER_ERROR, "foo")
+
+          val application = applicationBuilder(userAnswers = Some(updatedAnswersUkVatNumber))
+            .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+            .build()
+
+          when(mockRegistrationConnector.getVatCustomerInfo(eqTo(vatNumber))(any()))
+            .thenReturn(Future.successful(Left(failureResponse)))
+
+          running(application) {
+            val request = FakeRequest(GET, checkVatDetailsRoute)
+            val result = route(application, request).value
+
+            status(result) `mustBe` SEE_OTHER
+            redirectLocation(result).value `mustBe` VatApiDownPage.route(waypoints).url
+          }
+        }
       }
     }
   }

@@ -72,7 +72,7 @@ clientVatNumber.hint = This is 9 numbers, sometimes with ‘GB’ at the start, 
 clientCountryBased.title = Which country is your client''s business based in?
 clientCountryBased.heading = Which country is your client''s business based in?
 clientCountryBased.checkYourAnswersLabel = Country based in
-clientCountryBased.error.required = Select the country where your client's business is based
+clientCountryBased.error.required = Select the country where your client''s business is based
 clientCountryBased.change.hidden = Country based in
 
 clientUKBusinessName.title = What is your client''s business name?
