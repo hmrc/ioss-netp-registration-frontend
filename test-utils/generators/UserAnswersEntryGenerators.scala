@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,31 @@
 
 package generators
 
+import models.BusinessContactDetails
 import models.*
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
+import pages.BusinessContactDetailsPage
 import pages.ClientBusinessAddressPage
 import play.api.libs.json.{JsValue, Json}
 
 trait UserAnswersEntryGenerators extends PageGenerators with ModelGenerators {
-  
 
-  implicit lazy val arbitraryClientBusinessAddressUserAnswersEntry: Arbitrary[(ClientBusinessAddressPage.type, JsValue)] =
+  implicit lazy val arbitraryClientBusinessAddressUserAnswersEntry: Arbitrary[(ClientBusinessAddressPage.type, JsValue)] = {
     Arbitrary {
       for {
         page <- arbitrary[ClientBusinessAddressPage.type]
         value <- arbitrary[InternationalAddress].map(Json.toJson(_))
       } yield (page, value)
     }
-  
+  }
+
+  implicit lazy val arbitraryBusinessContactDetailsUserAnswersEntry: Arbitrary[(BusinessContactDetailsPage.type, JsValue)] = {
+    Arbitrary {
+      for {
+        page <- arbitrary[BusinessContactDetailsPage.type]
+        value <- arbitrary[BusinessContactDetails].map(Json.toJson(_))
+      } yield (page, value)
+    }
+  }
 }
