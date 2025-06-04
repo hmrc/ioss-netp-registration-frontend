@@ -23,7 +23,7 @@ import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.vatEuDetails.VatRegisteredInEuPage
-import pages.{EmptyWaypoints, Waypoints}
+import pages.{EmptyWaypoints, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
@@ -103,7 +103,7 @@ class VatRegisteredInEuControllerSpec extends SpecBase with MockitoSugar {
 
         status(result) `mustBe` SEE_OTHER
         redirectLocation(result).value `mustBe` VatRegisteredInEuPage.navigate(waypoints, emptyUserAnswersWithVatInfo, expectedAnswers).url
-        verify(mockSessionRepository, times(1)).set(any())
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }
 
@@ -126,5 +126,20 @@ class VatRegisteredInEuControllerSpec extends SpecBase with MockitoSugar {
         contentAsString(result) `mustBe` view(boundForm, waypoints)(request, messages(application)).toString
       }
     }
+
+    "must redirect to Journey Recovery for a GET if no existing data is found" in {
+
+      val application = applicationBuilder(userAnswers = None).build()
+
+      running(application) {
+        val request = FakeRequest(GET, vatRegisteredInEuRoute)
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` JourneyRecoveryPage.route(waypoints).url
+      }
+    }
+    
   }
 }
