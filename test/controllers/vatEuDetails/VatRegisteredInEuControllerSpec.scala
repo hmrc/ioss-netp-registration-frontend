@@ -127,6 +127,7 @@ class VatRegisteredInEuControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
+    // TODO implement required data in controller
     "must redirect to Journey Recovery for a GET if no existing data is found" in {
 
       val application = applicationBuilder(userAnswers = None).build()
@@ -140,6 +141,22 @@ class VatRegisteredInEuControllerSpec extends SpecBase with MockitoSugar {
         redirectLocation(result).value `mustBe` JourneyRecoveryPage.route(waypoints).url
       }
     }
-    
+
+    "must redirect to Journey Recovery for a POST if no existing data is found" in {
+
+      val application = applicationBuilder(userAnswers = None).build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, vatRegisteredInEuRoute)
+            .withFormUrlEncodedBody(("value", "true"))
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` JourneyRecoveryPage.route(waypoints).url
+      }
+    }
+
   }
 }
