@@ -16,7 +16,7 @@
 
 package pages.website
 
-import models.{Index, UserAnswers, Website}
+import models.{Index, NormalMode, UserAnswers, Website}
 import pages.{AddToListQuestionPage, AddToListSection, Page, QuestionPage, Waypoint, Waypoints, WebsiteSection}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
@@ -25,15 +25,16 @@ case class WebsitePage(index: Index) extends QuestionPage[Website] with AddToLis
 
   override val section: AddToListSection = WebsiteSection
 
-  override def path: JsPath = JsPath \ toString
+  override def path: JsPath = JsPath \ toString \ index.position
 
   override def toString: String = "websites"
 
-  override val addItemWaypoint: Waypoint = ???
+  override val addItemWaypoint: Waypoint = AddWebsitePage().waypoint(NormalMode)
 
   override def route(waypoints: Waypoints): Call =
     controllers.website.routes.WebsiteController.onPageLoad(waypoints, index)
 
-  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = ???
+  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
+    AddWebsitePage(None)
 
 }

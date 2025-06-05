@@ -24,7 +24,7 @@
     formHelper: FormWithCSRF,
     govukErrorSummary: GovukErrorSummary,
     govukInput: GovukInput,
-    govukButton: GovukButton
+    button: components.ButtonGroup
 )
 
 @(form: Form[_], waypoints: Waypoints, index: Index)(implicit request: Request[_], messages: Messages)
@@ -37,16 +37,32 @@
             @govukErrorSummary(ErrorSummaryViewModel(form))
         }
 
-        @govukInput(
-            InputViewModel(
-                field = form("value"),
-                label = LabelViewModel(messages("website.heading")).asPageHeading()
+        @if(form("value").value.exists(value => value.startsWith("https://") || value.startsWith("https://"))) {
+            @govukInput(
+                InputViewModel(
+                    field = form("value"),
+                    label = LabelViewModel(messages("website.change.heading")).asPageHeading()
+                )
+                .withWidth(Full)
             )
-            .withWidth(Full)
-        )
+        } else {
+            @govukInput(
+                InputViewModel(
+                    field = form("value"),
+                    label = LabelViewModel(
+                        if(form("value").value.isEmpty) {
+                            messages("website.heading")
+                        } else {
+                            messages("website.change.heading")
+                        }
+                    ).asPageHeading()
+                )
+                .withWidth(Full)
+                .withPrefix(PrefixOrSuffix(content = Text("https://")))
+            )
+        }
 
-        @govukButton(
-            ButtonViewModel(messages("site.continue"))
-        )
+        @button("site.continue",  WebsitePage(index).route(waypoints).url, waypoints)
+
     }
 }
