@@ -16,16 +16,24 @@
 
 package viewmodels
 
-import models.UserAnswers
+import models.{Index, UserAnswers}
 import pages.Waypoints
-import pages.website.WebsitePage
-import play.api.i18n.Messages
+import pages.website.{AddWebsitePage, DeleteWebsitePage, WebsitePage}
 import play.twirl.api.HtmlFormat
-import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
-import viewmodels.govuk.summarylist.*
-import viewmodels.implicits.*
+import queries.AllWebsites
 
 object WebsiteSummary  {
 
-  def row(answers: UserAnswers, waypoints: Waypoints)(implicit messages: Messages): Option[SummaryListRow] = ???
+  def addToListRows(answers: UserAnswers, waypoints: Waypoints, sourcePage: AddWebsitePage): Seq[ListItemWrapper] =
+    answers.get(AllWebsites).getOrElse(List.empty).zipWithIndex.map {
+      case (website, index) =>
+      ListItemWrapper(
+        ListItem(
+          name = HtmlFormat.escape(website.site).toString,
+          changeUrl = WebsitePage(Index(index)).changeLink(waypoints, sourcePage).url,
+          removeUrl = DeleteWebsitePage(Index(index)).route(waypoints).url
+        ),
+        removeButtonEnabled = true
+      )
+    }
 }
