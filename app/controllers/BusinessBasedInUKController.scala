@@ -67,29 +67,8 @@ class BusinessBasedInUKController @Inject()(
           
           for {
             updatedAnswers <- Future.fromTry(originalAnswers.set(BusinessBasedInUKPage, value))
-            finalAnswers <- Future.fromTry(cleanup(value, updatedAnswers))
-            _              <- sessionRepository.set(finalAnswers)
-          } yield Redirect(BusinessBasedInUKPage.navigate(waypoints, originalAnswers, finalAnswers).route)
+            _              <- sessionRepository.set(updatedAnswers)
+          } yield Redirect(BusinessBasedInUKPage.navigate(waypoints, originalAnswers, updatedAnswers).route)
       )
-  }
-
-  private def cleanup(value: Boolean, userAnswers: UserAnswers): Try[UserAnswers] = {
-    if (value) {
-      for {
-        removeCountryBasedInAnswers <- userAnswers.remove(ClientCountryBasedPage)
-        removeBusinessName <- removeCountryBasedInAnswers.remove(ClientBusinessNamePage)
-        removeTaxReferenceAnswers <- removeBusinessName.remove(ClientTaxReferencePage)
-        updatedUserAnswers <- removeTaxReferenceAnswers.remove(ClientBusinessAddressPage)
-      } yield updatedUserAnswers
-    } else {
-      for {
-        removeClientVatNumberAnswers <- userAnswers.remove(ClientVatNumberPage)
-        removeHasClientVatNumberAnswers <- removeClientVatNumberAnswers.remove(ClientHasVatNumberPage)
-        removeUtrNumberAnswers <- removeHasClientVatNumberAnswers.remove(ClientUtrNumberPage)
-        removeNinoNumberAnswers <- removeUtrNumberAnswers.remove(ClientsNinoNumberPage)
-        removeBusinessAddressAnswers <- removeNinoNumberAnswers.remove(ClientBusinessAddressPage)
-        updatedUserAnswers <- removeBusinessAddressAnswers.remove(ClientBusinessNamePage)
-      } yield updatedUserAnswers
-    }
   }
 }

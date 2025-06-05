@@ -21,6 +21,8 @@ import models.UserAnswers
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
+import scala.util.Try
+
 case object BusinessBasedInUKPage extends QuestionPage[Boolean] {
 
   override def path: JsPath = JsPath \ toString
@@ -37,4 +39,25 @@ case object BusinessBasedInUKPage extends QuestionPage[Boolean] {
       case false =>
         ClientCountryBasedPage
     }.orRecover
+
+  override def cleanup(value: Option[Boolean], userAnswers: UserAnswers): Try[UserAnswers] = {
+    if (value.contains(true)) {
+      for {
+        removeCountryBasedInAnswers <- userAnswers.remove(ClientCountryBasedPage)
+        removeBusinessName <- removeCountryBasedInAnswers.remove(ClientBusinessNamePage)
+        removeTaxReferenceAnswers <- removeBusinessName.remove(ClientTaxReferencePage)
+        updatedUserAnswers <- removeTaxReferenceAnswers.remove(ClientBusinessAddressPage)
+      } yield updatedUserAnswers
+    } else {
+      for {
+        removeClientVatNumberAnswers <- userAnswers.remove(ClientVatNumberPage)
+        removeHasClientVatNumberAnswers <- removeClientVatNumberAnswers.remove(ClientHasVatNumberPage)
+        removeHasUtrNumberAnswers <- removeHasClientVatNumberAnswers.remove(ClientHasUtrNumberPage)
+        removeUtrNumberAnswers <- removeHasUtrNumberAnswers.remove(ClientUtrNumberPage)
+        removeNinoNumberAnswers <- removeUtrNumberAnswers.remove(ClientsNinoNumberPage)
+        removeBusinessAddressAnswers <- removeNinoNumberAnswers.remove(ClientBusinessAddressPage)
+        updatedUserAnswers <- removeBusinessAddressAnswers.remove(ClientBusinessNamePage)
+      } yield updatedUserAnswers
+    }
+  }
 }
