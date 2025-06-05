@@ -29,7 +29,7 @@ object Waypoint {
   // TODO Add journey loop pages - url fragments
   private val fragments: Map[String, Waypoint] =
     Map(
-
+      CheckVatDetailsPage().urlFragment -> CheckVatDetailsPage().waypoint
     )
 
   def fromString(s: String): Option[Waypoint] =

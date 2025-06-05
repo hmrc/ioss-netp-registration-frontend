@@ -21,6 +21,8 @@ import controllers.actions.IdentifierAction
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import repositories.SessionRepository
+import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl.idFunctor
+import uk.gov.hmrc.play.bootstrap.binders.{AbsoluteWithHostnameFromAllowlist, OnlyRelative, RedirectUrl}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 
 import javax.inject.Inject
@@ -33,6 +35,8 @@ class AuthController @Inject()(
                                 sessionRepository: SessionRepository,
                                 identify: IdentifierAction
                               )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+
+  private val redirectPolicy = OnlyRelative | AbsoluteWithHostnameFromAllowlist(config.allowedRedirectUrls: _*)
 
   def signOut(): Action[AnyContent] = identify.async {
     implicit request =>
@@ -52,5 +56,14 @@ class AuthController @Inject()(
         _ =>
         Redirect(config.signOutUrl, Map("continue" -> Seq(routes.SignedOutController.onPageLoad().url)))
       }
+  }
+
+  def redirectToLogin(continueUrl: RedirectUrl): Action[AnyContent] = Action {
+    Redirect(config.loginUrl,
+      Map(
+        "origin" -> Seq(config.origin),
+        "continue" -> Seq(continueUrl.get(redirectPolicy).url)
+      )
+    )
   }
 }

@@ -18,7 +18,7 @@ package forms.mappings
 
 import config.CurrencyFormatter
 import java.time.LocalDate
-
+import forms.validation.Validation.utrRegex
 import play.api.data.validation.{Constraint, Invalid, Valid}
 
 trait Constraints {
@@ -87,6 +87,14 @@ trait Constraints {
         Invalid(errorKey, maximum)
     }
 
+  protected def minLength(minimum: Int, errorKey: String): Constraint[String] =
+    Constraint {
+      case str if str.length >= minimum =>
+        Valid
+      case _ =>
+        Invalid(errorKey, minimum)
+    }
+
   protected def maxDate(maximum: LocalDate, errorKey: String, args: Any*): Constraint[LocalDate] =
     Constraint {
       case date if date.isAfter(maximum) =>
@@ -129,5 +137,57 @@ trait Constraints {
         } else {
           Invalid(errorKey, CurrencyFormatter.currencyFormat(maximum))
         }
+    }
+
+  protected def ninoConstraint: Constraint[String] = Constraint("constraints.nino") { input =>
+    val normalized = input.replaceAll("\\s", "").toUpperCase
+
+    val validNinoRegex = "^[A-Z]{2}\\d{6}[A-D]?$"
+
+    val specialCharRegex = "^[A-Z0-9]*$"
+
+    if (!normalized.matches(specialCharRegex)) {
+      Invalid("clientsNinoNumber.error.nino.special.character")
+    } else if (normalized.length != 9) {
+      Invalid("clientsNinoNumber.error.nino.length")
+    } else if (!normalized.matches(validNinoRegex)) {
+      Invalid("clientsNinoNumber.error.nino.invalid")
+    } else {
+      Valid
+    }
+  }
+
+  protected def utrConstraint(errorKey: String): Constraint[String] =
+    Constraint { input =>
+      val normalized = input.replaceAll("[^A-Za-z0-9]", "").toLowerCase
+
+      if (utrRegex.pattern.matcher(normalized).matches()) {
+        Valid
+      } else {
+        Invalid(errorKey)
+      }
+    }
+
+  protected def utrLengthConstraint(errorKey: String): Constraint[String] =
+    Constraint { input =>
+      val digitsOnly = input.replaceAll("[^0-9]", "")
+
+      if (digitsOnly.length == 10 || digitsOnly.length == 13) {
+        Valid
+      } else {
+        Invalid(errorKey)
+      }
+  }
+
+  protected def vatNumberConstraint(errorKey: String): Constraint[String] =
+    Constraint { input =>
+      val normalized = input.toUpperCase.replaceAll("\\s", "").stripPrefix("GB")
+      val digitsOnly = normalized.replaceAll("[^0-9]", "")
+
+      if (digitsOnly.matches("^\\d{9}$")) {
+        Valid
+      } else {
+        Invalid(errorKey)
+      }
     }
 }

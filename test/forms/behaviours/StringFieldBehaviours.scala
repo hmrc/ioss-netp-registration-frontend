@@ -20,17 +20,51 @@ import play.api.data.{Form, FormError}
 
 trait StringFieldBehaviours extends FieldBehaviours {
 
-    def fieldWithMaxLength(form: Form[_],
-                           fieldName: String,
-                           maxLength: Int,
-                           lengthError: FormError): Unit = {
+  def fieldWithMaxLength(form: Form[_],
+                         fieldName: String,
+                         maxLength: Int,
+                         lengthError: FormError): Unit = {
 
     s"not bind strings longer than $maxLength characters" in {
 
       forAll(stringsLongerThan(maxLength) -> "longString") {
-        (string: String) =>
+        string =>
           val result = form.bind(Map(fieldName -> string)).apply(fieldName)
           result.errors must contain only lengthError
+      }
+    }
+  }
+
+  def commonTextField(form: Form[_],
+                      fieldName: String,
+                      formatError: FormError,
+                      lengthError: FormError,
+                      maxLength: Int): Unit = {
+
+    s"not bind strings longer than $maxLength characters" in {
+
+      forAll(stringsLongerThan(maxLength) -> "longString") {
+        string =>
+          val result = form.bind(Map(fieldName -> string)).apply(fieldName)
+          result.errors must contain(lengthError)
+      }
+    }
+
+    "not bind incorrect values" in {
+
+      forAll(unsafeInputsWithMaxLength(maxLength)) {
+        (invalidInput: String) =>
+          val result = form.bind(Map(fieldName -> invalidInput)).apply(fieldName)
+          result.errors must contain(formatError)
+      }
+    }
+
+    "bind correct values" in {
+
+      forAll(commonFieldString(maxLength)) {
+        (validInput: String) =>
+          val result = form.bind(Map(fieldName -> validInput)).apply(fieldName)
+          result.errors mustBe empty
       }
     }
   }
