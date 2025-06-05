@@ -19,11 +19,11 @@ package controllers
 import base.SpecBase
 import forms.ClientBusinessAddressFormProvider
 import models.{ClientBusinessName, Country, InternationalAddress}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Gen
 import org.scalatestplus.mockito.MockitoSugar
-import pages._
+import pages.*
 import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
@@ -96,7 +96,7 @@ class ClientBusinessAddressControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
-    "must redirect to the next page when valid data is submitted" in {
+    "must save the answers and redirect to the next page when valid data is submitted" in {
 
       val mockSessionRepository = mock[SessionRepository]
 
@@ -118,10 +118,11 @@ class ClientBusinessAddressControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        val expectedAnswers = emptyUserAnswers.set(ClientBusinessAddressPage, businessAddress).success.value
+        val expectedAnswers = updatedAnswers.set(ClientBusinessAddressPage, businessAddress).success.value
 
         status(result) mustEqual SEE_OTHER
         redirectLocation(result).value mustEqual ClientBusinessAddressPage.navigate(waypoints, emptyUserAnswers, expectedAnswers).url
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }
 

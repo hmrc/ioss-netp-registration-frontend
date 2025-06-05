@@ -19,8 +19,8 @@ package controllers
 import base.SpecBase
 import forms.ClientsNinoNumberFormProvider
 import models.UserAnswers
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{ClientsNinoNumberPage, EmptyWaypoints, Waypoints}
 import play.api.data.Form
@@ -35,7 +35,7 @@ import scala.concurrent.Future
 class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar {
 
   private val waypoints: Waypoints = EmptyWaypoints
-  private val nino = "QQ 12 34 56 C"
+  private val nino = "QQ123456C"
 
   val formProvider = new ClientsNinoNumberFormProvider()
   val form: Form[String] = formProvider()
@@ -78,7 +78,7 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
-    "must redirect to the next page when valid data is submitted" in {
+    "must save the answers and redirect to the next page when valid data is submitted" in {
 
       val mockSessionRepository = mock[SessionRepository]
 
@@ -98,10 +98,11 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
         
-        val  expectedAnswers = emptyUserAnswers.set(ClientsNinoNumberPage, nino).success.value
+        val expectedAnswers = emptyUserAnswers.set(ClientsNinoNumberPage, nino).success.value
 
         status(result) mustEqual SEE_OTHER
         redirectLocation(result).value mustEqual ClientsNinoNumberPage.navigate(waypoints, emptyUserAnswers, expectedAnswers).url
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }
 

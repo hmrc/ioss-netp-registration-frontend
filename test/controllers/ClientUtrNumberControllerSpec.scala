@@ -19,8 +19,8 @@ package controllers
 import base.SpecBase
 import forms.ClientUtrNumberFormProvider
 import models.UserAnswers
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{ClientUtrNumberPage, EmptyWaypoints, Waypoints}
 import play.api.data.Form
@@ -78,7 +78,7 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
-    "must redirect to the next page when valid data is submitted" in {
+    "must save the answers and redirect to the next page when valid data is submitted" in {
 
       val mockSessionRepository = mock[SessionRepository]
 
@@ -102,6 +102,7 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar {
 
         status(result) mustEqual SEE_OTHER
         redirectLocation(result).value mustEqual ClientUtrNumberPage.navigate(waypoints, emptyUserAnswers, expectedAnswers).url
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }
 

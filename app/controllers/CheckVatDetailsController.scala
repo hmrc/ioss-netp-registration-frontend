@@ -97,7 +97,8 @@ class CheckVatDetailsController @Inject()(
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
 
-      val ukVatNumber = request.userAnswers.get(ClientVatNumberPage)
+      val userAnswers = request.userAnswers
+      val ukVatNumber = userAnswers.get(ClientVatNumberPage)
 
 
       ukVatNumber match {
@@ -111,16 +112,16 @@ class CheckVatDetailsController @Inject()(
                   val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatInfo)
                   val sourcePage = CheckVatDetailsPage()
 
-                  val summaryList = buildSummaryList(waypoints, request.userAnswers, sourcePage)
+                  val summaryList = buildSummaryList(waypoints, userAnswers, sourcePage)
 
                   BadRequest(view(formWithErrors, waypoints, viewModel, summaryList, companyName)).toFuture
                 },
 
                 value =>
                   for {
-                    updatedAnswers <- Future.fromTry(request.userAnswers.set(CheckVatDetailsPage(), value))
+                    updatedAnswers <- Future.fromTry(userAnswers.set(CheckVatDetailsPage(), value))
                     _              <- sessionRepository.set(updatedAnswers)
-                  } yield Redirect(CheckVatDetailsPage().navigate(waypoints, request.userAnswers, updatedAnswers).route)
+                  } yield Redirect(CheckVatDetailsPage().navigate(waypoints, userAnswers, updatedAnswers).route)
               )
 
             case Left(VatCustomerNotFound) =>
@@ -130,7 +131,7 @@ class CheckVatDetailsController @Inject()(
               Redirect(VatApiDownPage.route(waypoints)).toFuture
           }
         case None =>
-          Redirect(CheckVatDetailsPage().navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
+          Redirect(CheckVatDetailsPage().navigate(waypoints, userAnswers, userAnswers).route).toFuture
       }
 
 

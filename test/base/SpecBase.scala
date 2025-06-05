@@ -43,13 +43,13 @@ trait SpecBase
 
   val userAnswersId: String = "id"
 
-  def emptyUserAnswers : UserAnswers = UserAnswers(userAnswersId)
-  def emptyUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.copy(vatInfo = Some(vatCustomerInfo))
-
   def messages(app: Application): Messages = app.injector.instanceOf[MessagesApi].preferred(FakeRequest())
 
   val arbitraryInstant: Instant = arbitraryDate.arbitrary.sample.value.atStartOfDay(ZoneId.systemDefault()).toInstant
   val stubClockAtArbitraryDate: Clock = Clock.fixed(arbitraryInstant, ZoneId.systemDefault())
+
+  def emptyUserAnswers : UserAnswers = UserAnswers(id = userAnswersId, lastUpdated = arbitraryInstant)
+  def emptyUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.copy(vatInfo = Some(vatCustomerInfo))
 
   val vatNumber = "GB123456789"
   val vatCustomerInfo: VatCustomerInfo =
@@ -62,11 +62,15 @@ trait SpecBase
       deregistrationDecisionDate = None
     )
 
-  protected def applicationBuilder(userAnswers: Option[UserAnswers] = None): GuiceApplicationBuilder =
+  protected def applicationBuilder(userAnswers: Option[UserAnswers] = None, clock: Option[Clock] = None): GuiceApplicationBuilder = {
+
+    val clockToBind = clock.getOrElse(stubClockAtArbitraryDate)
     new GuiceApplicationBuilder()
       .overrides(
         bind[DataRequiredAction].to[DataRequiredActionImpl],
         bind[IdentifierAction].to[FakeIdentifierAction],
-        bind[DataRetrievalAction].toInstance(new FakeDataRetrievalAction(userAnswers))
+        bind[DataRetrievalAction].toInstance(new FakeDataRetrievalAction(userAnswers)),
+        bind[Clock].toInstance(clockToBind)
       )
+  }
 }

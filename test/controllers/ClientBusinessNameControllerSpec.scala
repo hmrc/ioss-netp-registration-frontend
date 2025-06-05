@@ -19,8 +19,8 @@ package controllers
 import base.SpecBase
 import forms.ClientBusinessNameFormProvider
 import models.{ClientBusinessName, Country}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Gen
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{BusinessBasedInUKPage, ClientBusinessNamePage, ClientCountryBasedPage, EmptyWaypoints, Waypoints}
@@ -85,14 +85,14 @@ class ClientBusinessNameControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
-    "must redirect to the next page when valid data is submitted" in {
+    "must save the answers and redirect to the next page when valid data is submitted" in {
 
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
 
       val application =
-        applicationBuilder(userAnswers = Some(emptyUserAnswers))
+        applicationBuilder(userAnswers = Some(updatedAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository)
           )
@@ -104,10 +104,11 @@ class ClientBusinessNameControllerSpec extends SpecBase with MockitoSugar {
             .withFormUrlEncodedBody(("value", companyName))
 
         val result = route(application, request).value
-        val expectedAnswers = emptyUserAnswers.set(ClientBusinessNamePage, ClientBusinessName(companyName)).success.value
+        val expectedAnswers = updatedAnswers.set(ClientBusinessNamePage, ClientBusinessName(companyName)).success.value
 
         status(result) mustEqual SEE_OTHER
         redirectLocation(result).value mustEqual ClientBusinessNamePage.navigate(waypoints, emptyUserAnswers, expectedAnswers).route.url
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }
 

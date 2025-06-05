@@ -18,7 +18,7 @@ package forms.mappings
 
 import config.CurrencyFormatter
 import java.time.LocalDate
-
+import forms.validation.Validation.utrRegex
 import play.api.data.validation.{Constraint, Invalid, Valid}
 
 trait Constraints {
@@ -161,21 +161,16 @@ trait Constraints {
     Constraint { input =>
       val normalized = input.replaceAll("[^A-Za-z0-9]", "").toLowerCase
 
-      val isValid = normalized match {
-        case s if s.matches("^k?\\d{10}$") => true // k + 10 digits
-        case s if s.matches("^\\d{10}k$") => true // 10 digits + k
-        case s if s.matches("^k?\\d{13}$") => true // k + 13 digits
-        case s if s.matches("^\\d{13}k$") => true // 13 digits + k
-        case _ => false
+      if (utrRegex.pattern.matcher(normalized).matches()) {
+        Valid
+      } else {
+        Invalid(errorKey)
       }
-
-      if (isValid) Valid else Invalid(errorKey)
     }
 
   protected def utrLengthConstraint(errorKey: String): Constraint[String] =
     Constraint { input =>
-      val normalized = input.replaceAll("[^A-Za-z0-9]", "").toLowerCase
-      val digitsOnly = normalized.replaceAll("[^0-9]", "")
+      val digitsOnly = input.replaceAll("[^0-9]", "")
 
       if (digitsOnly.length == 10 || digitsOnly.length == 13) {
         Valid
@@ -195,6 +190,4 @@ trait Constraints {
         Invalid(errorKey)
       }
     }
-
-
 }
