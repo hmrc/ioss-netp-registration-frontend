@@ -17,8 +17,9 @@
 package forms.mappings
 
 import config.CurrencyFormatter
-import java.time.LocalDate
+import models.Index
 
+import java.time.LocalDate
 import play.api.data.validation.{Constraint, Invalid, Valid}
 
 trait Constraints {
@@ -121,7 +122,7 @@ trait Constraints {
         }
     }
 
-  protected def maximumCurrency(maximum: BigDecimal, errorKey: String)(implicit ev: Ordering[BigDecimal]): Constraint[BigDecimal] =
+  protected def maximumCurrency(maximum: BigDecimal, errorKey: String)(implicit ev: Ordering[BigDecimal]): Constraint[BigDecimal] = {
     Constraint {
       input =>
         if (input <= maximum) {
@@ -130,4 +131,19 @@ trait Constraints {
           Invalid(errorKey, CurrencyFormatter.currencyFormat(maximum))
         }
     }
+  }
+
+  protected def notADuplicate[A](index: Index, existingAnswers: Seq[A], errorKey: String, args: Any*): Constraint[A] = {
+
+    val indexedAnswers = existingAnswers.zipWithIndex
+    val filteredAnswers = indexedAnswers.filter(_._2 != index.position)
+
+    Constraint {
+      case answer if filteredAnswers.map(_._1).contains(answer) =>
+        Invalid(errorKey, args: _*)
+      case _ =>
+        Valid
+    }
+  }
+
 }

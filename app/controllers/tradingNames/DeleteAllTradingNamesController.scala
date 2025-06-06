@@ -40,6 +40,7 @@ class DeleteAllTradingNamesController @Inject()(
                                          requireData: DataRequiredAction,
                                          sessionRepository: SessionRepository,
                                          formProvider: DeleteAllTradingNamesFormProvider,
+                                         val controllerComponents: MessagesControllerComponents,
                                          view: DeleteAllTradingNamesView
                                  )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
   

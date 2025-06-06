@@ -41,6 +41,7 @@ class AddTradingNameController @Inject()(
                                           requireData: DataRequiredAction,
                                           sessionRepository: SessionRepository,
                                           formProvider: AddTradingNameFormProvider,
+                                          val controllerComponents: MessagesControllerComponents,
                                           view: AddTradingNameView
                                         )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
   

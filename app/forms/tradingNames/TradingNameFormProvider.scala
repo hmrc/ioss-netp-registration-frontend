@@ -16,9 +16,8 @@
 
 package forms.tradingNames
 
-import forms.mappings.Mappings
-import forms.mappings.Constraints
 import forms.Validation.commonTextPattern
+import forms.mappings.Mappings
 import models.Index
 import play.api.data.Form
 

@@ -84,13 +84,19 @@ class HasTradingNameController @Inject()(
       case Some(vatInfo) =>
         (vatInfo.organisationName, vatInfo.individualName) match {
           case (Some(organisationName), _) =>
+            logger.debug("Here is the debugger")
+            println("hey hey")
             block(organisationName)
 
           case (_, Some(individualName)) =>
+            logger.debug("Here is the debugger")
+            println("hey hey")
             block(individualName)
 
           case _ =>
             val exception = new IllegalStateException("Both organisationName and individualName are both missing")
+            logger.debug("Here is the debugger")
+            println("hey hey")
             logger.error(exception.getMessage, exception)
             Future.failed(exception)
         }

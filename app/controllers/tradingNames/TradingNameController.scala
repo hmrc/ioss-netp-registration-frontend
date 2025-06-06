@@ -16,14 +16,16 @@
 
 package controllers.tradingNames
 
+import com.google.inject.ImplementedBy
 import controllers.actions.*
 import forms.tradingNames.TradingNameFormProvider
+import models.requests.DataRequest
 import models.{Index, TradingName}
 import pages.Waypoints
 import pages.tradingNames.TradingNamePage
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import play.api.mvc.{Action, ActionFilter, AnyContent, MessagesControllerComponents, Result}
 import queries.tradingNames.AllTradingNamesQuery
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
@@ -33,31 +35,32 @@ import views.html.tradingNames.TradingNameView
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
+
 class TradingNameController @Inject()(
-                                         override val messagesApi: MessagesApi,
-                                         dataRequiredAction: DataRequiredAction,
-                                         identify: IdentifierAction,
-                                         getData: DataRetrievalAction,
-                                         requireData: DataRequiredAction,
-                                         maximumIndexFilter: MaximumIndexFilterProvider,
-                                         sessionRepository: SessionRepository,
-                                         formProvider: TradingNameFormProvider,
-                                         view: TradingNameView
-                                 )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
-  def limitIndex: MaximumIndexFilterProvider
-  private val maxTradingNames: Int =  10
+                                       override val messagesApi: MessagesApi,
+                                       identify: IdentifierAction,
+                                       getData: DataRetrievalAction,
+                                       requireData: DataRequiredAction,
+                                       val controllerComponents: MessagesControllerComponents,
+                                       sessionRepository: SessionRepository,
+                                       formProvider: TradingNameFormProvider,
+                                       view: TradingNameView
+                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+
 
 
   def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (
-      identify
+    identify
       andThen
       getData
       andThen
       requireData
       andThen
-      limitIndex(index, maxTradingNames )) {
+      maxIndexFilter(index)) {
+
+
     implicit request =>
-      
+
       val form: Form[String] = formProvider(index, request.userAnswers.get(AllTradingNamesQuery).getOrElse(Seq.empty).map(_.name))
 
       val preparedForm = request.userAnswers.get(TradingNamePage(index)) match {
@@ -75,7 +78,7 @@ class TradingNameController @Inject()(
       andThen
       requireData
       andThen
-      limitIndex(index, maxTradingNames )).async {
+      maxIndexFilter(index)).async {
     implicit request =>
 
       val form: Form[String] = formProvider(index, request.userAnswers.get(AllTradingNamesQuery).getOrElse(Seq.empty).map(_.name))
@@ -91,4 +94,27 @@ class TradingNameController @Inject()(
           } yield Redirect(TradingNamePage(index).navigate(waypoints, request.userAnswers, updatedAnswers).route)
       )
   }
+
+//  private def maxIndexFilter(index: Index): Future[Option[Status]] = {
+//    val maxTradingNames: Int = 10
+//    if (index.position >= maxTradingNames) {
+//      Future.successful(Some(NotFound))
+//    } else {
+//      Future.successful(None)
+//    }
+//  }
+  private def maxIndexFilter(index: Index) = {
+    val maxTradingNames: Int = 10
+    new ActionFilter[DataRequest] {
+      def executionContext: ExecutionContext = defaultExecutionContext
+      def filter[A](request: DataRequest[A]): Future[Option[Result]] = {
+        if (index.position >= maxTradingNames) {
+          Future.successful(Some(NotFound))
+        } else {
+          Future.successful(None)
+        }
+      }
+    }
+  }
+
 }

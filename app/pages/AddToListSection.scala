@@ -17,3 +17,5 @@
 package pages
 
 trait AddToListSection
+
+object TradingNameSection extends AddToListSection
