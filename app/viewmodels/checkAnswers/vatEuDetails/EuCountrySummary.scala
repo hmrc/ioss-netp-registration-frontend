@@ -16,8 +16,9 @@
 
 package viewmodels.checkAnswers.vatEuDetails
 
-import controllers.routes
-import models.{CheckMode, UserAnswers}
+import controllers.vatEuDetails.routes
+import models.UserAnswers
+import pages.{CheckAnswersPage, Waypoints}
 import pages.vatEuDetails.EuCountryPage
 import play.api.i18n.Messages
 import play.twirl.api.HtmlFormat
@@ -28,7 +29,11 @@ import viewmodels.implicits.*
 
 object EuCountrySummary  {
 
-  def row(answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] =
+  def row(
+           answers: UserAnswers,
+           waypoints: Waypoints,
+           sourcePage: CheckAnswersPage,
+         )(implicit messages: Messages): Option[SummaryListRow] =
     answers.get(EuCountryPage).map {
       answer =>
 
@@ -42,7 +47,7 @@ object EuCountrySummary  {
           key     = "euCountry.checkYourAnswersLabel",
           value   = value,
           actions = Seq(
-            ActionItemViewModel("site.change", routes.EuCountryController.onPageLoad(CheckMode).url)
+            ActionItemViewModel("site.change", routes.EuCountryController.onPageLoad(waypoints).url)
               .withVisuallyHiddenText(messages("euCountry.change.hidden"))
           )
         )
