@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package forms.validation
+package queries
 
-object Validation {
+import models.Website
+import play.api.libs.json.JsPath
 
+case object AllWebsites extends Gettable[List[Website]] with Settable[List[Website]] {
 
-  val websitePattern = """^(https?://)((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,})(\:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(\#[-a-z\d_]*)?"""
-  val commonTextPattern = """^(?!^[’'"])(?:[A-Za-z0-9À-ÿ \!\)\(.,_/’'"&-]|[’'"](?=[A-Za-z0-9À-ÿ \!\)\(.,_/’'"&-]))*[A-Za-z0-9À-ÿ \!\)\(.,_/’'"&-](?<![’'"]$)$"""
-  val postcodePattern = """^[A-Za-z0-9 ]{0,100}$"""
-  val alphaNumericWithSpace = """^[a-zA-Z0-9 ]+$"""
-  val utrRegex = """^(k?\d{10,13}|(\d{10,13})k)$""".r
-
+  override def path: JsPath = JsPath \ "websites"
 }

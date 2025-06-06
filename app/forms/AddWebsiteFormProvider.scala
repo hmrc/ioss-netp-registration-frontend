@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package forms.validation
+package forms
 
-object Validation {
+import javax.inject.Inject
 
+import forms.mappings.Mappings
+import play.api.data.Form
 
-  val websitePattern = """^(https?://)((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,})(\:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(\#[-a-z\d_]*)?"""
-  val commonTextPattern = """^(?!^[’'"])(?:[A-Za-z0-9À-ÿ \!\)\(.,_/’'"&-]|[’'"](?=[A-Za-z0-9À-ÿ \!\)\(.,_/’'"&-]))*[A-Za-z0-9À-ÿ \!\)\(.,_/’'"&-](?<![’'"]$)$"""
-  val postcodePattern = """^[A-Za-z0-9 ]{0,100}$"""
-  val alphaNumericWithSpace = """^[a-zA-Z0-9 ]+$"""
-  val utrRegex = """^(k?\d{10,13}|(\d{10,13})k)$""".r
+class AddWebsiteFormProvider @Inject() extends Mappings {
 
+  def apply(): Form[Boolean] =
+    Form(
+      "value" -> boolean("addWebsite.error.required")
+    )
 }

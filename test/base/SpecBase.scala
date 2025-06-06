@@ -40,7 +40,7 @@ trait SpecBase
     with ScalaFutures
     with IntegrationPatience
     with Generators {
-
+  
   val userAnswersId: String = "id"
 
   def messages(app: Application): Messages = app.injector.instanceOf[MessagesApi].preferred(FakeRequest())
