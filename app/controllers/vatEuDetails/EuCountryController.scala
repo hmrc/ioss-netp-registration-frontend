@@ -18,14 +18,14 @@ package controllers.vatEuDetails
 
 import controllers.actions.*
 import forms.vatEuDetails.EuCountryFormProvider
-import models.Mode
+import models.UserAnswers
 import pages.vatEuDetails.EuCountryPage
-import pages.{Waypoint, Waypoints}
+import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.EuCountryView
+import views.html.vatEuDetails.EuCountryView
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,7 +33,6 @@ import scala.concurrent.{ExecutionContext, Future}
 class EuCountryController @Inject()(
                                        override val messagesApi: MessagesApi,
                                        sessionRepository: SessionRepository,
-                                       navigator: Navigator,
                                        identify: IdentifierAction,
                                        getData: DataRetrievalAction,
                                        requireData: DataRequiredAction,
@@ -44,29 +43,30 @@ class EuCountryController @Inject()(
 
   val form = formProvider()
 
-  def onPageLoad(mode: Mode): Action[AnyContent] = (identify andThen getData andThen requireData) {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData) {
     implicit request =>
 
-      val preparedForm = request.userAnswers.get(EuCountryPage) match {
+      val preparedForm = request.userAnswers.getOrElse(UserAnswers(request.userId)).get(EuCountryPage) match {
         case None => form
         case Some(value) => form.fill(value)
       }
 
-      Ok(view(preparedForm, mode))
+      Ok(view(preparedForm, waypoints))
   }
 
-  def onSubmit(mode: Mode): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData).async {
     implicit request =>
 
       form.bindFromRequest().fold(
         formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, mode))),
+          Future.successful(BadRequest(view(formWithErrors, waypoints))),
 
         value =>
+          val originalAnswers: UserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
           for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(EuCountryPage, value))
+            updatedAnswers <- Future.fromTry(originalAnswers.set(EuCountryPage, value))
             _              <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(navigator.nextPage(EuCountryPage, mode, updatedAnswers))
+          } yield Redirect(EuCountryPage.navigate(waypoints, originalAnswers, updatedAnswers).route)
       )
   }
 }
