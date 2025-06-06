@@ -30,7 +30,7 @@ object Waypoint {
   private val fragments: Map[String, Waypoint] =
     Map(
       AddWebsitePage().normalModeUrlFragment ->  AddWebsitePage().waypoint(NormalMode),
-      AddWebsitePage().checkModeUrlFragment ->  AddWebsitePage().waypoint(CheckMode)
+      AddWebsitePage().checkModeUrlFragment ->  AddWebsitePage().waypoint(CheckMode),
       CheckVatDetailsPage().urlFragment -> CheckVatDetailsPage().waypoint
     )
 

@@ -40,8 +40,6 @@ trait SpecBase
     with ScalaFutures
     with IntegrationPatience
     with Generators {
-
-  val arbitraryInstant: Instant = arbitraryDate.arbitrary.sample.value.atStartOfDay(ZoneId.systemDefault()).toInstant
   
   val userAnswersId: String = "id"
 
