@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-package pages
+package forms.vatEuDetails
 
+import forms.mappings.Mappings
 import models.EuCountry
-import play.api.libs.json.JsPath
+import play.api.data.Form
 
-case object EuCountryPage extends QuestionPage[EuCountry] {
+import javax.inject.Inject
 
-  override def path: JsPath = JsPath \ toString
+class EuCountryFormProvider @Inject() extends Mappings {
 
-  override def toString: String = "euCountry"
+  def apply(): Form[EuCountry] =
+    Form(
+      "value" -> enumerable[EuCountry]("euCountry.error.required")
+    )
 }
