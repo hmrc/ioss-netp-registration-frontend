@@ -18,7 +18,7 @@ package controllers
 
 import controllers.actions.*
 import forms.BusinessContactDetailsFormProvider
-import models.{BusinessContactDetails, UserAnswers}
+import models.BusinessContactDetails
 import pages.{BusinessContactDetailsPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -36,47 +36,44 @@ class BusinessContactDetailsController @Inject()(
                                                   sessionRepository: SessionRepository,
                                                   identify: IdentifierAction,
                                                   getData: DataRetrievalAction,
-//                                                  requireData: DataRequiredAction,
+                                                  requireData: DataRequiredAction,
                                                   formProvider: BusinessContactDetailsFormProvider,
                                                   val controllerComponents: MessagesControllerComponents,
                                                   view: BusinessContactDetailsView
-                                                )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+                                                )(implicit ec: ExecutionContext)
+  extends FrontendBaseController with I18nSupport with GetClientCompanyName {
 
   private val form: Form[BusinessContactDetails] = formProvider()
 
-  // TODO - Remove
-  private val businessName: String = "Test trading name"
-
-  // TODO andThen requireData
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData) {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
 
-//      val preparedForm = request.userAnswers.get(BusinessContactDetailsPage) match {
-      val preparedForm = request.userAnswers.getOrElse(UserAnswers(request.userId)).get(BusinessContactDetailsPage) match {
-        case None => form
-        case Some(value) => form.fill(value)
-      }
+      getClientCompanyName(waypoints) { clientCompanyName =>
 
-      Ok(view(preparedForm, waypoints, businessName))
+        val preparedForm = request.userAnswers.get(BusinessContactDetailsPage) match {
+          case None => form
+          case Some(value) => form.fill(value)
+        }
+
+        Ok(view(preparedForm, waypoints, clientCompanyName)).toFuture
+      }
   }
 
-  // TODO andThen requireData
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
 
-      form.bindFromRequest().fold(
-        formWithErrors =>
-          BadRequest(view(formWithErrors, waypoints, businessName)).toFuture,
+      getClientCompanyName(waypoints) { clientCompanyName =>
 
-        value =>
+        form.bindFromRequest().fold(
+          formWithErrors =>
+            BadRequest(view(formWithErrors, waypoints, clientCompanyName)).toFuture,
 
-          // TODO -> Remove and revert to request.userAnswers when implemented
-          val answers = request.userAnswers.getOrElse(UserAnswers(request.userId))
-
-          for {
-            updatedAnswers <- Future.fromTry(answers.set(BusinessContactDetailsPage, value))
-            _ <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(BusinessContactDetailsPage.navigate(waypoints, answers, updatedAnswers).route)
-      )
+          value =>
+            for {
+              updatedAnswers <- Future.fromTry(request.userAnswers.set(BusinessContactDetailsPage, value))
+              _ <- sessionRepository.set(updatedAnswers)
+            } yield Redirect(BusinessContactDetailsPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+        )
+      }
   }
 }

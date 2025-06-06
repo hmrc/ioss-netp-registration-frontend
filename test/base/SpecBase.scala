@@ -70,7 +70,10 @@ trait SpecBase
   val businessContactDetails: BusinessContactDetails =
     BusinessContactDetails(fullName = "name", telephoneNumber = "0111 2223334", emailAddress = "email@example.com")
 
-  protected def applicationBuilder(userAnswers: Option[UserAnswers] = None, clock: Option[Clock] = None): GuiceApplicationBuilder = {
+  protected def applicationBuilder(
+                                    userAnswers: Option[UserAnswers] = None,
+                                    clock: Option[Clock] = None
+                                  ): GuiceApplicationBuilder = {
 
     val clockToBind = clock.getOrElse(stubClockAtArbitraryDate)
     new GuiceApplicationBuilder()

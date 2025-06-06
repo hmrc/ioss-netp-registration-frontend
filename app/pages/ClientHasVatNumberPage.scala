@@ -43,7 +43,9 @@ case object ClientHasVatNumberPage extends QuestionPage[Boolean] {
   override def cleanup(value: Option[Boolean], userAnswers: UserAnswers): Try[UserAnswers] = {
      value match {
        case Some(false) => for {
-         updatedUserAnswers <- userAnswers.remove(ClientVatNumberPage)
+         updatedUserAnswers <- userAnswers
+           .copy(vatInfo = None)
+           .remove(ClientVatNumberPage)
        } yield updatedUserAnswers
        case Some(true) => for {
          removeHasUtrNumberAnswers <- userAnswers.remove(ClientHasUtrNumberPage)

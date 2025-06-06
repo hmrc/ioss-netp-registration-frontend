@@ -16,12 +16,10 @@
 
 package generators
 
-import models.BusinessContactDetails
 import models.*
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
-import pages.BusinessContactDetailsPage
-import pages.ClientBusinessAddressPage
+import pages.{BusinessContactDetailsPage, ClientBusinessAddressPage}
 import play.api.libs.json.{JsValue, Json}
 
 trait UserAnswersEntryGenerators extends PageGenerators with ModelGenerators {

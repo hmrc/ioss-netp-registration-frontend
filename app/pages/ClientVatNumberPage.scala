@@ -30,6 +30,7 @@ case object ClientVatNumberPage extends QuestionPage[String] {
   override def route(waypoints: Waypoints): Call =
     routes.ClientVatNumberController.onPageLoad(waypoints)
 
-  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
+  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
     CheckVatDetailsPage()
+  }
 }

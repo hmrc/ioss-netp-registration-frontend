@@ -18,11 +18,11 @@ package controllers
 
 import base.SpecBase
 import forms.BusinessContactDetailsFormProvider
-import models.{BusinessContactDetails, UserAnswers}
+import models.{BusinessContactDetails, ClientBusinessName, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
-import pages.{BusinessContactDetailsPage, JourneyRecoveryPage}
+import pages.{BusinessContactDetailsPage, ClientBusinessNamePage, ClientVatNumberPage, JourneyRecoveryPage}
 import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
@@ -36,19 +36,21 @@ class BusinessContactDetailsControllerSpec extends SpecBase with MockitoSugar {
   private val formProvider = new BusinessContactDetailsFormProvider()
   private val form: Form[BusinessContactDetails] = formProvider()
 
+  private val clientBusinessName: ClientBusinessName = ClientBusinessName(vatCustomerInfo.organisationName.value)
+  
   private lazy val businessContactDetailsRoute: String = routes.BusinessContactDetailsController.onPageLoad(waypoints).url
-
-  private val tradingName: String = "Test trading name"
-
-  private val userAnswers = emptyUserAnswers
-    .set(BusinessContactDetailsPage, businessContactDetails).success.value
+  
+  private val userAnswers = emptyUserAnswersWithVatInfo
+    .set(ClientBusinessNamePage, clientBusinessName).success.value
+    .set(ClientVatNumberPage, vatNumber).success.value
 
   "BusinessContactDetails Controller" - {
 
     "must return OK and the correct view for a GET" in {
 
-      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
-
+      val application = applicationBuilder(userAnswers = Some(emptyUserAnswersWithVatInfo))
+        .build()
+      
       running(application) {
         val request = FakeRequest(GET, businessContactDetailsRoute)
 
@@ -57,13 +59,16 @@ class BusinessContactDetailsControllerSpec extends SpecBase with MockitoSugar {
         val result = route(application, request).value
 
         status(result) `mustBe` OK
-        contentAsString(result) `mustBe` view(form, waypoints, tradingName)(request, messages(application)).toString
+        contentAsString(result) `mustBe` view(form, waypoints, clientBusinessName.name)(request, messages(application)).toString
       }
     }
 
     "must populate the view correctly on a GET when the question has previously been answered" in {
+      
+      val answers = userAnswers
+        .set(BusinessContactDetailsPage, businessContactDetails).success.value
 
-      val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
+      val application = applicationBuilder(userAnswers = Some(answers)).build()
 
       running(application) {
         val request = FakeRequest(GET, businessContactDetailsRoute)
@@ -73,7 +78,7 @@ class BusinessContactDetailsControllerSpec extends SpecBase with MockitoSugar {
         val result = route(application, request).value
 
         status(result) `mustBe` OK
-        contentAsString(result) `mustBe` view(form.fill(businessContactDetails), waypoints, tradingName)(request, messages(application)).toString
+        contentAsString(result) `mustBe` view(form.fill(businessContactDetails), waypoints, clientBusinessName.name)(request, messages(application)).toString
       }
     }
 
@@ -84,7 +89,7 @@ class BusinessContactDetailsControllerSpec extends SpecBase with MockitoSugar {
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
       val application =
-        applicationBuilder(userAnswers = Some(emptyUserAnswers))
+        applicationBuilder(userAnswers = Some(userAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository)
           )
@@ -101,18 +106,19 @@ class BusinessContactDetailsControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        val expectedAnswers: UserAnswers = emptyUserAnswers
+        val expectedAnswers: UserAnswers = userAnswers
+          .set(ClientBusinessNamePage, clientBusinessName).success.value
           .set(BusinessContactDetailsPage, businessContactDetails).success.value
 
         status(result) `mustBe` SEE_OTHER
-        redirectLocation(result).value `mustBe` BusinessContactDetailsPage.navigate(waypoints, emptyUserAnswers, expectedAnswers).url
+        redirectLocation(result).value `mustBe` BusinessContactDetailsPage.navigate(waypoints, userAnswers, expectedAnswers).url
         verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }
 
     "must return a Bad Request and errors when invalid data is submitted" in {
 
-      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
+      val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
 
       running(application) {
         val request =
@@ -126,7 +132,7 @@ class BusinessContactDetailsControllerSpec extends SpecBase with MockitoSugar {
         val result = route(application, request).value
 
         status(result) `mustBe` BAD_REQUEST
-        contentAsString(result) `mustBe` view(boundForm, waypoints, tradingName)(request, messages(application)).toString
+        contentAsString(result) `mustBe` view(boundForm, waypoints, clientBusinessName.name)(request, messages(application)).toString
       }
     }
 

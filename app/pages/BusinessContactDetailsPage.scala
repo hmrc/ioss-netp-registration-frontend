@@ -16,10 +16,10 @@
 
 package pages
 
+import controllers.routes
 import models.{BusinessContactDetails, UserAnswers}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
-import controllers.routes
 
 case object BusinessContactDetailsPage extends QuestionPage[BusinessContactDetails] {
 
