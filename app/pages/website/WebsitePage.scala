@@ -17,9 +17,12 @@
 package pages.website
 
 import models.{Index, NormalMode, UserAnswers, Website}
-import pages.{AddToListQuestionPage, AddToListSection, Page, QuestionPage, Waypoint, Waypoints, WebsiteSection}
+import pages.{AddToListQuestionPage, AddToListSection, NonEmptyWaypoints, Page, QuestionPage, Waypoint, Waypoints, WebsiteSection}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
+import queries.AllWebsites
+
+import scala.util.Try
 
 case class WebsitePage(index: Index) extends QuestionPage[Website] with AddToListQuestionPage {
 
@@ -37,4 +40,15 @@ case class WebsitePage(index: Index) extends QuestionPage[Website] with AddToLis
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
     AddWebsitePage(None)
 
+  override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page =
+    AddWebsitePage(None)
+
+  override def cleanup(value: Option[Website], userAnswers: UserAnswers): Try[UserAnswers] = {
+    if (userAnswers.get(AllWebsites).exists(_.isEmpty)) {
+      userAnswers.remove(AllWebsites)
+    } else {
+      super.cleanup(value, userAnswers)
+    }
+  }
+  
 }

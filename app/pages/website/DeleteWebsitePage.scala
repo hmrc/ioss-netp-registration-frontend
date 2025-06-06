@@ -17,7 +17,7 @@
 package pages.website
 
 import models.{Index, UserAnswers}
-import pages.{Page, Waypoints}
+import pages.{Page, Waypoints, NonEmptyWaypoints}
 import play.api.mvc.Call
 import queries.DeriveNumberOfWebsites
 
@@ -36,4 +36,7 @@ case class DeleteWebsitePage(index: Index) extends Page {
     }
   }
 
+  override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page =
+    navigate(answers)
+    
 }
