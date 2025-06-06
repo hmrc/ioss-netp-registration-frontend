@@ -16,14 +16,12 @@
 
 package controllers
 
-import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.CheckVatDetailsFormProvider
 import logging.Logging
 import models.UserAnswers
-import models.responses.VatCustomerNotFound
-import javax.inject.Inject
 import models.checkVatDetails.CheckVatDetails
+import models.domain.VatCustomerInfo
 import pages.*
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
@@ -37,104 +35,93 @@ import viewmodels.checkAnswers.*
 import viewmodels.govuk.all.SummaryListViewModel
 import views.html.{CheckVatDetailsView, ConfirmClientVatDetailsView}
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class CheckVatDetailsController @Inject()(
-                                         override val messagesApi: MessagesApi,
-                                         sessionRepository: SessionRepository,
-                                         identify: IdentifierAction,
-                                         getData: DataRetrievalAction,
-                                         requireData: DataRequiredAction,
-                                         formProvider: CheckVatDetailsFormProvider,
-                                         registrationConnector: RegistrationConnector,
-                                         val controllerComponents: MessagesControllerComponents,
-                                         view: CheckVatDetailsView,
-                                         nonUkVatNumberView: ConfirmClientVatDetailsView
-                                 )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetClientCompanyName with Logging {
+                                           override val messagesApi: MessagesApi,
+                                           sessionRepository: SessionRepository,
+                                           identify: IdentifierAction,
+                                           getData: DataRetrievalAction,
+                                           requireData: DataRequiredAction,
+                                           formProvider: CheckVatDetailsFormProvider,
+                                           val controllerComponents: MessagesControllerComponents,
+                                           view: CheckVatDetailsView,
+                                           nonUkVatNumberView: ConfirmClientVatDetailsView
+                                         )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetClientCompanyName with Logging {
 
   val form: Form[CheckVatDetails] = formProvider()
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
-      
-      val userAnswers = request.userAnswers
-      val ukVatNumber = userAnswers.get(ClientVatNumberPage)
-      val sourcePage = CheckVatDetailsPage()
 
-      ukVatNumber match {
-        case Some(ukVatNumber) =>
-          registrationConnector.getVatCustomerInfo(ukVatNumber).flatMap {
-            case Right(vatInfo) =>
-              val preparedForm = userAnswers.get(CheckVatDetailsPage()) match {
-                case None => form
-                case Some(value) => form.fill(value)
-              }
+      getClientCompanyName(waypoints) { clientCompanyName =>
 
-              val companyName = vatInfo.organisationName.getOrElse("")
+        val sourcePage = CheckVatDetailsPage()
 
-              val summaryList = buildSummaryList(waypoints, userAnswers, sourcePage)
+        request.userAnswers.get(ClientVatNumberPage) match {
+          case Some(ukVatNumber) =>
 
-              val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatInfo)
+            val preparedForm = request.userAnswers.get(CheckVatDetailsPage()) match {
+              case None => form
+              case Some(value) => form.fill(value)
+            }
 
-              Ok(view(preparedForm, waypoints, viewModel, summaryList, companyName)).toFuture
+            request.userAnswers.vatInfo match {
+              case Some(vatCustomerInfo) =>
 
-            case Left(VatCustomerNotFound) =>
-              Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
+                val summaryList = buildSummaryList(waypoints, request.userAnswers, sourcePage)
 
-            case Left(_) =>
-              Redirect(VatApiDownPage.route(waypoints).url).toFuture
-          }
+                val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatCustomerInfo)
 
-        case None =>
-          getClientCompanyName(waypoints) { companyName =>
-            val summaryList = buildSummaryList(waypoints, userAnswers, sourcePage)
-            Ok(nonUkVatNumberView(waypoints, summaryList, companyName.name)).toFuture
-          }
+                Ok(view(preparedForm, waypoints, viewModel, summaryList, clientCompanyName)).toFuture
 
+              case None =>
+                Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
+            }
+
+          case None =>
+            val summaryList = buildSummaryList(waypoints, request.userAnswers, sourcePage)
+            Ok(nonUkVatNumberView(waypoints, summaryList, clientCompanyName)).toFuture
+        }
       }
   }
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
 
-      val userAnswers = request.userAnswers
-      val ukVatNumber = userAnswers.get(ClientVatNumberPage)
+      getClientCompanyName(waypoints) { clientCompanyName =>
 
+        request.userAnswers.get(ClientVatNumberPage) match {
+          case Some(ukVatNumber) =>
 
-      ukVatNumber match {
-        case Some(ukVatNumber) =>
-          registrationConnector.getVatCustomerInfo(ukVatNumber).flatMap {
-            case Right(vatInfo) =>
-              form.bindFromRequest().fold(
-                formWithErrors => {
-                  val companyName = vatInfo.organisationName.getOrElse("")
+            request.userAnswers.vatInfo match {
+              case Some(vatCustomerInfo) =>
 
-                  val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatInfo)
-                  val sourcePage = CheckVatDetailsPage()
+                form.bindFromRequest().fold(
+                  formWithErrors => {
 
-                  val summaryList = buildSummaryList(waypoints, userAnswers, sourcePage)
+                    val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatCustomerInfo)
+                    val sourcePage = CheckVatDetailsPage()
 
-                  BadRequest(view(formWithErrors, waypoints, viewModel, summaryList, companyName)).toFuture
-                },
+                    val summaryList = buildSummaryList(waypoints, request.userAnswers, sourcePage)
 
-                value =>
-                  for {
-                    updatedAnswers <- Future.fromTry(userAnswers.set(CheckVatDetailsPage(), value))
-                    _              <- sessionRepository.set(updatedAnswers)
-                  } yield Redirect(CheckVatDetailsPage().navigate(waypoints, userAnswers, updatedAnswers).route)
-              )
+                    BadRequest(view(formWithErrors, waypoints, viewModel, summaryList, clientCompanyName)).toFuture
+                  },
 
-            case Left(VatCustomerNotFound) =>
-              Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
-
-            case _ =>
-              Redirect(VatApiDownPage.route(waypoints)).toFuture
-          }
-        case None =>
-          Redirect(CheckVatDetailsPage().navigate(waypoints, userAnswers, userAnswers).route).toFuture
+                  value =>
+                    for {
+                      updatedAnswers <- Future.fromTry(request.userAnswers.set(CheckVatDetailsPage(), value))
+                      _ <- sessionRepository.set(updatedAnswers)
+                    } yield Redirect(CheckVatDetailsPage().navigate(waypoints, request.userAnswers, updatedAnswers).route)
+                )
+              case None =>
+                Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
+            }
+          case None =>
+            Redirect(CheckVatDetailsPage().navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
+        }
       }
-
-
   }
 
   private def buildSummaryList(

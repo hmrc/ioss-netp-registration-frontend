@@ -20,8 +20,8 @@ import base.SpecBase
 import connectors.RegistrationConnector
 import forms.CheckVatDetailsFormProvider
 import models.checkVatDetails.CheckVatDetails
-import models.responses.VatCustomerNotFound
-import models.{ClientBusinessName, Country, InternationalAddress, responses}
+import models.requests.DataRequest
+import models.{ClientBusinessName, Country, InternationalAddress, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.when
 import org.scalacheck.Gen
@@ -30,6 +30,7 @@ import pages.*
 import play.api.data.Form
 import play.api.i18n.Messages
 import play.api.inject.bind
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
@@ -145,8 +146,8 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
           val result = route(application, request).value
 
-          status(result) mustEqual SEE_OTHER
-          redirectLocation(result).value mustEqual CheckVatDetailsPage().navigate(waypoints, updatedAnswersNonUK, updatedAnswersNonUK).url
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` CheckVatDetailsPage().navigate(waypoints, updatedAnswersNonUK, updatedAnswersNonUK).url
         }
       }
 
@@ -160,8 +161,8 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
           val result = route(application, request).value
 
-          status(result) mustEqual SEE_OTHER
-          redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
         }
       }
 
@@ -176,8 +177,8 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
           val result = route(application, request).value
 
-          status(result) mustEqual SEE_OTHER
-          redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
         }
       }
 
@@ -214,8 +215,8 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
                 ).flatten
               )
 
-              status(result) mustEqual OK
-              contentAsString(result) mustEqual view(waypoints, summaryList, companyName)(request, messages(application)).toString
+              status(result) `mustBe` OK
+              contentAsString(result) `mustBe` view(waypoints, summaryList, companyName)(request, messages(application)).toString
             }
           }
 
@@ -238,8 +239,8 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
               val result = route(application, request).value
 
-              status(result) mustEqual SEE_OTHER
-              redirectLocation(result).value mustEqual CheckVatDetailsPage().navigate(waypoints, updatedAnswersUtr, updatedAnswersUtr).url
+              status(result) `mustBe` SEE_OTHER
+              redirectLocation(result).value `mustBe` CheckVatDetailsPage().navigate(waypoints, updatedAnswersUtr, updatedAnswersUtr).url
             }
           }
 
@@ -253,8 +254,8 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
               val result = route(application, request).value
 
-              status(result) mustEqual SEE_OTHER
-              redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+              status(result) `mustBe` SEE_OTHER
+              redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
             }
           }
 
@@ -269,8 +270,8 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
               val result = route(application, request).value
 
-              status(result) mustEqual SEE_OTHER
-              redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+              status(result) `mustBe` SEE_OTHER
+              redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
             }
           }
         }
@@ -301,8 +302,8 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
                 ).flatten
               )
 
-              status(result) mustEqual OK
-              contentAsString(result) mustEqual view(waypoints, summaryList, companyName)(request, messages(application)).toString
+              status(result) `mustBe` OK
+              contentAsString(result) `mustBe` view(waypoints, summaryList, companyName)(request, messages(application)).toString
             }
           }
 
@@ -325,8 +326,8 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
               val result = route(application, request).value
 
-              status(result) mustEqual SEE_OTHER
-              redirectLocation(result).value mustEqual CheckVatDetailsPage().navigate(waypoints, updatedAnswersNino, updatedAnswersNino).url
+              status(result) `mustBe` SEE_OTHER
+              redirectLocation(result).value `mustBe` CheckVatDetailsPage().navigate(waypoints, updatedAnswersNino, updatedAnswersNino).url
             }
           }
 
@@ -340,8 +341,8 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
               val result = route(application, request).value
 
-              status(result) mustEqual SEE_OTHER
-              redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+              status(result) `mustBe` SEE_OTHER
+              redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
             }
           }
 
@@ -356,8 +357,8 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
               val result = route(application, request).value
 
-              status(result) mustEqual SEE_OTHER
-              redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+              status(result) `mustBe` SEE_OTHER
+              redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
             }
           }
         }
@@ -394,48 +395,29 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
             val viewModel = CheckVatDetailsViewModel(vatNumber, vatCustomerInfo)
             val companyName = vatCustomerInfo.organisationName.get
 
-            status(result) mustEqual OK
-            contentAsString(result) mustEqual view(form, waypoints, viewModel, summaryList, companyName)(request, messages(application)).toString
+            status(result) `mustBe` OK
+            contentAsString(result) `mustBe` view(form, waypoints, viewModel, summaryList, companyName)(request, messages(application)).toString
           }
         }
 
         "must return Not Found error when not Found VAT information" in {
-          val mockRegistrationConnector = mock[RegistrationConnector]
-          val failureResponse = VatCustomerNotFound
 
-          val application = applicationBuilder(userAnswers = Some(updatedAnswersUkVatNumber))
-            .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          val answersWithoutVatInfo: UserAnswers = emptyUserAnswers
+            .set(ClientVatNumberPage, vatNumber).success.value
+            .set(ClientBusinessNamePage, ClientBusinessName(companyName)).success.value
+
+          val dataRequest: DataRequest[AnyContentAsEmpty.type] = DataRequest(FakeRequest(GET, checkVatDetailsRoute), userAnswersId, answersWithoutVatInfo)
+          val requestWithoutVatInfo: DataRequest[AnyContentAsEmpty.type] = DataRequest(dataRequest, userAnswersId, answersWithoutVatInfo)
+
+          val application = applicationBuilder(userAnswers = Some(answersWithoutVatInfo))
             .build()
 
-          when(mockRegistrationConnector.getVatCustomerInfo(eqTo(vatNumber))(any()))
-            .thenReturn(Future.successful(Left(failureResponse)))
-
           running(application) {
-            val request = FakeRequest(GET, checkVatDetailsRoute)
+            val request = requestWithoutVatInfo
             val result = route(application, request).value
 
             status(result) `mustBe` SEE_OTHER
             redirectLocation(result).value `mustBe` UkVatNumberNotFoundPage.route(waypoints).url
-          }
-        }
-
-        "must return Internal Server Error when VAT API call fails" in {
-          val mockRegistrationConnector = mock[RegistrationConnector]
-          val failureResponse = responses.UnexpectedResponseStatus(INTERNAL_SERVER_ERROR, "foo")
-
-          val application = applicationBuilder(userAnswers = Some(updatedAnswersUkVatNumber))
-            .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
-            .build()
-
-          when(mockRegistrationConnector.getVatCustomerInfo(eqTo(vatNumber))(any()))
-            .thenReturn(Future.successful(Left(failureResponse)))
-
-          running(application) {
-            val request = FakeRequest(GET, checkVatDetailsRoute)
-            val result = route(application, request).value
-
-            status(result) `mustBe` SEE_OTHER
-            redirectLocation(result).value `mustBe` VatApiDownPage.route(waypoints).url
           }
         }
       }

@@ -18,14 +18,13 @@ package generators
 
 import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
-import models.{Country, DesAddress, InternationalAddress}
+import models.{BusinessContactDetails, ClientBusinessName, Country, DesAddress, InternationalAddress}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.{choose, listOfN}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.EitherValues
 
 import java.time.{Instant, LocalDate, ZoneOffset}
-
 
 trait ModelGenerators extends EitherValues {
 
@@ -50,24 +49,6 @@ trait ModelGenerators extends EitherValues {
     Gen.const(' '),
     Gen.const('\'')
   )
-
-  def datesBetween(min: LocalDate, max: LocalDate): Gen[LocalDate] = {
-
-    def toMillis(date: LocalDate): Long = {
-      date.atStartOfDay.atZone(ZoneOffset.UTC).toInstant.toEpochMilli
-    }
-
-    Gen.choose(toMillis(min), toMillis(max)).map {
-      millis =>
-        Instant.ofEpochMilli(millis).atOffset(ZoneOffset.UTC).toLocalDate
-    }
-  }
-
-  implicit lazy val arbitraryDate: Arbitrary[LocalDate] = {
-    Arbitrary {
-      datesBetween(LocalDate.of(2021, 7, 1), LocalDate.of(2023, 12, 31))
-    }
-  }
 
   implicit lazy val arbitraryDesAddress: Arbitrary[DesAddress] =
     Arbitrary {
@@ -108,12 +89,12 @@ trait ModelGenerators extends EitherValues {
         Some(country)
       )
     }
-  
+
   implicit lazy val arbitraryCountry: Arbitrary[Country] =
     Arbitrary {
       Gen.oneOf(Country.allCountries)
     }
-    
+
 
   implicit val arbitraryVatCustomerInfo: Arbitrary[VatCustomerInfo] = {
     Arbitrary {
@@ -132,6 +113,51 @@ trait ModelGenerators extends EitherValues {
           singleMarketIndicator = singleMarketIndicator,
           deregistrationDecisionDate = None
         )
+      }
+    }
+  }
+
+  def datesBetween(min: LocalDate, max: LocalDate): Gen[LocalDate] = {
+
+    def toMillis(date: LocalDate): Long =
+      date.atStartOfDay.atZone(ZoneOffset.UTC).toInstant.toEpochMilli
+
+    Gen.choose(toMillis(min), toMillis(max)).map {
+      millis =>
+        Instant.ofEpochMilli(millis).atOffset(ZoneOffset.UTC).toLocalDate
+    }
+  }
+
+  implicit lazy val arbitraryDate: Arbitrary[LocalDate] = {
+    Arbitrary {
+      datesBetween(LocalDate.of(2021, 7, 1), LocalDate.of(2023, 12, 31))
+    }
+  }
+
+  implicit lazy val arbitraryBusinessContactDetails: Arbitrary[BusinessContactDetails] = {
+    Arbitrary {
+      for {
+        fullName <- Gen.alphaStr.retryUntil(fn => fn.length > 1 && fn.length < 99)
+        telephoneNumber <- Gen.numStr.retryUntil(tn => tn.length > 1 && tn.length < 19)
+        userName = Gen.alphaStr.retryUntil(un => un.length > 1 && un.length < 22).sample.head
+        hostName = Gen.alphaStr.retryUntil(hn => hn.length > 1 && hn.length < 22).sample.head
+        domain = Gen.oneOf(Seq(".com", ".co.uk", ".org")).sample.head
+      } yield {
+        BusinessContactDetails(
+          fullName = fullName,
+          telephoneNumber = telephoneNumber,
+          emailAddress = s"$userName@$hostName$domain"
+        )
+      }
+    }
+  }
+
+  implicit lazy val arbitraryClientBusinessName: Arbitrary[ClientBusinessName] = {
+    Arbitrary {
+      for {
+        clientBusinessName <- Gen.alphaStr.retryUntil(cbn => cbn.length > 1 && cbn.length < 40)
+      } yield {
+        ClientBusinessName(name = clientBusinessName)
       }
     }
   }

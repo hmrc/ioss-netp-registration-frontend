@@ -18,10 +18,13 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.actions.{DataRequiredAction, DataRetrievalAction, IdentifierAction}
+import models.CheckMode
+import pages.{CheckYourAnswersPage, EmptyWaypoints, Waypoint}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import viewmodels.govuk.summarylist._
+import viewmodels.checkAnswers.BusinessContactDetailsSummary
+import viewmodels.govuk.summarylist.*
 import views.html.CheckYourAnswersView
 
 class CheckYourAnswersController @Inject()(
@@ -36,8 +39,20 @@ class CheckYourAnswersController @Inject()(
   def onPageLoad(): Action[AnyContent] = (identify andThen getData andThen requireData) {
     implicit request =>
 
+      val thisPage = CheckYourAnswersPage
+
+      val waypoints = EmptyWaypoints.setNextWaypoint(Waypoint(thisPage, CheckMode, CheckYourAnswersPage.urlFragment))
+
+      val contactDetailsFullNameRow = BusinessContactDetailsSummary.rowFullName(waypoints, request.userAnswers, thisPage)
+      val contactDetailsTelephoneNumberRow = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, request.userAnswers, thisPage)
+      val contactDetailsEmailAddressRow = BusinessContactDetailsSummary.rowEmailAddress(waypoints, request.userAnswers, thisPage)
+
       val list = SummaryListViewModel(
-        rows = Seq.empty
+        rows = Seq(
+          contactDetailsFullNameRow.map(_.withCssClass("govuk-summary-list__row--no-border")),
+          contactDetailsTelephoneNumberRow.map(_.withCssClass("govuk-summary-list__row--no-border")),
+          contactDetailsEmailAddressRow,
+        ).flatten
       )
 
       Ok(view(list))

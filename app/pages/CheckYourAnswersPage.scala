@@ -18,19 +18,22 @@ package pages
 
 import controllers.routes
 import models.UserAnswers
-import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
-case object ClientVatNumberPage extends QuestionPage[String] {
+object CheckYourAnswersPage extends CheckAnswersPage {
 
-  override def path: JsPath = JsPath \ toString
+  override def isTheSamePage(other: Page): Boolean = other match {
+    case CheckYourAnswersPage => true
+    case _ => false
+  }
 
-  override def toString: String = "clientVatNumber"
+  override val urlFragment: String = "check-your-answers"
 
-  override def route(waypoints: Waypoints): Call =
-    routes.ClientVatNumberController.onPageLoad(waypoints)
+  override def route(waypoints: Waypoints): Call = {
+    routes.CheckYourAnswersController.onPageLoad()
+  }
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
-    CheckVatDetailsPage()
+    JourneyRecoveryPage // TODO -> to ApplicationCompletePage when implemented
   }
 }

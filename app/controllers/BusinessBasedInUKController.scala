@@ -19,8 +19,6 @@ package controllers
 import controllers.actions.*
 import forms.BusinessBasedInUKFormProvider
 import models.UserAnswers
-
-import javax.inject.Inject
 import pages.*
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -29,18 +27,18 @@ import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.BusinessBasedInUKView
 
-import scala.util.Try
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class BusinessBasedInUKController @Inject()(
-                                         override val messagesApi: MessagesApi,
-                                         sessionRepository: SessionRepository,
-                                         identify: IdentifierAction,
-                                         getData: DataRetrievalAction,
-                                         formProvider: BusinessBasedInUKFormProvider,
-                                         val controllerComponents: MessagesControllerComponents,
-                                         view: BusinessBasedInUKView
-                                 )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+                                             override val messagesApi: MessagesApi,
+                                             sessionRepository: SessionRepository,
+                                             identify: IdentifierAction,
+                                             getData: DataRetrievalAction,
+                                             formProvider: BusinessBasedInUKFormProvider,
+                                             val controllerComponents: MessagesControllerComponents,
+                                             view: BusinessBasedInUKView
+                                           )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
   val form: Form[Boolean] = formProvider()
 
@@ -64,10 +62,10 @@ class BusinessBasedInUKController @Inject()(
 
         value =>
           val originalAnswers: UserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
-          
+
           for {
             updatedAnswers <- Future.fromTry(originalAnswers.set(BusinessBasedInUKPage, value))
-            _              <- sessionRepository.set(updatedAnswers)
+            _ <- sessionRepository.set(updatedAnswers)
           } yield Redirect(BusinessBasedInUKPage.navigate(waypoints, originalAnswers, updatedAnswers).route)
       )
   }
