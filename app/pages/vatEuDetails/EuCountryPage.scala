@@ -16,13 +16,19 @@
 
 package pages.vatEuDetails
 
+import controllers.vatEuDetails.routes
 import models.EuCountry
-import pages.QuestionPage
+import pages.{QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
+import play.api.mvc.Call
 
 case object EuCountryPage extends QuestionPage[EuCountry] {
 
   override def path: JsPath = JsPath \ toString
 
   override def toString: String = "euCountry"
+
+  override def route(waypoints: Waypoints): Call = {
+    routes.EuCountryController.onPageLoad(waypoints)
+  }
 }
