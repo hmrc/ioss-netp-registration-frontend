@@ -76,3 +76,123 @@ addWebsite.checkWebsiteAddress = Check your client's website addresses are corre
 deleteWebsite.title = Are you sure you want to remove {0}?
 deleteWebsite.heading = Are you sure you want to remove {0}?
 deleteWebsite.error.required = Select yes if you want to remove this website address
+
+businessBasedInUK.title = Is your client''s business based in the UK?
+businessBasedInUK.heading = Is your client''s business based in the UK?
+businessBasedInUK.checkYourAnswersLabel = Based in UK
+businessBasedInUK.error.required = Select yes if your client''s business is based in the UK
+businessBasedInUK.change.hidden = Client's business based in the UK
+
+clientHasVatNumber.title = Does your client have a UK VAT number?
+clientHasVatNumber.heading = Does your client have a UK VAT number?
+clientHasVatNumber.checkYourAnswersLabel = Has UK VAT registration number
+clientHasVatNumber.error.required = Select yes if your client has a UK VAT number
+clientHasVatNumber.change.hidden = client have a UK VAT number
+
+clientVatNumber.title = What is your client''s UK VAT number
+clientVatNumber.heading = What is your client''s UK VAT number
+clientVatNumber.checkYourAnswersLabel = UK VAT registration number
+clientVatNumber.error.required = Enter your client''s VAT number
+clientVatNumber.error.length = VAT number must be 9 digits
+clientVatNumber.error.invalid = Enter a VAT number in the correct format
+clientVatNumber.change.hidden = VAT number
+clientVatNumber.hint = This is 9 numbers, sometimes with ‘GB’ at the start, for example 123456789 or GB123456789.
+
+clientCountryBased.title = Which country is your client''s business based in?
+clientCountryBased.heading = Which country is your client''s business based in?
+clientCountryBased.checkYourAnswersLabel = Country based in
+clientCountryBased.error.required = Select the country where your client''s business is based
+clientCountryBased.change.hidden = Country based in
+
+clientUKBusinessName.title = What is your client''s business name?
+clientUKBusinessName.heading = What is your client''s business name?
+clientBusinessName.title = What is your client''s business name in {0}?
+clientBusinessName.heading = What is your client''s business name in {0}?
+clientBusinessName.checkYourAnswersLabel = Client''s Business Name
+clientBusinessName.error.required = Enter your client''s business name
+clientBusinessName.error.length = Client''s business name must be 40 characters or less
+clientBusinessName.change.hidden = your Client's business name
+clientBusinessName.error.invalid = Business name must only include letters, numbers, hyphens, spaces and apostrophes
+
+clientTaxReference.title = What is your client''s tax reference number in {0}?
+clientTaxReference.heading = What is your client''s tax reference number in {0}?
+clientTaxReference.checkYourAnswersLabel = {0} tax reference number
+clientTaxReference.error.required = Enter your client''s tax reference number in {0}
+clientTaxReference.error.length = Tax reference number must be 20 characters or less
+clientTaxReference.error.format = Tax reference number must only include letters, numbers and spaces
+clientTaxReference.change.hidden = your client''s tax reference number
+
+clientBusinessAddress.title = What is your client''s business address?
+clientBusinessAddress.heading = What is your client''s business address?
+clientBusinessAddress.line1 = Address line 1
+clientBusinessAddress.line2 = Address line 2 (optional)
+clientBusinessAddress.townOrCity = Town or city
+clientBusinessAddress.stateOrRegion = Region or state (optional)
+clientBusinessAddress.postCode = Postcode (optional)
+clientBusinessAddress.checkYourAnswersLabel = Principal place of business address
+clientBusinessAddress.error.line1.required = Enter address line 1
+clientBusinessAddress.error.townOrCity.required = Enter the town or city
+clientBusinessAddress.error.line1.length = Address line 1 must be 35 characters or less
+clientBusinessAddress.error.line1.format = Address line 1 must only include letters, numbers, hyphens, spaces and apostrophes
+clientBusinessAddress.error.line2.length = Address line 2 must be 35 characters or less
+clientBusinessAddress.error.line2.format = Address line 2 must only include letters, numbers, hyphens, spaces and apostrophes
+clientBusinessAddress.error.townOrCity.length = Town or city must be 35 characters or less
+clientBusinessAddress.error.townOrCity.format = Town or city must only include letters, numbers, hyphens, spaces and apostrophes
+clientBusinessAddress.error.stateOrRegion.length = State or region must be 35 characters or less
+clientBusinessAddress.error.stateOrRegion.format = State or region must only include letters, numbers, hyphens, spaces and apostrophes
+clientBusinessAddress.error.postCode.length = Postcode must be 40 characters or less
+clientBusinessAddress.error.postCode.invalid = Postcode must only include letters, numbers and spaces
+
+confirmClientVatDetails.title = Confirm details for {0}
+confirmClientVatDetails.heading = Confirm details for {0}
+confirmClientVatDetails.info.p1 = If any of these details are incorrect, your client will need to change them from their business tax account.
+
+clientHasUtrNumber.title = Does your client''s business have a Unique Taxpayer Reference (UTR) number?
+clientHasUtrNumber.heading = Does your client''s business have a Unique Taxpayer Reference (UTR) number?
+clientHasUtrNumber.checkYourAnswersLabel = Has Unique Taxpayer Reference (UTR) number
+clientHasUtrNumber.error.required = Select yes if your client has a UTR number
+clientHasUtrNumber.change.hidden = Client Unique Taxpayer Reference (UTR) number
+
+clientUtrNumber.title = What is your client''s business Unique Taxpayer Reference number (UTR)?
+clientUtrNumber.heading = What is your client''s business Unique Taxpayer Reference number (UTR)?
+clientUtrNumber.checkYourAnswersLabel = UTR number
+clientUtrNumber.error.required = Enter your client''s business Unique Taxpayer Reference number (UTR)
+clientUtrNumber.error.length = Enter a UTR that is 10 or 13 digits long
+clientUtrNumber.error.invalid = Enter a UTR in the correct format
+clientUtrNumber.change.hidden = UTR Number
+clientUtrNumber.hint = Your UTR can be 10 or 13 digits long, for example 1234567890.
+
+clientsNinoNumber.title = What is your client''s National Insurance number (NINO)?
+clientsNinoNumber.heading = What is your client''s National Insurance number (NINO)?
+clientsNinoNumber.checkYourAnswersLabel = National Insurance number (NINO)
+clientsNinoNumber.error.nino.required = Enter your client''s National Insurance number (NINO)
+clientsNinoNumber.error.nino.length = National Insurance number must be 9 characters long
+clientsNinoNumber.error.nino.special.character = The National Insurance number must only include letters a to z and numbers 0 to 9
+clientsNinoNumber.error.nino.invalid = Enter a valid National Insurance number
+clientsNinoNumber.change.hidden = National Insurance number (NINO)
+clientsNinoNumber.hint = For example, ‘QQ 12 34 56 C’.
+
+checkVatDetails.title = Confirm details for {0}
+checkVatDetails.heading = Confirm details for {0}
+checkVatDetails.error.required = Select Yes if you want to register this business
+checkVatDetails.question = Do you want to register this business?
+checkVatDetails.yes = Yes
+checkVatDetails.wrongAccount = No, I want to register a different business
+checkVatDetails.info.p1 = If any of these details are incorrect, your client will need to change them from their business tax account.
+checkVatDetails.address = Principal place of business address
+
+useOtherAccount.title = Sign in with a different Government Gateway user ID
+useOtherAccount.heading = Sign in with a different Government Gateway user ID
+useOtherAccount.p1 = You signed in with a Government Gateway user ID that is linked to VAT registration number {0}.
+useOtherAccount.p2.1 = You need to
+useOtherAccount.p2.link.text = sign in with a different Government Gateway user ID
+useOtherAccount.p2.2 = if you want to register for a business with a different VAT registration number.
+
+vatApiDown.title = Sorry, there is a problem with the service
+vatApiDown.heading = Sorry, there is a problem with the service
+vatApiDown.tryAgain = Try again later.
+vatApiDown.contactUs = If the problem continues, you can email us at <a class="govuk-link" href="mailto:vatoss.contact@hmrc.gov.uk">vatoss.contact@hmrc.gov.uk</a>
+
+ukVatNumberNotFound.title = The VAT number you entered does not match a registered business
+ukVatNumberNotFound.heading = The VAT number you entered does not match a registered business
+ukVatNumberNotFound.tryAgain = Check you have entered it correctly and try again.

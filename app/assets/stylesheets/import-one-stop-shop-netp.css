@@ -1,0 +1,74 @@
+.red-background {
+    background-color: #d4351c;
+}
+
+.hint {
+    color: #505a5f;
+}
+
+/* Dynamic spinner for please-wait page within file upload journey */
+.processing-wheel-loader {
+    border: 12px solid #DEE0E2;
+    border-radius: 50%;
+    border-top-color: #005EA5;
+    width: 50px;
+    height: 50px;
+    -webkit-animation: spin 2s linear infinite;
+    animation: spin 2s linear infinite;
+}
+
+#processing-wheel {
+    margin-top: -75px;
+}
+
+@-webkit-keyframes spin {
+    0% {
+        -webkit-transform: rotate(0deg);
+    }
+
+    100% {
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* End of dynamic spinner */
+
+/* Fix for accessibility Audit Non-breaking space */
+.govuk-visually-hidden:before {
+    content: " ";
+}
+
+.govuk-visually-hidden:after {
+    content: " ";
+}
+/* End of Fix for accessibility Audit */
+
+.autocomplete__input.govuk-input--error {
+    border-color: #d4351c;
+}
+.autocomplete__dropdown-arrow-down {
+    z-index: 0;
+    pointer-events: none;
+}
+@media (min-width: 40.0625em) {
+    .autocomplete__wrapper {
+        width: 75% !important;
+    }
+}
+
+/*Ensure the down arrow for 'show all' option sits above the input so it is visible
+(there was a change - possibly either input or page background which effectively hid the arrow due to its z-index)*/
+.autocomplete__dropdown-arrow-down {
+    z-index: 0;
+    pointer-events: none;
+}

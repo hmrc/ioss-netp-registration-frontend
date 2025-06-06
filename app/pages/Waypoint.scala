@@ -31,6 +31,7 @@ object Waypoint {
     Map(
       AddWebsitePage().normalModeUrlFragment ->  AddWebsitePage().waypoint(NormalMode),
       AddWebsitePage().checkModeUrlFragment ->  AddWebsitePage().waypoint(CheckMode)
+      CheckVatDetailsPage().urlFragment -> CheckVatDetailsPage().waypoint
     )
 
   def fromString(s: String): Option[Waypoint] =
