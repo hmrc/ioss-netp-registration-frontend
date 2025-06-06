@@ -17,7 +17,6 @@
 package models
 
 import logging.Logging
-import models.CountryWithValidationDetails.logger
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.select.SelectItem
 import viewmodels.govuk.select.*

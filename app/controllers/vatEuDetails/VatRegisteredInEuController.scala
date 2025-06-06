@@ -20,7 +20,7 @@ import controllers.actions.{DataRequiredAction, DataRetrievalAction, IdentifierA
 import forms.vatEuDetails.VatRegisteredInEuFormProvider
 import models.UserAnswers
 import pages.vatEuDetails.VatRegisteredInEuPage
-import pages.{Waypoint, Waypoints}
+import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import repositories.SessionRepository
