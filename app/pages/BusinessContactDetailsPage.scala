@@ -17,20 +17,21 @@
 package pages
 
 import controllers.routes
-import models.UserAnswers
+import models.{BusinessContactDetails, UserAnswers}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
-case object ClientVatNumberPage extends QuestionPage[String] {
+case object BusinessContactDetailsPage extends QuestionPage[BusinessContactDetails] {
 
   override def path: JsPath = JsPath \ toString
 
-  override def toString: String = "clientVatNumber"
+  override def toString: String = "businessContactDetails"
 
-  override def route(waypoints: Waypoints): Call =
-    routes.ClientVatNumberController.onPageLoad(waypoints)
+  override def route(waypoints: Waypoints): Call = {
+    routes.BusinessContactDetailsController.onPageLoad(waypoints)
+  }
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
-    CheckVatDetailsPage()
+    CheckYourAnswersPage // TODO -> To next page when implemented
   }
 }

@@ -16,31 +16,34 @@
 
 package controllers
 
+import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.ClientVatNumberFormProvider
-
-import javax.inject.Inject
-import pages.ClientVatNumberPage
-import pages.Waypoints
+import logging.Logging
+import models.responses.VatCustomerNotFound
+import pages.{ClientVatNumberPage, UkVatNumberNotFoundPage, VatApiDownPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.FutureSyntax.FutureOps
 import views.html.ClientVatNumberView
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class ClientVatNumberController @Inject()(
-                                        override val messagesApi: MessagesApi,
-                                        sessionRepository: SessionRepository,
-                                        identify: IdentifierAction,
-                                        getData: DataRetrievalAction,
-                                        requireData: DataRequiredAction,
-                                        formProvider: ClientVatNumberFormProvider,
-                                        val controllerComponents: MessagesControllerComponents,
-                                        view: ClientVatNumberView
-                                    )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+                                           override val messagesApi: MessagesApi,
+                                           sessionRepository: SessionRepository,
+                                           identify: IdentifierAction,
+                                           getData: DataRetrievalAction,
+                                           requireData: DataRequiredAction,
+                                           formProvider: ClientVatNumberFormProvider,
+                                           registrationConnector: RegistrationConnector,
+                                           val controllerComponents: MessagesControllerComponents,
+                                           view: ClientVatNumberView
+                                         )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
 
   val form: Form[String] = formProvider()
 
@@ -60,13 +63,24 @@ class ClientVatNumberController @Inject()(
 
       form.bindFromRequest().fold(
         formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, waypoints))),
+          BadRequest(view(formWithErrors, waypoints)).toFuture,
 
-        value =>
-          for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientVatNumberPage, value))
-            _              <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(ClientVatNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+        ukVatNumber =>
+
+          registrationConnector.getVatCustomerInfo(ukVatNumber).flatMap {
+            case Right(value) =>
+              for {
+                updatedAnswers <- Future.fromTry(request
+                  .userAnswers
+                  .copy(vatInfo = Some(value))
+                  .set(ClientVatNumberPage, ukVatNumber))
+                _ <- sessionRepository.set(updatedAnswers)
+              } yield Redirect(ClientVatNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+            case Left(VatCustomerNotFound) =>
+              Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
+            case Left(_) =>
+              Redirect(VatApiDownPage.route(waypoints).url).toFuture
+          }
       )
   }
 }

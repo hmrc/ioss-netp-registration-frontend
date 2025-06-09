@@ -14,15 +14,14 @@
  * limitations under the License.
  *@
 
-@import pages.Waypoints
 @import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
+@import pages.Waypoints
+
 @this(govukButton: GovukButton)
 
 @(continueMessage: String, continueUrl: String, waypoints: Waypoints)(implicit messages: Messages)
-
 <div class="govuk-button-group">
-    @govukButton(
-        ButtonViewModel(messages(continueMessage)).withAttribute(("id", "continue"))
-    )
-
+  @govukButton(
+    ButtonViewModel(messages(continueMessage)).withAttribute(("id", "continue"))
+  )
 </div>

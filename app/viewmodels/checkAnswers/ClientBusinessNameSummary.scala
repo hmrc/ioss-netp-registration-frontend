@@ -20,6 +20,7 @@ import models.UserAnswers
 import pages.{CheckAnswersPage, ClientBusinessNamePage, Waypoints}
 import play.api.i18n.Messages
 import play.twirl.api.HtmlFormat
+import uk.gov.hmrc.govukfrontend.views.Aliases.HtmlContent
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.govuk.summarylist.*
 import viewmodels.implicits.*
@@ -33,9 +34,11 @@ object ClientBusinessNameSummary {
          )(implicit messages: Messages): Option[SummaryListRow] = {
     answers.get(ClientBusinessNamePage).map { answer =>
 
+      val value = HtmlFormat.escape(answer.name).toString
+
       SummaryListRowViewModel(
         key = "clientBusinessName.checkYourAnswersLabel",
-        value = ValueViewModel(HtmlFormat.escape(answer.name).toString),
+        value = ValueViewModel(HtmlContent(value)),
         actions = Seq(
           ActionItemViewModel("site.change", ClientBusinessNamePage.changeLink(waypoints, sourcePage).url)
             .withVisuallyHiddenText(messages("clientBusinessName.change.hidden"))
