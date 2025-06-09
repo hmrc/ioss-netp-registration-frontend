@@ -170,8 +170,8 @@ ukVatNumberNotFound.tryAgain = Check you have entered it correctly and try again
 
 businessContactDetails.title = Contact details for {0}
 businessContactDetails.heading = Contact details for {0}
-businessContactDetails.p1 =  We'll use these if we need to send your client information about their account.
-businessContactDetails.p2 =  We'll only contact them by email or a message on their service.
+businessContactDetails.p1 =  We''ll use these if we need to send your client information about their account.
+businessContactDetails.p2 =  We''ll only contact them by email or a message on their service.
 businessContactDetails.fullName = Contact name
 businessContactDetails.telephoneNumber = Telephone number
 businessContactDetails.emailAddress = Email address
