@@ -23,7 +23,6 @@ import pages.*
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.BusinessBasedInUKView
 
@@ -32,18 +31,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class BusinessBasedInUKController @Inject()(
                                              override val messagesApi: MessagesApi,
-                                             sessionRepository: SessionRepository,
-                                             identify: IdentifierAction,
-                                             getData: DataRetrievalAction,
-                                             checkIntermediary: CheckIntermediaryEnrolmentAction,
+                                             cc: AuthenticatedControllerComponents,
                                              formProvider: BusinessBasedInUKFormProvider,
-                                             val controllerComponents: MessagesControllerComponents,
                                              view: BusinessBasedInUKView
                                            )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
   val form: Form[Boolean] = formProvider()
+  protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen checkIntermediary() andThen getData) {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetOptionalData {
     implicit request =>
 
       val preparedForm = request.userAnswers.getOrElse(UserAnswers(request.userId)).get(BusinessBasedInUKPage) match {
@@ -54,7 +50,7 @@ class BusinessBasedInUKController @Inject()(
       Ok(view(preparedForm, waypoints))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen checkIntermediary() andThen getData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetOptionalData.async {
     implicit request =>
 
       form.bindFromRequest().fold(
@@ -66,7 +62,7 @@ class BusinessBasedInUKController @Inject()(
 
           for {
             updatedAnswers <- Future.fromTry(originalAnswers.set(BusinessBasedInUKPage, value))
-            _ <- sessionRepository.set(updatedAnswers)
+            _ <- cc.sessionRepository.set(updatedAnswers)
           } yield Redirect(BusinessBasedInUKPage.navigate(waypoints, originalAnswers, updatedAnswers).route)
       )
   }

@@ -26,7 +26,6 @@ import pages.Waypoints
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.ClientCountryBasedView
 
@@ -34,18 +33,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ClientCountryBasedController @Inject()(
                                         override val messagesApi: MessagesApi,
-                                        sessionRepository: SessionRepository,
-                                        identify: IdentifierAction,
-                                        getData: DataRetrievalAction,
-                                        requireData: DataRequiredAction,
+                                        cc: AuthenticatedControllerComponents,
                                         formProvider: ClientCountryBasedFormProvider,
-                                        val controllerComponents: MessagesControllerComponents,
                                         view: ClientCountryBasedView
                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
   val form: Form[Country] = formProvider()
+  protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData) {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(ClientCountryBasedPage) match {
@@ -56,7 +52,7 @@ class ClientCountryBasedController @Inject()(
       Ok(view(preparedForm, waypoints))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       form.bindFromRequest().fold(
@@ -66,7 +62,7 @@ class ClientCountryBasedController @Inject()(
         value =>
           for {
             updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientCountryBasedPage, value))
-            _              <- sessionRepository.set(updatedAnswers)
+            _              <- cc.sessionRepository.set(updatedAnswers)
           } yield Redirect(ClientCountryBasedPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
       )
   }

@@ -23,7 +23,7 @@ case class IdentifierRequest[A] (
                                   request: Request[A],
                                   userId: String,
                                   enrolments: Enrolments,
-                                  intermediaryNumber: Option[String]
+                                  intermediaryNumber: String
                                 ) extends WrappedRequest[A](request)
 
 case class SessionRequest[A](request: Request[A], userId: String) extends WrappedRequest[A](request)

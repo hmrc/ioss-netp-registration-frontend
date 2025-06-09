@@ -16,7 +16,6 @@
 
 package controllers
 
-import controllers.actions._
 import javax.inject.Inject
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -25,12 +24,11 @@ import views.html.CannotUseNotAnIntermediaryView
 
 class CannotUseNotAnIntermediaryController @Inject()(
                                        override val messagesApi: MessagesApi,
-                                       identify: IdentifierAction,
                                        val controllerComponents: MessagesControllerComponents,
                                        view: CannotUseNotAnIntermediaryView
                                      ) extends FrontendBaseController with I18nSupport {
 
-  def onPageLoad: Action[AnyContent] = identify {
+  def onPageLoad: Action[AnyContent] = Action {
     implicit request =>
       Ok(view())
   }

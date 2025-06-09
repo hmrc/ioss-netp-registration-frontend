@@ -26,14 +26,13 @@ import views.html.UkVatNumberNotFoundView
 
 class UkVatNumberNotFoundController @Inject()(
                                        override val messagesApi: MessagesApi,
-                                       identify: IdentifierAction,
-                                       getData: DataRetrievalAction,
-                                       requireData: DataRequiredAction,
-                                       val controllerComponents: MessagesControllerComponents,
+                                       cc: AuthenticatedControllerComponents,
                                        view: UkVatNumberNotFoundView
                                      ) extends FrontendBaseController with I18nSupport {
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData) {
+  protected val controllerComponents: MessagesControllerComponents = cc
+  
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData {
     implicit request =>
       Ok(view())
   }

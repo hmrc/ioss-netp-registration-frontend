@@ -26,14 +26,13 @@ import views.html.VatApiDownView
 
 class VatApiDownController @Inject()(
                                        override val messagesApi: MessagesApi,
-                                       identify: IdentifierAction,
-                                       getData: DataRetrievalAction,
-                                       requireData: DataRequiredAction,
-                                       val controllerComponents: MessagesControllerComponents,
+                                       cc: AuthenticatedControllerComponents,
                                        view: VatApiDownView
                                      ) extends FrontendBaseController with I18nSupport {
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData) {
+  protected val controllerComponents: MessagesControllerComponents = cc
+  
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData {
     implicit request =>
       Ok(view())
   }

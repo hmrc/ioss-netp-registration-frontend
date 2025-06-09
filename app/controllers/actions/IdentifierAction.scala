@@ -20,6 +20,7 @@ import com.google.inject.Inject
 import config.Constants.intermediaryEnrolmentKey
 import config.FrontendAppConfig
 import controllers.routes
+import logging.Logging
 import models.requests.{IdentifierRequest, SessionRequest}
 import play.api.mvc.Results.*
 import play.api.mvc.*
@@ -39,7 +40,7 @@ class AuthenticatedIdentifierAction @Inject()(
                                                config: FrontendAppConfig,
                                                val parser: BodyParsers.Default
                                              )
-                                             (implicit val executionContext: ExecutionContext) extends IdentifierAction with AuthorisedFunctions {
+                                             (implicit val executionContext: ExecutionContext) extends IdentifierAction with AuthorisedFunctions with Logging {
   
   override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
     
@@ -47,8 +48,12 @@ class AuthenticatedIdentifierAction @Inject()(
 
     authorised().retrieve(Retrievals.internalId and Retrievals.allEnrolments) {
       case Some(internalId) ~ enrolments =>
-        val intermediaryNumber = findIntermediaryNumberFromEnrolments(enrolments)
-        block(IdentifierRequest(request, internalId, enrolments, intermediaryNumber))
+       findIntermediaryNumberFromEnrolments(enrolments) match {
+         case Right(intermediaryNumber) =>
+           block(IdentifierRequest(request, internalId, enrolments, intermediaryNumber))
+         case Left(redirect) =>
+           Future.successful(redirect)
+       }
       case _ =>
         throw new UnauthorizedException("Unable to retrieve internal Id")
     } recover {
@@ -59,10 +64,14 @@ class AuthenticatedIdentifierAction @Inject()(
     }
   }
   
-  private def findIntermediaryNumberFromEnrolments(enrolments: Enrolments): Option[String] = {
+  private def findIntermediaryNumberFromEnrolments(enrolments: Enrolments): Either[Result, String] = {
     enrolments.enrolments
       .find(_.key == config.intermediaryEnrolment)
       .flatMap(_.identifiers.find(id => id.key == intermediaryEnrolmentKey && id.value.nonEmpty).map(_.value))
+      .toRight {
+        logger.warn("User does not have a valid intermediary enrolment")
+        Redirect(routes.CannotUseNotAnIntermediaryController.onPageLoad())
+      }
   }
 }
 

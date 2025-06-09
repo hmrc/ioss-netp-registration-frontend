@@ -16,8 +16,6 @@
 
 package models.responses
 
-import models.core.EisErrorResponse
-
 sealed trait ErrorResponse {
   def body: String
 }
@@ -48,13 +46,6 @@ case object ReceivedErrorFromCore extends ErrorResponse {
 
 case object VatCustomerNotFound extends ErrorResponse {
   override val body: String = "Not found"
-}
-
-case class EisError(eisErrorResponse: EisErrorResponse) extends ErrorResponse {
-  override val body: String =
-    s"${eisErrorResponse.timestamp} " +
-      s"${eisErrorResponse.error} " +
-      s"${eisErrorResponse.errorMessage} "
 }
 
 case class UnexpectedResponseStatus(status: Int, body: String) extends ErrorResponse
