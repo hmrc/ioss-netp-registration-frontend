@@ -18,7 +18,7 @@ package pages.website
 
 import config.Constants
 import models.{Index, UserAnswers}
-import pages.{AddItemPage, JourneyRecoveryPage, Page, QuestionPage, Waypoints}
+import pages.{AddItemPage, BusinessContactDetailsPage, JourneyRecoveryPage, Page, QuestionPage, Waypoints}
 import play.api.libs.json.{JsObject, JsPath}
 import play.api.mvc.Call
 import queries.{Derivable, DeriveNumberOfWebsites}
@@ -46,8 +46,7 @@ final case class AddWebsitePage(override val index: Option[Index] = None) extend
   }
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
-    //TODO VEI-217: We should update nextPage to direct users to the Contact Details page.
-    navigate(answers, nextPage = JourneyRecoveryPage)
+    navigate(answers, nextPage = BusinessContactDetailsPage)
 
   private def navigate(answers: UserAnswers, nextPage: Page): Page =
     (answers.get(AddWebsitePage()), answers.get(DeriveNumberOfWebsites)) match
