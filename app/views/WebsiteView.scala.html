@@ -37,7 +37,7 @@
             @govukErrorSummary(ErrorSummaryViewModel(form))
         }
 
-        @if(form("value").value.exists(value => value.startsWith("https://") || value.startsWith("https://"))) {
+        @if(form("value").value.exists(value => value.startsWith("https://") || value.startsWith("http://"))) {
             @govukInput(
                 InputViewModel(
                     field = form("value"),
