@@ -16,7 +16,8 @@
 
 package pages
 
-import models.Mode
+import models.{CheckMode, Mode, NormalMode}
+import pages.website.AddWebsitePage
 
 case class Waypoint(
                      page: WaypointPage,
@@ -26,9 +27,10 @@ case class Waypoint(
 
 object Waypoint {
 
-  // TODO Add journey loop pages - url fragments
   private val fragments: Map[String, Waypoint] =
     Map(
+      AddWebsitePage().normalModeUrlFragment ->  AddWebsitePage().waypoint(NormalMode),
+      AddWebsitePage().checkModeUrlFragment ->  AddWebsitePage().waypoint(CheckMode),
       CheckVatDetailsPage().urlFragment -> CheckVatDetailsPage().waypoint
     )
 

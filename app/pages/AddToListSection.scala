@@ -18,4 +18,5 @@ package pages
 
 trait AddToListSection
 
+object WebsiteSection extends AddToListSection
 object ClientBusinessNameSection extends AddToListSection

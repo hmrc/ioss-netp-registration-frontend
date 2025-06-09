@@ -14,15 +14,32 @@
  * limitations under the License.
  */
 
-package forms.validation
+package forms
 
-object Validation {
+import forms.behaviours.BooleanFieldBehaviours
+import play.api.data.FormError
 
+class AddWebsiteFormProviderSpec extends BooleanFieldBehaviours {
 
-  val websitePattern = """^(https?://)((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,})(\:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(\#[-a-z\d_]*)?"""
-  val commonTextPattern = """^(?!^[’'"])(?:[A-Za-z0-9À-ÿ \!\)\(.,_/’'"&-]|[’'"](?=[A-Za-z0-9À-ÿ \!\)\(.,_/’'"&-]))*[A-Za-z0-9À-ÿ \!\)\(.,_/’'"&-](?<![’'"]$)$"""
-  val postcodePattern = """^[A-Za-z0-9 ]{0,100}$"""
-  val alphaNumericWithSpace = """^[a-zA-Z0-9 ]+$"""
-  val utrRegex = """^(k?\d{10,13}|(\d{10,13})k)$""".r
+  val requiredKey = "addWebsite.error.required"
+  val invalidKey = "error.boolean"
 
+  val form = new AddWebsiteFormProvider()()
+
+  ".value" - {
+
+    val fieldName = "value"
+
+    behave like booleanField(
+      form,
+      fieldName,
+      invalidError = FormError(fieldName, invalidKey)
+    )
+
+    behave like mandatoryField(
+      form,
+      fieldName,
+      requiredError = FormError(fieldName, requiredKey)
+    )
+  }
 }

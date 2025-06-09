@@ -17,6 +17,7 @@
 package forms.mappings
 
 import config.CurrencyFormatter
+import models.Index
 import java.time.LocalDate
 import forms.validation.Validation.utrRegex
 import play.api.data.validation.{Constraint, Invalid, Valid}
@@ -139,6 +140,20 @@ trait Constraints {
         }
     }
 
+
+  protected def notADuplicate[A](index: Index, existingAnswers: Seq[A], errorKey: String, args: Any*): Constraint[A] = {
+
+    val indexedAnswers = existingAnswers.zipWithIndex
+    val filteredAnswers = indexedAnswers.filter(_._2 != index.position)
+
+    Constraint {
+      case answer if filteredAnswers.map(_._1).contains(answer) =>
+        Invalid(errorKey, args: _*)
+      case _ =>
+        Valid
+    }
+  }
+
   protected def ninoConstraint: Constraint[String] = Constraint("constraints.nino") { input =>
     val normalized = input.replaceAll("\\s", "").toUpperCase
 
@@ -190,4 +205,5 @@ trait Constraints {
         Invalid(errorKey)
       }
     }
+
 }
