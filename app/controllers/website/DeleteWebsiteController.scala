@@ -24,7 +24,6 @@ import pages.website.{DeleteWebsitePage, WebsitePage}
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.DeleteWebsiteView
 import utils.FutureSyntax.FutureOps
@@ -34,18 +33,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class DeleteWebsiteController @Inject()(
                                          override val messagesApi: MessagesApi,
-                                         sessionRepository: SessionRepository,
-                                         identify: IdentifierAction,
-                                         getData: DataRetrievalAction,
-                                         requireData: DataRequiredAction,
+                                         cc: AuthenticatedControllerComponents,
                                          formProvider: DeleteWebsiteFormProvider,
-                                         val controllerComponents: MessagesControllerComponents,
                                          view: DeleteWebsiteView
                                  )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
   private val form = formProvider()
+  protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
       getWebsite(waypoints, index) {
         website =>
@@ -62,7 +58,7 @@ class DeleteWebsiteController @Inject()(
     }.getOrElse(Redirect(controllers.website.routes.WebsiteController.onPageLoad(waypoints, index)).toFuture)
 
 
-  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       getWebsite(waypoints, index) {
@@ -75,7 +71,7 @@ class DeleteWebsiteController @Inject()(
             if (value) {
               for {
                 updatedAnswers <- Future.fromTry(request.userAnswers.remove(WebsitePage(index)))
-                _              <- sessionRepository.set(updatedAnswers)
+                _              <- cc.sessionRepository.set(updatedAnswers)
               } yield Redirect(DeleteWebsitePage(index).navigate(waypoints, updatedAnswers, updatedAnswers).route)
             } else {
               Redirect(DeleteWebsitePage(index).navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
