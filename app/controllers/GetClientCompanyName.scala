@@ -28,10 +28,22 @@ import scala.concurrent.Future
 trait GetClientCompanyName {
 
   def getClientCompanyName(waypoints: Waypoints)
-                (block: ClientBusinessName => Future[Result])
+                (block: String => Future[Result])
                 (implicit request: DataRequest[_]): Future[Result] = {
-    request.userAnswers.get(ClientBusinessNamePage).map { companyName =>
-      block(companyName)
-    }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
+    request.userAnswers.vatInfo match {
+      case Some(vatCustomerInfo) =>
+        vatCustomerInfo.organisationName match {
+          case Some(orgName) => block(orgName)
+          case _ =>
+            vatCustomerInfo.individualName
+              .map(block)
+              .getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
+        }
+        
+      case _ =>
+        request.userAnswers.get(ClientBusinessNamePage).map { companyName =>
+          block(companyName.name)
+        }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
+    }
   }
 }

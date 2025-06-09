@@ -18,12 +18,13 @@ package base
 
 import controllers.actions.*
 import generators.Generators
-import models.UserAnswers
 import models.domain.VatCustomerInfo
+import models.{BusinessContactDetails, UserAnswers}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.{OptionValues, TryValues}
+import pages.{EmptyWaypoints, Waypoints}
 import play.api.Application
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.bind
@@ -41,18 +42,21 @@ trait SpecBase
     with IntegrationPatience
     with Generators {
 
-  val userAnswersId: String = "id"
-
-  def messages(app: Application): Messages = app.injector.instanceOf[MessagesApi].preferred(FakeRequest())
+  val userAnswersId: String = "12345-credId"
 
   val arbitraryInstant: Instant = arbitraryDate.arbitrary.sample.value.atStartOfDay(ZoneId.systemDefault()).toInstant
   val stubClockAtArbitraryDate: Clock = Clock.fixed(arbitraryInstant, ZoneId.systemDefault())
 
-  def emptyUserAnswers : UserAnswers = UserAnswers(id = userAnswersId, lastUpdated = arbitraryInstant)
+  val waypoints: Waypoints = EmptyWaypoints
+
+  def messages(app: Application): Messages = app.injector.instanceOf[MessagesApi].preferred(FakeRequest())
+
+  def emptyUserAnswers: UserAnswers = UserAnswers(id = userAnswersId, lastUpdated = arbitraryInstant)
+
   def emptyUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.copy(vatInfo = Some(vatCustomerInfo))
 
   val vatNumber = "GB123456789"
-  val vatCustomerInfo: VatCustomerInfo =
+  val vatCustomerInfo: VatCustomerInfo = {
     VatCustomerInfo(
       registrationDate = LocalDate.now(stubClockAtArbitraryDate),
       desAddress = arbitraryDesAddress.arbitrary.sample.value,
@@ -61,8 +65,15 @@ trait SpecBase
       singleMarketIndicator = true,
       deregistrationDecisionDate = None
     )
+  }
 
-  protected def applicationBuilder(userAnswers: Option[UserAnswers] = None, clock: Option[Clock] = None): GuiceApplicationBuilder = {
+  val businessContactDetails: BusinessContactDetails =
+    BusinessContactDetails(fullName = "name", telephoneNumber = "0111 2223334", emailAddress = "email@example.com")
+
+  protected def applicationBuilder(
+                                    userAnswers: Option[UserAnswers] = None,
+                                    clock: Option[Clock] = None
+                                  ): GuiceApplicationBuilder = {
 
     val clockToBind = clock.getOrElse(stubClockAtArbitraryDate)
     new GuiceApplicationBuilder()
