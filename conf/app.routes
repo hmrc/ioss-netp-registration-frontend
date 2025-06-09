@@ -104,3 +104,11 @@ GET         /client-application-complete                    controllers.Applicat
 GET         /error-submitting-pending-registration          controllers.ErrorSubmittingPendingRegistrationController.onPageLoad()
 
 GET         /expired-vrn-date                               controllers.ExpiredVrnDateController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+
+GET         /business-contact-details           controllers.BusinessContactDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /business-contact-details           controllers.BusinessContactDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+
+GET        /previouslyRegistered                        controllers.previousRegistrations.PreviouslyRegisteredController.onPageLoad(mode: Mode = NormalMode)
+POST       /previouslyRegistered                        controllers.previousRegistrations.PreviouslyRegisteredController.onSubmit(mode: Mode = NormalMode)
+GET        /changePreviouslyRegistered                  controllers.previousRegistrations.PreviouslyRegisteredController.onPageLoad(mode: Mode = CheckMode)
+POST       /changePreviouslyRegistered                  controllers.previousRegistrations.PreviouslyRegisteredController.onSubmit(mode: Mode = CheckMode)

@@ -276,3 +276,9 @@ errorSubmittingPendingRegistration.contactUs = If the problem continues, you can
 
 expiredVrnDate.title = The VAT number for this trader has expired
 expiredVrnDate.heading = The VAT number for this trader has expired
+
+previouslyRegistered.title = previouslyRegistered
+previouslyRegistered.heading = previouslyRegistered
+previouslyRegistered.checkYourAnswersLabel = previouslyRegistered
+previouslyRegistered.error.required = Select yes if previouslyRegistered
+previouslyRegistered.change.hidden = PreviouslyRegistered
