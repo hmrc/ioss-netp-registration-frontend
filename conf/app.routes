@@ -71,6 +71,8 @@ GET         /registration-service-error         controllers.VatApiDownController
 
 GET         /vat-number-not-found               controllers.UkVatNumberNotFoundController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 
+GET         /cannot-use-this-service             controllers.CannotUseNotAnIntermediaryController.onPageLoad()
+
 # Business Contact Details section
 GET         /business-contact-details           controllers.BusinessContactDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST        /business-contact-details           controllers.BusinessContactDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)

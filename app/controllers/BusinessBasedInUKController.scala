@@ -35,6 +35,7 @@ class BusinessBasedInUKController @Inject()(
                                              sessionRepository: SessionRepository,
                                              identify: IdentifierAction,
                                              getData: DataRetrievalAction,
+                                             checkIntermediary: CheckIntermediaryEnrolmentAction,
                                              formProvider: BusinessBasedInUKFormProvider,
                                              val controllerComponents: MessagesControllerComponents,
                                              view: BusinessBasedInUKView
@@ -42,7 +43,7 @@ class BusinessBasedInUKController @Inject()(
 
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData) {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen checkIntermediary() andThen getData) {
     implicit request =>
 
       val preparedForm = request.userAnswers.getOrElse(UserAnswers(request.userId)).get(BusinessBasedInUKPage) match {
@@ -53,7 +54,7 @@ class BusinessBasedInUKController @Inject()(
       Ok(view(preparedForm, waypoints))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen checkIntermediary() andThen getData).async {
     implicit request =>
 
       form.bindFromRequest().fold(

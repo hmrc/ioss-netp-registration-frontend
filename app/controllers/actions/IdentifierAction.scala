@@ -17,15 +17,18 @@
 package controllers.actions
 
 import com.google.inject.Inject
+import config.Constants.intermediaryEnrolmentKey
 import config.FrontendAppConfig
 import controllers.routes
-import models.requests.IdentifierRequest
-import play.api.mvc.Results._
-import play.api.mvc._
-import uk.gov.hmrc.auth.core._
+import models.requests.{IdentifierRequest, SessionRequest}
+import play.api.mvc.Results.*
+import play.api.mvc.*
+import uk.gov.hmrc.auth.core.*
+import uk.gov.hmrc.auth.core.retrieve.*
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.{HeaderCarrier, UnauthorizedException}
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
+import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -42,10 +45,12 @@ class AuthenticatedIdentifierAction @Inject()(
     
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 
-    authorised().retrieve(Retrievals.internalId) {
-      _.map {
-        internalId => block(IdentifierRequest(request, internalId))
-      }.getOrElse(throw new UnauthorizedException("Unable to retrieve internal Id"))
+    authorised().retrieve(Retrievals.internalId and Retrievals.allEnrolments) {
+      case Some(internalId) ~ enrolments =>
+        val intermediaryNumber = findIntermediaryNumberFromEnrolments(enrolments)
+        block(IdentifierRequest(request, internalId, enrolments, intermediaryNumber))
+      case _ =>
+        throw new UnauthorizedException("Unable to retrieve internal Id")
     } recover {
       case _: NoActiveSession =>
         Redirect(config.loginUrl, Map("continue" -> Seq(config.loginContinueUrl)))
@@ -53,22 +58,23 @@ class AuthenticatedIdentifierAction @Inject()(
         Redirect(routes.UnauthorisedController.onPageLoad())
     }
   }
+  
+  private def findIntermediaryNumberFromEnrolments(enrolments: Enrolments): Option[String] = {
+    enrolments.enrolments
+      .find(_.key == config.intermediaryEnrolment)
+      .flatMap(_.identifiers.find(id => id.key == intermediaryEnrolmentKey && id.value.nonEmpty).map(_.value))
+  }
 }
 
-class SessionIdentifierAction @Inject()(
-                                         val parser: BodyParsers.Default
-                                       )
-                                       (implicit val executionContext: ExecutionContext) extends IdentifierAction {
+class SessionIdentifierAction @Inject()()(implicit val executionContext: ExecutionContext)
+  extends ActionRefiner[Request, SessionRequest] with ActionFunction[Request, SessionRequest] {
 
-  override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
+  override def refine[A](request: Request[A]): Future[Either[Result, SessionRequest[A]]] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 
-    hc.sessionId match {
-      case Some(session) =>
-        block(IdentifierRequest(request, session.value))
-      case None =>
-        Future.successful(Redirect(routes.JourneyRecoveryController.onPageLoad()))
-    }
+    hc.sessionId
+      .map(session => Right(SessionRequest(request, session.value)).toFuture)
+      .getOrElse(Left(Redirect(routes.JourneyRecoveryController.onPageLoad())).toFuture)
   }
 }

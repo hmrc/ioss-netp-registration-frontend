@@ -16,21 +16,21 @@
 
 package controllers.actions
 
-import javax.inject.Inject
 import models.requests.IdentifierRequest
 import play.api.mvc.*
-import uk.gov.hmrc.auth.core.Enrolments
+import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class FakeIdentifierAction @Inject()(bodyParsers: PlayBodyParsers) extends IdentifierAction {
+class FakeCheckIntermediaryEnrolmentActionImpl extends CheckIntermediaryEnrolmentActionImpl()(ExecutionContext.Implicits.global) {
 
-  override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] =
-    block(IdentifierRequest(request, "12345-credId", Enrolments(Set.empty), intermediaryNumber = None))
+  override protected def refine[A](request: IdentifierRequest[A]): Future[Either[Result, IdentifierRequest[A]]] =
 
-  override def parser: BodyParser[AnyContent] =
-    bodyParsers.default
+    Right(request).toFuture
+}
 
-  override protected def executionContext: ExecutionContext =
-    scala.concurrent.ExecutionContext.Implicits.global
+class FakeCheckIntermediaryEnrolmentAction extends CheckIntermediaryEnrolmentAction()(ExecutionContext.Implicits.global) {
+
+  override def apply(): CheckIntermediaryEnrolmentActionImpl =
+    FakeCheckIntermediaryEnrolmentActionImpl()
 }
