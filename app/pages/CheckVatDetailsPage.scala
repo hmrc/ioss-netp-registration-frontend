@@ -41,7 +41,7 @@ case class CheckVatDetailsPage() extends CheckAnswersPage with QuestionPage[Chec
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
     (answers.get(this), answers.vatInfo) match {
-      case (Some(Yes), Some(vatInfo)) if vatInfo.desAddress.line1.nonEmpty => ??? //todo Trading name
+      case (Some(Yes), Some(vatInfo)) if vatInfo.desAddress.line1.nonEmpty => CheckYourAnswersPage //todo Trading name
       case (Some(WrongAccount), _) => UseOtherAccountPage
       case _ => JourneyRecoveryPage
         
