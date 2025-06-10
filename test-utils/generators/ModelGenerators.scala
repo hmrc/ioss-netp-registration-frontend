@@ -28,6 +28,11 @@ import java.time.{Instant, LocalDate, ZoneOffset}
 
 trait ModelGenerators extends EitherValues {
 
+  implicit lazy val arbitraryPreviousEuCountry: Arbitrary[PreviousEuCountry] =
+    Arbitrary {
+      Gen.oneOf(PreviousEuCountry.values.toSeq)
+    }
+
   private val maxFieldLength: Int = 35
 
   private def commonFieldString(maxLength: Int): Gen[String] = (for {
