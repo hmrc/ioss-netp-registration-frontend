@@ -277,8 +277,9 @@ errorSubmittingPendingRegistration.contactUs = If the problem continues, you can
 expiredVrnDate.title = The VAT number for this trader has expired
 expiredVrnDate.heading = The VAT number for this trader has expired
 
-previouslyRegistered.title = previouslyRegistered
-previouslyRegistered.heading = previouslyRegistered
-previouslyRegistered.checkYourAnswersLabel = previouslyRegistered
-previouslyRegistered.error.required = Select yes if previouslyRegistered
-previouslyRegistered.change.hidden = PreviouslyRegistered
+previouslyRegistered.title = Has your client''s business ever registered for an IOSS scheme?
+previouslyRegistered.heading = Has your client''s business ever registered for an IOSS scheme?
+previouslyRegistered.hint = This includes One Stop Shop (OSS) schemes.
+previouslyRegistered.checkYourAnswersLabel = Other One Stop Shop registrations
+previouslyRegistered.error.required = Select yes if your client''s business has ever registered for an Import One Stop Shop scheme in an EU country
+previouslyRegistered.change.hidden = Select yes if your client''s business has ever registered for an Import One Stop Shop scheme in an EU country

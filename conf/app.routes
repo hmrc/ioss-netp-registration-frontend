@@ -108,7 +108,6 @@ GET         /expired-vrn-date                               controllers.ExpiredV
 GET         /business-contact-details           controllers.BusinessContactDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST        /business-contact-details           controllers.BusinessContactDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET        /previouslyRegistered                        controllers.previousRegistrations.PreviouslyRegisteredController.onPageLoad(mode: Mode = NormalMode)
-POST       /previouslyRegistered                        controllers.previousRegistrations.PreviouslyRegisteredController.onSubmit(mode: Mode = NormalMode)
-GET        /changePreviouslyRegistered                  controllers.previousRegistrations.PreviouslyRegisteredController.onPageLoad(mode: Mode = CheckMode)
-POST       /changePreviouslyRegistered                  controllers.previousRegistrations.PreviouslyRegisteredController.onSubmit(mode: Mode = CheckMode)
+# Previously registered details section
+GET         /previous-oss                       controllers.previousRegistrations.PreviouslyRegisteredController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /previous-oss                       controllers.previousRegistrations.PreviouslyRegisteredController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
