@@ -16,16 +16,24 @@
 
 package pages.previousRegistrations
 
-import pages.{QuestionPage, Waypoints}
+import models.{Index, UserAnswers}
+import pages.{JourneyRecoveryPage, Page, QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
+import pages.RecoveryOps
 
 case object PreviouslyRegisteredPage extends QuestionPage[Boolean] {
 
   override def path: JsPath = JsPath \ toString
 
   override def toString: String = "previouslyRegistered"
-  
+
   override def route(waypoints: Waypoints): Call =
     controllers.previousRegistrations.routes.PreviouslyRegisteredController.onPageLoad(waypoints)
+
+  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
+    answers.get(this).map {
+      case true => PreviousEuCountryPage(Index(0))
+      case false => JourneyRecoveryPage
+    }.orRecover
 }
