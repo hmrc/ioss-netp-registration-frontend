@@ -17,18 +17,18 @@
 package pages.vatEuDetails
 
 import controllers.vatEuDetails.routes
-import models.EuCountry
+import models.{Country, Index}
 import pages.{QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
-case object EuCountryPage extends QuestionPage[EuCountry] {
+case class EuCountryPage(countryIndex: Index) extends QuestionPage[Country] {
 
-  override def path: JsPath = JsPath \ toString
+  override def path: JsPath = JsPath \ "EuDetails" \ countryIndex.position \ toString
 
   override def toString: String = "euCountry"
 
   override def route(waypoints: Waypoints): Call = {
-    routes.EuCountryController.onPageLoad(waypoints)
+    routes.EuCountryController.onPageLoad(waypoints, countryIndex)
   }
 }
