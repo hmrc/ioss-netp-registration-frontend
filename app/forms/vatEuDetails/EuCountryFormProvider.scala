@@ -17,15 +17,19 @@
 package forms.vatEuDetails
 
 import forms.mappings.Mappings
-import models.EuCountry
+import models.{Country, Index}
 import play.api.data.Form
 
 import javax.inject.Inject
 
 class EuCountryFormProvider @Inject() extends Mappings {
-
-  def apply(): Form[EuCountry] =
+  
+  def apply(countryIndex: Index, existingAnswers: Seq[Country]): Form[Country] = {
     Form(
-      "value" -> enumerable[EuCountry]("euCountry.error.required")
+      "value" -> text("euCountry.error.required")
+        .verifying("euCountry.error.required", value => Country.euCountries.exists(_.code == value))
+        .transform[Country](value => Country.euCountries.find(_.code == value).get, _.code)
+        .verifying(notADuplicate(countryIndex, existingAnswers, "euCountry.error.duplicate"))
     )
+  }
 }
