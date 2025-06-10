@@ -30,6 +30,11 @@ import java.time.{Instant, LocalDate, ZoneOffset}
 import java.util.UUID
 
 trait ModelGenerators extends EitherValues {
+
+  implicit lazy val arbitraryPreviousScheme: Arbitrary[PreviousScheme] =
+    Arbitrary {
+      Gen.oneOf(PreviousScheme.values.toSeq)
+    }
   private val maxFieldLength: Int = 35
 
   private def commonFieldString(maxLength: Int): Gen[String] = (for {

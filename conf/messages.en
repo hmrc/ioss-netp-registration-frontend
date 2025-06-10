@@ -288,3 +288,11 @@ previousEuCountry.title = Which country was it registered in?
 previousEuCountry.heading = Which country was it registered in?
 previousEuCountry.error.required = Select an EU country
 previousEuCountry.error.duplicate = You selected this EU country already. Select a different one.
+
+previousScheme.title = previousScheme
+previousScheme.heading = previousScheme
+previousScheme.option1 = Option 1
+previousScheme.option2 = Option 2
+previousScheme.checkYourAnswersLabel = previousScheme
+previousScheme.error.required = Select previousScheme
+previousScheme.change.hidden = PreviousScheme
