@@ -43,10 +43,10 @@ class VatRegisteredInEuController @Inject()(
 
   val form = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData) {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData) {
     implicit request =>
 
-      val preparedForm = request.userAnswers.getOrElse(UserAnswers(request.userId)).get(VatRegisteredInEuPage) match {
+      val preparedForm = request.userAnswers.get(VatRegisteredInEuPage) match {
         case None => form
         case Some(value) => form.fill(value)
       }
