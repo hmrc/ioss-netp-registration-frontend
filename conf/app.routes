@@ -143,5 +143,5 @@ POST       /remove-all-previous-registrations                           controll
 GET         /vat-in-eu                                   controllers.vatEuDetails.VatRegisteredInEuController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST        /vat-in-eu                                   controllers.vatEuDetails.VatRegisteredInEuController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET         /vat-registered-eu-country                   controllers.vatEuDetails.EuCountryController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-POST        /vat-registered-eu-country                   controllers.vatEuDetails.EuCountryController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+GET         /vat-registered-eu-country/:countryIndex                   controllers.vatEuDetails.EuCountryController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
+POST        /vat-registered-eu-country/:countryIndex                   controllers.vatEuDetails.EuCountryController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
