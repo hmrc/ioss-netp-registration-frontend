@@ -18,11 +18,13 @@ package controllers.vatEuDetails
 
 import controllers.actions.*
 import forms.vatEuDetails.EuCountryFormProvider
-import models.UserAnswers
+import models.{Country, Index, UserAnswers}
 import pages.vatEuDetails.EuCountryPage
 import pages.Waypoints
+import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.euDetails.AllEuDetailsQuery
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.vatEuDetails.EuCountryView
@@ -40,33 +42,37 @@ class EuCountryController @Inject()(
                                        val controllerComponents: MessagesControllerComponents,
                                        view: EuCountryView
                                      )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
-
-  val form = formProvider()
-
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData) {
+  
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData) {
     implicit request =>
 
-      val preparedForm = request.userAnswers.getOrElse(UserAnswers(request.userId)).get(EuCountryPage) match {
+      val form: Form[Country] = formProvider(countryIndex, request.userAnswers.get(AllEuDetailsQuery)
+        .getOrElse(Seq.empty).map(_.euCountry))
+
+      val preparedForm = request.userAnswers.get(EuCountryPage(countryIndex)) match {
         case None => form
         case Some(value) => form.fill(value)
       }
 
-      Ok(view(preparedForm, waypoints))
+      Ok(view(preparedForm, waypoints, countryIndex))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData).async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = (identify andThen getData).async {
     implicit request =>
+ 
+      val form: Form[Country] = formProvider(countryIndex, request.userAnswers.getOrElse(UserAnswers(request.userId)).get(AllEuDetailsQuery)
+        .getOrElse(Seq.empty).map(_.euCountry))
 
       form.bindFromRequest().fold(
         formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, waypoints))),
+          Future.successful(BadRequest(view(formWithErrors, waypoints, countryIndex))),
 
         value =>
           val originalAnswers: UserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
           for {
-            updatedAnswers <- Future.fromTry(originalAnswers.set(EuCountryPage, value))
+            updatedAnswers <- Future.fromTry(originalAnswers.set(EuCountryPage(countryIndex), value))
             _              <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(EuCountryPage.navigate(waypoints, originalAnswers, updatedAnswers).route)
+          } yield Redirect(EuCountryPage(countryIndex).navigate(waypoints, originalAnswers, updatedAnswers).route)
       )
   }
 }
