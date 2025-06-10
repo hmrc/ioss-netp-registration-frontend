@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-package pages.previousRegistrations
+package queries.previousRegistrations
 
-import models.{Country, Index}
-import pages.{QuestionPage, Waypoints}
+import models.previousRegistrations.PreviousRegistrationDetails
 import play.api.libs.json.JsPath
-import play.api.mvc.Call
+import queries.{Gettable, Settable}
 
-case class PreviousEuCountryPage(index: Index) extends QuestionPage[Country] {
+case object AllPreviousRegistrationsQuery extends Gettable[List[PreviousRegistrationDetails]] with Settable[List[PreviousRegistrationDetails]] {
 
-  override def path: JsPath = JsPath \ "previousRegistrations" \ index.position \ toString
-
-  override def toString: String = "previousEuCountry"
-  
-  override def route(waypoints: Waypoints): Call =
-    controllers.previousRegistrations.routes.PreviousEuCountryController.onPageLoad(waypoints, index)
-  
+  override def path: JsPath = JsPath \ "previousRegistrations"
 }

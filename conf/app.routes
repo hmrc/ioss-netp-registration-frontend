@@ -112,7 +112,5 @@ POST        /business-contact-details           controllers.BusinessContactDetai
 GET         /previous-oss                       controllers.previousRegistrations.PreviouslyRegisteredController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST        /previous-oss                       controllers.previousRegistrations.PreviouslyRegisteredController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET        /previousEuCountry                        controllers.previousRegistrations.PreviousEuCountryController.onPageLoad(mode: Mode = NormalMode)
-POST       /previousEuCountry                        controllers.previousRegistrations.PreviousEuCountryController.onSubmit(mode: Mode = NormalMode)
-GET        /changePreviousEuCountry                  controllers.previousRegistrations.PreviousEuCountryController.onPageLoad(mode: Mode = CheckMode)
-POST       /changePreviousEuCountry                  controllers.previousRegistrations.PreviousEuCountryController.onSubmit(mode: Mode = CheckMode)
+GET        /previous-country/:index             controllers.previousRegistrations.PreviousEuCountryController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
+POST       /previous-country/:index             controllers.previousRegistrations.PreviousEuCountryController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, index: Index)

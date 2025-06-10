@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-package pages.previousRegistrations
+package models.previousRegistrations
 
-import models.{Country, Index}
-import pages.{QuestionPage, Waypoints}
-import play.api.libs.json.JsPath
-import play.api.mvc.Call
+import models.Country
+import play.api.libs.json.{Json, OFormat}
 
-case class PreviousEuCountryPage(index: Index) extends QuestionPage[Country] {
+case class PreviousRegistrationDetails(
+                                      previousEuCountry: Country
+                                      )
 
-  override def path: JsPath = JsPath \ "previousRegistrations" \ index.position \ toString
-
-  override def toString: String = "previousEuCountry"
-  
-  override def route(waypoints: Waypoints): Call =
-    controllers.previousRegistrations.routes.PreviousEuCountryController.onPageLoad(waypoints, index)
-  
+object PreviousRegistrationDetails {
+  implicit val format: OFormat[PreviousRegistrationDetails] = Json.format[PreviousRegistrationDetails]
 }
