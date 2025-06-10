@@ -27,6 +27,11 @@ import org.scalatest.EitherValues
 import java.time.{Instant, LocalDate, ZoneOffset}
 
 trait ModelGenerators extends EitherValues {
+
+  implicit lazy val arbitraryPreviousScheme: Arbitrary[PreviousScheme] =
+    Arbitrary {
+      Gen.oneOf(PreviousScheme.values.toSeq)
+    }
   private val maxFieldLength: Int = 35
 
   private def commonFieldString(maxLength: Int): Gen[String] = (for {
