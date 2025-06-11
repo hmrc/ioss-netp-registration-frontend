@@ -37,7 +37,8 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
   private def application: Application =
     applicationBuilder()
       .configure(
-        "microservice.services.ioss-netp-registration.port" -> server.port
+        "microservice.services.ioss-netp-registration.port" -> server.port,
+        "microservice.services.ioss-intermediary-registration.port" -> server.port
       ).build()
 
   ".getCustomerVatInfo" - {
@@ -99,6 +100,71 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
         server.stubFor(get(urlEqualTo(url)).willReturn(aResponse().withStatus(status)))
 
         val result = connector.getVatCustomerInfo(vatNumber).futureValue
+
+        result `mustBe` Left(UnexpectedResponseStatus(status, s"Received unexpected response code $status"))
+      }
+    }
+  }
+
+  ".getIntermediaryVatCustomerInfo" - {
+
+    val url: String = "/ioss-intermediary-registration/vat-information"
+
+    "must return vat information when the backend returns some" in {
+
+      running(application) {
+        val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
+
+        val vatInfo: VatCustomerInfo = intermediaryVatCustomerInfo
+
+        val responseBody = Json.toJson(vatInfo).toString()
+
+        server.stubFor(get(urlEqualTo(url)).willReturn(ok().withBody(responseBody)))
+
+        val result = connector.getIntermediaryVatCustomerInfo().futureValue
+
+        result `mustBe` Right(vatInfo)
+      }
+    }
+
+    "must return invalid json when the backend returns some" in {
+
+      running(application) {
+        val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
+
+        val responseBody = Json.obj("test" -> "test").toString()
+
+        server.stubFor(get(urlEqualTo(url)).willReturn(ok().withBody(responseBody)))
+
+        val result = connector.getIntermediaryVatCustomerInfo().futureValue
+
+        result `mustBe` Left(InvalidJson)
+      }
+    }
+
+    "must return Left(NotFound) when the backend returns NOT_FOUND" in {
+
+      running(application) {
+        val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
+
+        server.stubFor(get(urlEqualTo(url)).willReturn(notFound()))
+
+        val result = connector.getIntermediaryVatCustomerInfo().futureValue
+
+        result `mustBe` Left(VatCustomerNotFound)
+      }
+    }
+
+    "must return Left(UnexpectedResponseStatus) when the backend returns another error code" in {
+
+      val status = Gen.oneOf(BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_IMPLEMENTED, BAD_GATEWAY, SERVICE_UNAVAILABLE).sample.value
+
+      running(application) {
+        val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
+
+        server.stubFor(get(urlEqualTo(url)).willReturn(aResponse().withStatus(status)))
+
+        val result = connector.getIntermediaryVatCustomerInfo().futureValue
 
         result `mustBe` Left(UnexpectedResponseStatus(status, s"Received unexpected response code $status"))
       }

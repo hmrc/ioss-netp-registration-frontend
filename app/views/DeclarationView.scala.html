@@ -1,0 +1,73 @@
+@*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import pages.Waypoints
+
+@this(
+    layout: templates.Layout,
+    formHelper: FormWithCSRF,
+    govukErrorSummary: GovukErrorSummary,
+    govukCheckboxes : GovukCheckboxes,
+    govukButton: GovukButton
+)
+
+@(form: Form[_], waypoints: Waypoints, intermediaryName: String, companyName: String)(implicit request: Request[_], messages: Messages)
+
+@layout(pageTitle = title(form, messages("declaration.title"))) {
+
+    @formHelper(action = routes.DeclarationController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
+
+        @if(form.errors.nonEmpty) {
+            @govukErrorSummary(ErrorSummary(
+                title = Text(messages("error.summary.title")),
+                errorList = form.errors.map { error =>
+                    ErrorLink(
+                        href = Some("#checkbox"),
+                        content = Text(messages(error.message))
+                    )
+                }
+            ))
+        }
+
+        <h1 class="govuk-heading-l govuk-!-margin-bottom-3">@messages("declaration.heading")</h1>
+
+        <p class="govuk-body govuk-!-margin-bottom-4">@messages("declaration.p1", intermediaryName, companyName)</p>
+
+        <p class="govuk-body govuk-!-margin-bottom-4">@messages("declaration.p2")</p>
+
+        @govukCheckboxes(
+            Checkboxes(
+                name = "declaration",
+                items = Seq(
+                    CheckboxItem(
+                        id = Some("checkbox"),
+                        name = Some("checkbox"),
+                        content = Text(messages("declaration.checkbox.text")),
+                        value = "true",
+                        checked = form("checkbox").value.contains("true")
+                    )
+                ),
+                errorMessage = form.errors.headOption.map { error =>
+                    ErrorMessage(content = Text(messages(error.message)))
+                }
+            )
+        )
+
+        @govukButton(
+            ButtonViewModel(messages("site.agree"))
+        )
+    }
+}

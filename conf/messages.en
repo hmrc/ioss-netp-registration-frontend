@@ -10,6 +10,7 @@ site.start = Start now
 site.startAgain = Start again
 site.signIn = Sign in
 site.govuk = GOV.UK
+site.agree = Agree and confirm
 
 date.day = Day
 date.month = Month
@@ -219,3 +220,10 @@ businessContactDetails.error.emailAddress.invalid = Enter an email address in th
 businessContactDetails.change.fullName.hidden = your contact name or department
 businessContactDetails.change.telephoneNumber.hidden = your telephone number
 businessContactDetails.change.emailAddress.hidden = your email address
+
+declaration.title = Declaration
+declaration.heading = Declaration
+declaration.p1 = I, {0}, agree to act as an intermediary on behalf of {1} for the VAT Import One Stop Shop scheme.
+declaration.p2 = I understand that we are joint and severally liable for any debts that we may incur on this registration.
+declaration.checkbox.text = I declare that the information I''ve provided is correct and complete to the best of my knowledge.
+declaration.error.required = Agree to the declaration to continue

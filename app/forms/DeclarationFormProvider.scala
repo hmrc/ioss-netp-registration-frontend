@@ -14,26 +14,20 @@
  * limitations under the License.
  */
 
-package pages
+package forms
 
-import controllers.routes
-import models.UserAnswers
-import play.api.mvc.Call
+import javax.inject.Inject
+import forms.mappings.Mappings
+import play.api.data.Form
+import play.api.data.validation.{Constraint, Invalid, Valid}
 
-object CheckYourAnswersPage extends CheckAnswersPage {
+class DeclarationFormProvider @Inject() extends Mappings {
 
-  override def isTheSamePage(other: Page): Boolean = other match {
-    case CheckYourAnswersPage => true
-    case _ => false
+  private val mustBeTrue: Constraint[Boolean] = Constraint("constraint.declaration") { value =>
+    if (value) Valid else Invalid("declaration.error.required")
   }
-
-  override val urlFragment: String = "check-your-answers"
-
-  override def route(waypoints: Waypoints): Call = {
-    routes.CheckYourAnswersController.onPageLoad()
-  }
-
-  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
-    DeclarationPage
-  }
+  def apply(): Form[Boolean] =
+    Form(
+      "declaration" -> boolean("declaration.error.required").verifying(mustBeTrue)
+    )
 }

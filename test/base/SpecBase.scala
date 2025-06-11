@@ -68,6 +68,17 @@ trait SpecBase
     )
   }
 
+  val intermediaryVatCustomerInfo: VatCustomerInfo = {
+    VatCustomerInfo(
+      registrationDate = LocalDate.now(stubClockAtArbitraryDate),
+      desAddress = arbitraryDesAddress.arbitrary.sample.value,
+      organisationName = Some("Intermediary Company name"),
+      individualName = None,
+      singleMarketIndicator = true,
+      deregistrationDecisionDate = None
+    )
+  }
+
   val businessContactDetails: BusinessContactDetails =
     BusinessContactDetails(fullName = "name", telephoneNumber = "0111 2223334", emailAddress = "email@example.com")
 
