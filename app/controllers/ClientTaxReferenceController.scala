@@ -24,7 +24,6 @@ import pages.ClientTaxReferencePage
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.ClientTaxReferenceView
@@ -33,17 +32,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ClientTaxReferenceController @Inject()(
                                               override val messagesApi: MessagesApi,
-                                              sessionRepository: SessionRepository,
-                                              identify: IdentifierAction,
-                                              getData: DataRetrievalAction,
-                                              requireData: DataRequiredAction,
+                                              cc: AuthenticatedControllerComponents,
                                               formProvider: ClientTaxReferenceFormProvider,
-                                              val controllerComponents: MessagesControllerComponents,
                                               view: ClientTaxReferenceView
                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
 
-
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  protected val controllerComponents: MessagesControllerComponents = cc
+  
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       getCountry(waypoints) { country =>
@@ -59,7 +55,7 @@ class ClientTaxReferenceController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       getCountry(waypoints) { country =>
@@ -73,7 +69,7 @@ class ClientTaxReferenceController @Inject()(
           value =>
             for {
               updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientTaxReferencePage, value))
-              _ <- sessionRepository.set(updatedAnswers)
+              _ <- cc.sessionRepository.set(updatedAnswers)
             } yield Redirect(ClientTaxReferencePage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
         )
       }

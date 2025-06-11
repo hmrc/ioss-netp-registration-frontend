@@ -23,7 +23,6 @@ import pages.{BusinessBasedInUKPage, ClientBusinessAddressPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.ClientBusinessAddressView
@@ -33,18 +32,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ClientBusinessAddressController @Inject()(
                                         override val messagesApi: MessagesApi,
-                                        sessionRepository: SessionRepository,
-                                        identify: IdentifierAction,
-                                        getData: DataRetrievalAction,
-                                        requireData: DataRequiredAction,
+                                        cc: AuthenticatedControllerComponents,
                                         formProvider: ClientBusinessAddressFormProvider,
-                                        val controllerComponents: MessagesControllerComponents,
                                         view: ClientBusinessAddressView
                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
 
-  
+  protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       val isUKBased = request.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
@@ -76,7 +71,7 @@ class ClientBusinessAddressController @Inject()(
       
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       val isUKBased = request.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
@@ -91,7 +86,7 @@ class ClientBusinessAddressController @Inject()(
           value =>
             for {
               updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientBusinessAddressPage, value))
-              _ <- sessionRepository.set(updatedAnswers)
+              _ <- cc.sessionRepository.set(updatedAnswers)
             } yield Redirect(ClientBusinessAddressPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
         )
         
@@ -108,7 +103,7 @@ class ClientBusinessAddressController @Inject()(
             value =>
               for {
                 updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientBusinessAddressPage, value))
-                _ <- sessionRepository.set(updatedAnswers)
+                _ <- cc.sessionRepository.set(updatedAnswers)
               } yield Redirect(ClientBusinessAddressPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
           )
         }

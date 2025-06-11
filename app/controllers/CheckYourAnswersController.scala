@@ -17,7 +17,7 @@
 package controllers
 
 import com.google.inject.Inject
-import controllers.actions.{DataRequiredAction, DataRetrievalAction, IdentifierAction}
+import controllers.actions._
 import models.CheckMode
 import pages.{CheckYourAnswersPage, EmptyWaypoints, Waypoint}
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -29,14 +29,13 @@ import views.html.CheckYourAnswersView
 
 class CheckYourAnswersController @Inject()(
                                             override val messagesApi: MessagesApi,
-                                            identify: IdentifierAction,
-                                            getData: DataRetrievalAction,
-                                            requireData: DataRequiredAction,
-                                            val controllerComponents: MessagesControllerComponents,
+                                            cc: AuthenticatedControllerComponents,
                                             view: CheckYourAnswersView
                                           ) extends FrontendBaseController with I18nSupport {
 
-  def onPageLoad(): Action[AnyContent] = (identify andThen getData andThen requireData) {
+  protected val controllerComponents: MessagesControllerComponents = cc
+
+  def onPageLoad(): Action[AnyContent] = cc.identifyAndGetData {
     implicit request =>
 
       val thisPage = CheckYourAnswersPage

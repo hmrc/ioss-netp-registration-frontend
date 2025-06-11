@@ -1,4 +1,4 @@
-/*
+@*
  * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,22 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *@
 
-package models.core
+@this(
+        layout: templates.Layout,
+        govukButton: GovukButton
+)
 
-import play.api.libs.json.{Json, OFormat}
+@()(implicit request: Request[_], messages: Messages)
 
-import java.time.Instant
+@layout(pageTitle = titleNoForm(messages("cannotUseNotAnIntermediary.title"))) {
 
-case class EisErrorResponse(
-                             timestamp: Instant,
-                             error: String,
-                             errorMessage: String
-                           )
-
-object EisErrorResponse {
-
-  implicit val format: OFormat[EisErrorResponse] = Json.format[EisErrorResponse]
+    <h1 class="govuk-heading-l">@messages("cannotUseNotAnIntermediary.heading")</h1>
 
 }

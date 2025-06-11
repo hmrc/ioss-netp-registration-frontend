@@ -197,6 +197,9 @@ ukVatNumberNotFound.title = The VAT number you entered does not match a register
 ukVatNumberNotFound.heading = The VAT number you entered does not match a registered business
 ukVatNumberNotFound.tryAgain = Check you have entered it correctly and try again.
 
+cannotUseNotAnIntermediary.title = You cannot use this service
+cannotUseNotAnIntermediary.heading = You cannot use this service
+
 businessContactDetails.title = Contact details for {0}
 businessContactDetails.heading = Contact details for {0}
 businessContactDetails.p1 =  We''ll use these if we need to send your client information about their account.

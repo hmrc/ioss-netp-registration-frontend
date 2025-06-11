@@ -56,6 +56,7 @@ trait SpecBase
   def emptyUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.copy(vatInfo = Some(vatCustomerInfo))
 
   val vatNumber = "GB123456789"
+  val intermediaryNumber = "IN9001234567"
   val vatCustomerInfo: VatCustomerInfo = {
     VatCustomerInfo(
       registrationDate = LocalDate.now(stubClockAtArbitraryDate),
@@ -81,7 +82,7 @@ trait SpecBase
         bind[DataRequiredAction].to[DataRequiredActionImpl],
         bind[IdentifierAction].to[FakeIdentifierAction],
         bind[DataRetrievalAction].toInstance(new FakeDataRetrievalAction(userAnswers)),
-        bind[Clock].toInstance(clockToBind)
+        bind[Clock].toInstance(clockToBind),
       )
   }
 }

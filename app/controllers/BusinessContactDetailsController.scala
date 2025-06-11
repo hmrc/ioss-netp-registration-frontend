@@ -23,7 +23,6 @@ import pages.{BusinessContactDetailsPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.BusinessContactDetailsView
@@ -33,19 +32,16 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class BusinessContactDetailsController @Inject()(
                                                   override val messagesApi: MessagesApi,
-                                                  sessionRepository: SessionRepository,
-                                                  identify: IdentifierAction,
-                                                  getData: DataRetrievalAction,
-                                                  requireData: DataRequiredAction,
+                                                  cc: AuthenticatedControllerComponents,
                                                   formProvider: BusinessContactDetailsFormProvider,
-                                                  val controllerComponents: MessagesControllerComponents,
                                                   view: BusinessContactDetailsView
                                                 )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with GetClientCompanyName {
 
   private val form: Form[BusinessContactDetails] = formProvider()
+  protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       getClientCompanyName(waypoints) { clientCompanyName =>
@@ -59,7 +55,7 @@ class BusinessContactDetailsController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       getClientCompanyName(waypoints) { clientCompanyName =>
@@ -71,7 +67,7 @@ class BusinessContactDetailsController @Inject()(
           value =>
             for {
               updatedAnswers <- Future.fromTry(request.userAnswers.set(BusinessContactDetailsPage, value))
-              _ <- sessionRepository.set(updatedAnswers)
+              _ <- cc.sessionRepository.set(updatedAnswers)
             } yield Redirect(BusinessContactDetailsPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
         )
       }

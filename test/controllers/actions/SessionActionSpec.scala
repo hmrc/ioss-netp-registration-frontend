@@ -17,17 +17,17 @@
 package controllers.actions
 
 import base.SpecBase
-import play.api.mvc.{Action, AnyContent, BodyParsers, Results}
+import play.api.mvc.{Action, AnyContent, DefaultActionBuilder, Results}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.http.SessionKeys
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class SessionActionSpec extends SpecBase {
 
-  class Harness(action: IdentifierAction) {
-    def onPageLoad(): Action[AnyContent] = action { _ => Results.Ok }
+  class Harness(identify: SessionIdentifierAction, actionBuilder: DefaultActionBuilder) {
+    def onPageLoad(): Action[AnyContent] = (actionBuilder andThen identify) { _ => Results.Ok }
   }
 
   "Session Action" - {
@@ -39,15 +39,15 @@ class SessionActionSpec extends SpecBase {
         val application = applicationBuilder(userAnswers = None).build()
 
         running(application){
-          val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
+          def actionBuilder: DefaultActionBuilder = application.injector.instanceOf[DefaultActionBuilder]
 
-          val sessionAction = new SessionIdentifierAction(bodyParsers)
+          val sessionAction = new SessionIdentifierAction()
 
-          val controller = new Harness(sessionAction)
+          val controller = new Harness(sessionAction, actionBuilder)
 
           val result = controller.onPageLoad()(FakeRequest())
 
-          status(result) mustBe SEE_OTHER
+          status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value must startWith(controllers.routes.JourneyRecoveryController.onPageLoad().url)
         }
       }
@@ -60,11 +60,11 @@ class SessionActionSpec extends SpecBase {
         val application = applicationBuilder(userAnswers = None).build()
 
         running(application) {
-          val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
+          def actionBuilder: DefaultActionBuilder = application.injector.instanceOf[DefaultActionBuilder]
 
-          val sessionAction = new SessionIdentifierAction(bodyParsers)
+          val sessionAction = new SessionIdentifierAction()
 
-          val controller = new Harness(sessionAction)
+          val controller = new Harness(sessionAction, actionBuilder)
 
           val request = FakeRequest().withSession(SessionKeys.sessionId -> "foo")
 

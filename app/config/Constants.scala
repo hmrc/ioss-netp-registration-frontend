@@ -19,4 +19,6 @@ package config
 object Constants {
 
   val maxWebsites: Int = 10
+
+  val intermediaryEnrolmentKey: String = "IntNumber"
 }

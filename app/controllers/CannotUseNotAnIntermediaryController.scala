@@ -16,27 +16,20 @@
 
 package controllers
 
-import controllers.actions.*
-
 import javax.inject.Inject
 import play.api.i18n.{I18nSupport, MessagesApi}
-import pages.{ClientVatNumberPage, Waypoints}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.UseOtherAccountView
+import views.html.CannotUseNotAnIntermediaryView
 
-class UseOtherAccountController @Inject()(
+class CannotUseNotAnIntermediaryController @Inject()(
                                        override val messagesApi: MessagesApi,
-                                       cc: AuthenticatedControllerComponents,
-                                       view: UseOtherAccountView
+                                       val controllerComponents: MessagesControllerComponents,
+                                       view: CannotUseNotAnIntermediaryView
                                      ) extends FrontendBaseController with I18nSupport {
 
-  protected val controllerComponents: MessagesControllerComponents = cc
-  
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData {
+  def onPageLoad: Action[AnyContent] = Action {
     implicit request =>
-
-      val ukVatNumber = request.userAnswers.get(ClientVatNumberPage).getOrElse("")
-      Ok(view(ukVatNumber))
+      Ok(view())
   }
 }

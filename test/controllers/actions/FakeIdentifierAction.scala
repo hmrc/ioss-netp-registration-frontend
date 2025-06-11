@@ -18,14 +18,15 @@ package controllers.actions
 
 import javax.inject.Inject
 import models.requests.IdentifierRequest
-import play.api.mvc._
+import play.api.mvc.*
+import uk.gov.hmrc.auth.core.Enrolments
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeIdentifierAction @Inject()(bodyParsers: PlayBodyParsers) extends IdentifierAction {
 
   override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] =
-    block(IdentifierRequest(request, "12345-credId"))
+    block(IdentifierRequest(request, "12345-credId", Enrolments(Set.empty), "IN9001234567"))
 
   override def parser: BodyParser[AnyContent] =
     bodyParsers.default

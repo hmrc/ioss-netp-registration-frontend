@@ -26,7 +26,6 @@ import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import queries.DeriveNumberOfWebsites
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.AddWebsiteView
 import utils.FutureSyntax.FutureOps
@@ -37,18 +36,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class AddWebsiteController @Inject()(
                                          override val messagesApi: MessagesApi,
-                                         sessionRepository: SessionRepository,
-                                         identify: IdentifierAction,
-                                         getData: DataRetrievalAction,
-                                         requireData: DataRequiredAction,
+                                         cc: AuthenticatedControllerComponents,
                                          formProvider: AddWebsiteFormProvider,
-                                         val controllerComponents: MessagesControllerComponents,
                                          view: AddWebsiteView
                                  )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
   private val form = formProvider()
+  protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
       getNumberOfWebsites(waypoints) {
         number =>
@@ -75,7 +71,7 @@ class AddWebsiteController @Inject()(
     }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       getNumberOfWebsites(waypoints) {
@@ -97,7 +93,7 @@ class AddWebsiteController @Inject()(
             value =>
               for {
                 updatedAnswers <- Future.fromTry(request.userAnswers.set(AddWebsitePage(), value))
-                _              <- sessionRepository.set(updatedAnswers)
+                _              <- cc.sessionRepository.set(updatedAnswers)
               } yield Redirect(AddWebsitePage().navigate(waypoints, updatedAnswers, updatedAnswers).route)
           )
 
