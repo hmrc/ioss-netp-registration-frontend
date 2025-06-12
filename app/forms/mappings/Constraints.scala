@@ -17,10 +17,11 @@
 package forms.mappings
 
 import config.CurrencyFormatter
-import models.Index
-import java.time.LocalDate
 import forms.validation.Validation.utrRegex
+import models.Index
 import play.api.data.validation.{Constraint, Invalid, Valid}
+
+import java.time.LocalDate
 
 trait Constraints {
 
@@ -37,7 +38,7 @@ trait Constraints {
     Constraint {
       input =>
 
-        import ev._
+        import ev.*
 
         if (input >= minimum) {
           Valid
@@ -50,7 +51,7 @@ trait Constraints {
     Constraint {
       input =>
 
-        import ev._
+        import ev.*
 
         if (input <= maximum) {
           Valid
@@ -63,7 +64,7 @@ trait Constraints {
     Constraint {
       input =>
 
-        import ev._
+        import ev.*
 
         if (input >= minimum && input <= maximum) {
           Valid
@@ -130,7 +131,7 @@ trait Constraints {
         }
     }
 
-  protected def maximumCurrency(maximum: BigDecimal, errorKey: String)(implicit ev: Ordering[BigDecimal]): Constraint[BigDecimal] =
+  protected def maximumCurrency(maximum: BigDecimal, errorKey: String)(implicit ev: Ordering[BigDecimal]): Constraint[BigDecimal] = {
     Constraint {
       input =>
         if (input <= maximum) {
@@ -139,20 +140,8 @@ trait Constraints {
           Invalid(errorKey, CurrencyFormatter.currencyFormat(maximum))
         }
     }
-
-
-  protected def notADuplicate[A](index: Index, existingAnswers: Seq[A], errorKey: String, args: Any*): Constraint[A] = {
-
-    val indexedAnswers = existingAnswers.zipWithIndex
-    val filteredAnswers = indexedAnswers.filter(_._2 != index.position)
-
-    Constraint {
-      case answer if filteredAnswers.map(_._1).contains(answer) =>
-        Invalid(errorKey, args: _*)
-      case _ =>
-        Valid
-    }
   }
+
 
   protected def ninoConstraint: Constraint[String] = Constraint("constraints.nino") { input =>
     val normalized = input.replaceAll("\\s", "").toUpperCase
@@ -192,7 +181,7 @@ trait Constraints {
       } else {
         Invalid(errorKey)
       }
-  }
+    }
 
   protected def vatNumberConstraint(errorKey: String): Constraint[String] =
     Constraint { input =>
@@ -205,5 +194,18 @@ trait Constraints {
         Invalid(errorKey)
       }
     }
+
+  protected def notADuplicate[A](index: Index, existingAnswers: Seq[A], errorKey: String, args: Any*): Constraint[A] = {
+
+    val indexedAnswers = existingAnswers.zipWithIndex
+    val filteredAnswers = indexedAnswers.filter(_._2 != index.position)
+
+    Constraint {
+      case answer if filteredAnswers.map(_._1).contains(answer) =>
+        Invalid(errorKey, args: _*)
+      case _ =>
+        Valid
+    }
+  }
 
 }

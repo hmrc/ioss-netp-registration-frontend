@@ -40,7 +40,7 @@ final case class UserAnswers(
       .getOrElse(None)
       .map(derivable.derive)
   }
-  
+
   def set[A](page: Settable[A], value: A)(implicit writes: Writes[A]): Try[UserAnswers] = {
 
     val updatedData = data.setObject(page.path, Json.toJson(value)) match {
@@ -52,7 +52,7 @@ final case class UserAnswers(
 
     updatedData.flatMap {
       d =>
-        val updatedAnswers = copy (data = d)
+        val updatedAnswers = copy(data = d)
         page.cleanup(Some(value), updatedAnswers)
     }
   }
@@ -68,7 +68,7 @@ final case class UserAnswers(
 
     updatedData.flatMap {
       d =>
-        val updatedAnswers = copy (data = d)
+        val updatedAnswers = copy(data = d)
         page.cleanup(None, updatedAnswers)
     }
   }
@@ -83,26 +83,26 @@ object UserAnswers {
 
   val reads: Reads[UserAnswers] = {
 
-    import play.api.libs.functional.syntax._
+    import play.api.libs.functional.syntax.*
 
     (
       (__ \ "_id").read[String] and
-      (__ \ "data").read[JsObject] and
-      (__ \ "vatInfo").readNullable[VatCustomerInfo] and
-      (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
-    ) (UserAnswers.apply _)
+        (__ \ "data").read[JsObject] and
+        (__ \ "vatInfo").readNullable[VatCustomerInfo] and
+        (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
+      )(UserAnswers.apply _)
   }
 
   val writes: OWrites[UserAnswers] = {
 
-    import play.api.libs.functional.syntax._
+    import play.api.libs.functional.syntax.*
 
     (
       (__ \ "_id").write[String] and
-      (__ \ "data").write[JsObject] and
-      (__ \ "vatInfo").writeNullable[VatCustomerInfo] and
-      (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
-    ) (userAnswers => Tuple.fromProductTyped(userAnswers))
+        (__ \ "data").write[JsObject] and
+        (__ \ "vatInfo").writeNullable[VatCustomerInfo] and
+        (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
+      )(userAnswers => Tuple.fromProductTyped(userAnswers))
   }
 
   implicit val format: OFormat[UserAnswers] = OFormat(reads, writes)
