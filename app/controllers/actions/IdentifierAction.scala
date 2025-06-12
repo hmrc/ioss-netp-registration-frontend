@@ -24,6 +24,7 @@ import logging.Logging
 import models.requests.{IdentifierRequest, SessionRequest}
 import play.api.mvc.Results.*
 import play.api.mvc.*
+import services.IntermediaryRegistrationService
 import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.retrieve.*
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
@@ -39,7 +40,8 @@ trait IdentifierAction extends ActionBuilder[IdentifierRequest, AnyContent] with
 class AuthenticatedIdentifierAction @Inject()(
                                                override val authConnector: AuthConnector,
                                                config: FrontendAppConfig,
-                                               val parser: BodyParsers.Default
+                                               val parser: BodyParsers.Default,
+                                               intermediaryRegistrationService: IntermediaryRegistrationService
                                              )
                                              (implicit val executionContext: ExecutionContext) extends IdentifierAction with AuthorisedFunctions with Logging {
   
@@ -52,7 +54,14 @@ class AuthenticatedIdentifierAction @Inject()(
         findIntermediaryNumberFromEnrolments(enrolments) match {
           case Some(intermediaryNumber) =>
             val vrn = findVrnFromEnrolments(enrolments)
-            block(IdentifierRequest(request, internalId, enrolments, vrn, intermediaryNumber))
+            intermediaryRegistrationService.getIntermediaryRegistration().flatMap {
+              case Some(_) =>
+                block(IdentifierRequest(request, internalId, enrolments, vrn, intermediaryNumber))
+              case None =>
+                logger.error(s"No VAT customer info found for VRN: ${vrn.vrn}")
+                Future.failed(new IllegalStateException("Missing VAT customer info"))
+            }
+
          case None =>
            Future.successful(Redirect(routes.CannotUseNotAnIntermediaryController.onPageLoad()))
        }
