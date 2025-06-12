@@ -27,6 +27,7 @@ import play.api.mvc.*
 import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.retrieve.*
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.{HeaderCarrier, UnauthorizedException}
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import utils.FutureSyntax.FutureOps
@@ -48,10 +49,13 @@ class AuthenticatedIdentifierAction @Inject()(
 
     authorised().retrieve(Retrievals.internalId and Retrievals.allEnrolments) {
       case Some(internalId) ~ enrolments =>
-       findIntermediaryNumberFromEnrolments(enrolments) match {
-         case Right(intermediaryNumber) =>
-           block(IdentifierRequest(request, internalId, enrolments, intermediaryNumber))
-         case Left(redirect) =>
+        (findVrnFromEnrolments(enrolments), findIntermediaryNumberFromEnrolments(enrolments)) match {
+         case (Some(vrn), Right(intermediaryNumber)) =>
+           block(IdentifierRequest(request, internalId, enrolments, vrn, intermediaryNumber))
+         case (None, _) =>
+           logger.warn("Missing VAT enrolment")
+           throw new IllegalStateException("Missing VAT enrolment")
+         case (_, Left(redirect)) =>
            Future.successful(redirect)
        }
       case _ =>
@@ -62,6 +66,11 @@ class AuthenticatedIdentifierAction @Inject()(
       case _: AuthorisationException =>
         Redirect(routes.UnauthorisedController.onPageLoad())
     }
+  }
+
+  private def findVrnFromEnrolments(enrolments: Enrolments): Option[Vrn] = {
+    enrolments.enrolments.find(_.key == "HMRC-MTD-VAT")
+      .flatMap(_.identifiers.find(id => id.key == "VRN").map(e => Vrn(e.value)))
   }
   
   private def findIntermediaryNumberFromEnrolments(enrolments: Enrolments): Either[Result, String] = {
