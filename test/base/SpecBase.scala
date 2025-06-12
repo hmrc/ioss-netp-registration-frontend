@@ -18,6 +18,7 @@ package base
 
 import controllers.actions.*
 import generators.Generators
+import models.{Index, UserAnswers}
 import models.domain.VatCustomerInfo
 import models.{BusinessContactDetails, CheckMode, UserAnswers}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -47,6 +48,7 @@ trait SpecBase
     with Generators {
 
   val userAnswersId: String = "12345-credId"
+  def countryIndex(index: Int): Index = Index(index)
 
   val journeyId: String = UUID.randomUUID().toString
 
