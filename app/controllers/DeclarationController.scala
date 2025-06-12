@@ -26,7 +26,6 @@ import pages.Waypoints
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import repositories.SessionRepository
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.DeclarationView
@@ -35,25 +34,22 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class DeclarationController @Inject()(
                                          override val messagesApi: MessagesApi,
-                                         sessionRepository: SessionRepository,
-                                         identify: IdentifierAction,
-                                         getData: DataRetrievalAction,
-                                         requireData: DataRequiredAction,
+                                         cc: AuthenticatedControllerComponents,
                                          formProvider: DeclarationFormProvider,
                                          registrationConnector: RegistrationConnector,
-                                         val controllerComponents: MessagesControllerComponents,
                                          view: DeclarationView
                                  )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetClientCompanyName {
 
   val form: Form[Boolean] = formProvider()
+  protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       getClientCompanyName(waypoints) { clientCompanyName =>
         getIntermediaryName().map { intermediaryOpt =>
           val intermediaryName = intermediaryOpt.getOrElse("")
-          
+
           val preparedForm = request.userAnswers.get(DeclarationPage) match {
             case None => form
             case Some(value) => form.fill(value)
@@ -64,21 +60,21 @@ class DeclarationController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       getClientCompanyName(waypoints) { clientCompanyName =>
         getIntermediaryName().flatMap { intermediaryOpt =>
           val intermediaryName = intermediaryOpt.getOrElse("")
-          
+
           form.bindFromRequest().fold(
             formWithErrors =>
               Future.successful(BadRequest(view(formWithErrors, waypoints, intermediaryName, clientCompanyName))),
-  
+
             value =>
               for {
                 updatedAnswers <- Future.fromTry(request.userAnswers.set(DeclarationPage, value))
-                _ <- sessionRepository.set(updatedAnswers)
+                _ <- cc.sessionRepository.set(updatedAnswers)
               } yield Redirect(DeclarationPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
           )
         }
