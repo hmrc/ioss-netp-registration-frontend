@@ -35,7 +35,7 @@
                 title = Text(messages("error.summary.title")),
                 errorList = form.errors.map { error =>
                     ErrorLink(
-                        href = Some("#checkbox"),
+                        href = Some("#declaration"),
                         content = Text(messages(error.message))
                     )
                 }
@@ -53,11 +53,11 @@
                 name = "declaration",
                 items = Seq(
                     CheckboxItem(
-                        id = Some("checkbox"),
-                        name = Some("checkbox"),
+                        id = Some("declaration"),
+                        name = Some("declaration"),
                         content = Text(messages("declaration.checkbox.text")),
                         value = "true",
-                        checked = form("checkbox").value.contains("true")
+                        checked = form("declaration").value.contains("true")
                     )
                 ),
                 errorMessage = form.errors.headOption.map { error =>
@@ -67,7 +67,7 @@
         )
 
         @govukButton(
-            ButtonViewModel(messages("site.agree"))
+            ButtonViewModel(messages("site.agree")).withAttribute("id", "continue")
         )
     }
 }
