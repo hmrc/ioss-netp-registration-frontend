@@ -49,14 +49,12 @@ class AuthenticatedIdentifierAction @Inject()(
 
     authorised().retrieve(Retrievals.internalId and Retrievals.allEnrolments) {
       case Some(internalId) ~ enrolments =>
-        (findVrnFromEnrolments(enrolments), findIntermediaryNumberFromEnrolments(enrolments)) match {
-         case (Some(vrn), Right(intermediaryNumber)) =>
-           block(IdentifierRequest(request, internalId, enrolments, vrn, intermediaryNumber))
-         case (None, _) =>
-           logger.warn("Missing VAT enrolment")
-           throw new IllegalStateException("Missing VAT enrolment")
-         case (_, Left(redirect)) =>
-           Future.successful(redirect)
+        findIntermediaryNumberFromEnrolments(enrolments) match {
+          case Some(intermediaryNumber) =>
+            val vrn = findVrnFromEnrolments(enrolments)
+            block(IdentifierRequest(request, internalId, enrolments, vrn, intermediaryNumber))
+         case None =>
+           Future.successful(Redirect(routes.CannotUseNotAnIntermediaryController.onPageLoad()))
        }
       case _ =>
         throw new UnauthorizedException("Unable to retrieve internal Id")
@@ -68,19 +66,19 @@ class AuthenticatedIdentifierAction @Inject()(
     }
   }
 
-  private def findVrnFromEnrolments(enrolments: Enrolments): Option[Vrn] = {
+  private def findVrnFromEnrolments(enrolments: Enrolments): Vrn = {
     enrolments.enrolments.find(_.key == "HMRC-MTD-VAT")
       .flatMap(_.identifiers.find(id => id.key == "VRN").map(e => Vrn(e.value)))
+      .getOrElse {
+        logger.warn("User does not have a valid VAT enrolment")
+        throw new IllegalStateException("Missing VAT enrolment")
+      }
   }
   
-  private def findIntermediaryNumberFromEnrolments(enrolments: Enrolments): Either[Result, String] = {
+  private def findIntermediaryNumberFromEnrolments(enrolments: Enrolments): Option[String] = {
     enrolments.enrolments
       .find(_.key == config.intermediaryEnrolment)
       .flatMap(_.identifiers.find(id => id.key == intermediaryEnrolmentKey && id.value.nonEmpty).map(_.value))
-      .toRight {
-        logger.warn("User does not have a valid intermediary enrolment")
-        Redirect(routes.CannotUseNotAnIntermediaryController.onPageLoad())
-      }
   }
 }
 
