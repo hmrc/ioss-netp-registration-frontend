@@ -357,3 +357,6 @@ deleteAllPreviousRegistrations.error.required = Select yes if you want to remove
 
 vatRegisteredInEu.title = Is your business registered for tax in EU countries?
 vatRegisteredInEu.heading = Is your business registered for tax in EU countries?
+
+euCountry.title = Select an EU country where your business is registered for tax
+euCountry.heading = Select an EU country where your business is registered for tax
