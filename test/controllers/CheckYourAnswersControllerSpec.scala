@@ -113,12 +113,37 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency {
 
       "must submit completed answers" in {
 
+        val waypoints: Waypoints = EmptyWaypoints
+        val application = applicationBuilder(userAnswers = Some(completeUserAnswers)).build()
+
+        running(application) {
+
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = false).url)
+
+          val result = route(application, request).value
+
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` CheckYourAnswersPage.navigate(waypoints, completeUserAnswers, completeUserAnswers).url
+        }
       }
 
       "must redirect to the correct page when there is incomplete data" in {
 
+        val waypoints: Waypoints = EmptyWaypoints
+        val incompleteAnswers: UserAnswers = completeUserAnswers
+          .remove(WebsitePage(Index(0))).success.value
 
+        val application = applicationBuilder(userAnswers = Some(incompleteAnswers)).build()
 
+        running(application) {
+
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = true).url)
+
+          val result = route(application, request).value
+
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` WebsitePage(Index(0)).route(waypoints).url
+        }
       }
     }
   }
