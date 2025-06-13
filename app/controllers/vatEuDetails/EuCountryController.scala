@@ -57,10 +57,10 @@ class EuCountryController @Inject()(
       Ok(view(preparedForm, waypoints, countryIndex))
   }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = (identify andThen getData).async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
  
-      val form: Form[Country] = formProvider(countryIndex, request.userAnswers.getOrElse(UserAnswers(request.userId)).get(AllEuDetailsQuery)
+      val form: Form[Country] = formProvider(countryIndex, request.userAnswers.get(AllEuDetailsQuery)
         .getOrElse(Seq.empty).map(_.euCountry))
 
       form.bindFromRequest().fold(
@@ -68,11 +68,11 @@ class EuCountryController @Inject()(
           Future.successful(BadRequest(view(formWithErrors, waypoints, countryIndex))),
 
         value =>
-          val originalAnswers: UserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
+
           for {
-            updatedAnswers <- Future.fromTry(originalAnswers.set(EuCountryPage(countryIndex), value))
+            updatedAnswers <- Future.fromTry(request.userAnswers.set(EuCountryPage(countryIndex), value))
             _              <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(EuCountryPage(countryIndex).navigate(waypoints, originalAnswers, updatedAnswers).route)
+          } yield Redirect(EuCountryPage(countryIndex).navigate(waypoints, request.userAnswers, updatedAnswers).route)
       )
   }
 }
