@@ -30,6 +30,7 @@ import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
+import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, Instant, LocalDate, ZoneId}
 
@@ -57,11 +58,23 @@ trait SpecBase
 
   val vatNumber = "GB123456789"
   val intermediaryNumber = "IN9001234567"
+  val vrn: Vrn = Vrn("123456789")
   val vatCustomerInfo: VatCustomerInfo = {
     VatCustomerInfo(
       registrationDate = LocalDate.now(stubClockAtArbitraryDate),
       desAddress = arbitraryDesAddress.arbitrary.sample.value,
       organisationName = Some("Company name"),
+      individualName = None,
+      singleMarketIndicator = true,
+      deregistrationDecisionDate = None
+    )
+  }
+
+  val intermediaryVatCustomerInfo: VatCustomerInfo = {
+    VatCustomerInfo(
+      registrationDate = LocalDate.now(stubClockAtArbitraryDate),
+      desAddress = arbitraryDesAddress.arbitrary.sample.value,
+      organisationName = Some("Intermediary Company name"),
       individualName = None,
       singleMarketIndicator = true,
       deregistrationDecisionDate = None

@@ -31,7 +31,11 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
                                      (implicit executionContext: ExecutionContext) extends HttpErrorFunctions with Logging {
 
   private val baseUrl: Service = config.get[Service]("microservice.services.ioss-netp-registration")
+  private val intermediaryUrl: Service = config.get[Service]("microservice.services.ioss-intermediary-registration")
 
   def getVatCustomerInfo(ukVatNumber: String)(implicit hc: HeaderCarrier): Future[VatCustomerInfoResponse] =
     httpClientV2.get(url"$baseUrl/vat-information/$ukVatNumber").execute[VatCustomerInfoResponse]
+
+  def getIntermediaryVatCustomerInfo()(implicit hc: HeaderCarrier): Future[VatCustomerInfoResponse] =
+    httpClientV2.get(url"$intermediaryUrl/vat-information").execute[VatCustomerInfoResponse]
 }

@@ -24,9 +24,11 @@ import logging.Logging
 import models.requests.{IdentifierRequest, SessionRequest}
 import play.api.mvc.Results.*
 import play.api.mvc.*
+import services.IntermediaryRegistrationService
 import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.retrieve.*
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.{HeaderCarrier, UnauthorizedException}
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import utils.FutureSyntax.FutureOps
@@ -38,7 +40,8 @@ trait IdentifierAction extends ActionBuilder[IdentifierRequest, AnyContent] with
 class AuthenticatedIdentifierAction @Inject()(
                                                override val authConnector: AuthConnector,
                                                config: FrontendAppConfig,
-                                               val parser: BodyParsers.Default
+                                               val parser: BodyParsers.Default,
+                                               intermediaryRegistrationService: IntermediaryRegistrationService
                                              )
                                              (implicit val executionContext: ExecutionContext) extends IdentifierAction with AuthorisedFunctions with Logging {
   
@@ -48,11 +51,19 @@ class AuthenticatedIdentifierAction @Inject()(
 
     authorised().retrieve(Retrievals.internalId and Retrievals.allEnrolments) {
       case Some(internalId) ~ enrolments =>
-       findIntermediaryNumberFromEnrolments(enrolments) match {
-         case Right(intermediaryNumber) =>
-           block(IdentifierRequest(request, internalId, enrolments, intermediaryNumber))
-         case Left(redirect) =>
-           Future.successful(redirect)
+        findIntermediaryNumberFromEnrolments(enrolments) match {
+          case Some(intermediaryNumber) =>
+            val vrn = findVrnFromEnrolments(enrolments)
+            intermediaryRegistrationService.getIntermediaryRegistration().flatMap {
+              case Some(_) =>
+                block(IdentifierRequest(request, internalId, enrolments, vrn, intermediaryNumber))
+              case None =>
+                logger.error(s"No VAT customer info found for VRN: ${vrn.vrn}")
+                Future.failed(new IllegalStateException("Missing VAT customer info"))
+            }
+
+         case None =>
+           Future.successful(Redirect(routes.CannotUseNotAnIntermediaryController.onPageLoad()))
        }
       case _ =>
         throw new UnauthorizedException("Unable to retrieve internal Id")
@@ -63,15 +74,20 @@ class AuthenticatedIdentifierAction @Inject()(
         Redirect(routes.UnauthorisedController.onPageLoad())
     }
   }
+
+  private def findVrnFromEnrolments(enrolments: Enrolments): Vrn = {
+    enrolments.enrolments.find(_.key == "HMRC-MTD-VAT")
+      .flatMap(_.identifiers.find(id => id.key == "VRN").map(e => Vrn(e.value)))
+      .getOrElse {
+        logger.warn("User does not have a valid VAT enrolment")
+        throw new IllegalStateException("Missing VAT enrolment")
+      }
+  }
   
-  private def findIntermediaryNumberFromEnrolments(enrolments: Enrolments): Either[Result, String] = {
+  private def findIntermediaryNumberFromEnrolments(enrolments: Enrolments): Option[String] = {
     enrolments.enrolments
       .find(_.key == config.intermediaryEnrolment)
       .flatMap(_.identifiers.find(id => id.key == intermediaryEnrolmentKey && id.value.nonEmpty).map(_.value))
-      .toRight {
-        logger.warn("User does not have a valid intermediary enrolment")
-        Redirect(routes.CannotUseNotAnIntermediaryController.onPageLoad())
-      }
   }
 }
 
