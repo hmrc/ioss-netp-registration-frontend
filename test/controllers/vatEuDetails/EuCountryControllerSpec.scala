@@ -82,6 +82,86 @@ class EuCountryControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
+    "must save the answer and redirect to the next page when valid data is submitted" in {
+
+      val mockSessionRepository = mock[AuthenticatedUserAnswersRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+
+      val application =
+        applicationBuilder(userAnswers = Some(updatedAnswers))
+          .overrides(
+            bind[AuthenticatedUserAnswersRepository].toInstance(mockSessionRepository)
+          )
+          .build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, euCountryRoute)
+            .withFormUrlEncodedBody(("value", country.code))
+
+        val result = route(application, request).value
+
+        val expectedAnswers: UserAnswers = updatedAnswers
+          .set(EuCountryPage(countryIndex(0)), country).success.value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` EuCountryPage(countryIndex(0))
+          .navigate(waypoints, emptyUserAnswersWithVatInfo, expectedAnswers).url
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
+      }
+    }
+
+    "must return a Bad Request and errors when invalid data is submitted" in {
+
+      val application = applicationBuilder(userAnswers = Some(updatedAnswers)).build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, euCountryRoute)
+            .withFormUrlEncodedBody(("value", ""))
+
+        val boundForm = form.bind(Map("value" -> ""))
+
+        val view = application.injector.instanceOf[EuCountryView]
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` BAD_REQUEST
+        contentAsString(result) `mustBe` view(boundForm, waypoints, countryIndex(0))(request, messages(application)).toString
+      }
+    }
+
+    "must redirect to Journey Recovery for a GET if no existing data is found" in {
+
+      val application = applicationBuilder(userAnswers = None).build()
+
+      running(application) {
+        val request = FakeRequest(GET, euCountryRoute)
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` JourneyRecoveryPage.route(waypoints).url
+      }
+    }
+
+    "must redirect to Journey Recovery for a POST if no existing data is found" in {
+
+      val application = applicationBuilder(userAnswers = None).build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, euCountryRoute)
+            .withFormUrlEncodedBody(("value", country.code))
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` JourneyRecoveryPage.route(waypoints).url
+      }
+    }
+
 
   }
 }
