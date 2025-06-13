@@ -32,6 +32,6 @@ case object BusinessContactDetailsPage extends QuestionPage[BusinessContactDetai
   }
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
-    CheckYourAnswersPage // TODO -> To next page when implemented
+    CheckYourAnswersPage
   }
 }

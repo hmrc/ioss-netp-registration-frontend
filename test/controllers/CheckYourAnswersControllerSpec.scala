@@ -138,7 +138,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(()).toFuture
 
         running(application) {
-          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints).url)
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = false).url)
 
           val result = route(application, request).value
 
@@ -157,13 +157,37 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Left(InternalServerError).toFuture
 
         running(application) {
-          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints).url)
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = false).url)
 
           val result = route(application, request).value
 
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value `mustBe` ErrorSubmittingPendingRegistrationPage.route(waypoints).url
           verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(completeUserAnswers))(any())
+        }
+      }
+
+      "must redirect to the correct page when there is incomplete data" in {
+
+
+        val incompleteAnswers: UserAnswers = completeUserAnswers
+          .remove(WebsitePage(Index(0))).success.value
+
+        val application = applicationBuilder(userAnswers = Some(incompleteAnswers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(()).toFuture
+
+        running(application) {
+
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = true).url)
+
+          val result = route(application, request).value
+
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` WebsitePage(Index(0)).route(waypoints).url
+          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(incompleteAnswers))(any())
         }
       }
     }
