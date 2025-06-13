@@ -20,19 +20,38 @@ import models.UserAnswers
 import pages.{CheckAnswersPage, Waypoints}
 import play.api.i18n.Messages
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
-import viewmodels.checkAnswers.BusinessContactDetailsSummary
+import viewmodels.WebsiteSummary
+import viewmodels.checkAnswers.*
 import viewmodels.govuk.SummaryListFluency
 
 object CheckYourAnswersSummaries extends SummaryListFluency {
 
+  def getCYAVatDetailsSummaryList(waypoints: Waypoints, answers: UserAnswers, sourcePage: CheckAnswersPage)
+                       (implicit msgs: Messages): Seq[SummaryListRow] = {
+
+    val basedInUkSummaryRow = BusinessBasedInUKSummary.row(waypoints, answers, sourcePage)
+    val hasVatNumberSummaryRow = ClientHasVatNumberSummary.row(waypoints, answers, sourcePage)
+    val vatNumberSummaryRow = ClientVatNumberSummary.row(waypoints, answers, sourcePage)
+    val businessAddressSumaryRow = VatRegistrationDetailsSummary.rowBusinessAddress(waypoints, answers, sourcePage)
+      
+    Seq(
+      basedInUkSummaryRow,
+      hasVatNumberSummaryRow,
+      vatNumberSummaryRow,
+      businessAddressSumaryRow
+    ).flatten
+  }
+  
   def getCYASummaryList(waypoints: Waypoints, answers: UserAnswers, sourcePage: CheckAnswersPage)
                        (implicit msgs: Messages): Seq[SummaryListRow] = {
 
+    val websiteSummaryRow = WebsiteSummary.checkAnswersRow(waypoints, answers, sourcePage)
     val contactDetailsContactNameSummaryRow = BusinessContactDetailsSummary.rowFullName(waypoints, answers, sourcePage)
     val contactDetailsTelephoneSummaryRow = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, answers, sourcePage)
     val contactDetailsEmailSummaryRow = BusinessContactDetailsSummary.rowEmailAddress(waypoints, answers, sourcePage)
 
     Seq(
+      websiteSummaryRow,
       contactDetailsContactNameSummaryRow.map(_.withCssClass("govuk-summary-list__row--no-border")),
       contactDetailsTelephoneSummaryRow.map(_.withCssClass("govuk-summary-list__row--no-border")),
       contactDetailsEmailSummaryRow
