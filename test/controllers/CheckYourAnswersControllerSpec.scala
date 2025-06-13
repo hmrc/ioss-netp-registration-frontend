@@ -17,53 +17,133 @@
 package controllers
 
 import base.SpecBase
-import models.{BusinessContactDetails, UserAnswers}
-import pages.{BusinessContactDetailsPage, CheckYourAnswersPage}
+import models.{BusinessContactDetails, CheckMode, Index, UserAnswers, Website}
+import pages.*
+import pages.website.WebsitePage
 import play.api.i18n.Messages
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import testutils.CheckYourAnswersSummaries.getCYASummaryList
+import testutils.CheckYourAnswersSummaries.{getCYASummaryList, getCYAVatDetailsSummaryList}
+import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
 import viewmodels.govuk.SummaryListFluency
 import views.html.CheckYourAnswersView
 
 class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency {
 
+  private val waypoints: Waypoints = EmptyWaypoints.setNextWaypoint(Waypoint(CheckYourAnswersPage, CheckMode, CheckYourAnswersPage.urlFragment))
+
   private val businessContactDetails: BusinessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
-  private val completeUserAnswers: UserAnswers = emptyUserAnswers
+
+  private val updatedAnswersWithVatInfo = emptyUserAnswersWithVatInfo
+    .set(BusinessBasedInUKPage, true).success.value
+
+  private val completeUserAnswers: UserAnswers = updatedAnswersWithVatInfo
+    .set(WebsitePage(Index(0)), Website("www.test-website.com")).success.value
     .set(BusinessContactDetailsPage, businessContactDetails).success.value
 
   "Check Your Answers Controller" - {
 
-    "must return OK and the correct view for a GET" in {
+    ".onPageLoad" - {
 
-      val application = applicationBuilder(userAnswers = Some(completeUserAnswers)).build()
+      "must return OK and the correct view for a GET" - {
 
-      running(application) {
-        implicit val msgs: Messages = messages(application)
+        "with completed data present" in {
 
-        val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
+          val application = applicationBuilder(userAnswers = Some(completeUserAnswers)).build()
 
-        val result = route(application, request).value
+          running(application) {
+            implicit val msgs: Messages = messages(application)
 
-        val view = application.injector.instanceOf[CheckYourAnswersView]
-        val list = SummaryListViewModel(getCYASummaryList(waypoints, completeUserAnswers, CheckYourAnswersPage))
+            val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
 
-        status(result) `mustBe` OK
-        contentAsString(result) `mustBe` view(list)(request, messages(application)).toString
+            val result = route(application, request).value
+
+            val view = application.injector.instanceOf[CheckYourAnswersView]
+
+            val vatDetailsList: SummaryList = SummaryListViewModel(getCYAVatDetailsSummaryList(waypoints, updatedAnswersWithVatInfo, CheckYourAnswersPage))
+            val list = SummaryListViewModel(getCYASummaryList(waypoints, completeUserAnswers, CheckYourAnswersPage))
+
+            status(result) `mustBe` OK
+            contentAsString(result) `mustBe` view(waypoints, vatDetailsList, list, isValid = true)(request, messages(application)).toString
+          }
+        }
+
+        "with incomplete data" in {
+
+          val missingAnswers: UserAnswers = completeUserAnswers
+            .remove(WebsitePage(Index(0))).success.value
+            .remove(BusinessContactDetailsPage).success.value
+
+          val application = applicationBuilder(userAnswers = Some(missingAnswers)).build()
+
+          running(application) {
+            implicit val msgs: Messages = messages(application)
+
+            val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
+
+            val result = route(application, request).value
+
+            val view = application.injector.instanceOf[CheckYourAnswersView]
+
+            val vatDetailsList: SummaryList = SummaryListViewModel(getCYAVatDetailsSummaryList(waypoints, completeUserAnswers, CheckYourAnswersPage))
+            val list = SummaryListViewModel(getCYASummaryList(waypoints, missingAnswers, CheckYourAnswersPage))
+
+            status(result) `mustBe` OK
+            contentAsString(result) `mustBe` view(waypoints, vatDetailsList, list, isValid = false)(request, messages(application)).toString
+          }
+        }
+      }
+
+      "must redirect to Journey Recovery for a GET if no existing data is found" in {
+
+        val application = applicationBuilder(userAnswers = None).build()
+
+        running(application) {
+          val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
+
+          val result = route(application, request).value
+
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
+        }
       }
     }
 
-    "must redirect to Journey Recovery for a GET if no existing data is found" in {
+    ".onSubmit" - {
 
-      val application = applicationBuilder(userAnswers = None).build()
+      "must submit completed answers" in {
 
-      running(application) {
-        val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
+        val waypoints: Waypoints = EmptyWaypoints
+        val application = applicationBuilder(userAnswers = Some(completeUserAnswers)).build()
 
-        val result = route(application, request).value
+        running(application) {
 
-        status(result) `mustBe` SEE_OTHER
-        redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = false).url)
+
+          val result = route(application, request).value
+
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` CheckYourAnswersPage.navigate(waypoints, completeUserAnswers, completeUserAnswers).url
+        }
+      }
+
+      "must redirect to the correct page when there is incomplete data" in {
+
+        val waypoints: Waypoints = EmptyWaypoints
+        val incompleteAnswers: UserAnswers = completeUserAnswers
+          .remove(WebsitePage(Index(0))).success.value
+
+        val application = applicationBuilder(userAnswers = Some(incompleteAnswers)).build()
+
+        running(application) {
+
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = true).url)
+
+          val result = route(application, request).value
+
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` WebsitePage(Index(0)).route(waypoints).url
+        }
       }
     }
   }

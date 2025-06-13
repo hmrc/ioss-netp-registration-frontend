@@ -17,10 +17,15 @@
 package viewmodels
 
 import models.{Index, UserAnswers}
-import pages.Waypoints
+import pages.{CheckAnswersPage, Waypoints}
 import pages.website.{AddWebsitePage, DeleteWebsitePage, WebsitePage}
+import play.api.i18n.Messages
 import play.twirl.api.HtmlFormat
 import queries.AllWebsites
+import uk.gov.hmrc.govukfrontend.views.viewmodels.content.HtmlContent
+import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
+import viewmodels.govuk.summarylist._
+import viewmodels.implicits._
 
 object WebsiteSummary  {
 
@@ -35,5 +40,32 @@ object WebsiteSummary  {
         ),
         removeButtonEnabled = true
       )
+    }
+
+  def checkAnswersRow(
+                       waypoints: Waypoints,
+                       answers: UserAnswers,
+                       sourcePage: CheckAnswersPage
+                     )(implicit messages: Messages): Option[SummaryListRow] =
+    answers.get(AllWebsites).map {
+      websites =>
+
+        val value = websites.map {
+          website =>
+            HtmlFormat.escape(website.site)
+        }.mkString("<br/>")
+
+        val addWebsitePageChangeUrl = AddWebsitePage().changeLink(waypoints, sourcePage).url
+
+        val listRowViewModel = SummaryListRowViewModel(
+          key = "website.checkYourAnswersLabel",
+          value = ValueViewModel(HtmlContent(value)),
+          actions = Seq(
+            ActionItemViewModel("site.change", addWebsitePageChangeUrl)
+              .withVisuallyHiddenText(messages("website.change.hidden"))
+          )
+        )
+
+        listRowViewModel
     }
 }

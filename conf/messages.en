@@ -34,6 +34,8 @@ index.guidance = Welcome to your new frontend. Please see the README file for a 
 
 checkYourAnswers.title = Check your answers
 checkYourAnswers.heading = Check your answers
+checkYourAnswers.vatRegistrationDetails.heading = VAT registration details
+checkYourAnswers.details.heading = Import One Stop Shop details
 
 journeyRecovery.continue.title = Sorry, there is a problem with the service
 journeyRecovery.continue.heading = Sorry, there is a problem with the service
@@ -51,7 +53,7 @@ unauthorised.heading = You can’t access this service with this account
 
 website.title = Enter a website your client uses to sell goods
 website.heading = Enter a website your client uses to sell goods
-website.checkYourAnswersLabel = Website address
+website.checkYourAnswersLabel = Trading websites
 website.error.required = Enter a website address
 website.error.length = Website address must be 250 characters or less
 website.error.duplicate = You entered this website address already. Enter a different one.
@@ -227,3 +229,9 @@ declaration.p1 = I, {0}, agree to act as an intermediary on behalf of {1} for th
 declaration.p2 = I understand that we are joint and severally liable for any debts that we may incur on this registration.
 declaration.checkbox.text = I declare that the information I''ve provided is correct and complete to the best of my knowledge.
 declaration.error.required = Agree to the declaration to continue
+
+error.missing_answers = Some of your information is missing. You must complete this before you can submit your changes.
+error.missing_answers_header = Some information is missing.
+error.missing_answers_prompt = You need to complete the missing information for {0} before you continue.
+error.missing_answers_prompt.general = You need to complete the missing information before you continue.
+error.resolve_missing_answers = Resolve missing answers
