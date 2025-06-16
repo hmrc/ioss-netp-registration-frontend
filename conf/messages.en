@@ -360,3 +360,9 @@ vatRegisteredInEu.heading = Is your business registered for tax in EU countries?
 
 euCountry.title = Select an EU country where your business is registered for tax
 euCountry.heading = Select an EU country where your business is registered for tax
+
+hasFixedEstablishment.title = Does your business have a fixed establishment in {0}?
+hasFixedEstablishment.heading = Does your business have a fixed establishment in {0}?
+hasFixedEstablishment.checkYourAnswersLabel = Has fixed establishment
+hasFixedEstablishment.error.required = Select yes if your business has a fixed establishment in {0}
+hasFixedEstablishment.change.hidden = if your business has a fixed establishment in {0}
