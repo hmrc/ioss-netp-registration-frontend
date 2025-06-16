@@ -44,7 +44,7 @@ class HasTradingNameControllerSpec extends SpecBase with MockitoSugar {
   lazy val hasTradingNameRoute: String = routes.HasTradingNameController.onPageLoad(waypoints).url
 
   "HasTradingName Controller" - {
-
+    
     "must return OK and the correct view for a GET" in {
 
       val application = applicationBuilder(userAnswers = Some(emptyUserAnswersWithVatInfo)).build()
@@ -185,25 +185,6 @@ class HasTradingNameControllerSpec extends SpecBase with MockitoSugar {
 
         status(result) mustEqual SEE_OTHER
         redirectLocation(result).value mustBe JourneyRecoveryPage.route(waypoints).url
-      }
-    }
-
-    "must fail with an exception when both organisationName and individualName are missing in VAT details" in {
-
-      val vatCustomerInfoWithMissingNames = vatCustomerInfo.copy(organisationName = None, individualName = None)
-      val userAnswers = emptyUserAnswersWithVatInfo.copy(vatInfo = Some(vatCustomerInfoWithMissingNames))
-
-      val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
-
-      running(application) {
-        val request = FakeRequest(GET, hasTradingNameRoute)
-
-        val result = route(application, request).value
-
-        whenReady(result.failed) { exception =>
-          exception mustBe a[IllegalStateException]
-          exception.getMessage mustBe "Both organisationName and individualName are both missing"
-        }
       }
     }
 

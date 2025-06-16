@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+  
 package controllers.tradingNames
 
 import base.SpecBase
@@ -28,7 +29,7 @@ import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import repositories.AuthenticatedUserAnswersRepository
+import repositories.SessionRepository
 import utils.FutureSyntax.FutureOps
 import views.html.tradingNames.DeleteTradingNameView
 
@@ -44,12 +45,11 @@ class DeleteTradingNameControllerSpec extends SpecBase with MockitoSugar {
 
   lazy val deleteTradingNameRoute: String = routes.DeleteTradingNameController.onPageLoad(waypoints, index).url
 
-  private val answers = basicUserAnswersWithVatInfo.set(TradingNamePage(index), tradingName).success.value
+  private val answers = emptyUserAnswersWithVatInfo.set(TradingNamePage(Index(0)), tradingName).success.value
 
   "DeleteTradingName Controller" - {
 
     "must return OK and the correct view for a GET" in {
-
       val application = applicationBuilder(userAnswers = Some(answers)).build()
 
       running(application) {
@@ -66,14 +66,14 @@ class DeleteTradingNameControllerSpec extends SpecBase with MockitoSugar {
 
     "must delete a record and redirect to the next page when the user answers Yes" in {
 
-      val mockSessionRepository = mock[AuthenticatedUserAnswersRepository]
+      val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
       val application =
         applicationBuilder(userAnswers = Some(answers))
           .overrides(
-            bind[AuthenticatedUserAnswersRepository].toInstance(mockSessionRepository)
+            bind[SessionRepository].toInstance(mockSessionRepository)
           )
           .build()
 
@@ -93,14 +93,14 @@ class DeleteTradingNameControllerSpec extends SpecBase with MockitoSugar {
 
     "must not delete a record, then redirect to the next page when the user answers No" in {
 
-      val mockSessionRepository = mock[AuthenticatedUserAnswersRepository]
+      val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
       val application =
         applicationBuilder(userAnswers = Some(answers))
           .overrides(
-            bind[AuthenticatedUserAnswersRepository].toInstance(mockSessionRepository)
+            bind[SessionRepository].toInstance(mockSessionRepository)
           )
           .build()
 
@@ -118,7 +118,7 @@ class DeleteTradingNameControllerSpec extends SpecBase with MockitoSugar {
     }
 
     "must return a Bad Request and errors when invalid data is submitted" in {
-
+      //TODO - SCG Not working- Need fixing
       val application = applicationBuilder(userAnswers = Some(answers)).build()
 
       running(application) {

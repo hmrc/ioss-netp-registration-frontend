@@ -19,19 +19,20 @@ package controllers.tradingNames
 import base.SpecBase
 import forms.tradingNames.AddTradingNameFormProvider
 import models.{Index, TradingName, UserAnswers}
-import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.tradingNames.{AddTradingNamePage, TradingNamePage}
 import pages.{EmptyWaypoints, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
-import play.api.inject.bind
+import play.api.inject
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import repositories.AuthenticatedUserAnswersRepository
-import utils.FutureSyntax.FutureOps
+import repositories.SessionRepository
 import viewmodels.checkAnswers.tradingNames.TradingNameSummary
 import views.html.tradingNames.AddTradingNameView
+
+import scala.concurrent.Future
 
 
 class AddTradingNameControllerSpec extends SpecBase with MockitoSugar {
@@ -42,7 +43,7 @@ class AddTradingNameControllerSpec extends SpecBase with MockitoSugar {
   val formProvider = new AddTradingNameFormProvider()
   val form: Form[Boolean] = formProvider()
 
-  private val answers = basicUserAnswersWithVatInfo.set(TradingNamePage(Index(0)), TradingName("foo")).success.value
+  private val answers = emptyUserAnswersWithVatInfo.set(TradingNamePage(Index(0)), TradingName("foo")).success.value
 
   lazy val addTradingNameRoute: String = routes.AddTradingNameController.onPageLoad(waypoints).url
 
@@ -62,7 +63,7 @@ class AddTradingNameControllerSpec extends SpecBase with MockitoSugar {
         val list = TradingNameSummary.addToListRows(waypoints, answers, AddTradingNamePage())
 
         status(result) `mustBe` OK
-        contentAsString(result) mustBe view(form, waypoints, list, canAddTradingNames = true, None, None, 1)(request, messages(application)).toString
+        contentAsString(result) mustBe view(form, waypoints, list, canAddTradingNames = true)(request, messages(application)).toString
       }
     }
 
@@ -84,12 +85,12 @@ class AddTradingNameControllerSpec extends SpecBase with MockitoSugar {
         val result = route(application, request).value
 
         status(result) `mustBe` OK
-        contentAsString(result) mustBe view(form.fill(true), waypoints, list, canAddTradingNames = false, None, None, 1)(request, messages(application)).toString
+        contentAsString(result) mustBe view(form.fill(true), waypoints, list, canAddTradingNames = false)(request, messages(application)).toString
       }
     }
 
     "must allow adding a trading name when just below the maximum number of trading names" in {
-      
+
       val userAnswers = (0 to 8).foldLeft(answers) { case (userAnswers: UserAnswers, index: Int) =>
         userAnswers.set(TradingNamePage(Index(index)), TradingName("foo")).success.value
       }
@@ -106,20 +107,20 @@ class AddTradingNameControllerSpec extends SpecBase with MockitoSugar {
         val result = route(application, request).value
 
         status(result) `mustBe` OK
-        contentAsString(result) mustBe view(form, waypoints, list, canAddTradingNames = true, None, None, 1)(request, messages(application)).toString
+        contentAsString(result) mustBe view(form, waypoints, list, canAddTradingNames = true)(request, messages(application)).toString
       }
     }
 
     "must redirect to the next page when valid data is submitted" in {
 
-      val mockSessionRepository = mock[AuthenticatedUserAnswersRepository]
+      val mockSessionRepository = mock[SessionRepository]
 
-      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
 
       val application =
         applicationBuilder(userAnswers = Some(answers))
           .overrides(
-            bind[AuthenticatedUserAnswersRepository].toInstance(mockSessionRepository)
+            inject.bind[SessionRepository].toInstance(mockSessionRepository)
           )
           .build()
 
@@ -137,28 +138,27 @@ class AddTradingNameControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
-    "must return a Bad Request and errors when invalid data is submitted" in {
+      "must return a Bad Request and errors when invalid data is submitted" in {
 
       val application = applicationBuilder(userAnswers = Some(answers)).build()
 
       running(application) {
-        val request =
-          FakeRequest(POST, addTradingNameRoute)
-            .withFormUrlEncodedBody(("value", ""))
+      val request =
+      FakeRequest(POST, addTradingNameRoute)
+      .withFormUrlEncodedBody(("value", ""))
 
-        val boundForm = form.bind(Map("value" -> ""))
+      val boundForm = form.bind(Map("value" -> ""))
 
-        val view = application.injector.instanceOf[AddTradingNameView]
+      val view = application.injector.instanceOf[AddTradingNameView]
 
-        val list = TradingNameSummary.addToListRows(waypoints, answers, AddTradingNamePage())
+       val list = TradingNameSummary.addToListRows(waypoints, answers, AddTradingNamePage())
 
-        val result = route(application, request).value
+      val result = route(application, request).value
 
-        status(result) `mustBe` BAD_REQUEST
-        contentAsString(result) mustBe view(boundForm, waypoints, list, canAddTradingNames = true, None, None, 1)(request, messages(application)).toString
+      status(result) `mustBe` BAD_REQUEST
+      contentAsString(result) mustBe view(boundForm, waypoints, list, canAddTradingNames = true)(request, messages(application)).toString
       }
-    }
-
+      }
     "must redirect to Journey Recovery for a GET if no existing data is found" in {
 
       val application = applicationBuilder(userAnswers = None).build()

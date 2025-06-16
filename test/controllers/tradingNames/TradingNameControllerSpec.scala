@@ -29,7 +29,7 @@ import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import repositories.AuthenticatedUserAnswersRepository
+import repositories.SessionRepository
 import utils.FutureSyntax.FutureOps
 import views.html.tradingNames.TradingNameView
 
@@ -50,7 +50,7 @@ class TradingNameControllerSpec extends SpecBase with MockitoSugar {
 
     "must return OK and the correct view for a GET" in {
 
-      val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo)).build()
+      val application = applicationBuilder(userAnswers = Some(emptyUserAnswersWithVatInfo)).build()
 
       running(application) {
         val request = FakeRequest(GET, tradingNameRoute)
@@ -66,7 +66,7 @@ class TradingNameControllerSpec extends SpecBase with MockitoSugar {
 
     "must populate the view correctly on a GET when the question has previously been answered" in {
 
-      val userAnswers = basicUserAnswersWithVatInfo.set(TradingNamePage(index), TradingName("answer")).success.value
+      val userAnswers = emptyUserAnswersWithVatInfo.set(TradingNamePage(index), TradingName("answer")).success.value
 
       val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
 
@@ -84,14 +84,14 @@ class TradingNameControllerSpec extends SpecBase with MockitoSugar {
 
     "must redirect to the next page when valid data is submitted" in {
 
-      val mockSessionRepository = mock[AuthenticatedUserAnswersRepository]
+      val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
       val application =
-        applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
+        applicationBuilder(userAnswers = Some(emptyUserAnswersWithVatInfo))
           .overrides(
-            bind[AuthenticatedUserAnswersRepository].toInstance(mockSessionRepository)
+            bind[SessionRepository].toInstance(mockSessionRepository)
           )
           .build()
 
@@ -101,7 +101,7 @@ class TradingNameControllerSpec extends SpecBase with MockitoSugar {
             .withFormUrlEncodedBody(("value", companyName))
 
         val result = route(application, request).value
-        val expectedAnswers = basicUserAnswersWithVatInfo.set(TradingNamePage(index), TradingName(companyName)).success.value
+        val expectedAnswers = emptyUserAnswersWithVatInfo.set(TradingNamePage(index), TradingName(companyName)).success.value
         
         status(result) mustEqual SEE_OTHER
         redirectLocation(result).value mustBe TradingNamePage(index).navigate(waypoints, emptyUserAnswersWithVatInfo, expectedAnswers).url
@@ -111,7 +111,7 @@ class TradingNameControllerSpec extends SpecBase with MockitoSugar {
 
     "must return a Bad Request and errors when invalid data is submitted" in {
 
-      val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo)).build()
+      val application = applicationBuilder(userAnswers = Some(emptyUserAnswersWithVatInfo)).build()
 
       running(application) {
         val request =
@@ -161,7 +161,7 @@ class TradingNameControllerSpec extends SpecBase with MockitoSugar {
 
     "must return NOT_FOUND for a GET with an index of position 10 or greater" in {
 
-      val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo)).build()
+      val application = applicationBuilder(userAnswers = Some(emptyUserAnswersWithVatInfo)).build()
       val highIndex = Gen.choose(10, Int.MaxValue).map(Index(_)).sample.value
 
       running(application) {
@@ -176,7 +176,7 @@ class TradingNameControllerSpec extends SpecBase with MockitoSugar {
 
     "must return NOT_FOUND for a POST with an index of position 10 or greater" in {
 
-      val answers = (0 to 9).foldLeft(basicUserAnswersWithVatInfo) { (userAnswers: UserAnswers, index: Int) =>
+      val answers = (0 to 9).foldLeft(emptyUserAnswersWithVatInfo) { (userAnswers: UserAnswers, index: Int) =>
         userAnswers.set(TradingNamePage(Index(index)), TradingName("foo")).success.value
       }
 

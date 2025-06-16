@@ -18,7 +18,7 @@ package controllers.tradingNames
 
 import base.SpecBase
 import forms.tradingNames.DeleteAllTradingNamesFormProvider
-import models.{Index, UserAnswers}
+import models.{Index, TradingName, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
@@ -29,7 +29,7 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import queries.tradingNames.AllTradingNamesQuery
-import repositories.AuthenticatedUserAnswersRepository
+import repositories.SessionRepository
 import utils.FutureSyntax.FutureOps
 import views.html.tradingNames.DeleteAllTradingNamesView
 
@@ -39,9 +39,9 @@ class DeleteAllTradingNamesControllerSpec extends SpecBase with MockitoSugar {
   val form: Form[Boolean] = formProvider()
 
   private val waypoints: Waypoints = EmptyWaypoints
-  private val companyName = arbitraryTradingName.arbitrary.sample.value
+  private val companyName = TradingName("Company Name")
 
-  private val answers: UserAnswers = basicUserAnswersWithVatInfo
+  private val answers: UserAnswers = emptyUserAnswersWithVatInfo
     .set(TradingNamePage(Index(0)), companyName).success.value
     .set(TradingNamePage(Index(1)), companyName).success.value
 
@@ -51,7 +51,7 @@ class DeleteAllTradingNamesControllerSpec extends SpecBase with MockitoSugar {
 
     "must return OK and the correct view for a GET" in {
 
-      val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo)).build()
+      val application = applicationBuilder(userAnswers = Some(emptyUserAnswersWithVatInfo)).build()
 
       running(application) {
         val request = FakeRequest(GET, deleteAllTradingNamesRoute)
@@ -67,14 +67,14 @@ class DeleteAllTradingNamesControllerSpec extends SpecBase with MockitoSugar {
 
     "must remove all trading names and redirect to the next page when the user answers Yes" in {
 
-      val mockSessionRepository = mock[AuthenticatedUserAnswersRepository]
+      val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
       val application =
         applicationBuilder(userAnswers = Some(answers))
           .overrides(
-            bind[AuthenticatedUserAnswersRepository].toInstance(mockSessionRepository)
+            bind[SessionRepository].toInstance(mockSessionRepository)
           )
           .build()
 
@@ -97,14 +97,14 @@ class DeleteAllTradingNamesControllerSpec extends SpecBase with MockitoSugar {
 
     "must not remove all trading names and redirect to the next page when the user answers No" in {
 
-      val mockSessionRepository = mock[AuthenticatedUserAnswersRepository]
+      val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
       val application =
         applicationBuilder(userAnswers = Some(answers))
           .overrides(
-            bind[AuthenticatedUserAnswersRepository].toInstance(mockSessionRepository)
+            bind[SessionRepository].toInstance(mockSessionRepository)
           )
           .build()
 
