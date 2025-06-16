@@ -18,46 +18,46 @@ package models
 
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.OptionValues
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.{JsError, JsString, Json}
 
-class PreviousSchemeSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with OptionValues {
+class PreviousSchemeTypeSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with OptionValues {
 
-  "PreviousScheme" - {
+  "PreviousSchemeType" - {
 
     "must deserialise valid values" in {
 
-      val gen = Gen.oneOf(PreviousScheme.values.toSeq)
+      val gen = Gen.oneOf(PreviousSchemeType.values)
 
       forAll(gen) {
-        previousScheme =>
+        previousSchemeType =>
 
-          JsString(previousScheme.toString).validate[PreviousScheme].asOpt.value mustEqual previousScheme
+          JsString(previousSchemeType.toString).validate[PreviousSchemeType].asOpt.value mustEqual previousSchemeType
       }
     }
 
     "must fail to deserialise invalid values" in {
 
-      val gen = arbitrary[String] suchThat (!PreviousScheme.values.map(_.toString).contains(_))
+      val gen = arbitrary[String] suchThat (!PreviousSchemeType.values.map(_.toString).contains(_))
 
       forAll(gen) {
         invalidValue =>
 
-          JsString(invalidValue).validate[PreviousScheme] mustEqual JsError("error.invalid")
+          JsString(invalidValue).validate[PreviousSchemeType] mustEqual JsError("error.invalid")
       }
     }
 
     "must serialise" in {
 
-      val gen = Gen.oneOf(PreviousScheme.values.toSeq)
+      val gen = Gen.oneOf(PreviousSchemeType.values)
 
       forAll(gen) {
-        previousScheme =>
+        previousSchemeType =>
 
-          Json.toJson(previousScheme) mustEqual JsString(previousScheme.toString)
+          Json.toJson(previousSchemeType) mustEqual JsString(previousSchemeType.toString)
       }
     }
   }

@@ -14,10 +14,20 @@
  * limitations under the License.
  */
 
-package pages
+package testutils
 
-trait AddToListSection
+import base.SpecBase
+import models.Country
+import models.etmp._
+import org.scalacheck.Arbitrary.arbitrary
 
-object WebsiteSection extends AddToListSection
-object ClientBusinessNameSection extends AddToListSection
-object PreviousSchemeSection extends AddToListSection
+object RegistrationData extends SpecBase {
+
+  val etmpEuPreviousRegistrationDetails: EtmpPreviousEuRegistrationDetails = EtmpPreviousEuRegistrationDetails(
+    issuedBy = arbitrary[Country].sample.value.code,
+    registrationNumber = arbitrary[String].sample.value,
+    schemeType = arbitrary[SchemeType].sample.value,
+    intermediaryNumber = Some(arbitrary[String].sample.value)
+  )
+  
+}

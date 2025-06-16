@@ -18,6 +18,7 @@ package generators
 
 import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
+import models.etmp.SchemeType
 import models.{BusinessContactDetails, ClientBusinessName, Country, DesAddress, InternationalAddress}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.{choose, listOfN}
@@ -27,11 +28,7 @@ import org.scalatest.EitherValues
 import java.time.{Instant, LocalDate, ZoneOffset}
 
 trait ModelGenerators extends EitherValues {
-
-  implicit lazy val arbitraryPreviousScheme: Arbitrary[PreviousScheme] =
-    Arbitrary {
-      Gen.oneOf(PreviousScheme.values.toSeq)
-    }
+  
   private val maxFieldLength: Int = 35
 
   private def commonFieldString(maxLength: Int): Gen[String] = (for {
@@ -165,4 +162,9 @@ trait ModelGenerators extends EitherValues {
       }
     }
   }
+
+  implicit lazy val arbitrarySchemeType: Arbitrary[SchemeType] =
+    Arbitrary {
+      Gen.oneOf(SchemeType.values)
+    }
 }

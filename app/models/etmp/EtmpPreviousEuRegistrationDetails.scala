@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package forms.previousRegistrations
+package models.etmp
 
-import forms.mappings.Mappings
-import models.PreviousScheme
-import play.api.data.Form
+import play.api.libs.json.{Json, OFormat}
 
-import javax.inject.Inject
+case class EtmpPreviousEuRegistrationDetails(
+                                              issuedBy: String,
+                                              registrationNumber: String,
+                                              schemeType: SchemeType,
+                                              intermediaryNumber: Option[String] = None
+                                            )
 
-class PreviousSchemeFormProvider @Inject() extends Mappings {
+object EtmpPreviousEuRegistrationDetails {
 
-  def apply(): Form[PreviousScheme] =
-    Form(
-      "value" -> enumerable[PreviousScheme]("previousScheme.error.required")
-    )
+  implicit val format: OFormat[EtmpPreviousEuRegistrationDetails] = Json.format[EtmpPreviousEuRegistrationDetails]
 }

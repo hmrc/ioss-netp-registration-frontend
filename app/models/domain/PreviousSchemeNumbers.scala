@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
-package pages
+package models.domain
 
-trait AddToListSection
+import play.api.libs.json.{Json, OFormat}
 
-object WebsiteSection extends AddToListSection
-object ClientBusinessNameSection extends AddToListSection
-object PreviousSchemeSection extends AddToListSection
+case class PreviousSchemeNumbers(
+                                  previousSchemeNumber: String,
+                                  previousIntermediaryNumber: Option[String]
+                                )
+
+object PreviousSchemeNumbers {
+  implicit val format: OFormat[PreviousSchemeNumbers] = Json.format[PreviousSchemeNumbers]
+}

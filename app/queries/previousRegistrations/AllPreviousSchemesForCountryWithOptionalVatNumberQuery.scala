@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 
-package pages
+package queries.previousRegistrations
 
-trait AddToListSection
+import models.Index
+import models.previousRegistrations.SchemeDetailsWithOptionalVatNumber
+import play.api.libs.json.JsPath
+import queries.{Gettable, Settable}
 
-object WebsiteSection extends AddToListSection
-object ClientBusinessNameSection extends AddToListSection
-object PreviousSchemeSection extends AddToListSection
+case class AllPreviousSchemesForCountryWithOptionalVatNumberQuery(index: Index) extends Gettable[List[SchemeDetailsWithOptionalVatNumber]]
+  with Settable[List[SchemeDetailsWithOptionalVatNumber]] {
+
+  override def path: JsPath = JsPath \ "previousRegistrations" \ index.position \ "previousSchemesDetails"
+}
+

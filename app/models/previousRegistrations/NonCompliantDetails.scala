@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 
-package pages
+package models.previousRegistrations
 
-trait AddToListSection
+import play.api.libs.json.*
 
-object WebsiteSection extends AddToListSection
-object ClientBusinessNameSection extends AddToListSection
-object PreviousSchemeSection extends AddToListSection
+case class NonCompliantDetails(
+                                nonCompliantReturns: Option[Int],
+                                nonCompliantPayments: Option[Int]
+                              )
+
+object NonCompliantDetails {
+
+  implicit val format: OFormat[NonCompliantDetails] = Json.format[NonCompliantDetails]
+}
