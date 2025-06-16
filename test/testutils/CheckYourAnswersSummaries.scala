@@ -33,12 +33,24 @@ object CheckYourAnswersSummaries extends SummaryListFluency {
     val hasVatNumberSummaryRow = ClientHasVatNumberSummary.row(waypoints, answers, sourcePage)
     val vatNumberSummaryRow = ClientVatNumberSummary.row(waypoints, answers, sourcePage)
     val businessAddressSumaryRow = VatRegistrationDetailsSummary.rowBusinessAddress(waypoints, answers, sourcePage)
-      
+    val clientHasUtrNumberSummaryRow = ClientHasUtrNumberSummary.row(waypoints, answers, sourcePage)
+    val clientUtrNumberSummaryRow = ClientUtrNumberSummary.row(waypoints, answers, sourcePage)
+    val clientNinoNumberSummaryRow = ClientsNinoNumberSummary.row(waypoints, answers, sourcePage)
+    val clientTaxReferenceSummaryRow = ClientTaxReferenceSummary.row(waypoints, answers, sourcePage)
+    val clientBusinessNameSummaryRow = ClientBusinessNameSummary.row(waypoints, answers, sourcePage)
+    val clientsBusinessAddressSummaryRow = ClientBusinessAddressSummary.row(waypoints, answers, sourcePage)
+    
     Seq(
       basedInUkSummaryRow,
       hasVatNumberSummaryRow,
       vatNumberSummaryRow,
-      businessAddressSumaryRow
+      businessAddressSumaryRow,
+      clientHasUtrNumberSummaryRow,
+      clientUtrNumberSummaryRow,
+      clientNinoNumberSummaryRow,
+      clientTaxReferenceSummaryRow,
+      clientBusinessNameSummaryRow,
+      clientsBusinessAddressSummaryRow
     ).flatten
   }
   

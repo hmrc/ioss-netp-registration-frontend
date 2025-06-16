@@ -17,7 +17,7 @@
 package controllers
 
 import base.SpecBase
-import models.{BusinessContactDetails, CheckMode, Index, UserAnswers, Website}
+import models.*
 import pages.*
 import pages.website.WebsitePage
 import play.api.i18n.Messages
@@ -36,6 +36,8 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency {
 
   private val updatedAnswersWithVatInfo = emptyUserAnswersWithVatInfo
     .set(BusinessBasedInUKPage, true).success.value
+    .set(ClientHasVatNumberPage, true).success.value
+    .set(ClientVatNumberPage, vatNumber).success.value
 
   private val completeUserAnswers: UserAnswers = updatedAnswersWithVatInfo
     .set(WebsitePage(Index(0)), Website("www.test-website.com")).success.value
@@ -71,6 +73,9 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency {
         "with incomplete data" in {
 
           val missingAnswers: UserAnswers = completeUserAnswers
+            .remove(BusinessBasedInUKPage).success.value
+            .remove(ClientHasVatNumberPage).success.value
+            .remove(ClientVatNumberPage).success.value
             .remove(WebsitePage(Index(0))).success.value
             .remove(BusinessContactDetailsPage).success.value
 
@@ -85,7 +90,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency {
 
             val view = application.injector.instanceOf[CheckYourAnswersView]
 
-            val vatDetailsList: SummaryList = SummaryListViewModel(getCYAVatDetailsSummaryList(waypoints, completeUserAnswers, CheckYourAnswersPage))
+            val vatDetailsList: SummaryList = SummaryListViewModel(getCYAVatDetailsSummaryList(waypoints, missingAnswers, CheckYourAnswersPage))
             val list = SummaryListViewModel(getCYASummaryList(waypoints, missingAnswers, CheckYourAnswersPage))
 
             status(result) `mustBe` OK
