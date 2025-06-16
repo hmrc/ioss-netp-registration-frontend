@@ -18,9 +18,11 @@ package utils
 
 import base.SpecBase
 import models.requests.DataRequest
-import models.{Index, UserAnswers, Website}
+import models.*
 import org.mockito.Mockito.when
+import org.scalacheck.Gen
 import org.scalatestplus.mockito.MockitoSugar
+import pages.*
 import pages.website.WebsitePage
 import play.api.mvc.AnyContent
 import play.api.mvc.Results.Redirect
@@ -30,7 +32,28 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
 
   private object CompletionChecksTests extends CompletionChecks
 
+  private val clientBusinessName: ClientBusinessName = ClientBusinessName(vatCustomerInfo.organisationName.value)
+  private val countries: Seq[Country] = Gen.listOf(arbitraryCountry.arbitrary).sample.value
+  private val country: Country = Gen.oneOf(countries).sample.value
+  private val businessAddress: InternationalAddress = InternationalAddress(
+    line1 = "line-1",
+    line2 = None,
+    townOrCity = "town-or-city",
+    stateOrRegion = None,
+    postCode = None,
+    country = Some(country)
+  )
+
   private val validAnswers: UserAnswers = emptyUserAnswersWithVatInfo
+    .set(BusinessBasedInUKPage, true).success.value
+    .set(ClientHasVatNumberPage, true).success.value
+    .set(ClientVatNumberPage, vatNumber).success.value
+    .set(ClientHasUtrNumberPage, true).success.value
+    .set(ClientUtrNumberPage, utr).success.value
+    .set(ClientsNinoNumberPage, nino).success.value
+    .set(ClientTaxReferencePage, taxReference).success.value
+    .set(ClientBusinessNamePage, clientBusinessName).success.value
+    .set(ClientBusinessAddressPage, businessAddress).success.value
     .set(WebsitePage(Index(0)), Website("www.test-website.com")).success.value
 
 

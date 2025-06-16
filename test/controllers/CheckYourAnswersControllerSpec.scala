@@ -47,6 +47,8 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
 
   private val updatedAnswersWithVatInfo = emptyUserAnswersWithVatInfo
     .set(BusinessBasedInUKPage, true).success.value
+    .set(ClientHasVatNumberPage, true).success.value
+    .set(ClientVatNumberPage, vatNumber).success.value
 
   private val completeUserAnswers: UserAnswers = updatedAnswersWithVatInfo
     .set(WebsitePage(Index(0)), Website("www.test-website.com")).success.value
@@ -89,6 +91,9 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
         "with incomplete data" in {
 
           val missingAnswers: UserAnswers = completeUserAnswers
+            .remove(BusinessBasedInUKPage).success.value
+            .remove(ClientHasVatNumberPage).success.value
+            .remove(ClientVatNumberPage).success.value
             .remove(WebsitePage(Index(0))).success.value
             .remove(BusinessContactDetailsPage).success.value
 
@@ -103,7 +108,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
 
             val view = application.injector.instanceOf[CheckYourAnswersView]
 
-            val vatDetailsList: SummaryList = SummaryListViewModel(getCYAVatDetailsSummaryList(waypoints, completeUserAnswers, CheckYourAnswersPage))
+            val vatDetailsList: SummaryList = SummaryListViewModel(getCYAVatDetailsSummaryList(waypoints, missingAnswers, CheckYourAnswersPage))
             val list = SummaryListViewModel(getCYASummaryList(waypoints, missingAnswers, CheckYourAnswersPage))
 
             status(result) `mustBe` OK
