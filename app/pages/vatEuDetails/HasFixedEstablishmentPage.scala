@@ -16,12 +16,17 @@
 
 package pages.vatEuDetails
 
-import pages.QuestionPage
+import controllers.vatEuDetails.routes
+import pages.{QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
+import play.api.mvc.Call
 
 case object HasFixedEstablishmentPage extends QuestionPage[Boolean] {
 
   override def path: JsPath = JsPath \ toString
 
   override def toString: String = "hasFixedEstablishment"
+
+  override def route(waypoints: Waypoints): Call =
+    routes.HasFixedEstablishmentController.onPageLoad(waypoints)
 }

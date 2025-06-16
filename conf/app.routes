@@ -145,3 +145,7 @@ POST        /vat-in-eu                                   controllers.vatEuDetail
 
 GET         /vat-registered-eu-country/:countryIndex     controllers.vatEuDetails.EuCountryController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
 POST        /vat-registered-eu-country/:countryIndex     controllers.vatEuDetails.EuCountryController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
+
+# add countryIndex
+GET         /eu-fixed-establishment/                          controllers.vatEuDetails.HasFixedEstablishmentController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /eu-fixed-establishment/                          controllers.vatEuDetails.HasFixedEstablishmentController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
