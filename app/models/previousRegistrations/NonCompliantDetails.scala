@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package forms.previousRegistrations
+package models.previousRegistrations
 
-import forms.mappings.Mappings
-import models.PreviousScheme
-import play.api.data.Form
+import play.api.libs.json.*
 
-import javax.inject.Inject
+case class NonCompliantDetails(
+                                nonCompliantReturns: Option[Int],
+                                nonCompliantPayments: Option[Int]
+                              )
 
-class PreviousSchemeFormProvider @Inject() extends Mappings {
+object NonCompliantDetails {
 
-  def apply(): Form[PreviousScheme] =
-    Form(
-      "value" -> enumerable[PreviousScheme]("previousScheme.error.required")
-    )
+  implicit val format: OFormat[NonCompliantDetails] = Json.format[NonCompliantDetails]
 }

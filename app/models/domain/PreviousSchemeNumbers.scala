@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package forms.previousRegistrations
+package models.domain
 
-import forms.mappings.Mappings
-import models.PreviousScheme
-import play.api.data.Form
+import play.api.libs.json.{Json, OFormat}
 
-import javax.inject.Inject
+case class PreviousSchemeNumbers(
+                                  previousSchemeNumber: String,
+                                  previousIntermediaryNumber: Option[String]
+                                )
 
-class PreviousSchemeFormProvider @Inject() extends Mappings {
-
-  def apply(): Form[PreviousScheme] =
-    Form(
-      "value" -> enumerable[PreviousScheme]("previousScheme.error.required")
-    )
+object PreviousSchemeNumbers {
+  implicit val format: OFormat[PreviousSchemeNumbers] = Json.format[PreviousSchemeNumbers]
 }

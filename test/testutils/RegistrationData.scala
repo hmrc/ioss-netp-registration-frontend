@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package forms.previousRegistrations
+package testutils
 
-import forms.mappings.Mappings
-import models.PreviousScheme
-import play.api.data.Form
+import base.SpecBase
+import models.Country
+import models.etmp._
+import org.scalacheck.Arbitrary.arbitrary
 
-import javax.inject.Inject
+object RegistrationData extends SpecBase {
 
-class PreviousSchemeFormProvider @Inject() extends Mappings {
-
-  def apply(): Form[PreviousScheme] =
-    Form(
-      "value" -> enumerable[PreviousScheme]("previousScheme.error.required")
-    )
+  val etmpEuPreviousRegistrationDetails: EtmpPreviousEuRegistrationDetails = EtmpPreviousEuRegistrationDetails(
+    issuedBy = arbitrary[Country].sample.value.code,
+    registrationNumber = arbitrary[String].sample.value,
+    schemeType = arbitrary[SchemeType].sample.value,
+    intermediaryNumber = Some(arbitrary[String].sample.value)
+  )
+  
 }

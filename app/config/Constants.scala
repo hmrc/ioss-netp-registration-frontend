@@ -21,4 +21,8 @@ object Constants {
   val maxWebsites: Int = 10
   val intermediaryEnrolmentKey: String = "IntNumber"
   val pendingRegistrationTTL: Int = 28
+
+  val maxSchemes: Int = 3
+  val maxOssSchemes: Int = 2
+  val maxIossSchemes: Int = 1
 }

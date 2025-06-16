@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package forms.previousRegistrations
+package queries.previousRegistrations
 
-import forms.mappings.Mappings
-import models.PreviousScheme
-import play.api.data.Form
+import models.Index
+import models.previousRegistrations.SchemeDetailsWithOptionalVatNumber
+import play.api.libs.json.JsPath
+import queries.{Gettable, Settable}
 
-import javax.inject.Inject
+case class AllPreviousSchemesForCountryWithOptionalVatNumberQuery(index: Index) extends Gettable[List[SchemeDetailsWithOptionalVatNumber]]
+  with Settable[List[SchemeDetailsWithOptionalVatNumber]] {
 
-class PreviousSchemeFormProvider @Inject() extends Mappings {
-
-  def apply(): Form[PreviousScheme] =
-    Form(
-      "value" -> enumerable[PreviousScheme]("previousScheme.error.required")
-    )
+  override def path: JsPath = JsPath \ "previousRegistrations" \ index.position \ "previousSchemesDetails"
 }
+

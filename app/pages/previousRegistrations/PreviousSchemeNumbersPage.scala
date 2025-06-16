@@ -16,21 +16,22 @@
 
 package pages.previousRegistrations
 
-import models.{Index, NormalMode, PreviousScheme}
-import pages.{AddToListQuestionPage, AddToListSection, PreviousSchemeSection, QuestionPage, Waypoint, Waypoints}
+import models.domain.PreviousSchemeNumbers
+import models.{Index, NormalMode}
+import pages.{AddToListQuestionPage, AddToListSection, PreviousSchemeSection, QuestionPage, Waypoint}
 import play.api.libs.json.JsPath
-import play.api.mvc.Call
 
-case class PreviousSchemePage(countryIndex: Index, schemeIndex: Index) extends QuestionPage[PreviousScheme] with AddToListQuestionPage {
+trait PreviousSchemeNumbersPage extends QuestionPage[PreviousSchemeNumbers] with AddToListQuestionPage {
 
   override val section: AddToListSection = PreviousSchemeSection
-  
-  override val addItemWaypoint: Waypoint = CheckPreviousSchemeAnswersPage(countryIndex).waypoint(NormalMode)
-  
-  override def path: JsPath = JsPath \ "previousRegistrations" \ countryIndex.position \ "previousSchemeDetails" \ schemeIndex.position \ toString
 
-  override def toString: String = "previousScheme"
-  
-  override def route(waypoints: Waypoints): Call =
-    controllers.previousRegistrations.routes.PreviousSchemeController.onPageLoad(waypoints, countryIndex, schemeIndex)
+  override val addItemWaypoint: Waypoint = CheckPreviousSchemeAnswersPage(countryIndex).waypoint(NormalMode)
+
+  def countryIndex: Index
+
+  def schemeIndex: Index
+
+  override def path: JsPath = JsPath \ "previousRegistrations" \ countryIndex.position \ "previousSchemesDetails" \ schemeIndex.position \ toString
+
+  override def toString: String = "previousSchemeNumbers"
 }
