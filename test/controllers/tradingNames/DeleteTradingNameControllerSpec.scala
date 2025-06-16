@@ -118,7 +118,7 @@ class DeleteTradingNameControllerSpec extends SpecBase with MockitoSugar {
     }
 
     "must return a Bad Request and errors when invalid data is submitted" in {
-      //TODO - SCG Not working- Need fixing
+
       val application = applicationBuilder(userAnswers = Some(answers)).build()
 
       running(application) {
