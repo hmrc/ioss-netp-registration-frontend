@@ -26,7 +26,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.{Action, AnyContent, BodyParsers, Results}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import services.IntermediaryRegistrationService
+import services.{IntermediaryRegistrationService, UrlBuilderService}
 import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.Retrieval
@@ -56,16 +56,18 @@ class AuthActionSpec extends SpecBase with MockitoSugar {
 
         running(application) {
           val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
-          val appConfig   = application.injector.instanceOf[FrontendAppConfig]
+          val appConfig = application.injector.instanceOf[FrontendAppConfig]
+          val urlBuilder = application.injector.instanceOf[UrlBuilderService]
 
           val authAction = new AuthenticatedIdentifierAction(
             new FakeFailingAuthConnector(new MissingBearerToken),
             appConfig,
             bodyParsers,
-            mockIntermediaryRegistrationService
+            mockIntermediaryRegistrationService,
+            urlBuilder
           )
           val controller = new Harness(authAction)
-          val result = controller.onPageLoad()(FakeRequest())
+          val result = controller.onPageLoad()(fakeRequest)
 
           status(result) mustBe SEE_OTHER
           redirectLocation(result).value must startWith(appConfig.loginUrl)
@@ -83,16 +85,18 @@ class AuthActionSpec extends SpecBase with MockitoSugar {
 
         running(application) {
           val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
-          val appConfig   = application.injector.instanceOf[FrontendAppConfig]
+          val appConfig = application.injector.instanceOf[FrontendAppConfig]
+          val urlBuilder = application.injector.instanceOf[UrlBuilderService]
 
           val authAction = new AuthenticatedIdentifierAction(
             new FakeFailingAuthConnector(new BearerTokenExpired),
             appConfig,
             bodyParsers,
-            mockIntermediaryRegistrationService
+            mockIntermediaryRegistrationService,
+            urlBuilder
           )
           val controller = new Harness(authAction)
-          val result = controller.onPageLoad()(FakeRequest())
+          val result = controller.onPageLoad()(fakeRequest)
 
           status(result) mustBe SEE_OTHER
           redirectLocation(result).value must startWith(appConfig.loginUrl)
@@ -110,13 +114,15 @@ class AuthActionSpec extends SpecBase with MockitoSugar {
 
         running(application) {
           val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
-          val appConfig   = application.injector.instanceOf[FrontendAppConfig]
+          val appConfig = application.injector.instanceOf[FrontendAppConfig]
+          val urlBuilder = application.injector.instanceOf[UrlBuilderService]
 
           val authAction = new AuthenticatedIdentifierAction(
             new FakeFailingAuthConnector(new InsufficientEnrolments),
             appConfig,
             bodyParsers,
-            mockIntermediaryRegistrationService
+            mockIntermediaryRegistrationService,
+            urlBuilder
           )
           val controller = new Harness(authAction)
           val result = controller.onPageLoad()(FakeRequest())
@@ -137,13 +143,15 @@ class AuthActionSpec extends SpecBase with MockitoSugar {
 
         running(application) {
           val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
-          val appConfig   = application.injector.instanceOf[FrontendAppConfig]
+          val appConfig = application.injector.instanceOf[FrontendAppConfig]
+          val urlBuilder = application.injector.instanceOf[UrlBuilderService]
 
           val authAction = new AuthenticatedIdentifierAction(
             new FakeFailingAuthConnector(new InsufficientConfidenceLevel),
             appConfig,
             bodyParsers,
-            mockIntermediaryRegistrationService
+            mockIntermediaryRegistrationService,
+            urlBuilder
           )
           val controller = new Harness(authAction)
           val result = controller.onPageLoad()(FakeRequest())
@@ -164,13 +172,15 @@ class AuthActionSpec extends SpecBase with MockitoSugar {
 
         running(application) {
           val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
-          val appConfig   = application.injector.instanceOf[FrontendAppConfig]
+          val appConfig = application.injector.instanceOf[FrontendAppConfig]
+          val urlBuilder = application.injector.instanceOf[UrlBuilderService]
 
           val authAction = new AuthenticatedIdentifierAction(
             new FakeFailingAuthConnector(new UnsupportedAuthProvider),
             appConfig,
             bodyParsers,
-            mockIntermediaryRegistrationService
+            mockIntermediaryRegistrationService,
+            urlBuilder
           )
           val controller = new Harness(authAction)
           val result = controller.onPageLoad()(FakeRequest())
@@ -190,13 +200,15 @@ class AuthActionSpec extends SpecBase with MockitoSugar {
 
         running(application) {
           val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
-          val appConfig   = application.injector.instanceOf[FrontendAppConfig]
+          val appConfig = application.injector.instanceOf[FrontendAppConfig]
+          val urlBuilder = application.injector.instanceOf[UrlBuilderService]
 
           val authAction = new AuthenticatedIdentifierAction(
             new FakeFailingAuthConnector(new UnsupportedAffinityGroup),
             appConfig,
             bodyParsers,
-            mockIntermediaryRegistrationService
+            mockIntermediaryRegistrationService,
+            urlBuilder
           )
           val controller = new Harness(authAction)
           val result = controller.onPageLoad()(FakeRequest())
@@ -216,13 +228,15 @@ class AuthActionSpec extends SpecBase with MockitoSugar {
 
         running(application) {
           val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
-          val appConfig   = application.injector.instanceOf[FrontendAppConfig]
+          val appConfig = application.injector.instanceOf[FrontendAppConfig]
+          val urlBuilder = application.injector.instanceOf[UrlBuilderService]
 
           val authAction = new AuthenticatedIdentifierAction(
             new FakeFailingAuthConnector(new UnsupportedCredentialRole),
             appConfig,
             bodyParsers,
-            mockIntermediaryRegistrationService
+            mockIntermediaryRegistrationService,
+            urlBuilder
           )
           val controller = new Harness(authAction)
           val result = controller.onPageLoad()(FakeRequest())
