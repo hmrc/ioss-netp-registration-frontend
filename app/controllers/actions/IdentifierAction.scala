@@ -22,14 +22,16 @@ import config.FrontendAppConfig
 import controllers.routes
 import logging.Logging
 import models.requests.{IdentifierRequest, SessionRequest}
-import play.api.mvc.Results.*
 import play.api.mvc.*
-import services.IntermediaryRegistrationService
+import play.api.mvc.Results.*
+import services.{IntermediaryRegistrationService, UrlBuilderService}
 import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.retrieve.*
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.{HeaderCarrier, UnauthorizedException}
+import uk.gov.hmrc.play.bootstrap.binders.{AbsoluteWithHostnameFromAllowlist, OnlyRelative}
+import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl.idFunctor
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import utils.FutureSyntax.FutureOps
 
@@ -41,9 +43,12 @@ class AuthenticatedIdentifierAction @Inject()(
                                                override val authConnector: AuthConnector,
                                                config: FrontendAppConfig,
                                                val parser: BodyParsers.Default,
-                                               intermediaryRegistrationService: IntermediaryRegistrationService
+                                               intermediaryRegistrationService: IntermediaryRegistrationService,
+                                               urlBuilderService: UrlBuilderService
                                              )
                                              (implicit val executionContext: ExecutionContext) extends IdentifierAction with AuthorisedFunctions with Logging {
+
+  private lazy val redirectPolicy = (OnlyRelative | AbsoluteWithHostnameFromAllowlist(config.allowedRedirectUrls: _*))
   
   override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
     
@@ -69,7 +74,7 @@ class AuthenticatedIdentifierAction @Inject()(
         throw new UnauthorizedException("Unable to retrieve internal Id")
     } recover {
       case _: NoActiveSession =>
-        Redirect(config.loginUrl, Map("continue" -> Seq(config.loginContinueUrl)))
+        Redirect(config.loginUrl, Map("continue" -> Seq(urlBuilderService.loginContinueUrl(request).get(redirectPolicy).url)))
       case _: AuthorisationException =>
         Redirect(routes.UnauthorisedController.onPageLoad())
     }
