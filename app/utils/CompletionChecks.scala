@@ -18,10 +18,11 @@ package utils
 
 import models.Index
 import models.requests.DataRequest
-import pages.Waypoints
+import pages.*
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{AnyContent, Result}
 import queries.AllWebsites
+import utils.VatInfoCompletionChecks.*
 
 import scala.concurrent.Future
 
@@ -48,11 +49,32 @@ trait CompletionChecks {
   }
 
   def validate()(implicit request: DataRequest[AnyContent]): Boolean = {
-    hasWebsiteValid()
+    isBasedInUk() &&
+      hasUkVatNumber() &&
+      ukVatNumberDefined() &&
+      clientCountryBasedDefined() &&
+      hasClientBusinessName() &&
+      hasUtrNumber() &&
+      utrNumberDefined() &&
+      ninoNumberDefined() &&
+      clientTaxReferenceDefined() &&
+      clientBusinessAddressDefined() &&
+      hasWebsiteValid()
   }
 
   def getFirstValidationErrorRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
-    (incompleteWebsiteUrlsRedirect(waypoints)).headOption
+    (incompleteBusinessBasedInUkRedirect(waypoints) ++
+      incompleteHasVatNumberRedirect(waypoints) ++
+      incompleteClientVatNumberRedirect(waypoints) ++
+      incompleteClientCountryRedirect(waypoints) ++
+      incompleteClientBusinessNameRedirect(waypoints) ++
+      incompleteHasUtrNumberRedirect(waypoints) ++
+      incompleteClientUtrNumberRedirect(waypoints) ++
+      incompleteClientsNinoNumberRedirect(waypoints) ++
+      incompleteClientTaxReferenceRedirect(waypoints) ++
+      incompleteBusinessAddressRedirect(waypoints) ++
+      incompleteWebsiteUrlsRedirect(waypoints)
+      ).headOption
   }
 
   private def hasWebsiteValid()(implicit request: DataRequest[AnyContent]): Boolean = {
@@ -64,4 +86,6 @@ trait CompletionChecks {
   } else {
     None
   }
+
+  
 }
