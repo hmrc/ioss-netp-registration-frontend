@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package controllers
+package controllers.vatEuDetails
 
-import controllers.actions._
-import forms.HasFixedEstablishmentFormProvider
-import javax.inject.Inject
+import controllers.actions.*
+import forms.vatEuDetails.HasFixedEstablishmentFormProvider
 import models.Mode
-import pages.HasFixedEstablishmentPage
+import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.{Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -28,6 +27,7 @@ import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.HasFixedEstablishmentView
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class HasFixedEstablishmentController @Inject()(
