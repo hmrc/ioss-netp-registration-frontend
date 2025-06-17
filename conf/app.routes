@@ -106,3 +106,8 @@ GET         /error-submitting-pending-registration          controllers.ErrorSub
 # Netp Declaration Section
 GET        /client-code-entry                        controllers.clientDeclarationJourney.ClientCodeEntryController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST       /client-code-entry                        controllers.clientDeclarationJourney.ClientCodeEntryController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+
+GET        /clientDeclaration                        controllers.clientDeclarationJourney.ClientDeclarationController.onPageLoad(mode: Mode = NormalMode)
+POST       /clientDeclaration                        controllers.clientDeclarationJourney.ClientDeclarationController.onSubmit(mode: Mode = NormalMode)
+GET        /changeClientDeclaration                  controllers.clientDeclarationJourney.ClientDeclarationController.onPageLoad(mode: Mode = CheckMode)
+POST       /changeClientDeclaration                  controllers.clientDeclarationJourney.ClientDeclarationController.onSubmit(mode: Mode = CheckMode)

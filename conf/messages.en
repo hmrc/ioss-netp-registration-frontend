@@ -284,3 +284,11 @@ clientCodeEntry.checkYourAnswersLabel = The code you entered is incorrect. Check
 clientCodeEntry.error.required = The code you entered is incorrect. Check the code and try again.
 clientCodeEntry.error.length = The code you entered is incorrect. Check the code and try again.
 clientCodeEntry.change.hidden = The code you entered is incorrect. Check the code and try again.
+
+clientDeclaration.title = clientDeclaration
+clientDeclaration.heading = clientDeclaration
+clientDeclaration.option1 = Option 1
+clientDeclaration.option2 = Option 2
+clientDeclaration.checkYourAnswersLabel = clientDeclaration
+clientDeclaration.error.required = Select clientDeclaration
+clientDeclaration.change.hidden = ClientDeclaration
