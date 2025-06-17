@@ -31,6 +31,7 @@ import viewmodels.govuk.summarylist.*
 import views.html.CheckYourAnswersView
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
+import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
 
 import scala.concurrent.ExecutionContext
 
@@ -68,6 +69,8 @@ class CheckYourAnswersController @Inject()(
         ).flatten
       )
 
+      val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(userAnswers, waypoints, thisPage)
+      val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, userAnswers, thisPage)
       val websiteSummaryRow = WebsiteSummary.checkAnswersRow(waypoints, userAnswers, thisPage)
       val contactDetailsFullNameRow = BusinessContactDetailsSummary.rowFullName(waypoints, userAnswers, thisPage)
       val contactDetailsTelephoneNumberRow = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, userAnswers, thisPage)
@@ -75,6 +78,14 @@ class CheckYourAnswersController @Inject()(
 
       val list = SummaryListViewModel(
         rows = Seq(
+         maybeHasTradingNameSummaryRow.map { hasTradingNameSummaryRow =>
+                      if (tradingNameSummaryRow.nonEmpty) {
+                        hasTradingNameSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+                      } else {
+                        hasTradingNameSummaryRow
+                      }
+                    },
+          tradingNameSummaryRow,
           websiteSummaryRow,
           contactDetailsFullNameRow.map(_.withCssClass("govuk-summary-list__row--no-border")),
           contactDetailsTelephoneNumberRow.map(_.withCssClass("govuk-summary-list__row--no-border")),

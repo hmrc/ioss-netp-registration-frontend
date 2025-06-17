@@ -23,6 +23,7 @@ import org.mockito.Mockito.when
 import org.scalacheck.Gen
 import org.scalatestplus.mockito.MockitoSugar
 import pages.*
+import pages.tradingNames.{HasTradingNamePage, TradingNamePage}
 import pages.website.WebsitePage
 import play.api.mvc.AnyContent
 import play.api.mvc.Results.Redirect
@@ -35,6 +36,8 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
   private val clientBusinessName: ClientBusinessName = ClientBusinessName(vatCustomerInfo.organisationName.value)
   private val countries: Seq[Country] = Gen.listOf(arbitraryCountry.arbitrary).sample.value
   private val country: Country = Gen.oneOf(countries).sample.value
+  private val tradingNameIndex: Index = Index(0)
+  private val tradingName: TradingName = arbitraryTradingName.arbitrary.sample.value
   private val businessAddress: InternationalAddress = InternationalAddress(
     line1 = "line-1",
     line2 = None,
@@ -54,6 +57,8 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
     .set(ClientTaxReferencePage, taxReference).success.value
     .set(ClientBusinessNamePage, clientBusinessName).success.value
     .set(ClientBusinessAddressPage, businessAddress).success.value
+    .set(HasTradingNamePage, true).success.value
+    .set(TradingNamePage(tradingNameIndex), tradingName).success.value
     .set(WebsitePage(Index(0)), Website("www.test-website.com")).success.value
 
 
@@ -120,8 +125,8 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
         "when there are multiple validation errors present" in {
 
           val invalidAnswers: UserAnswers = validAnswers
+            .remove(TradingNamePage(Index(0))).success.value
             .remove(WebsitePage(Index(0))).success.value
-          //todo remove another page when completed
 
           val application = applicationBuilder(userAnswers = Some(invalidAnswers)).build()
 
@@ -132,7 +137,7 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
 
             val result = CompletionChecksTests.getFirstValidationErrorRedirect(waypoints)
 
-            result `mustBe` Some(Redirect(WebsitePage(Index(0)).route(waypoints).url))
+            result `mustBe` Some(Redirect(TradingNamePage(Index(0)).route(waypoints).url))
           }
         }
       }

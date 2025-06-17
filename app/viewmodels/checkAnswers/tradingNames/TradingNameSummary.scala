@@ -17,7 +17,7 @@
 package viewmodels.checkAnswers.tradingNames
 
 import models.{Index, UserAnswers}
-import pages.tradingNames.{DeleteTradingNamePage, TradingNamePage}
+import pages.tradingNames.{AddTradingNamePage, DeleteTradingNamePage, TradingNamePage}
 import pages.{AddItemPage, CheckAnswersPage, Waypoints}
 import play.api.i18n.Messages
 import play.twirl.api.HtmlFormat
@@ -58,7 +58,7 @@ object TradingNameSummary {
           key = "tradingName.checkYourAnswersLabel",
           value = ValueViewModel(HtmlContent(value)),
           actions = Seq(
-            ActionItemViewModel("site.change", ???)
+            ActionItemViewModel("site.change", AddTradingNamePage().changeLink(waypoints, sourcePage).url)
               .withVisuallyHiddenText(messages("tradingName.change.hidden"))
           )
         )

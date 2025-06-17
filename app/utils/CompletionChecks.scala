@@ -19,9 +19,11 @@ package utils
 import models.Index
 import models.requests.DataRequest
 import pages.*
+import pages.tradingNames.HasTradingNamePage
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{AnyContent, Result}
 import queries.AllWebsites
+import queries.tradingNames.AllTradingNamesQuery
 import utils.VatInfoCompletionChecks.*
 
 import scala.concurrent.Future
@@ -59,6 +61,7 @@ trait CompletionChecks {
       ninoNumberDefined() &&
       clientTaxReferenceDefined() &&
       clientBusinessAddressDefined() &&
+      isTradingNamesValid() &&
       hasWebsiteValid()
   }
 
@@ -73,6 +76,8 @@ trait CompletionChecks {
       incompleteClientsNinoNumberRedirect(waypoints) ++
       incompleteClientTaxReferenceRedirect(waypoints) ++
       incompleteBusinessAddressRedirect(waypoints) ++
+      incompleteHasTradingNameRedirect(waypoints) ++
+      incompleteTradingNameRedirect(waypoints) ++
       incompleteWebsiteUrlsRedirect(waypoints)
       ).headOption
   }
@@ -87,5 +92,37 @@ trait CompletionChecks {
     None
   }
 
-  
+  private def isTradingNamesValid()(implicit request: DataRequest[AnyContent]): Boolean = {
+    request.userAnswers.get(HasTradingNamePage).exists {
+      case true => request.userAnswers.get(AllTradingNamesQuery).getOrElse(List.empty).nonEmpty
+      case false => request.userAnswers.get(AllTradingNamesQuery).getOrElse(List.empty).isEmpty
+    }
+  }
+
+  private def incompleteHasTradingNameRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
+    if (request.userAnswers.get(HasTradingNamePage).isEmpty) {
+      Some(Redirect(HasTradingNamePage.route(waypoints)))
+    } else {
+      None
+    }
+  }
+
+
+  private def incompleteTradingNameRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
+    request.userAnswers.get(HasTradingNamePage) match {
+      case Some(true) =>
+        val tradingNames = request.userAnswers.get(AllTradingNamesQuery).getOrElse(Nil)
+        if (tradingNames.isEmpty) {
+          Some(Redirect(controllers.tradingNames.routes.TradingNameController.onPageLoad(waypoints, Index(0))))
+        } else {
+          None
+        }
+      case _ => None
+    }
+  }
+
+  // todo previously registered completion checks
+  // todo Eu details Completion Checks
+
+
 }

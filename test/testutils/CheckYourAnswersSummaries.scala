@@ -22,6 +22,7 @@ import play.api.i18n.Messages
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.WebsiteSummary
 import viewmodels.checkAnswers.*
+import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
 import viewmodels.govuk.SummaryListFluency
 
 object CheckYourAnswersSummaries extends SummaryListFluency {
@@ -57,12 +58,22 @@ object CheckYourAnswersSummaries extends SummaryListFluency {
   def getCYASummaryList(waypoints: Waypoints, answers: UserAnswers, sourcePage: CheckAnswersPage)
                        (implicit msgs: Messages): Seq[SummaryListRow] = {
 
+    val hasTradingNameSummaryRow: Option[SummaryListRow] = HasTradingNameSummary.row(answers, waypoints, sourcePage)
+    val tradingNameSummaryRow: Option[SummaryListRow] = TradingNameSummary.checkAnswersRow(waypoints, answers, sourcePage)
     val websiteSummaryRow = WebsiteSummary.checkAnswersRow(waypoints, answers, sourcePage)
     val contactDetailsContactNameSummaryRow = BusinessContactDetailsSummary.rowFullName(waypoints, answers, sourcePage)
     val contactDetailsTelephoneSummaryRow = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, answers, sourcePage)
     val contactDetailsEmailSummaryRow = BusinessContactDetailsSummary.rowEmailAddress(waypoints, answers, sourcePage)
 
     Seq(
+      hasTradingNameSummaryRow.map { sr =>
+        if (tradingNameSummaryRow.isDefined) {
+          sr.withCssClass("govuk-summary-list__row--no-border")
+        } else {
+          sr
+        }
+      },
+      tradingNameSummaryRow,
       websiteSummaryRow,
       contactDetailsContactNameSummaryRow.map(_.withCssClass("govuk-summary-list__row--no-border")),
       contactDetailsTelephoneSummaryRow.map(_.withCssClass("govuk-summary-list__row--no-border")),

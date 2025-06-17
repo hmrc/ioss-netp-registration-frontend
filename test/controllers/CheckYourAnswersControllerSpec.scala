@@ -26,6 +26,7 @@ import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar.mock
 import pages.*
+import pages.tradingNames.{HasTradingNamePage, TradingNamePage}
 import pages.website.WebsitePage
 import play.api.i18n.Messages
 import play.api.inject.bind
@@ -51,6 +52,8 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
     .set(ClientVatNumberPage, vatNumber).success.value
 
   private val completeUserAnswers: UserAnswers = updatedAnswersWithVatInfo
+    .set(HasTradingNamePage, true).success.value
+    .set(TradingNamePage(Index(0)), TradingName("Test trading name")).success.value
     .set(WebsitePage(Index(0)), Website("www.test-website.com")).success.value
     .set(BusinessContactDetailsPage, businessContactDetails).success.value
 
