@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
-@this(govukButton: GovukButton)
+package forms.tradingNames
 
-@(continueMessage: String, continueUrl: String, waypoints: Waypoints)(implicit messages: Messages)
+import forms.mappings.Mappings
+import play.api.data.Form
 
-<div class="govuk-button-group">
-  @govukButton(
-    ButtonViewModel(messages(continueMessage)).withAttribute(("id", "continue"))
-  )
-</div>
+import javax.inject.Inject
+
+class DeleteAllTradingNamesFormProvider @Inject() extends Mappings {
+
+  def apply(): Form[Boolean] =
+    Form(
+      "value" -> boolean("deleteAllTradingNames.error.required")
+    )
+}
