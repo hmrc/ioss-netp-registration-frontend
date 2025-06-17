@@ -38,24 +38,19 @@ class AuthController @Inject()(
 
   private val redirectPolicy = OnlyRelative | AbsoluteWithHostnameFromAllowlist(config.allowedRedirectUrls: _*)
 
-  def signOut(): Action[AnyContent] = identify.async {
+  def signOut(): Action[AnyContent] = Action {
+    implicit request =>
+      Redirect(config.signOutUrl, Map("continue" -> Seq(config.exitSurveyUrl)))
+  }
+
+  def signOutNoSurvey(): Action[AnyContent] = identify.async {
     implicit request =>
       sessionRepository
         .clear(request.userId)
         .map {
           _ =>
-            Redirect(config.signOutUrl, Map("continue" -> Seq(config.exitSurveyUrl)))
-      }
-  }
-
-  def signOutNoSurvey(): Action[AnyContent] = identify.async {
-    implicit request =>
-    sessionRepository
-      .clear(request.userId)
-      .map {
-        _ =>
-        Redirect(config.signOutUrl, Map("continue" -> Seq(routes.SignedOutController.onPageLoad().url)))
-      }
+            Redirect(config.signOutUrl, Map("continue" -> Seq(routes.SignedOutController.onPageLoad().url)))
+        }
   }
 
   def redirectToLogin(continueUrl: RedirectUrl): Action[AnyContent] = Action {
