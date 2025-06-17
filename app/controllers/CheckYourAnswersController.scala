@@ -36,7 +36,6 @@ class CheckYourAnswersController @Inject()(
                                             override val messagesApi: MessagesApi,
                                             cc: AuthenticatedControllerComponents,
                                             registrationConnector: RegistrationConnector,
-                                            val controllerComponents: MessagesControllerComponents,
                                             view: CheckYourAnswersView
                                           )(implicit executionContext: ExecutionContext)
   extends FrontendBaseController with I18nSupport with Logging {
@@ -65,7 +64,7 @@ class CheckYourAnswersController @Inject()(
       Ok(view(waypoints, list))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       registrationConnector.submitPendingRegistration(request.userAnswers).flatMap {

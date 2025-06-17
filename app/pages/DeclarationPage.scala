@@ -32,6 +32,6 @@ case object DeclarationPage extends QuestionPage[Boolean] {
   }
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
-    JourneyRecoveryPage //todo update to request pending when implemented
+    ApplicationCompletePage
   }
 }
