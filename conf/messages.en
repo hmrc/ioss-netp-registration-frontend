@@ -231,25 +231,25 @@ declaration.error.required = Agree to the declaration to continue
 
 hasTradingName.title = Does your client''s business trade using a name that is different from {0}?
 hasTradingName.heading = Does your client''s business trade using a name that is different from {0}?
-hasTradingName.checkYourAnswersLabel = Have a different UK trading name
+hasTradingName.checkYourAnswersLabel = Have a different trading name
 hasTradingName.error.required = Select yes if they use a different trading name
 hasTradingName.change.hidden = if they have a different trading name
 
-tradingName.title = What is your client''s UK trading name?
-tradingName.heading = What is your client''s UK trading name?
+tradingName.title = What is your client''s other trading name?
+tradingName.heading = What is your client''s other trading name?
 tradingName.checkYourAnswersLabel = Other trading names
-tradingName.error.required = Enter your client''s UK trading name
+tradingName.error.required = Enter your client''s other trading name
 tradingName.error.length = Trading name must be 100 characters or less
 tradingName.error.duplicate = You have entered this trading name already. Enter a different one.
 tradingName.error.invalid = Trading name must only include letters, numbers, hyphens, spaces and apostrophes
-tradingName.change.hidden = your client''s UK trading name
+tradingName.change.hidden = your client''s other trading name
 
-addTradingName.title.singular = You have added one UK trading name
-addTradingName.title.plural = You have added {0} UK trading names
-addTradingName.heading.singular = You have added one UK trading name
-addTradingName.heading.plural = You have added {0} UK trading names
+addTradingName.title.singular = You have added one other trading name
+addTradingName.title.plural = You have added {0} other trading names
+addTradingName.heading.singular = You have added one other trading name
+addTradingName.heading.plural = You have added {0} other trading names
 addTradingName.maximumReached = You have added the maximum number of trading names.
-addTradingName.error.required = Select yes if you need to add another UK trading name
+addTradingName.error.required = Select yes if you need to add another trading name
 addTradingName.change.hidden = Change {0}
 addTradingName.remove.hidden = Remove {0}
 addTradingName.addAnother = Add another trading name?
