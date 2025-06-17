@@ -103,3 +103,6 @@ POST        /declaration                           controllers.DeclarationContro
 GET         /client-application-complete                    controllers.ApplicationCompleteController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 
 GET         /error-submitting-pending-registration          controllers.ErrorSubmittingPendingRegistrationController.onPageLoad()
+# Netp Declaration Section
+GET        /client-code-entry                        controllers.clientDeclarationJourney.ClientCodeEntryController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST       /client-code-entry                        controllers.clientDeclarationJourney.ClientCodeEntryController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)

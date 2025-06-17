@@ -277,3 +277,10 @@ applicationComplete.returnToYourAccount = <a class="govuk-link" href="">Return t
 errorSubmittingPendingRegistration.title = We have a problem with our service right now
 errorSubmittingPendingRegistration.heading = The registration is not submitted
 errorSubmittingPendingRegistration.contactUs = If the problem continues, you can email us at <a class="govuk-link" href="mailto:vatoss.contact@hmrc.gov.uk">vatoss.contact@hmrc.gov.uk</a>
+clientCodeEntry.title = Enter your activation code
+clientCodeEntry.heading = Enter your activation code
+clientCodeEntry.hint = This is the 6-digit code we emailed to [email address].
+clientCodeEntry.checkYourAnswersLabel = The code you entered is incorrect. Check the code and try again.
+clientCodeEntry.error.required = The code you entered is incorrect. Check the code and try again.
+clientCodeEntry.error.length = The code you entered is incorrect. Check the code and try again.
+clientCodeEntry.change.hidden = The code you entered is incorrect. Check the code and try again.
