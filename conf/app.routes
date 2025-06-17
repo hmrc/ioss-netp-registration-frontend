@@ -100,8 +100,6 @@ GET         /declaration                           controllers.DeclarationContro
 POST        /declaration                           controllers.DeclarationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
 # Application complete
-GET         /client-application-complete                  controllers.ApplicationCompleteController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+GET         /client-application-complete                    controllers.ApplicationCompleteController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET         /error-submitting-pending-registration         controllers.ErrorSubmittingPendingRegistrationController.onPageLoad()
-
-GET         /error-retrieving-pending-registration         controllers.ErrorRetrievingPendingRegistrationController.onPageLoad()
+GET         /error-submitting-pending-registration          controllers.ErrorSubmittingPendingRegistrationController.onPageLoad()

@@ -25,7 +25,6 @@ import models.responses.InternalServerError
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar.mock
-import pages.ErrorRetrievingPendingRegistrationPage
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
@@ -69,7 +68,7 @@ class ApplicationCompleteControllerSpec extends SpecBase {
       }
     }
 
-    "must redirect to the correct page when there is an error retrieving saved pending registration from the backend" in {
+    "must throw an Exception when there is an error retrieving saved pending registration from the backend" in {
 
       val application = applicationBuilder(userAnswers = Some(savedPendingRegistration.userAnswers))
         .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
@@ -82,8 +81,10 @@ class ApplicationCompleteControllerSpec extends SpecBase {
 
         val result = route(application, request).value
 
-        status(result) `mustBe` SEE_OTHER
-        redirectLocation(result).value `mustBe` ErrorRetrievingPendingRegistrationPage.route(waypoints).url
+        whenReady(result.failed) { exp =>
+          exp `mustBe` a[Exception]
+          exp.getMessage `mustBe` exp.getLocalizedMessage
+        }
       }
     }
   }
