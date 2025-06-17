@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package config
+package pages
 
-object Constants {
+import play.api.mvc.Call
+import controllers.routes
 
-  val maxWebsites: Int = 10
-  val intermediaryEnrolmentKey: String = "IntNumber"
-  val pendingRegistrationTTL: Int = 28
+object ApplicationCompletePage extends Page {
+
+  override def route(waypoints: Waypoints): Call = {
+    routes.ApplicationCompleteController.onPageLoad(waypoints)
+  }
 }

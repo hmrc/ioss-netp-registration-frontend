@@ -14,16 +14,26 @@
  * limitations under the License.
  *@
 
+@import pages.{CheckYourAnswersPage, Waypoints}
+@import uk.gov.hmrc.govukfrontend.views.html.components.FormWithCSRF
+@import views.html.components.ButtonGroup
+
 @this(
-    layout: templates.Layout,
-    govukSummaryList: GovukSummaryList
+        formHelper: FormWithCSRF,
+        layout: templates.Layout,
+        govukSummaryList: GovukSummaryList,
+        button: ButtonGroup
 )
 
-@(list: SummaryList)(implicit request: Request[_], messages: Messages)
+@(waypoints: Waypoints, list: SummaryList)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("checkYourAnswers.title"))) {
 
-    <h1 class="govuk-heading-xl">@messages("checkYourAnswers.heading")</h1>
+  <h1 class="govuk-heading-xl">@messages("checkYourAnswers.heading")</h1>
 
-    @govukSummaryList(list)
+  @govukSummaryList(list)
+
+  @formHelper(action = routes.CheckYourAnswersController.onSubmit(waypoints)) {
+    @button("site.submit", CheckYourAnswersPage.route(waypoints).url, waypoints)
+  }
 }

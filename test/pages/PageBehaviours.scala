@@ -17,7 +17,6 @@
 package pages
 
 import generators.Generators
-import models.UserAnswers
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
@@ -39,7 +38,7 @@ trait PageBehaviours extends AnyFreeSpec with Matchers with ScalaCheckPropertyCh
 
             val gen = for {
               page <- genP
-              userAnswers <- arbitrary[UserAnswers]
+              userAnswers <- arbitraryUserData.arbitrary
             } yield (page, userAnswers.remove(page).success.value)
 
             forAll(gen) {
@@ -57,7 +56,7 @@ trait PageBehaviours extends AnyFreeSpec with Matchers with ScalaCheckPropertyCh
             val gen = for {
               page <- genP
               savedValue <- arbitrary[A]
-              userAnswers <- arbitrary[UserAnswers]
+              userAnswers <- arbitraryUserData.arbitrary
             } yield (page, savedValue, userAnswers.set(page, savedValue).success.value)
 
             forAll(gen) {
@@ -79,7 +78,7 @@ trait PageBehaviours extends AnyFreeSpec with Matchers with ScalaCheckPropertyCh
         val gen = for {
           page <- genP
           newValue <- arbitrary[A]
-          userAnswers <- arbitrary[UserAnswers]
+          userAnswers <- arbitraryUserData.arbitrary
         } yield (page, newValue, userAnswers)
 
         forAll(gen) {
@@ -100,7 +99,7 @@ trait PageBehaviours extends AnyFreeSpec with Matchers with ScalaCheckPropertyCh
         val gen = for {
           page <- genP
           savedValue <- arbitrary[A]
-          userAnswers <- arbitrary[UserAnswers]
+          userAnswers <- arbitraryUserData.arbitrary
         } yield (page, userAnswers.set(page, savedValue).success.value)
 
         forAll(gen) {

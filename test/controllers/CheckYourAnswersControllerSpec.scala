@@ -17,53 +17,115 @@
 package controllers
 
 import base.SpecBase
-import models.{BusinessContactDetails, UserAnswers}
-import pages.{BusinessContactDetailsPage, CheckYourAnswersPage}
+import connectors.RegistrationConnector
+import models.responses.InternalServerError
+import models.{BusinessContactDetails, CheckMode, UserAnswers}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito
+import org.mockito.Mockito.{times, verify, when}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatestplus.mockito.MockitoSugar.mock
+import pages.{BusinessContactDetailsPage, CheckYourAnswersPage, EmptyWaypoints, JourneyRecoveryPage, NonEmptyWaypoints, Waypoint}
 import play.api.i18n.Messages
+import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import testutils.CheckYourAnswersSummaries.getCYASummaryList
+import utils.FutureSyntax.FutureOps
 import viewmodels.govuk.SummaryListFluency
 import views.html.CheckYourAnswersView
 
-class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency {
+class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency with BeforeAndAfterEach {
+
+  private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
 
   private val businessContactDetails: BusinessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
   private val completeUserAnswers: UserAnswers = emptyUserAnswers
     .set(BusinessContactDetailsPage, businessContactDetails).success.value
 
+  override def beforeEach(): Unit = {
+    Mockito.reset(mockRegistrationConnector)
+  }
+
   "Check Your Answers Controller" - {
 
-    "must return OK and the correct view for a GET" in {
+    ".onPageLoad" - {
 
-      val application = applicationBuilder(userAnswers = Some(completeUserAnswers)).build()
+      val waypoints: NonEmptyWaypoints = EmptyWaypoints
+        .setNextWaypoint(Waypoint(CheckYourAnswersPage, CheckMode, CheckYourAnswersPage.urlFragment))
 
-      running(application) {
-        implicit val msgs: Messages = messages(application)
+      "must return OK and the correct view for a GET" in {
 
-        val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
+        val application = applicationBuilder(userAnswers = Some(completeUserAnswers)).build()
 
-        val result = route(application, request).value
+        running(application) {
+          implicit val msgs: Messages = messages(application)
 
-        val view = application.injector.instanceOf[CheckYourAnswersView]
-        val list = SummaryListViewModel(getCYASummaryList(waypoints, completeUserAnswers, CheckYourAnswersPage))
+          val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
 
-        status(result) `mustBe` OK
-        contentAsString(result) `mustBe` view(list)(request, messages(application)).toString
+          val result = route(application, request).value
+
+          val view = application.injector.instanceOf[CheckYourAnswersView]
+          val list = SummaryListViewModel(getCYASummaryList(waypoints, completeUserAnswers, CheckYourAnswersPage))
+
+          status(result) `mustBe` OK
+          contentAsString(result) `mustBe` view(waypoints, list)(request, messages(application)).toString
+        }
+      }
+
+      "must redirect to Journey Recovery for a GET if no existing data is found" in {
+
+        val application = applicationBuilder(userAnswers = None).build()
+
+        running(application) {
+          val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
+
+          val result = route(application, request).value
+
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
+        }
       }
     }
 
-    "must redirect to Journey Recovery for a GET if no existing data is found" in {
+    ".onSubmit" - {
 
-      val application = applicationBuilder(userAnswers = None).build()
+      "must redirect to the next page for a POST when a valid response is received from the backend" in {
 
-      running(application) {
-        val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
+        val application = applicationBuilder(userAnswers = Some(completeUserAnswers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
 
-        val result = route(application, request).value
+        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(()).toFuture
 
-        status(result) `mustBe` SEE_OTHER
-        redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
+        running(application) {
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints).url)
+
+          val result = route(application, request).value
+
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` CheckYourAnswersPage.navigate(waypoints, completeUserAnswers, completeUserAnswers).url
+          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(completeUserAnswers))(any())
+        }
+      }
+
+      "must redirect to the correct page when an error is returned from the backend" in {
+
+        val application = applicationBuilder(userAnswers = Some(completeUserAnswers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Left(InternalServerError).toFuture
+
+        running(application) {
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints).url)
+
+          val result = route(application, request).value
+
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` JourneyRecoveryPage.route(waypoints).url
+          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(completeUserAnswers))(any())
+        }
       }
     }
   }

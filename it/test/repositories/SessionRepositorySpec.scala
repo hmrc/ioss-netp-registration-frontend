@@ -32,7 +32,7 @@ class SessionRepositorySpec
   private val instant = Instant.now.truncatedTo(ChronoUnit.MILLIS)
   private val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
 
-  private val userAnswers = UserAnswers("id", Json.obj("foo" -> "bar"), None, Instant.ofEpochSecond(1))
+  private val userAnswers = UserAnswers("id", "journeyId", Json.obj("foo" -> "bar"), None, Instant.ofEpochSecond(1))
 
   private val mockAppConfig = mock[FrontendAppConfig]
   when(mockAppConfig.cacheTtl) thenReturn 1L
@@ -52,7 +52,7 @@ class SessionRepositorySpec
       val _ = repository.set(userAnswers).futureValue
       val updatedRecord = find(Filters.equal("_id", userAnswers.id)).futureValue.headOption.value
 
-      updatedRecord mustEqual expectedResult
+      updatedRecord `mustBe` expectedResult
     }
 
     mustPreserveMdc(repository.set(userAnswers))
@@ -69,7 +69,7 @@ class SessionRepositorySpec
         val result = repository.get(userAnswers.id).futureValue
         val expectedResult = userAnswers copy (lastUpdated = instant)
 
-        result.value mustEqual expectedResult
+        result.value `mustBe` expectedResult
       }
     }
 
@@ -98,7 +98,7 @@ class SessionRepositorySpec
     "must return true when there is no record to remove" in {
       val result = repository.clear("id that does not exist").futureValue
 
-      result mustEqual true
+      result `mustBe` true
     }
 
     mustPreserveMdc(repository.clear(userAnswers.id))
@@ -117,7 +117,7 @@ class SessionRepositorySpec
         val expectedUpdatedAnswers = userAnswers copy (lastUpdated = instant)
 
         val updatedAnswers = find(Filters.equal("_id", userAnswers.id)).futureValue.headOption.value
-        updatedAnswers mustEqual expectedUpdatedAnswers
+        updatedAnswers `mustBe` expectedUpdatedAnswers
       }
     }
 
@@ -125,7 +125,7 @@ class SessionRepositorySpec
 
       "must return true" in {
 
-        repository.keepAlive("id that does not exist").futureValue mustEqual true
+        repository.keepAlive("id that does not exist").futureValue `mustBe` true
       }
     }
 
@@ -141,7 +141,7 @@ class SessionRepositorySpec
       MDC.put("test", "foo")
 
       f.map { _ =>
-        MDC.get("test") mustEqual "foo"
+        MDC.get("test") `mustBe` "foo"
       }.futureValue
     }
 }

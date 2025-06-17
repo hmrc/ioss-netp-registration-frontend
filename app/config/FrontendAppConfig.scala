@@ -22,7 +22,7 @@ import play.api.i18n.Lang
 import play.api.mvc.RequestHeader
 
 @Singleton
-class FrontendAppConfig @Inject() (configuration: Configuration) {
+class FrontendAppConfig @Inject()(configuration: Configuration) {
 
   val host: String    = configuration.get[String]("host")
   val appName: String = configuration.get[String]("appName")

@@ -14,11 +14,20 @@
  * limitations under the License.
  */
 
-package config
+package models
 
-object Constants {
+import play.api.libs.json.*
 
-  val maxWebsites: Int = 10
-  val intermediaryEnrolmentKey: String = "IntNumber"
-  val pendingRegistrationTTL: Int = 28
+import java.time.Instant
+
+case class SavedPendingRegistration(
+                                     journeyId: String,
+                                     uniqueCode: String,
+                                     userAnswers: UserAnswers,
+                                     lastUpdated: Instant
+                                   )
+
+object SavedPendingRegistration {
+
+  implicit lazy val format: OFormat[SavedPendingRegistration] = Json.format[SavedPendingRegistration]
 }

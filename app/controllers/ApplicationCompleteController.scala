@@ -1,0 +1,64 @@
+/*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package controllers
+
+import config.Constants.pendingRegistrationTTL
+import connectors.RegistrationConnector
+import controllers.actions.*
+import formats.Format.dateFormatter
+import pages.{JourneyRecoveryPage, Waypoints}
+import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.FutureSyntax.FutureOps
+import views.html.ApplicationCompleteView
+
+import java.time.{LocalDateTime, ZoneId}
+import javax.inject.Inject
+import scala.concurrent.ExecutionContext
+
+class ApplicationCompleteController @Inject()(
+                                               override val messagesApi: MessagesApi,
+                                               identify: IdentifierAction,
+                                               getData: DataRetrievalAction,
+                                               requireData: DataRequiredAction,
+                                               registrationConnector: RegistrationConnector,
+                                               val controllerComponents: MessagesControllerComponents,
+                                               view: ApplicationCompleteView
+                                             )(implicit ec: ExecutionContext)
+  extends FrontendBaseController with I18nSupport with GetClientCompanyName {
+
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+    implicit request =>
+      getClientCompanyName(waypoints) { clientCompanyName =>
+
+        registrationConnector.getPendingRegistration(request.userAnswers.journeyId).flatMap {
+          case Right(savedPendingRegistration) =>
+
+            val activationExpiryDate: String = LocalDateTime
+              .ofInstant(savedPendingRegistration.lastUpdated, ZoneId.systemDefault())
+              .plusDays(pendingRegistrationTTL).format(dateFormatter)
+
+            Ok(view(clientCompanyName, savedPendingRegistration.uniqueCode, activationExpiryDate)).toFuture
+
+          case Left(error) =>
+            // TODO redirect to new error page for GET
+            Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture
+        }
+      }
+  }
+}
