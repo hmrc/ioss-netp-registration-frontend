@@ -21,7 +21,7 @@ import connectors.RegistrationConnector
 import controllers.actions.*
 import logging.Logging
 import models.CheckMode
-import pages.{CheckYourAnswersPage, EmptyWaypoints, JourneyRecoveryPage, NonEmptyWaypoints, Waypoint, Waypoints}
+import pages.{CheckYourAnswersPage, EmptyWaypoints, ErrorSubmittingPendingRegistrationPage, NonEmptyWaypoints, Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
@@ -73,8 +73,7 @@ class CheckYourAnswersController @Inject()(
 
         case Left(error) =>
           logger.error(s"Received an unexpected error on pending registration submission: ${error.body}")
-          // TODO -> Redirect to new error page for POST
-          Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture
+          Redirect(ErrorSubmittingPendingRegistrationPage.route(waypoints).url).toFuture
       }
   }
 }

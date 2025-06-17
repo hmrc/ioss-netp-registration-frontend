@@ -20,7 +20,8 @@ import config.Constants.pendingRegistrationTTL
 import connectors.RegistrationConnector
 import controllers.actions.*
 import formats.Format.dateFormatter
-import pages.{JourneyRecoveryPage, Waypoints}
+import logging.Logging
+import pages.{ErrorRetrievingPendingRegistrationPage, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
@@ -40,7 +41,7 @@ class ApplicationCompleteController @Inject()(
                                                val controllerComponents: MessagesControllerComponents,
                                                view: ApplicationCompleteView
                                              )(implicit ec: ExecutionContext)
-  extends FrontendBaseController with I18nSupport with GetClientCompanyName {
+  extends FrontendBaseController with I18nSupport with GetClientCompanyName with Logging {
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
@@ -56,8 +57,8 @@ class ApplicationCompleteController @Inject()(
             Ok(view(clientCompanyName, savedPendingRegistration.uniqueCode, activationExpiryDate)).toFuture
 
           case Left(error) =>
-            // TODO redirect to new error page for GET
-            Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture
+            logger.error(s"Received an unexpected error when trying to retrieve a pending registration for the given journey ID: ${error.body}.")
+            Redirect(ErrorRetrievingPendingRegistrationPage.route(waypoints).url).toFuture
         }
       }
   }

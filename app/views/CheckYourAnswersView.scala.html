@@ -34,6 +34,6 @@
   @govukSummaryList(list)
 
   @formHelper(action = routes.CheckYourAnswersController.onSubmit(waypoints)) {
-    @button("site.submit", CheckYourAnswersPage.route(waypoints).url, waypoints)
+    @button("site.continue", CheckYourAnswersPage.route(waypoints).url, waypoints)
   }
 }
