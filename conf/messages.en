@@ -34,7 +34,7 @@ index.guidance = Welcome to your new frontend. Please see the README file for a 
 
 checkYourAnswers.title = Check your answers
 checkYourAnswers.heading = Check your answers
-checkYourAnswers.vatRegistrationDetails.heading = VAT registration details
+checkYourAnswers.vatRegistrationDetails.heading = Registration Details
 checkYourAnswers.details.heading = Import One Stop Shop details
 
 journeyRecovery.continue.title = Sorry, there is a problem with the service
