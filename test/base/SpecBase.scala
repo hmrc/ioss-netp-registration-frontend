@@ -35,6 +35,7 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, Instant, LocalDate, ZoneId}
+import java.util.UUID
 
 trait SpecBase
   extends AnyFreeSpec
@@ -47,6 +48,8 @@ trait SpecBase
 
   val userAnswersId: String = "12345-credId"
 
+  val journeyId: String = UUID.randomUUID().toString
+
   val arbitraryInstant: Instant = arbitraryDate.arbitrary.sample.value.atStartOfDay(ZoneId.systemDefault()).toInstant
   val stubClockAtArbitraryDate: Clock = Clock.fixed(arbitraryInstant, ZoneId.systemDefault())
 
@@ -57,7 +60,7 @@ trait SpecBase
 
   def messages(app: Application): Messages = app.injector.instanceOf[MessagesApi].preferred(FakeRequest())
 
-  def emptyUserAnswers: UserAnswers = UserAnswers(id = userAnswersId, lastUpdated = arbitraryInstant)
+  def emptyUserAnswers: UserAnswers = UserAnswers(id = userAnswersId, journeyId = journeyId, lastUpdated = arbitraryInstant)
 
   def emptyUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.copy(vatInfo = Some(vatCustomerInfo))
 

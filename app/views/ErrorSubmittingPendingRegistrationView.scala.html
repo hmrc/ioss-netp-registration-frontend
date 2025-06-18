@@ -1,4 +1,4 @@
-/*
+@*
  * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,26 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *@
 
-package pages
+@this(
+    layout: templates.Layout,
+    govukPanel: GovukPanel
+)
 
-import controllers.routes
-import models.UserAnswers
-import play.api.libs.json.JsPath
-import play.api.mvc.Call
+@()(implicit request: Request[_], messages: Messages)
 
-case object DeclarationPage extends QuestionPage[Boolean] {
+@layout(pageTitle = titleNoForm(messages("errorSubmittingPendingRegistration.title")), showBackLink = false) {
 
-  override def path: JsPath = JsPath \ toString
+    @govukPanel(Panel(
+        title = Text(messages("errorSubmittingPendingRegistration.title")),
+        content = HtmlContent(messages("errorSubmittingPendingRegistration.heading")),
+        classes = "red-background"
+    ))
 
-  override def toString: String = "declaration"
-
-  override def route(waypoints: Waypoints): Call = {
-    routes.DeclarationController.onPageLoad(waypoints)
-  }
-
-  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
-    ApplicationCompletePage
-  }
+    <p class="govuk-body">@Html(messages("errorSubmittingPendingRegistration.contactUs"))</p>
 }

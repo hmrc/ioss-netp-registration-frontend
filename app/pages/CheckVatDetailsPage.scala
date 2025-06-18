@@ -45,7 +45,5 @@ case class CheckVatDetailsPage() extends CheckAnswersPage with QuestionPage[Chec
       //TODO: -> Trading name
       case (Some(WrongAccount), _) => UseOtherAccountPage
       case _ => JourneyRecoveryPage
-
     }
-
 }

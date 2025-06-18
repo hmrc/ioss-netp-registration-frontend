@@ -17,7 +17,6 @@
 package services
 
 import config.FrontendAppConfig
-import controllers.auth.routes as authRoutes
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl

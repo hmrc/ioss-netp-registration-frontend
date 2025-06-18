@@ -20,6 +20,8 @@ import models.{CheckMode, Mode, NormalMode}
 import pages.tradingNames.AddTradingNamePage
 import pages.website.AddWebsitePage
 
+import scala.language.postfixOps
+
 case class Waypoint(
                      page: WaypointPage,
                      mode: Mode,
@@ -34,7 +36,8 @@ object Waypoint {
       AddTradingNamePage().checkModeUrlFragment -> AddTradingNamePage().waypoint(CheckMode),
       AddWebsitePage().normalModeUrlFragment ->  AddWebsitePage().waypoint(NormalMode),
       AddWebsitePage().checkModeUrlFragment ->  AddWebsitePage().waypoint(CheckMode),
-      CheckVatDetailsPage().urlFragment -> CheckVatDetailsPage().waypoint
+      CheckVatDetailsPage().urlFragment -> CheckVatDetailsPage().waypoint,
+      CheckYourAnswersPage.urlFragment -> CheckYourAnswersPage.waypoint
     )
 
   def fromString(s: String): Option[Waypoint] =

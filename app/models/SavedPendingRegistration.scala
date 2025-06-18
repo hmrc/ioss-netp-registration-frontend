@@ -14,24 +14,20 @@
  * limitations under the License.
  */
 
-package pages
+package models
 
-import controllers.routes
-import models.UserAnswers
-import play.api.libs.json.JsPath
-import play.api.mvc.Call
+import play.api.libs.json.*
 
-case object DeclarationPage extends QuestionPage[Boolean] {
+import java.time.Instant
 
-  override def path: JsPath = JsPath \ toString
+case class SavedPendingRegistration(
+                                     journeyId: String,
+                                     uniqueCode: String,
+                                     userAnswers: UserAnswers,
+                                     lastUpdated: Instant
+                                   )
 
-  override def toString: String = "declaration"
+object SavedPendingRegistration {
 
-  override def route(waypoints: Waypoints): Call = {
-    routes.DeclarationController.onPageLoad(waypoints)
-  }
-
-  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
-    ApplicationCompletePage
-  }
+  implicit lazy val format: OFormat[SavedPendingRegistration] = Json.format[SavedPendingRegistration]
 }

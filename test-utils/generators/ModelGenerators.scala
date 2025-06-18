@@ -18,13 +18,16 @@ package generators
 
 import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
-import models.{BusinessContactDetails, ClientBusinessName, Country, DesAddress, InternationalAddress}
+import models.{BusinessContactDetails, ClientBusinessName, Country, DesAddress, InternationalAddress, SavedPendingRegistration, UserAnswers}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.{choose, listOfN}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.EitherValues
+import play.api.libs.json.{JsObject, Json}
 
+import java.time.temporal.ChronoUnit
 import java.time.{Instant, LocalDate, ZoneOffset}
+import java.util.UUID
 
 trait ModelGenerators extends EitherValues {
 
@@ -158,6 +161,42 @@ trait ModelGenerators extends EitherValues {
         clientBusinessName <- Gen.alphaStr.retryUntil(cbn => cbn.length > 1 && cbn.length < 40)
       } yield {
         ClientBusinessName(name = clientBusinessName)
+      }
+    }
+  }
+
+  implicit lazy val arbitraryUserAnswers: Arbitrary[UserAnswers] = {
+    Arbitrary {
+      for {
+        id <- arbitrary[String]
+        journeyId = UUID.randomUUID().toString
+        data = JsObject(Seq("test" -> Json.toJson("test")))
+        vatInfo <- arbitraryVatCustomerInfo.arbitrary
+        lastUpdated = Instant.now().truncatedTo(ChronoUnit.MILLIS)
+      } yield {
+        UserAnswers(
+          id = id,
+          journeyId = journeyId,
+          data = data,
+          vatInfo = Some(vatInfo),
+          lastUpdated = lastUpdated
+        )
+      }
+    }
+  }
+
+  implicit lazy val arbitrarySavedPendingRegistration: Arbitrary[SavedPendingRegistration] = {
+    Arbitrary {
+      for {
+        userAnswers <- arbitraryUserAnswers.arbitrary
+        uniqueCode = UUID.randomUUID().toString
+      } yield {
+        SavedPendingRegistration(
+          journeyId = userAnswers.journeyId,
+          uniqueCode = uniqueCode,
+          userAnswers = userAnswers,
+          lastUpdated = userAnswers.lastUpdated
+        )
       }
     }
   }

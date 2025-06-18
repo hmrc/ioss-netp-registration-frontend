@@ -16,22 +16,12 @@
 
 package pages
 
-import controllers.routes
-import models.UserAnswers
-import play.api.libs.json.JsPath
 import play.api.mvc.Call
+import controllers.routes
 
-case object DeclarationPage extends QuestionPage[Boolean] {
-
-  override def path: JsPath = JsPath \ toString
-
-  override def toString: String = "declaration"
+object ApplicationCompletePage extends Page {
 
   override def route(waypoints: Waypoints): Call = {
-    routes.DeclarationController.onPageLoad(waypoints)
-  }
-
-  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
-    ApplicationCompletePage
+    routes.ApplicationCompleteController.onPageLoad(waypoints)
   }
 }

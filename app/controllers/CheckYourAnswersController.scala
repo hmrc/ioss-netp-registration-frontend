@@ -17,21 +17,28 @@
 package controllers
 
 import com.google.inject.Inject
-import controllers.actions._
+import connectors.RegistrationConnector
+import controllers.actions.*
+import logging.Logging
 import models.CheckMode
-import pages.{CheckYourAnswersPage, EmptyWaypoints, Waypoint}
+import pages.{CheckYourAnswersPage, EmptyWaypoints, ErrorSubmittingPendingRegistrationPage, NonEmptyWaypoints, Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.FutureSyntax.FutureOps
 import viewmodels.checkAnswers.BusinessContactDetailsSummary
 import viewmodels.govuk.summarylist.*
 import views.html.CheckYourAnswersView
 
+import scala.concurrent.ExecutionContext
+
 class CheckYourAnswersController @Inject()(
                                             override val messagesApi: MessagesApi,
                                             cc: AuthenticatedControllerComponents,
+                                            registrationConnector: RegistrationConnector,
                                             view: CheckYourAnswersView
-                                          ) extends FrontendBaseController with I18nSupport {
+                                          )(implicit executionContext: ExecutionContext)
+  extends FrontendBaseController with I18nSupport with Logging {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -40,7 +47,7 @@ class CheckYourAnswersController @Inject()(
 
       val thisPage = CheckYourAnswersPage
 
-      val waypoints = EmptyWaypoints.setNextWaypoint(Waypoint(thisPage, CheckMode, CheckYourAnswersPage.urlFragment))
+      val waypoints: NonEmptyWaypoints = EmptyWaypoints.setNextWaypoint(Waypoint(thisPage, CheckMode, CheckYourAnswersPage.urlFragment))
 
       val contactDetailsFullNameRow = BusinessContactDetailsSummary.rowFullName(waypoints, request.userAnswers, thisPage)
       val contactDetailsTelephoneNumberRow = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, request.userAnswers, thisPage)
@@ -54,6 +61,19 @@ class CheckYourAnswersController @Inject()(
         ).flatten
       )
 
-      Ok(view(list))
+      Ok(view(waypoints, list))
+  }
+
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+    implicit request =>
+
+      registrationConnector.submitPendingRegistration(request.userAnswers).flatMap {
+        case Right(_) =>
+          Redirect(CheckYourAnswersPage.navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
+
+        case Left(error) =>
+          logger.error(s"Received an unexpected error on pending registration submission: ${error.body}")
+          Redirect(ErrorSubmittingPendingRegistrationPage.route(waypoints).url).toFuture
+      }
   }
 }
