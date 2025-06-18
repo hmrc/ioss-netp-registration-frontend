@@ -18,7 +18,7 @@ package pages.vatEuDetails
 
 import controllers.vatEuDetails.routes
 import models.{Index, UserAnswers}
-import pages.{BusinessContactDetailsPage, JourneyRecoveryPage, Page, QuestionPage, RecoveryOps, Waypoints}
+import pages.{BusinessContactDetailsPage, Page, QuestionPage, RecoveryOps, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 

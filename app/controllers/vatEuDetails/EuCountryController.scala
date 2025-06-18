@@ -18,7 +18,7 @@ package controllers.vatEuDetails
 
 import controllers.actions.*
 import forms.vatEuDetails.EuCountryFormProvider
-import models.{Country, Index, UserAnswers}
+import models.{Country, Index}
 import pages.vatEuDetails.EuCountryPage
 import pages.Waypoints
 import play.api.data.Form

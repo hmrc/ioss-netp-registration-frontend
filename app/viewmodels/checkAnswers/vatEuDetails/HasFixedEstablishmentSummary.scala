@@ -16,8 +16,7 @@
 
 package viewmodels.checkAnswers.vatEuDetails
 
-import controllers.routes
-import models.{CheckMode, Country, Index, UserAnswers}
+import models.{Country, Index, UserAnswers}
 import pages.{CheckAnswersPage, Waypoints}
 import pages.vatEuDetails.HasFixedEstablishmentPage
 import play.api.i18n.Messages

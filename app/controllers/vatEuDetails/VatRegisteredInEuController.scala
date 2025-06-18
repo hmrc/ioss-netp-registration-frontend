@@ -18,7 +18,6 @@ package controllers.vatEuDetails
 
 import controllers.actions.{DataRequiredAction, DataRetrievalAction, IdentifierAction}
 import forms.vatEuDetails.VatRegisteredInEuFormProvider
-import models.UserAnswers
 import pages.vatEuDetails.VatRegisteredInEuPage
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}

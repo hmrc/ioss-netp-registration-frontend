@@ -21,13 +21,12 @@ import controllers.actions.*
 import forms.vatEuDetails.HasFixedEstablishmentFormProvider
 import models.Index
 import pages.vatEuDetails.HasFixedEstablishmentPage
-import pages.{Waypoint, Waypoints}
+import pages.Waypoints
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.helper.form
 import views.html.vatEuDetails.HasFixedEstablishmentView
 import utils.FutureSyntax.FutureOps
 
