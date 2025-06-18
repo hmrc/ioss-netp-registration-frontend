@@ -1,15 +1,36 @@
+/*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package controllers.previousRegistrations
 
+import config.Constants
+import controllers.GetCountry
 import controllers.actions.*
 import forms.previousRegistrations.CheckPreviousSchemeAnswersFormProvider
-import models.Mode
+import models.Index
 import pages.previousRegistrations.CheckPreviousSchemeAnswersPage
-import pages.{Waypoint, Waypoints}
+import pages.{JourneyRecoveryPage, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.previousRegistrations.AllPreviousSchemesForCountryWithOptionalVatNumberQuery
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.CheckPreviousSchemeAnswersView
+import viewmodels.previousRegistrations.PreviousSchemeSummary
+import views.html.previousRegistrations.CheckPreviousSchemeAnswersView
+import utils.FutureSyntax.*
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -17,40 +38,55 @@ import scala.concurrent.{ExecutionContext, Future}
 class CheckPreviousSchemeAnswersController @Inject()(
                                        override val messagesApi: MessagesApi,
                                        sessionRepository: SessionRepository,
-                                       navigator: Navigator,
                                        identify: IdentifierAction,
                                        getData: DataRetrievalAction,
                                        requireData: DataRequiredAction,
                                        formProvider: CheckPreviousSchemeAnswersFormProvider,
                                        val controllerComponents: MessagesControllerComponents,
                                        view: CheckPreviousSchemeAnswersView
-                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
 
-  val form = formProvider()
-
-  def onPageLoad(mode: Mode): Action[AnyContent] = (identify andThen getData andThen requireData) {
+  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
+      getPreviousCountry(waypoints, index) {
+        country =>
+          request.userAnswers.get(AllPreviousSchemesForCountryWithOptionalVatNumberQuery(index)).map { previousSchemes =>
+            val canAddScheme = previousSchemes.size < Constants.maxSchemes
+            val lists = PreviousSchemeSummary.getSummaryLists(previousSchemes, index, country, Seq.empty, waypoints)
 
-      val preparedForm = request.userAnswers.get(CheckPreviousSchemeAnswersPage) match {
-        case None => form
-        case Some(value) => form.fill(value)
+            val form = formProvider(country)
+
+            Ok(view(form, waypoints, lists, index, country, canAddScheme)).toFuture
+          }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture)
       }
-
-      Ok(view(preparedForm, mode))
   }
 
-  def onSubmit(mode: Mode): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
 
-      form.bindFromRequest().fold(
-        formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, mode))),
+      getPreviousCountry(waypoints, index) { country =>
 
-        value =>
-          for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(CheckPreviousSchemeAnswersPage, value))
-            _              <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(navigator.nextPage(CheckPreviousSchemeAnswersPage, mode, updatedAnswers))
-      )
+        request.userAnswers.get(AllPreviousSchemesForCountryWithOptionalVatNumberQuery(index)).map { previousSchemes =>
+
+          val canAddScheme = previousSchemes.size < Constants.maxSchemes
+
+          val existingSchemes = Seq.empty
+
+          val lists = PreviousSchemeSummary.getSummaryLists(previousSchemes, index, country, existingSchemes, waypoints)
+
+          val form = formProvider(country)
+
+          form.bindFromRequest().fold(
+            formWithErrors =>
+              Future.successful(BadRequest(view(formWithErrors, waypoints, lists, index, country, canAddScheme))),
+
+            value =>
+              for {
+                updatedAnswers <- Future.fromTry(request.userAnswers.set(CheckPreviousSchemeAnswersPage(index), value))
+                _              <- sessionRepository.set(updatedAnswers)
+              } yield Redirect(CheckPreviousSchemeAnswersPage(index).navigate(waypoints, request.userAnswers, updatedAnswers).route)
+          )
+        }.getOrElse(Future.successful(Redirect(JourneyRecoveryPage.route(waypoints).url)))
+      }
   }
 }

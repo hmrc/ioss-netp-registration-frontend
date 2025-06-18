@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package forms.previousRegistrations
+package queries.previousRegistrations
 
-import forms.mappings.Mappings
-import models.Country
-import play.api.data.Form
+import models.Index
+import play.api.libs.json.{JsObject, JsPath}
+import queries.Derivable
 
-import javax.inject.Inject
+case class DeriveNumberOfPreviousSchemes(index: Index) extends Derivable[Seq[JsObject], Int] {
+  override val derive: Seq[JsObject] => Int = _.size
 
-class CheckPreviousSchemeAnswersFormProvider @Inject() extends Mappings {
-
-  def apply(country: Country): Form[Boolean] =
-    Form(
-      "value" -> boolean("checkPreviousSchemeAnswers.error.required", args = Seq(country.name))
-    )
+  override def path: JsPath = JsPath \ "previousRegistrations" \ index.position \ "previousSchemesDetails"
 }
+
