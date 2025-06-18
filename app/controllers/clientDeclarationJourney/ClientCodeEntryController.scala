@@ -49,20 +49,24 @@ class ClientCodeEntryController @Inject()(
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData) {
     implicit request =>
 
+      val clientEmailAddress = "iAmAnEmail@gmail.com"
+
       val preparedForm = request.userAnswers.flatMap(_.get(ClientCodeEntryPage)) match {
         case None => form
         case Some(value) => form.fill(value)
       }
 
-      Ok(view(preparedForm, waypoints))
+      Ok(view(preparedForm, waypoints, clientEmailAddress))
   }
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData).async {
     implicit request =>
-      
+
+      val clientEmailAddress = "iAmAnEmail@gmail.com"
+
       form.bindFromRequest().fold(
         formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, waypoints))),
+          Future.successful(BadRequest(view(formWithErrors, waypoints, clientEmailAddress))),
 
         value =>
           val originalAnswers: UserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))

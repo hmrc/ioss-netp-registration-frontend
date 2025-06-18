@@ -24,7 +24,11 @@
     govukButton: GovukButton
 )
 
-@(form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
+@(
+form: Form[_], 
+waypoints: Waypoints,
+clientEmailAddress: String
+)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = title(form, messages("clientCodeEntry.title")), showBackLink = false) {
 
@@ -40,7 +44,7 @@
                 label = LabelViewModel(messages("clientCodeEntry.heading")).asPageHeading()
             )
             .withWidth(Full)
-            .withHint(HintViewModel(messages("clientCodeEntry.hint")))
+            .withHint(HintViewModel(messages("clientCodeEntry.hint", clientEmailAddress)))
         )
 
         @govukButton(

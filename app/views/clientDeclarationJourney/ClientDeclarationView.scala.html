@@ -22,7 +22,12 @@
     govukButton: GovukButton
 )
 
-@(form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
+@(
+form: Form[_], 
+waypoints: Waypoints,
+clientName: String,
+intermediaryName: String
+)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = title(form, messages("clientDeclaration.title"))) {
 
@@ -34,7 +39,7 @@
 
         <h1 class="govuk-heading-l govuk-!-margin-bottom-3">@messages("clientDeclaration.heading")</h1>
 
-        <p class="govuk-body">@messages("clientDeclaration.information.p1")</p>
+        <p class="govuk-body">@messages("clientDeclaration.information.p1", clientName, intermediaryName)</p>
 
         <p class="govuk-body">@messages("clientDeclaration.information.p2")</p>
 

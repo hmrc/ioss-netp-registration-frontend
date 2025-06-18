@@ -45,20 +45,26 @@ class ClientDeclarationController @Inject()(
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData) {
     implicit request =>
 
+      val clientName = "NETP Company ltd"
+
+      val intermediaryName = "ChartoffWinkler ltd"
       val preparedForm = request.userAnswers.flatMap(_.get(ClientDeclarationPage)) match {
         case None => form
         case Some(value) => form.fill(value)
       }
 
-      Ok(view(preparedForm, waypoints))
+      Ok(view(preparedForm, waypoints, clientName, intermediaryName))
   }
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData).async {
     implicit request =>
+      val clientName = "NETP Company ltd"
+
+      val intermediaryName = "ChartoffWinkler ltd"
 
       form.bindFromRequest().fold(
         formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, waypoints))),
+          Future.successful(BadRequest(view(formWithErrors, waypoints, clientName, intermediaryName))),
 
         value =>
           val originalAnswers: UserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
