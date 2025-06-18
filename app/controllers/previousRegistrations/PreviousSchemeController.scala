@@ -16,6 +16,7 @@
 
 package controllers.previousRegistrations
 
+import controllers.GetCountry
 import controllers.actions.*
 import forms.previousRegistrations.PreviousSchemeTypeFormProvider
 import models.requests.DataRequest
@@ -42,7 +43,7 @@ class PreviousSchemeController @Inject()(
                                        formProvider: PreviousSchemeTypeFormProvider,
                                        val controllerComponents: MessagesControllerComponents,
                                        view: PreviousSchemeView
-                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
 
 
   def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
@@ -71,20 +72,8 @@ class PreviousSchemeController @Inject()(
 
   }
 
-  private def getPreviousCountry(waypoints: Waypoints, index: Index)
-                        (block: Country => Future[Result])
-                        (implicit request: DataRequest[AnyContent]): Future[Result] =
-    request.userAnswers.get(PreviousEuCountryPage(index)).map {
-      println("HERE")
-      country =>
-        println("----------- GET PREVIOUS COUNTRY ------------ " + country)
-        block(country)
-    }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
-
-
   def onSubmit(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
-
       getPreviousCountry(waypoints, countryIndex) {
         country =>
 

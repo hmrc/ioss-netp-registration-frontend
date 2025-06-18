@@ -48,9 +48,6 @@ class PreviousSchemeControllerSpec extends SpecBase with MockitoSugar {
     "must return OK and the correct view for a GET" in {
 
       val application = applicationBuilder(userAnswers = Some(baseAnswers)).build()
-      println("------ base answers ------ " + baseAnswers)
-      println("------ empty answers ------ " + emptyUserAnswers)
-      println("------ empty answers vat info ------ " + emptyUserAnswersWithVatInfo)
       running(application) {
         val request = FakeRequest(GET, previousSchemeRoute)
 

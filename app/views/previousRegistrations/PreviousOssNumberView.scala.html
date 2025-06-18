@@ -1,18 +1,39 @@
+@*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
 @import viewmodels.InputWidth._
+@import pages.Waypoints
+@import models.Index
+@import models.previousRegistrations.PreviousSchemeHintText
+@import pages.previousRegistrations.PreviousOssNumberPage
+@import models.Country._
 
 @this(
     layout: templates.Layout,
     formHelper: FormWithCSRF,
     govukErrorSummary: GovukErrorSummary,
     govukInput: GovukInput,
-    govukButton: GovukButton
+    button: components.ButtonGroup
 )
 
-@(form: Form[_], mode: Mode)(implicit request: Request[_], messages: Messages)
+@(form: Form[_], waypoints: Waypoints, countryIndex: Index, schemeIndex: Index, countryWithValidationDetails: CountryWithValidationDetails, previousSchemeHintText: PreviousSchemeHintText)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = title(form, messages("previousOssNumber.title"))) {
+@layout(pageTitle = title(form, messages("previousOssNumber.title", countryWithValidationDetails.country.name))) {
 
-    @formHelper(action = routes.PreviousOssNumberController.onSubmit(mode)) {
+    @formHelper(action = controllers.previousRegistrations.routes.PreviousOssNumberController.onSubmit(waypoints, countryIndex, schemeIndex)) {
 
         @if(form.errors.nonEmpty) {
             @govukErrorSummary(ErrorSummaryViewModel(form))
@@ -21,13 +42,21 @@
         @govukInput(
             InputViewModel(
                 field = form("value"),
-                label = LabelViewModel(messages("previousOssNumber.heading")).asPageHeading()
+                label = LabelViewModel(messages("previousOssNumber.heading", countryWithValidationDetails.country.name)).asPageHeading()
             )
             .withWidth(Full)
+            .withHint(HintViewModel(
+                previousSchemeHintText match {
+                    case PreviousSchemeHintText.OssUnion =>
+                        messages("previousOssNumber.hint.union", countryWithValidationDetails.country.code, countryWithValidationDetails.exampleVrn)
+                    case PreviousSchemeHintText.OssNonUnion =>
+                        messages("previousOssNumber.hint.nonunion")
+                    case PreviousSchemeHintText.Both =>
+                        messages("previousOssNumber.hint.default", countryWithValidationDetails.country.code, countryWithValidationDetails.exampleVrn)
+                }
+            ))
         )
 
-        @govukButton(
-            ButtonViewModel(messages("site.continue"))
-        )
+        @button("site.continue", PreviousOssNumberPage(countryIndex, schemeIndex).route(waypoints).url, waypoints)
     }
 }
