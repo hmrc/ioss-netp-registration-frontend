@@ -1,34 +1,70 @@
+/*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package viewmodels.previousRegistrations
 
-import controllers.routes
-import models.{CheckMode, UserAnswers}
+import models.previousRegistrations.SchemeDetailsWithOptionalVatNumber
+import models.requests.DataRequest
+import models.{Country, Index, PreviousScheme}
+import pages.Waypoints
 import pages.previousRegistrations.PreviousSchemePage
 import play.api.i18n.Messages
 import play.twirl.api.HtmlFormat
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content.HtmlContent
-import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
+import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.{Actions, Card, CardTitle, SummaryList, SummaryListRow}
 import viewmodels.govuk.summarylist.*
 import viewmodels.implicits.*
 
 object PreviousSchemeSummary  {
 
-  def row(answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] =
-    answers.get(PreviousSchemePage).map {
-      answer =>
+  def getSummaryLists(
+                       previousSchemes: List[SchemeDetailsWithOptionalVatNumber],
+                       countryIndex: Index,
+                       country: Country,
+                       existingSchemes: Seq[PreviousScheme],
+                       waypoints: Waypoints
+                     )(implicit request: DataRequest[_], messages: Messages): List[SummaryList] = {
 
-        val value = ValueViewModel(
-          HtmlContent(
-            HtmlFormat.escape(messages(s"previousScheme.$answer"))
+
+    previousSchemes.zipWithIndex.flatMap { case (scheme, schemeIndex) =>
+      request.userAnswers.get(PreviousSchemePage(countryIndex, Index(schemeIndex))).map { (previousAnsweredScheme: PreviousScheme) =>
+        val isExistingScheme = existingSchemes.contains(previousAnsweredScheme)
+        SummaryListViewModel(
+          rows = Seq(
+            PreviousSchemeNumberSummary.row(request.userAnswers, countryIndex, Index(schemeIndex), scheme.previousScheme),
+            PreviousIntermediaryNumberSummary.row(request.userAnswers, countryIndex, Index(schemeIndex))
+          ).flatten
+        ).withCard(
+          card = Card(
+            title = Some(CardTitle(content = HtmlContent(HtmlFormat.escape(messages(s"previousScheme.$previousAnsweredScheme"))))),
+            actions = Some(Actions(
+              items = if (!isExistingScheme) {
+                Seq(
+                  ActionItemViewModel(
+                    "site.remove",
+                    controllers.previousRegistrations.routes.DeletePreviousSchemeController.onPageLoad(waypoints, countryIndex, Index(schemeIndex)).url
+                  ).withVisuallyHiddenText(messages("site.remove.hidden", country.name, HtmlFormat.escape(messages(s"previousScheme.$previousAnsweredScheme"))))
+                )
+              } else {
+                Seq.empty
+              }
+            ))
           )
         )
-
-        SummaryListRowViewModel(
-          key     = "previousScheme.checkYourAnswersLabel",
-          value   = value,
-          actions = Seq(
-            ActionItemViewModel("site.change", routes.PreviousSchemeController.onPageLoad(CheckMode).url)
-              .withVisuallyHiddenText(messages("previousScheme.change.hidden"))
-          )
-        )
+      }
     }
+  }
 }

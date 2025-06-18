@@ -19,12 +19,12 @@ package base
 import controllers.actions.*
 import generators.Generators
 import models.domain.VatCustomerInfo
-import models.{BusinessContactDetails, UserAnswers}
+import models.{BusinessContactDetails, CheckMode, UserAnswers}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.{OptionValues, TryValues}
-import pages.{EmptyWaypoints, Waypoints}
+import pages.{CheckAnswersPage, EmptyWaypoints, NonEmptyWaypoints, Waypoint, Waypoints}
 import play.api.Application
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.bind
@@ -84,4 +84,7 @@ trait SpecBase
         bind[Clock].toInstance(clockToBind)
       )
   }
+
+  protected def createCheckModeWayPoint(checkAnswersPage: CheckAnswersPage): NonEmptyWaypoints =
+    EmptyWaypoints.setNextWaypoint(Waypoint(checkAnswersPage, CheckMode, checkAnswersPage.urlFragment))
 }
