@@ -34,16 +34,15 @@ import scala.concurrent.ExecutionContext
 
 class ApplicationCompleteController @Inject()(
                                                override val messagesApi: MessagesApi,
-                                               identify: IdentifierAction,
-                                               getData: DataRetrievalAction,
-                                               requireData: DataRequiredAction,
+                                               cc: AuthenticatedControllerComponents,
                                                registrationConnector: RegistrationConnector,
-                                               val controllerComponents: MessagesControllerComponents,
                                                view: ApplicationCompleteView
                                              )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with GetClientCompanyName with Logging {
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  protected val controllerComponents: MessagesControllerComponents = cc
+
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
       getClientCompanyName(waypoints) { clientCompanyName =>
 

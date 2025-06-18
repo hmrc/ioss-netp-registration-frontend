@@ -18,8 +18,8 @@ package connectors
 
 import logging.Logging
 import models.SavedPendingRegistration
-import models.responses.{ErrorResponse, InternalServerError, InvalidJson, UnexpectedResponseStatus}
-import play.api.http.Status.{INTERNAL_SERVER_ERROR, NO_CONTENT, OK}
+import models.responses.{ErrorResponse, InvalidJson, UnexpectedResponseStatus}
+import play.api.http.Status.{NO_CONTENT, OK}
 import play.api.libs.json.{JsError, JsSuccess}
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
@@ -52,12 +52,7 @@ object PendingRegistrationHttpParser extends Logging {
             logger.error(s"Failed trying to parse Saved Pending Registration JSON with errors $errors.")
             Left(InvalidJson)
         }
-
-        case INTERNAL_SERVER_ERROR =>
-          logger.error(s"Received an InternalServerError when trying to retrieve a Saved Pending Registration for the given journey id " +
-            s"with error message: ${InternalServerError.body}")
-          Left(InternalServerError)
-
+        
         case status =>
           logger.error(s"Received unexpected error when trying to retrieve a Saved Pending Registration with the given journey id " +
             s"with status $status and body ${response.body}")

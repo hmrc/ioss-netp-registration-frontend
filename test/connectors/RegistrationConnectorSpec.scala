@@ -36,7 +36,6 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
   private val userAnswers: UserAnswers = arbitraryUserAnswers.arbitrary.sample.value
   private val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
 
-  private val internalServerErrorStatus: Int = INTERNAL_SERVER_ERROR
   private val otherErrorStatuses: Seq[Int] = Seq(BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE, UNPROCESSABLE_ENTITY)
   private val vatNumber = "123456789"
 
@@ -248,24 +247,6 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
           val result = connector.getPendingRegistration(journeyId).futureValue
 
           result `mustBe` Right(savedPendingRegistration)
-        }
-      }
-
-      "must return an Left(InternalServerError) when the server responds with Internal Server Error" in {
-
-        running(application) {
-
-          val connector = application.injector.instanceOf[RegistrationConnector]
-
-          server.stubFor(
-            get(urlEqualTo(url))
-              .willReturn(aResponse()
-                .withStatus(internalServerErrorStatus))
-          )
-
-          val result = connector.getPendingRegistration(journeyId).futureValue
-
-          result `mustBe` Left(InternalServerError)
         }
       }
 
