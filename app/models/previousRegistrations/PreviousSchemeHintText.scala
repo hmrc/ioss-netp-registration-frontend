@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package pages.previousRegistrations
+package models.previousRegistrations
 
-import models.{Index, UserAnswers}
-import pages.{Page, Waypoints}
-import play.api.mvc.Call
+import models.Enumerable
+import models.WithName
 
-case class PreviousOssNumberPage(countryIndex: Index, schemeIndex: Index) extends PreviousSchemeNumbersPage {
+sealed trait PreviousSchemeHintText
 
-  override def route(waypoints: Waypoints): Call =
-    controllers.previousRegistrations.routes.PreviousOssNumberController.onPageLoad(waypoints, countryIndex, schemeIndex)
+object PreviousSchemeHintText extends Enumerable.Implicits {
 
-  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
-    CheckPreviousSchemeAnswersPage(countryIndex)
+  case object OssUnion extends WithName("OssUnion") with PreviousSchemeHintText
+
+  case object OssNonUnion extends WithName("OssNonUnion") with PreviousSchemeHintText
+
+  case object Both extends WithName("Both") with PreviousSchemeHintText
 }

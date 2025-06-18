@@ -1,15 +1,38 @@
+/*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package controllers.previousRegistrations
 
+import controllers.GetCountry
 import controllers.actions.*
 import forms.previousRegistrations.PreviousOssNumberFormProvider
-import models.Mode
-import pages.previousRegistrations.PreviousOssNumberPage
-import pages.{Waypoint, Waypoints}
+import models.domain.PreviousSchemeNumbers
+import models.previousRegistrations.{PreviousSchemeHintText, SchemeDetailsWithOptionalVatNumber}
+import models.requests.DataRequest
+import models.{Country, CountryWithValidationDetails, Index, PreviousScheme}
+import pages.previousRegistrations.{PreviousOssNumberPage, PreviousSchemePage}
+import pages.Waypoints
+import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
+import queries.previousRegistrations.AllPreviousSchemesForCountryWithOptionalVatNumberQuery
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.PreviousOssNumberView
+import views.html.previousRegistrations.PreviousOssNumberView
+import utils.FutureSyntax.*
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -17,40 +40,145 @@ import scala.concurrent.{ExecutionContext, Future}
 class PreviousOssNumberController @Inject()(
                                         override val messagesApi: MessagesApi,
                                         sessionRepository: SessionRepository,
-                                        navigator: Navigator,
                                         identify: IdentifierAction,
                                         getData: DataRetrievalAction,
                                         requireData: DataRequiredAction,
                                         formProvider: PreviousOssNumberFormProvider,
                                         val controllerComponents: MessagesControllerComponents,
                                         view: PreviousOssNumberView
-                                    )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+                                    )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
 
-  val form = formProvider()
 
-  def onPageLoad(mode: Mode): Action[AnyContent] = (identify andThen getData andThen requireData) {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
+      getPreviousCountry(waypoints, countryIndex) {
+        country =>
+          val maybeCurrentAnswer = request.userAnswers.get(PreviousOssNumberPage(countryIndex, schemeIndex))
 
-      val preparedForm = request.userAnswers.get(PreviousOssNumberPage) match {
-        case None => form
-        case Some(value) => form.fill(value)
+          val (isEditingAndAnotherOssScheme, form) = request.userAnswers.get(AllPreviousSchemesForCountryWithOptionalVatNumberQuery(countryIndex)) match {
+            case Some(previousSchemeDetails) =>
+              getFormAndIfEditingExistingWithSecondaryScheme(countryIndex, schemeIndex, request, country, maybeCurrentAnswer, previousSchemeDetails)
+            case None =>
+              (false, formProvider(country, Seq.empty))
+          }
+
+          val previousSchemeHintText = determinePreviousSchemeHintText(countryIndex, maybeCurrentAnswer.isDefined && !isEditingAndAnotherOssScheme)
+
+          val preparedForm = maybeCurrentAnswer match
+            case None => form
+            case Some(value) => form.fill(value.previousSchemeNumber)
+
+          CountryWithValidationDetails.euCountriesWithVRNValidationRules.find(_.country.code == country.code) match
+            case Some(countryWithValidationDetails) =>
+              Ok(view(preparedForm, waypoints, countryIndex, schemeIndex, countryWithValidationDetails, previousSchemeHintText)).toFuture
+            case _ =>
+              throw new RuntimeException(s"Cannot find country code ${country.code} in euCountriesWithVRNValidationRules")
       }
-
-      Ok(view(preparedForm, mode))
   }
 
-  def onSubmit(mode: Mode): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  private def getFormAndIfEditingExistingWithSecondaryScheme(
+                                                              countryIndex: Index,
+                                                              schemeIndex: Index,
+                                                              request: DataRequest[AnyContent],
+                                                              country: Country,
+                                                              maybeCurrentAnswer: Option[PreviousSchemeNumbers],
+                                                              previousSchemeDetails: List[SchemeDetailsWithOptionalVatNumber]
+                                                            ): (Boolean, Form[String]) = {
+
+    val previousSchemes = previousSchemeDetails.flatMap(_.previousScheme)
+    val editingOssScheme = previousSchemes.filter(previousScheme => previousScheme == PreviousScheme.OSSU || previousScheme == PreviousScheme.OSSNU)
+    val isEditing = maybeCurrentAnswer.isDefined
+    val thereIsAnotherOssScheme = editingOssScheme.size > 1
+    val isEditingAndSecondSchemeExists = isEditing && thereIsAnotherOssScheme
+    val editingSchemeType = request.userAnswers.get(PreviousSchemePage(countryIndex, schemeIndex))
+    val providingForm = (maybeCurrentAnswer, editingSchemeType) match {
+      case (Some(_), Some(currentAnswerSchemeType)) => if (thereIsAnotherOssScheme) {
+        formProvider(country, previousSchemes.filterNot(_ == currentAnswerSchemeType))
+      } else {
+        formProvider(country, Seq.empty)
+      }
+      case _ =>
+        formProvider(country, Seq.empty)
+    }
+
+    (isEditingAndSecondSchemeExists, providingForm)
+  }
+
+  private def determinePreviousSchemeHintText(
+                                               countryIndex: Index,
+                                               hasCurrentAnswer: Boolean
+                                             )(implicit request: DataRequest[AnyContent]): PreviousSchemeHintText = {
+    if (hasCurrentAnswer) {
+      PreviousSchemeHintText.Both
+    } else {
+      request.userAnswers.get(AllPreviousSchemesForCountryWithOptionalVatNumberQuery(countryIndex)) match {
+        case Some(listSchemeDetails) =>
+          val previousSchemes = listSchemeDetails.flatMap(_.previousScheme)
+          if (previousSchemes.contains(PreviousScheme.OSSU)) {
+            PreviousSchemeHintText.OssNonUnion
+          } else if (previousSchemes.contains(PreviousScheme.OSSNU)) {
+            PreviousSchemeHintText.OssUnion
+          } else {
+            PreviousSchemeHintText.Both
+          }
+        case _ => PreviousSchemeHintText.Both
+      }
+    }
+  }
+
+  def onSubmit(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
+      getPreviousCountry(waypoints, countryIndex) {
+        country =>
 
-      form.bindFromRequest().fold(
-        formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, mode))),
+          val maybeCurrentAnswer = request.userAnswers.get(PreviousOssNumberPage(countryIndex, schemeIndex))
 
-        value =>
-          for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(PreviousOssNumberPage, value))
-            _              <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(navigator.nextPage(PreviousOssNumberPage, mode, updatedAnswers))
-      )
+          val (isEditingAndAnotherOssScheme, form) = request.userAnswers.get(AllPreviousSchemesForCountryWithOptionalVatNumberQuery(countryIndex)) match
+            case Some(previousSchemeDetails) =>
+              getFormAndIfEditingExistingWithSecondaryScheme(countryIndex, schemeIndex, request, country, maybeCurrentAnswer, previousSchemeDetails)
+            case None =>
+              (false, formProvider(country, Seq.empty))
+
+          val previousSchemeHintText = determinePreviousSchemeHintText(countryIndex, maybeCurrentAnswer.isDefined && !isEditingAndAnotherOssScheme)
+
+          form.bindFromRequest().fold(
+            formWithErrors =>
+              CountryWithValidationDetails.euCountriesWithVRNValidationRules.filter(_.country.code == country.code).head match {
+                case countryWithValidationDetails =>
+                  Future.successful(BadRequest(view(
+                    formWithErrors, waypoints, countryIndex, schemeIndex, countryWithValidationDetails, previousSchemeHintText)))
+              },
+
+            value => {
+              val previousScheme = if (value.startsWith("EU")) {
+                PreviousScheme.OSSNU
+              } else {
+                PreviousScheme.OSSU
+              }
+              saveAndRedirect(countryIndex, schemeIndex, value, previousScheme, waypoints)
+            }
+          )
+      }
   }
+
+  private def saveAndRedirect(
+                               countryIndex: Index,
+                               schemeIndex: Index,
+                               registrationNumber: String,
+                               previousScheme: PreviousScheme,
+                               waypoints: Waypoints
+                             )(implicit request: DataRequest[AnyContent]): Future[Result] = {
+    for {
+      updatedAnswers <- Future.fromTry(request.userAnswers.set(
+        PreviousOssNumberPage(countryIndex, schemeIndex),
+        PreviousSchemeNumbers(registrationNumber, None),
+      ))
+      updatedAnswersWithScheme <- Future.fromTry(updatedAnswers.set(
+        PreviousSchemePage(countryIndex, schemeIndex),
+        previousScheme
+      ))
+      _ <- sessionRepository.set(updatedAnswersWithScheme)
+    } yield Redirect(PreviousOssNumberPage(countryIndex, schemeIndex).navigate(waypoints, request.userAnswers, updatedAnswersWithScheme).route)
+  }
+
 }
