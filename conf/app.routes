@@ -109,3 +109,5 @@ POST       /client-code-entry                        controllers.clientDeclarati
 
 GET        /declaration-client                        controllers.clientDeclarationJourney.ClientDeclarationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST       /declaration-client                       controllers.clientDeclarationJourney.ClientDeclarationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+
+GET        /successful-registration                      controllers.clientDeclarationJourney.ClientSuccessfulRegistrationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)

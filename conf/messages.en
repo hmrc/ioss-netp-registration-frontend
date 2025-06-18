@@ -293,3 +293,9 @@ clientDeclaration.checkbox.text = I agree to register my business.
 clientDeclaration.checkYourAnswersLabel = clientDeclaration
 clientDeclaration.error.required = Select clientDeclaration
 clientDeclaration.change.hidden = ClientDeclaration
+
+clientSuccessfulRegistration.title = Registration successful
+clientSuccessfulRegistration.heading = Registration successful
+clientSuccessfulRegistration.text = Your IOSS number is
+clientSuccessfulRegistration.info.1 = We have let your intermediary know.
+clientSuccessfulRegistration.info.2 = They must now complete your monthly IOSS VAT returns and pay any VAT due.
