@@ -17,14 +17,16 @@
 package forms.vatEuDetails
 
 import forms.mappings.Mappings
+import models.Country
 import play.api.data.Form
 
 import javax.inject.Inject
 
 class HasFixedEstablishmentFormProvider @Inject() extends Mappings {
 
-  def apply(): Form[Boolean] =
+  def apply(country: Country): Form[Boolean] =
     Form(
-      "value" -> boolean("hasFixedEstablishment.error.required")
+      "value" -> boolean("hasFixedEstablishment.error.required", args = Seq(country.name))
     )
 }
+

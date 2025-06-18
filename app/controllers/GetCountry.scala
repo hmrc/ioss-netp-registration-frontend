@@ -43,5 +43,14 @@ trait GetCountry {
       country =>
         block(country)
     }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
-    
+
+
+  // TODO merge with getCountry and change params for controllers?
+  def getCountryWithIndex(waypoints: Waypoints, countryIndex: Index)
+                (block: Country => Future[Result])
+                (implicit request: DataRequest[_]): Future[Result] = {
+    request.userAnswers.get(EuCountryPage(countryIndex)).map { country =>
+      block(country)
+    }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
+  }
 }

@@ -16,16 +16,20 @@
 
 package controllers.vatEuDetails
 
+import controllers.GetCountry
 import controllers.actions.*
 import forms.vatEuDetails.HasFixedEstablishmentFormProvider
-import models.Mode
+import models.Index
 import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.{Waypoint, Waypoints}
+import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import views.html.helper.form
 import views.html.vatEuDetails.HasFixedEstablishmentView
+import utils.FutureSyntax.FutureOps
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,33 +43,42 @@ class HasFixedEstablishmentController @Inject()(
                                          formProvider: HasFixedEstablishmentFormProvider,
                                          val controllerComponents: MessagesControllerComponents,
                                          view: HasFixedEstablishmentView
-                                 )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+                                 )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
+  
 
-  val form = formProvider()
-
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData) {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
 
-      val preparedForm = request.userAnswers.get(HasFixedEstablishmentPage) match {
-        case None => form
-        case Some(value) => form.fill(value)
-      }
+      getCountryWithIndex(waypoints, countryIndex) { country =>
 
-      Ok(view(preparedForm, waypoints))
+        val form: Form[Boolean] = formProvider(country)
+
+        val preparedForm = request.userAnswers.get(HasFixedEstablishmentPage(countryIndex)) match {
+          case None => form
+          case Some(value) => form.fill(value)
+        }
+
+        Ok(view(preparedForm, waypoints, countryIndex, country)).toFuture
+      }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
 
-      form.bindFromRequest().fold(
-        formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, waypoints))),
+      getCountryWithIndex(waypoints, countryIndex) { country =>
 
-        value =>
-          for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(HasFixedEstablishmentPage, value))
-            _              <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(HasFixedEstablishmentPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
-      )
+        val form: Form[Boolean] = formProvider(country)
+
+        form.bindFromRequest().fold(
+          formWithErrors =>
+            BadRequest(view(formWithErrors, waypoints, countryIndex, country)).toFuture,
+
+          value =>
+            for {
+              updatedAnswers <- Future.fromTry(request.userAnswers.set(HasFixedEstablishmentPage(countryIndex), value))
+              _ <- sessionRepository.set(updatedAnswers)
+            } yield Redirect(HasFixedEstablishmentPage(countryIndex).navigate(waypoints, request.userAnswers, updatedAnswers).route)
+        )
+      }
   }
 }

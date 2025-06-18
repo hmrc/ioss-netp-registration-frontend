@@ -15,36 +15,36 @@
  *@
 
 @import controllers.vatEuDetails.routes
+@import models.{Country, Index}
 @import pages.vatEuDetails.HasFixedEstablishmentPage
 @import pages.Waypoints
+@import views.html.components.ButtonGroup
 
 @this(
-    layout: templates.Layout,
-    formHelper: FormWithCSRF,
-    govukErrorSummary: GovukErrorSummary,
-    govukRadios: GovukRadios,
-    govukButton: GovukButton
+        layout: templates.Layout,
+        formHelper: FormWithCSRF,
+        govukErrorSummary: GovukErrorSummary,
+        govukRadios: GovukRadios,
+        button: ButtonGroup
 )
 
-@(form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
+@(form: Form[_], waypoints: Waypoints, countryIndex: Index, country: Country)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = title(form, messages("hasFixedEstablishment.title"))) {
+@layout(pageTitle = title(form, messages("hasFixedEstablishment.title", country.name))) {
 
-    @formHelper(action = routes.HasFixedEstablishmentController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
+  @formHelper(action = routes.HasFixedEstablishmentController.onSubmit(waypoints, countryIndex), Symbol("autoComplete") -> "off") {
 
-        @if(form.errors.nonEmpty) {
-            @govukErrorSummary(ErrorSummaryViewModel(form))
-        }
-
-        @govukRadios(
-            RadiosViewModel.yesNo(
-                field = form("value"),
-                legend = LegendViewModel(messages("hasFixedEstablishment.heading")).asPageHeading()
-            )
-        )
-
-        @govukButton(
-            ButtonViewModel(messages("site.continue"))
-        )
+    @if(form.errors.nonEmpty) {
+      @govukErrorSummary(ErrorSummaryViewModel(form))
     }
+
+    @govukRadios(
+      RadiosViewModel.yesNo(
+        field = form("value"),
+        legend = LegendViewModel(messages("hasFixedEstablishment.heading", country.name)).asPageHeading()
+      )
+    )
+
+    @button("site.continue", HasFixedEstablishmentPage(countryIndex).route(waypoints).url, waypoints)
+  }
 }

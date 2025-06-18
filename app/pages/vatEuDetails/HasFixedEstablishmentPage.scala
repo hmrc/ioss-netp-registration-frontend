@@ -17,16 +17,18 @@
 package pages.vatEuDetails
 
 import controllers.vatEuDetails.routes
+import models.Index
 import pages.{QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
-case object HasFixedEstablishmentPage extends QuestionPage[Boolean] {
+case class HasFixedEstablishmentPage(countryIndex: Index) extends QuestionPage[Boolean] {
 
-  override def path: JsPath = JsPath \ toString
+  override def path: JsPath = JsPath \ "euDetails" \ countryIndex.position \ toString
 
   override def toString: String = "hasFixedEstablishment"
 
-  override def route(waypoints: Waypoints): Call =
-    routes.HasFixedEstablishmentController.onPageLoad(waypoints)
+  override def route(waypoints: Waypoints): Call = {
+    routes.HasFixedEstablishmentController.onPageLoad(waypoints, countryIndex)
+  }
 }

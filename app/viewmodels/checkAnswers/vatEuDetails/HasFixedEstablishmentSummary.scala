@@ -17,7 +17,7 @@
 package viewmodels.checkAnswers.vatEuDetails
 
 import controllers.routes
-import models.{CheckMode, UserAnswers}
+import models.{CheckMode, Country, Index, UserAnswers}
 import pages.{CheckAnswersPage, Waypoints}
 import pages.vatEuDetails.HasFixedEstablishmentPage
 import play.api.i18n.Messages
@@ -25,25 +25,27 @@ import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.govuk.summarylist.*
 import viewmodels.implicits.*
 
-object HasFixedEstablishmentSummary  {
+object HasFixedEstablishmentSummary {
 
   def row(
-           answers: UserAnswers,
            waypoints: Waypoints,
-           sourcePage: CheckAnswersPage,
-         )(implicit messages: Messages): Option[SummaryListRow] =
-    answers.get(HasFixedEstablishmentPage).map {
-      answer =>
+           answers: UserAnswers,
+           countryIndex: Index,
+           country: Country,
+           sourcePage: CheckAnswersPage
+         )(implicit messages: Messages): Option[SummaryListRow] = {
+    answers.get(HasFixedEstablishmentPage(countryIndex)).map { answer =>
 
-        val value = if (answer) "site.yes" else "site.no"
+      val value = if (answer) "site.yes" else "site.no"
 
-        SummaryListRowViewModel(
-          key     = "hasFixedEstablishment.checkYourAnswersLabel",
-          value   = ValueViewModel(value),
-          actions = Seq(
-            ActionItemViewModel("site.change", HasFixedEstablishmentPage.changeLink(waypoints, sourcePage).url)
-              .withVisuallyHiddenText(messages("hasFixedEstablishment.change.hidden"))
-          )
+      SummaryListRowViewModel(
+        key = "hasFixedEstablishment.checkYourAnswersLabel",
+        value = ValueViewModel(value),
+        actions = Seq(
+          ActionItemViewModel("site.change", HasFixedEstablishmentPage(countryIndex).changeLink(waypoints, sourcePage).url)
+            .withVisuallyHiddenText(messages("hasFixedEstablishment.change.hidden", country))
         )
+      )
     }
+  }
 }
