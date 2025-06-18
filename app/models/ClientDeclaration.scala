@@ -25,12 +25,10 @@ sealed trait ClientDeclaration
 
 object ClientDeclaration extends Enumerable.Implicits {
 
-  case object Option1 extends WithName("option1") with ClientDeclaration
-  case object Option2 extends WithName("option2") with ClientDeclaration
+  case object ClientConsent extends WithName("option1") with ClientDeclaration
 
   val values: Seq[ClientDeclaration] = Seq(
-    Option1,
-    Option2
+    ClientConsent
   )
 
   def checkboxItems(implicit messages: Messages): Seq[CheckboxItem] =

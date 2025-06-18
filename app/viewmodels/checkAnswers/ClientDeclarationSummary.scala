@@ -18,17 +18,20 @@ package viewmodels.checkAnswers
 
 import controllers.routes
 import models.{CheckMode, UserAnswers}
+import pages.Waypoints
 import pages.clientDeclarationJourney.ClientDeclarationPage
 import play.api.i18n.Messages
 import play.twirl.api.HtmlFormat
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content.HtmlContent
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
-import viewmodels.govuk.summarylist._
-import viewmodels.implicits._
+import viewmodels.govuk.summarylist.*
+import viewmodels.implicits.*
 
 object ClientDeclarationSummary  {
 
-  def row(answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] =
+  def row(
+           waypoints: Waypoints,
+           answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] =
     answers.get(ClientDeclarationPage).map {
       answers =>
 
@@ -45,7 +48,7 @@ object ClientDeclarationSummary  {
           key     = "clientDeclaration.checkYourAnswersLabel",
           value   = value,
           actions = Seq(
-            ActionItemViewModel("site.change", routes.ClientDeclarationController.onPageLoad(CheckMode).url)
+            ActionItemViewModel("site.change", controllers.clientDeclarationJourney.routes.ClientDeclarationController.onPageLoad(waypoints).url)
               .withVisuallyHiddenText(messages("clientDeclaration.change.hidden"))
           )
         )

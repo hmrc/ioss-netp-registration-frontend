@@ -18,7 +18,7 @@ package controllers.clientDeclarationJourney
 
 import controllers.actions.*
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
-import models.Mode
+import models.{Mode, UserAnswers}
 import pages.clientDeclarationJourney.{ClientCodeEntryPage, ClientDeclarationPage}
 import pages.{Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -35,7 +35,6 @@ class ClientDeclarationController @Inject()(
                                         sessionRepository: SessionRepository,
                                         identify: IdentifierAction,
                                         getData: DataRetrievalAction,
-                                        requireData: DataRequiredAction,
                                         formProvider: ClientDeclarationFormProvider,
                                         val controllerComponents: MessagesControllerComponents,
                                         view: ClientDeclarationView
@@ -43,10 +42,10 @@ class ClientDeclarationController @Inject()(
 
   val form = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData) {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData) {
     implicit request =>
 
-      val preparedForm = request.userAnswers.get(ClientDeclarationPage) match {
+      val preparedForm = request.userAnswers.flatMap(_.get(ClientDeclarationPage)) match {
         case None => form
         case Some(value) => form.fill(value)
       }
@@ -54,7 +53,7 @@ class ClientDeclarationController @Inject()(
       Ok(view(preparedForm, waypoints))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData).async {
     implicit request =>
 
       form.bindFromRequest().fold(
@@ -62,10 +61,12 @@ class ClientDeclarationController @Inject()(
           Future.successful(BadRequest(view(formWithErrors, waypoints))),
 
         value =>
+          val originalAnswers: UserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
+
           for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientDeclarationPage, value))
+            updatedAnswers <- Future.fromTry(originalAnswers.set(ClientDeclarationPage, value))
             _              <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(ClientCodeEntryPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+            } yield Redirect(ClientCodeEntryPage.navigate(waypoints, originalAnswers, updatedAnswers).route)
       )
   }
 }

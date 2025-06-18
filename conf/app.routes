@@ -107,7 +107,5 @@ GET         /error-submitting-pending-registration          controllers.ErrorSub
 GET        /client-code-entry                        controllers.clientDeclarationJourney.ClientCodeEntryController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST       /client-code-entry                        controllers.clientDeclarationJourney.ClientCodeEntryController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET        /clientDeclaration                        controllers.clientDeclarationJourney.ClientDeclarationController.onPageLoad(mode: Mode = NormalMode)
-POST       /clientDeclaration                        controllers.clientDeclarationJourney.ClientDeclarationController.onSubmit(mode: Mode = NormalMode)
-GET        /changeClientDeclaration                  controllers.clientDeclarationJourney.ClientDeclarationController.onPageLoad(mode: Mode = CheckMode)
-POST       /changeClientDeclaration                  controllers.clientDeclarationJourney.ClientDeclarationController.onSubmit(mode: Mode = CheckMode)
+GET        /declaration-client                        controllers.clientDeclarationJourney.ClientDeclarationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST       /declaration-client                       controllers.clientDeclarationJourney.ClientDeclarationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)

@@ -22,27 +22,44 @@
     govukButton: GovukButton
 )
 
-@(form: Form[_], mode: Mode)(implicit request: Request[_], messages: Messages)
+@(form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = title(form, messages("clientDeclaration.title"))) {
 
-    @formHelper(action = routes.ClientDeclarationController.onSubmit(mode), Symbol("autoComplete") -> "off") {
+    @formHelper(action = controllers.clientDeclarationJourney.routes.ClientDeclarationController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
 
         @if(form.errors.nonEmpty) {
             @govukErrorSummary(ErrorSummaryViewModel(form, errorLinkOverrides = Map("value" -> "value_0")))
         }
 
-        @govukCheckboxes(
-            CheckboxesViewModel(
-                form   = form,
-                name   = "value",
-                legend = LegendViewModel(messages("clientDeclaration.heading")).asPageHeading(),
-                items  = ClientDeclaration.checkboxItems
-            )
+        <h1 class="govuk-heading-l govuk-!-margin-bottom-3">@messages("clientDeclaration.heading")</h1>
+
+        <p class="govuk-body">@messages("clientDeclaration.information.p1")</p>
+
+        <p class="govuk-body">@messages("clientDeclaration.information.p2")</p>
+
+
+    @govukCheckboxes(
+        Checkboxes(
+            name = "declaration",
+            items = Seq(
+                CheckboxItem(
+                    id = Some("declaration"),
+                    name = Some("declaration"),
+                    content = Text(messages("clientDeclaration.checkbox.text")),
+                    value = "true",
+                    checked = form("declaration").value.contains("true")
+                )
+            ),
+            errorMessage = form.errors.headOption.map { error =>
+            ErrorMessage(content = Text(messages(error.message)))
+            }
+        )
+    )
+
+    @govukButton(
+        ButtonViewModel(messages("site.agree")).withAttribute("id", "continue")
         )
 
-        @govukButton(
-            ButtonViewModel(messages("site.continue"))
-        )
     }
 }

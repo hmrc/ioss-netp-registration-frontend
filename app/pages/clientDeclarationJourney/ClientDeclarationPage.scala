@@ -16,13 +16,22 @@
 
 package pages.clientDeclarationJourney
 
-import models.ClientDeclaration
-import pages.QuestionPage
+import models.{ClientDeclaration, UserAnswers}
+import pages.{JourneyRecoveryPage, Page, QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
+import play.api.mvc.Call
 
 case object ClientDeclarationPage extends QuestionPage[Set[ClientDeclaration]] {
 
   override def path: JsPath = JsPath \ toString
 
   override def toString: String = "clientDeclaration"
+
+  override def route(waypoints: Waypoints): Call = {
+    controllers.clientDeclarationJourney.routes.ClientDeclarationController.onPageLoad(waypoints)
+  }
+
+  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
+    JourneyRecoveryPage //TODO VEI-265: Update navigation
+  }
 }
