@@ -361,9 +361,9 @@ taxRegisteredInEu.checkYourAnswersLabel = Registered for tax in EU countries
 taxRegisteredInEu.error.required = Select yes if your client''s business is registered for tax in EU countries
 taxRegisteredInEu.change.hidden = if your client''s business is registered for tax in EU countries
 
-euCountry.title = Select an EU country where your business is registered for tax
-euCountry.heading = Select an EU country where your business is registered for tax
-euCountry.error.required = Select an EU country where your business is registered for tax
+euCountry.title = Which country is their fixed establishment in?
+euCountry.heading = Which country is their fixed establishment in?
+euCountry.error.required = Please select which country their fixed establishment is in
 euCountry.error.duplicate = You selected this country already. Select a different one
 
 hasFixedEstablishment.title = Does your business have a fixed establishment in {0}?
