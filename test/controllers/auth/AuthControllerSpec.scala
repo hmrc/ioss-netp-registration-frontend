@@ -30,18 +30,11 @@ import utils.FutureSyntax.FutureOps
 import java.net.URLEncoder
 
 class AuthControllerSpec extends SpecBase with MockitoSugar {
-/* TODO temp comment out
   "signOut" - {
 
-    "must clear user answers and redirect to sign out, specifying the exit survey as the continue URL" in {
+    "must redirect to sign out, specifying the exit survey as the continue URL" in {
 
-      val mockSessionRepository = mock[SessionRepository]
-      when(mockSessionRepository.clear(any())) thenReturn true.toFuture
-
-      val application =
-        applicationBuilder(None)
-          .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
-          .build()
+      val application = applicationBuilder(None).build()
 
       running(application) {
 
@@ -55,10 +48,9 @@ class AuthControllerSpec extends SpecBase with MockitoSugar {
 
         status(result) `mustBe` SEE_OTHER
         redirectLocation(result).value `mustBe` expectedRedirectUrl
-        verify(mockSessionRepository, times(1)).clear(eqTo(userAnswersId))
       }
     }
-  }*/
+  }
 
   "signOutNoSurvey" - {
 
