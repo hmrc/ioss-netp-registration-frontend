@@ -17,21 +17,28 @@
 package controllers
 
 import com.google.inject.Inject
-import controllers.actions._
+import controllers.actions.*
 import models.CheckMode
-import pages.{CheckYourAnswersPage, EmptyWaypoints, Waypoint}
+import pages.{CheckYourAnswersPage, EmptyWaypoints, Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import viewmodels.checkAnswers.BusinessContactDetailsSummary
+import utils.CompletionChecks
+import viewmodels.checkAnswers.*
 import viewmodels.govuk.summarylist.*
 import views.html.CheckYourAnswersView
+import utils.FutureSyntax.FutureOps
+import viewmodels.WebsiteSummary
+import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
+
+import scala.concurrent.ExecutionContext
 
 class CheckYourAnswersController @Inject()(
                                             override val messagesApi: MessagesApi,
                                             cc: AuthenticatedControllerComponents,
                                             view: CheckYourAnswersView
-                                          ) extends FrontendBaseController with I18nSupport {
+                                          )(implicit executionContext: ExecutionContext)
+  extends FrontendBaseController with I18nSupport with CompletionChecks {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -39,21 +46,70 @@ class CheckYourAnswersController @Inject()(
     implicit request =>
 
       val thisPage = CheckYourAnswersPage
+      val userAnswers = request.userAnswers
 
       val waypoints = EmptyWaypoints.setNextWaypoint(Waypoint(thisPage, CheckMode, CheckYourAnswersPage.urlFragment))
 
-      val contactDetailsFullNameRow = BusinessContactDetailsSummary.rowFullName(waypoints, request.userAnswers, thisPage)
-      val contactDetailsTelephoneNumberRow = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, request.userAnswers, thisPage)
-      val contactDetailsEmailAddressRow = BusinessContactDetailsSummary.rowEmailAddress(waypoints, request.userAnswers, thisPage)
+      val vatRegistrationDetailsList = SummaryListViewModel(
+        rows = Seq(
+          BusinessBasedInUKSummary.row(waypoints, userAnswers, thisPage),
+          ClientHasVatNumberSummary.row(waypoints, userAnswers, thisPage),
+          ClientVatNumberSummary.row(waypoints, userAnswers, thisPage),
+          ClientBusinessNameSummary.row(waypoints, userAnswers, thisPage),
+          ClientHasUtrNumberSummary.row(waypoints, userAnswers, thisPage),
+          ClientUtrNumberSummary.row(waypoints, userAnswers, thisPage),
+          ClientsNinoNumberSummary.row(waypoints, userAnswers, thisPage),
+          ClientCountryBasedSummary.row(waypoints, userAnswers, thisPage),
+          ClientTaxReferenceSummary.row(waypoints, userAnswers, thisPage),
+          ClientBusinessAddressSummary.row(waypoints, userAnswers, thisPage),
+          VatRegistrationDetailsSummary.rowBusinessAddress(waypoints, userAnswers, thisPage)
+        ).flatten
+      )
+
+      val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(userAnswers, waypoints, thisPage)
+      val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, userAnswers, thisPage)
+      val websiteSummaryRow = WebsiteSummary.checkAnswersRow(waypoints, userAnswers, thisPage)
+      val contactDetailsFullNameRow = BusinessContactDetailsSummary.rowFullName(waypoints, userAnswers, thisPage)
+      val contactDetailsTelephoneNumberRow = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, userAnswers, thisPage)
+      val contactDetailsEmailAddressRow = BusinessContactDetailsSummary.rowEmailAddress(waypoints, userAnswers, thisPage)
 
       val list = SummaryListViewModel(
         rows = Seq(
+         maybeHasTradingNameSummaryRow.map { hasTradingNameSummaryRow =>
+                      if (tradingNameSummaryRow.nonEmpty) {
+                        hasTradingNameSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+                      } else {
+                        hasTradingNameSummaryRow
+                      }
+                    },
+          tradingNameSummaryRow,
+          websiteSummaryRow,
           contactDetailsFullNameRow.map(_.withCssClass("govuk-summary-list__row--no-border")),
           contactDetailsTelephoneNumberRow.map(_.withCssClass("govuk-summary-list__row--no-border")),
           contactDetailsEmailAddressRow,
         ).flatten
       )
 
-      Ok(view(list))
+      val isValid: Boolean = validate()
+
+      Ok(view(waypoints, vatRegistrationDetailsList, list, isValid))
+  }
+
+  def onSubmit(waypoints: Waypoints, incompletePrompt: Boolean): Action[AnyContent] = cc.identifyAndGetData.async {
+    implicit request =>
+
+      getFirstValidationErrorRedirect(waypoints) match {
+        case Some(errorRedirect) => if (incompletePrompt) {
+          errorRedirect.toFuture
+        } else {
+          Redirect(CheckYourAnswersPage.route(waypoints).url).toFuture
+        }
+
+        case None =>
+
+          for {
+            _ <- cc.sessionRepository.set(request.userAnswers)
+          } yield Redirect(CheckYourAnswersPage.navigate(waypoints, request.userAnswers, request.userAnswers).route)
+      }
   }
 }

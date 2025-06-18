@@ -18,7 +18,7 @@ package generators
 
 import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
-import models.{BusinessContactDetails, ClientBusinessName, Country, DesAddress, InternationalAddress}
+import models.{BusinessContactDetails, ClientBusinessName, Country, DesAddress, InternationalAddress, TradingName}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.{choose, listOfN}
 import org.scalacheck.{Arbitrary, Gen}
@@ -158,6 +158,16 @@ trait ModelGenerators extends EitherValues {
         clientBusinessName <- Gen.alphaStr.retryUntil(cbn => cbn.length > 1 && cbn.length < 40)
       } yield {
         ClientBusinessName(name = clientBusinessName)
+      }
+    }
+  }
+
+  implicit lazy val arbitraryTradingName: Arbitrary[TradingName] = {
+    Arbitrary {
+      for {
+        name <- commonFieldString(maxFieldLength)
+      } yield {
+        TradingName(name)
       }
     }
   }
