@@ -144,10 +144,6 @@ clientBusinessAddress.error.stateOrRegion.format = State or region must only inc
 clientBusinessAddress.error.postCode.length = Postcode must be 40 characters or less
 clientBusinessAddress.error.postCode.invalid = Postcode must only include letters, numbers and spaces
 
-confirmClientVatDetails.title = Confirm details for {0}
-confirmClientVatDetails.heading = Confirm details for {0}
-confirmClientVatDetails.info.p1 = If any of these details are incorrect, your client will need to change them from their business tax account.
-
 clientHasUtrNumber.title = Does your client''s business have a Unique Taxpayer Reference (UTR) number?
 clientHasUtrNumber.heading = Does your client''s business have a Unique Taxpayer Reference (UTR) number?
 clientHasUtrNumber.checkYourAnswersLabel = Has Unique Taxpayer Reference (UTR) number
@@ -179,7 +175,7 @@ checkVatDetails.error.required = Select Yes if you want to register this busines
 checkVatDetails.question = Do you want to register this business?
 checkVatDetails.yes = Yes
 checkVatDetails.wrongAccount = No, I want to register a different business
-checkVatDetails.info.p1 = If your client's name or address are incorrect, your client will need to change them from their business tax account.
+checkVatDetails.info.p1 = If your client''s name or address are incorrect, your client will need to change them from their business tax account.
 checkVatDetails.address = Principal place of business address
 
 useOtherAccount.title = Sign in with a different Government Gateway user ID
