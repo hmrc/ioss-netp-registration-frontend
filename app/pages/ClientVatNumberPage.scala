@@ -31,6 +31,13 @@ case object ClientVatNumberPage extends QuestionPage[String] {
     routes.ClientVatNumberController.onPageLoad(waypoints)
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
-    CheckVatDetailsPage()
+    answers.get(BusinessBasedInUKPage) match {
+      case Some(true) =>
+        CheckVatDetailsPage()
+      case Some(false) =>
+        ClientCountryBasedPage
+      case _ =>
+        JourneyRecoveryPage
+    }
   }
 }

@@ -105,15 +105,15 @@ clientCountryBased.checkYourAnswersLabel = Country based in
 clientCountryBased.error.required = Select the country where your client''s business is based
 clientCountryBased.change.hidden = Country based in
 
-clientUKBusinessName.title = What is your client''s business name?
-clientUKBusinessName.heading = What is your client''s business name?
-clientBusinessName.title = What is your client''s business name in {0}?
-clientBusinessName.heading = What is your client''s business name in {0}?
-clientBusinessName.checkYourAnswersLabel = Client''s Business Name
-clientBusinessName.error.required = Enter your client''s business name
+clientUKBusinessName.title = What name does your client trade under?
+clientUKBusinessName.heading = What name does your client trade under?
+clientBusinessName.title = What name does your client trade under in {0}?
+clientBusinessName.heading = What name does your client trade under in {0}?
+clientBusinessName.checkYourAnswersLabel = Trading name
+clientBusinessName.error.required = Enter your client''s trading name
 clientBusinessName.error.length = Client''s business name must be 40 characters or less
-clientBusinessName.change.hidden = your Client's business name
-clientBusinessName.error.invalid = Business name must only include letters, numbers, hyphens, spaces and apostrophes
+clientBusinessName.change.hidden = your Client's trading name
+clientBusinessName.error.invalid = Trading name must only include letters, numbers, hyphens, spaces and apostrophes
 
 clientTaxReference.title = What is your client''s tax reference number in {0}?
 clientTaxReference.heading = What is your client''s tax reference number in {0}?
@@ -179,7 +179,7 @@ checkVatDetails.error.required = Select Yes if you want to register this busines
 checkVatDetails.question = Do you want to register this business?
 checkVatDetails.yes = Yes
 checkVatDetails.wrongAccount = No, I want to register a different business
-checkVatDetails.info.p1 = If any of these details are incorrect, your client will need to change them from their business tax account.
+checkVatDetails.info.p1 = If your client's name or address are incorrect, your client will need to change them from their business tax account.
 checkVatDetails.address = Principal place of business address
 
 useOtherAccount.title = Sign in with a different Government Gateway user ID

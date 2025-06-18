@@ -17,13 +17,10 @@
 package controllers
 
 import controllers.actions.*
-import forms.CheckVatDetailsFormProvider
 import logging.Logging
 import models.UserAnswers
-import models.checkVatDetails.CheckVatDetails
 import models.domain.VatCustomerInfo
 import pages.*
-import play.api.data.Form
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
@@ -32,92 +29,49 @@ import utils.FutureSyntax.FutureOps
 import viewmodels.CheckVatDetailsViewModel
 import viewmodels.checkAnswers.*
 import viewmodels.govuk.all.SummaryListViewModel
-import views.html.{CheckVatDetailsView, ConfirmClientVatDetailsView}
+import views.html.CheckVatDetailsView
 
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
 
 class CheckVatDetailsController @Inject()(
                                            override val messagesApi: MessagesApi,
                                            cc: AuthenticatedControllerComponents,
-                                           formProvider: CheckVatDetailsFormProvider,
-                                           view: CheckVatDetailsView,
-                                           nonUkVatNumberView: ConfirmClientVatDetailsView
-                                         )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetClientCompanyName with Logging {
+                                           view: CheckVatDetailsView
+                                         )() extends FrontendBaseController with I18nSupport with GetClientCompanyName with Logging {
 
-  val form: Form[CheckVatDetails] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
+      val isBasedInUk = request.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
+      val hasVatNumber = request.userAnswers.get(ClientHasVatNumberPage).getOrElse(false)
+      val summaryList = buildSummaryList(waypoints, request.userAnswers, CheckVatDetailsPage())
+      val ukVatNumber = request.userAnswers.get(ClientVatNumberPage).getOrElse("")
+
       getClientCompanyName(waypoints) { clientCompanyName =>
 
-        val sourcePage = CheckVatDetailsPage()
+        if (isBasedInUk && hasVatNumber) {
+          request.userAnswers.vatInfo match {
+            case Some(vatCustomerInfo) =>
 
-        request.userAnswers.get(ClientVatNumberPage) match {
-          case Some(ukVatNumber) =>
+              val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatCustomerInfo)
 
-            val preparedForm = request.userAnswers.get(CheckVatDetailsPage()) match {
-              case None => form
-              case Some(value) => form.fill(value)
-            }
+              Ok(view(waypoints, Some(viewModel), summaryList, clientCompanyName, isBasedInUk, hasVatNumber)).toFuture
 
-            request.userAnswers.vatInfo match {
-              case Some(vatCustomerInfo) =>
-
-                val summaryList = buildSummaryList(waypoints, request.userAnswers, sourcePage)
-
-                val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatCustomerInfo)
-
-                Ok(view(preparedForm, waypoints, viewModel, summaryList, clientCompanyName)).toFuture
-
-              case None =>
-                Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
-            }
-
-          case None =>
-            val summaryList = buildSummaryList(waypoints, request.userAnswers, sourcePage)
-            Ok(nonUkVatNumberView(waypoints, summaryList, clientCompanyName)).toFuture
+            case None =>
+              Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
+          }
+        } else {
+            Ok(view(waypoints, None, summaryList, clientCompanyName, isBasedInUk, hasVatNumber)).toFuture
         }
       }
   }
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
+      Redirect(CheckVatDetailsPage().navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
 
-      getClientCompanyName(waypoints) { clientCompanyName =>
-
-        request.userAnswers.get(ClientVatNumberPage) match {
-          case Some(ukVatNumber) =>
-
-            request.userAnswers.vatInfo match {
-              case Some(vatCustomerInfo) =>
-
-                form.bindFromRequest().fold(
-                  formWithErrors => {
-
-                    val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatCustomerInfo)
-                    val sourcePage = CheckVatDetailsPage()
-
-                    val summaryList = buildSummaryList(waypoints, request.userAnswers, sourcePage)
-
-                    BadRequest(view(formWithErrors, waypoints, viewModel, summaryList, clientCompanyName)).toFuture
-                  },
-
-                  value =>
-                    for {
-                      updatedAnswers <- Future.fromTry(request.userAnswers.set(CheckVatDetailsPage(), value))
-                      _ <- cc.sessionRepository.set(updatedAnswers)
-                    } yield Redirect(CheckVatDetailsPage().navigate(waypoints, request.userAnswers, updatedAnswers).route)
-                )
-              case None =>
-                Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
-            }
-          case None =>
-            Redirect(CheckVatDetailsPage().navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
-        }
-      }
   }
 
   private def buildSummaryList(
@@ -131,14 +85,14 @@ class CheckVatDetailsController @Inject()(
 
     val rows = Seq(
       BusinessBasedInUKSummary.row(waypoints, userAnswers, sourcePage),
-      if (isUKBased) ClientHasVatNumberSummary.row(waypoints, userAnswers, sourcePage) else None,
+      ClientHasVatNumberSummary.row(waypoints, userAnswers, sourcePage),
       ClientVatNumberSummary.row(waypoints, userAnswers, sourcePage),
+      ClientCountryBasedSummary.row(waypoints, userAnswers, sourcePage),
+      ClientTaxReferenceSummary.row(waypoints, userAnswers, sourcePage),
       ClientBusinessNameSummary.row(waypoints, userAnswers, sourcePage),
       if (isUKBased && !hasUkVatNumber) ClientHasUtrNumberSummary.row(waypoints, userAnswers, sourcePage) else None,
       ClientUtrNumberSummary.row(waypoints, userAnswers, sourcePage),
       ClientsNinoNumberSummary.row(waypoints, userAnswers, sourcePage),
-      ClientCountryBasedSummary.row(waypoints, userAnswers, sourcePage),
-      ClientTaxReferenceSummary.row(waypoints, userAnswers, sourcePage),
       ClientBusinessAddressSummary.row(waypoints, userAnswers, sourcePage)
     ).flatten
 

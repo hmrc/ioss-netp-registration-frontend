@@ -37,12 +37,14 @@ case object BusinessBasedInUKPage extends QuestionPage[Boolean] {
       case true =>
         ClientHasVatNumberPage
       case false =>
-        ClientCountryBasedPage
+        ClientHasVatNumberPage
     }.orRecover
 
   override def cleanup(value: Option[Boolean], userAnswers: UserAnswers): Try[UserAnswers] = {
     if (value.contains(true)) {
       for {
+        removeClientVatNumberAnswers <- userAnswers.remove(ClientVatNumberPage)
+        removeHasClientVatNumberAnswers <- removeClientVatNumberAnswers.remove(ClientHasVatNumberPage)
         removeCountryBasedInAnswers <- userAnswers.remove(ClientCountryBasedPage)
         removeBusinessName <- removeCountryBasedInAnswers.remove(ClientBusinessNamePage)
         removeTaxReferenceAnswers <- removeBusinessName.remove(ClientTaxReferencePage)

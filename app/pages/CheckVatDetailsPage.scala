@@ -18,12 +18,10 @@ package pages
 
 import controllers.routes
 import models.UserAnswers
-import models.checkVatDetails.CheckVatDetails
-import models.checkVatDetails.CheckVatDetails.{WrongAccount, Yes}
-import play.api.libs.json.JsPath
+import pages.tradingNames.HasTradingNamePage
 import play.api.mvc.Call
 
-case class CheckVatDetailsPage() extends CheckAnswersPage with QuestionPage[CheckVatDetails] {
+case class CheckVatDetailsPage() extends CheckAnswersPage {
 
   override val urlFragment: String = "check-vat-details"
 
@@ -32,18 +30,12 @@ case class CheckVatDetailsPage() extends CheckAnswersPage with QuestionPage[Chec
     case _ => false
   }
 
-  override def path: JsPath = JsPath \ toString
-
   override def toString: String = "checkVatDetails"
 
   override def route(waypoints: Waypoints): Call =
     routes.CheckVatDetailsController.onPageLoad(waypoints)
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
-    (answers.get(this), answers.vatInfo) match {
-      case (Some(Yes), Some(vatInfo)) if vatInfo.desAddress.line1.nonEmpty => CheckYourAnswersPage
-      //TODO: -> Trading name
-      case (Some(WrongAccount), _) => UseOtherAccountPage
-      case _ => JourneyRecoveryPage
-    }
+     HasTradingNamePage
+
 }

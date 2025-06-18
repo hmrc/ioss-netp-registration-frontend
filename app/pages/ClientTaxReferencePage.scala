@@ -32,5 +32,5 @@ case object ClientTaxReferencePage extends QuestionPage[String] {
   }
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
-    ClientBusinessAddressPage
+    ClientBusinessNamePage
 }

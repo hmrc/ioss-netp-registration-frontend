@@ -33,12 +33,18 @@ case object ClientHasVatNumberPage extends QuestionPage[Boolean] {
     routes.ClientHasVatNumberController.onPageLoad(waypoints)
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
-    answers.get(this).map {
-      case true =>
+    (answers.get(BusinessBasedInUKPage), answers.get(this)) match {
+      case (Some(true), Some(true)) =>
         ClientVatNumberPage
-      case false =>
+      case (Some(true), Some(false))=>
         ClientBusinessNamePage
-    }.orRecover
+      case (Some(false), Some(true)) =>
+        ClientVatNumberPage
+      case (Some(false), Some(false)) =>
+        ClientCountryBasedPage
+      case _ =>
+        JourneyRecoveryPage
+    }
 
   override def cleanup(value: Option[Boolean], userAnswers: UserAnswers): Try[UserAnswers] = {
      value match {
@@ -48,7 +54,8 @@ case object ClientHasVatNumberPage extends QuestionPage[Boolean] {
            .remove(ClientVatNumberPage)
        } yield updatedUserAnswers
        case Some(true) => for {
-         removeHasUtrNumberAnswers <- userAnswers.remove(ClientHasUtrNumberPage)
+         removeClientVatNumberAnswers <- userAnswers.remove(ClientVatNumberPage)
+         removeHasUtrNumberAnswers <- removeClientVatNumberAnswers.remove(ClientHasUtrNumberPage)
          removeUtrNumberAnswers <- removeHasUtrNumberAnswers.remove(ClientUtrNumberPage)
          removeNinoNumberAnswers <- removeUtrNumberAnswers.remove(ClientsNinoNumberPage)
          removeBusinessAddressAnswers <- removeNinoNumberAnswers.remove(ClientBusinessAddressPage)
