@@ -1,4 +1,4 @@
-package forms
+package forms.vatEuDetails
 
 import forms.behaviours.OptionFieldBehaviours
 import models.RegistrationType

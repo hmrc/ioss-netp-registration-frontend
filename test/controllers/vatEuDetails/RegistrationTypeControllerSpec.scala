@@ -1,6 +1,7 @@
-package controllers
+package controllers.vatEuDetails
 
 import base.SpecBase
+import controllers.routes
 import forms.RegistrationTypeFormProvider
 import models.{NormalMode, RegistrationType, UserAnswers}
 import org.mockito.ArgumentMatchers.any
@@ -10,7 +11,7 @@ import pages.RegistrationTypePage
 import play.api.inject.bind
 import play.api.mvc.Call
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import repositories.SessionRepository
 import views.html.RegistrationTypeView
 

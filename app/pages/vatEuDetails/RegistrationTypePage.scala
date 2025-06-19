@@ -1,6 +1,7 @@
-package pages
+package pages.vatEuDetails
 
 import models.RegistrationType
+import pages.QuestionPage
 import play.api.libs.json.JsPath
 
 case object RegistrationTypePage extends QuestionPage[RegistrationType] {

@@ -1,10 +1,9 @@
-package controllers
+package controllers.vatEuDetails
 
-import controllers.actions._
-import forms.RegistrationTypeFormProvider
-import javax.inject.Inject
+import controllers.actions.*
+import forms.vatEuDetails.RegistrationTypeFormProvider
 import models.Mode
-import pages.RegistrationTypePage
+import pages.vatEuDetails.RegistrationTypePage
 import pages.{Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -12,6 +11,7 @@ import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.RegistrationTypeView
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class RegistrationTypeController @Inject()(

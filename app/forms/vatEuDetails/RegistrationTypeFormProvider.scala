@@ -1,10 +1,10 @@
-package forms
-
-import javax.inject.Inject
+package forms.vatEuDetails
 
 import forms.mappings.Mappings
-import play.api.data.Form
 import models.RegistrationType
+import play.api.data.Form
+
+import javax.inject.Inject
 
 class RegistrationTypeFormProvider @Inject() extends Mappings {
 
