@@ -49,17 +49,22 @@ case object ClientHasVatNumberPage extends QuestionPage[Boolean] {
   override def cleanup(value: Option[Boolean], userAnswers: UserAnswers): Try[UserAnswers] = {
      value match {
        case Some(false) => for {
-         updatedUserAnswers <- userAnswers
+         removeVatNumber <- userAnswers
            .copy(vatInfo = None)
            .remove(ClientVatNumberPage)
+         removeCountryBasedInAnswers <- removeVatNumber.remove(ClientCountryBasedPage)
+         removeBusinessName <- removeCountryBasedInAnswers.remove(ClientBusinessNamePage)
+         updatedUserAnswers <- removeBusinessName.remove(ClientBusinessAddressPage)
        } yield updatedUserAnswers
        case Some(true) => for {
          removeClientVatNumberAnswers <- userAnswers.remove(ClientVatNumberPage)
-         removeHasUtrNumberAnswers <- removeClientVatNumberAnswers.remove(ClientHasUtrNumberPage)
+         removeCountryBasedInAnswers <- removeClientVatNumberAnswers.remove(ClientCountryBasedPage)
+         removeHasUtrNumberAnswers <- removeCountryBasedInAnswers.remove(ClientHasUtrNumberPage)
          removeUtrNumberAnswers <- removeHasUtrNumberAnswers.remove(ClientUtrNumberPage)
          removeNinoNumberAnswers <- removeUtrNumberAnswers.remove(ClientsNinoNumberPage)
          removeBusinessAddressAnswers <- removeNinoNumberAnswers.remove(ClientBusinessAddressPage)
-         updatedUserAnswers <- removeBusinessAddressAnswers.remove(ClientBusinessNamePage)
+         removeTaxReferenceAnswers <- removeBusinessAddressAnswers.remove(ClientTaxReferencePage)
+         updatedUserAnswers <- removeTaxReferenceAnswers.remove(ClientBusinessNamePage)
        } yield updatedUserAnswers
        case _ => super.cleanup(value, userAnswers)
      }

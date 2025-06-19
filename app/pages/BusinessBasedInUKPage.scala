@@ -53,7 +53,8 @@ case object BusinessBasedInUKPage extends QuestionPage[Boolean] {
       case Some(true) => for {
         removeClientVatNumberAnswers <- userAnswers.remove(ClientVatNumberPage)
         removeHasClientVatNumberAnswers <- removeClientVatNumberAnswers.remove(ClientHasVatNumberPage)
-        removeHasUtrNumberAnswers <- removeHasClientVatNumberAnswers.remove(ClientHasUtrNumberPage)
+        removeCountryBasedInAnswers <- removeHasClientVatNumberAnswers.remove(ClientCountryBasedPage)
+        removeHasUtrNumberAnswers <- removeCountryBasedInAnswers.remove(ClientHasUtrNumberPage)
         removeUtrNumberAnswers <- removeHasUtrNumberAnswers.remove(ClientUtrNumberPage)
         removeNinoNumberAnswers <- removeUtrNumberAnswers.remove(ClientsNinoNumberPage)
         removeBusinessAddressAnswers <- removeNinoNumberAnswers.remove(ClientBusinessAddressPage)
