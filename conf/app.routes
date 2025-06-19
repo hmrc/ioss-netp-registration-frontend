@@ -148,3 +148,6 @@ POST        /vat-registered-eu-country/:countryIndex     controllers.vatEuDetail
 
 GET         /eu-fixed-establishment/:countryIndex                          controllers.vatEuDetails.HasFixedEstablishmentController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
 POST        /eu-fixed-establishment/:countryIndex                          controllers.vatEuDetails.HasFixedEstablishmentController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
+
+GET         /registration-tax-type/:countryIndex                            controllers.vatEuDetails.RegistrationTypeController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
+POST        /registration-tax-type/:countryIndex                            controllers.vatEuDetails.RegistrationTypeController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
