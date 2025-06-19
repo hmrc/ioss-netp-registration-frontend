@@ -32,6 +32,15 @@ case object ClientCountryBasedPage extends QuestionPage[Country] {
   }
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
-    ClientTaxReferencePage
+    
+    answers.get(ClientHasVatNumberPage) match {
+      case Some(true) =>
+        ClientBusinessNamePage
+      case Some(false) =>
+        ClientTaxReferencePage
+      case None =>
+        JourneyRecoveryPage
+    }
+    
   }
 }

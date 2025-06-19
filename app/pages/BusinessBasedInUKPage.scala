@@ -41,17 +41,16 @@ case object BusinessBasedInUKPage extends QuestionPage[Boolean] {
     }.orRecover
 
   override def cleanup(value: Option[Boolean], userAnswers: UserAnswers): Try[UserAnswers] = {
-    if (value.contains(true)) {
-      for {
+    value match {
+      case Some(false) => for {
         removeClientVatNumberAnswers <- userAnswers.remove(ClientVatNumberPage)
         removeHasClientVatNumberAnswers <- removeClientVatNumberAnswers.remove(ClientHasVatNumberPage)
-        removeCountryBasedInAnswers <- userAnswers.remove(ClientCountryBasedPage)
+        removeCountryBasedInAnswers <- removeHasClientVatNumberAnswers.remove(ClientCountryBasedPage)
         removeBusinessName <- removeCountryBasedInAnswers.remove(ClientBusinessNamePage)
         removeTaxReferenceAnswers <- removeBusinessName.remove(ClientTaxReferencePage)
         updatedUserAnswers <- removeTaxReferenceAnswers.remove(ClientBusinessAddressPage)
       } yield updatedUserAnswers
-    } else {
-      for {
+      case Some(true) => for {
         removeClientVatNumberAnswers <- userAnswers.remove(ClientVatNumberPage)
         removeHasClientVatNumberAnswers <- removeClientVatNumberAnswers.remove(ClientHasVatNumberPage)
         removeHasUtrNumberAnswers <- removeHasClientVatNumberAnswers.remove(ClientHasUtrNumberPage)
@@ -60,6 +59,7 @@ case object BusinessBasedInUKPage extends QuestionPage[Boolean] {
         removeBusinessAddressAnswers <- removeNinoNumberAnswers.remove(ClientBusinessAddressPage)
         updatedUserAnswers <- removeBusinessAddressAnswers.remove(ClientBusinessNamePage)
       } yield updatedUserAnswers
+      case _ => super.cleanup(value, userAnswers)
     }
   }
 }

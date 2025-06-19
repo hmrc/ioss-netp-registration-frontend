@@ -90,8 +90,8 @@ clientHasVatNumber.checkYourAnswersLabel = Has UK VAT registration number
 clientHasVatNumber.error.required = Select yes if your client has a UK VAT number
 clientHasVatNumber.change.hidden = client have a UK VAT number
 
-clientVatNumber.title = What is your client''s UK VAT number
-clientVatNumber.heading = What is your client''s UK VAT number
+clientVatNumber.title = What is your client''s UK VAT number?
+clientVatNumber.heading = What is your client''s UK VAT number?
 clientVatNumber.checkYourAnswersLabel = UK VAT registration number
 clientVatNumber.error.required = Enter your client''s VAT number
 clientVatNumber.error.length = VAT number must be 9 digits
@@ -115,9 +115,9 @@ clientBusinessName.error.length = Client''s business name must be 40 characters 
 clientBusinessName.change.hidden = your Client's trading name
 clientBusinessName.error.invalid = Trading name must only include letters, numbers, hyphens, spaces and apostrophes
 
-clientTaxReference.title = What is your client''s tax reference number in {0}?
-clientTaxReference.heading = What is your client''s tax reference number in {0}?
-clientTaxReference.checkYourAnswersLabel = {0} tax reference number
+clientTaxReference.title = What is your client''s national tax number in {0}?
+clientTaxReference.heading = What is your client''s national tax number in {0}?
+clientTaxReference.checkYourAnswersLabel = National tax number
 clientTaxReference.error.required = Enter your client''s tax reference number in {0}
 clientTaxReference.error.length = Tax reference number must be 20 characters or less
 clientTaxReference.error.format = Tax reference number must only include letters, numbers and spaces
