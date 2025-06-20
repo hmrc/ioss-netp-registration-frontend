@@ -17,10 +17,11 @@
 package pages.vatEuDetails
 
 import controllers.vatEuDetails.routes
-import models.Index
-import pages.{QuestionPage, Waypoints}
+import models.{Index, UserAnswers}
+import pages.{BusinessContactDetailsPage, Page, QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
+import pages.RecoveryOps
 
 case class HasFixedEstablishmentPage(countryIndex: Index) extends QuestionPage[Boolean] {
 
@@ -30,5 +31,12 @@ case class HasFixedEstablishmentPage(countryIndex: Index) extends QuestionPage[B
 
   override def route(waypoints: Waypoints): Call = {
     routes.HasFixedEstablishmentController.onPageLoad(waypoints, countryIndex)
+  }
+
+  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
+    answers.get(this).map {
+      case true => RegistrationTypePage(countryIndex)
+      case false => BusinessContactDetailsPage //TODO:  placeholder pending clarified requirements
+    }.orRecover
   }
 }
