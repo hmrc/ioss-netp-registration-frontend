@@ -16,8 +16,12 @@
 
 package controllers.clientDeclarationJourney
 
+import config.Constants.pendingRegistrationTTL
+import connectors.PendingRegistrationHttpParser.SavedPendingRegistrationResponse
+import connectors.RegistrationConnector
 import controllers.actions.*
 import controllers.routes
+import formats.Format.dateFormatter
 import forms.clientDeclarationJourney.ClientCodeEntryFormProvider
 import models.UserAnswers
 import pages.Waypoints
@@ -30,6 +34,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.clientDeclarationJourney.ClientCodeEntryView
 
+import java.time.{LocalDateTime, ZoneId}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -40,6 +45,7 @@ class ClientCodeEntryController @Inject()(
                                            getData: DataRetrievalAction,
                                            requireData: DataRequiredAction,
                                            formProvider: ClientCodeEntryFormProvider,
+                                           registrationConnector: RegistrationConnector,
                                            val controllerComponents: MessagesControllerComponents,
                                            view: ClientCodeEntryView
                                          )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
@@ -48,8 +54,26 @@ class ClientCodeEntryController @Inject()(
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData) {
     implicit request =>
+      //
+      //      registrationConnector.getPendingRegistration(request.userAnswers.journeyId).flatMap {
+      //        case Right(savedPendingRegistration) =>
+      //
+      //          val activationExpiryDate: String = LocalDateTime
+      //            .ofInstant(savedPendingRegistration.lastUpdated, ZoneId.systemDefault())
+      //            .plusDays(pendingRegistrationTTL).format(dateFormatter)
+      //
+      //          Ok(view(clientCompanyName, savedPendingRegistration.uniqueCode, activationExpiryDate)).toFuture
+      //
+      //        case Left(errors) =>
+      //          val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given journey ID: $errors."
+      //          val exception: Exception = new Exception(message)
+      //          logger.error(exception.getMessage, exception)
+      //          throw exception
+      //      }
+      //  }
 
       val clientEmailAddress = "iAmAnEmail@gmail.com"
+
 
       val preparedForm = request.userAnswers.flatMap(_.get(ClientCodeEntryPage)) match {
         case None => form

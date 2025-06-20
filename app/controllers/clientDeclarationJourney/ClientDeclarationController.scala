@@ -45,6 +45,7 @@ class ClientDeclarationController @Inject()(
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData) {
     implicit request =>
 
+
       val clientName = "NETP Company ltd"
 
       val intermediaryName = "ChartoffWinkler ltd"
