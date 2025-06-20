@@ -25,49 +25,42 @@
     formHelper: FormWithCSRF,
     govukErrorSummary: GovukErrorSummary,
     govukSummaryList: GovukSummaryList,
-    govukRadios: GovukRadios,
     govukButton: GovukButton
 )
 
 @(
-    form: Form[_],
     waypoints: Waypoints,
-    viewModel: CheckVatDetailsViewModel,
+    viewModel: Option[CheckVatDetailsViewModel],
     summaryList: SummaryList,
     companyName: String,
+    isBasedInUk: Boolean,
+    hasVatNumber: Boolean
 )(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = title(form, messages("checkVatDetails.title", companyName))) {
+@layout(pageTitle = titleNoForm(messages("checkVatDetails.title", companyName))) {
 
     @formHelper(action = routes.CheckVatDetailsController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
-
-        @if(form.errors.nonEmpty) {
-            @govukErrorSummary(ErrorSummaryViewModel(form, errorLinkOverrides = Map("value" -> "value_0")))
-        }
 
         <h1 class="govuk-heading-l">@messages("checkVatDetails.heading", companyName)</h1>
 
         @{
-            val extendedSummaryList = summaryList.copy(
-                rows = summaryList.rows :+ SummaryListRow(
-                    key = Key(content = Text(messages("checkVatDetails.address"))),
-                    value = Value(content = HtmlContent(viewModel.formattedAddress.body))
-                )
-            )
+            val maybeAddressRow = if (isBasedInUk) {
+                viewModel.map { model =>
+                    SummaryListRow(
+                        key = Key(content = Text(messages("checkVatDetails.address"))),
+                        value = Value(content = HtmlContent(model.formattedAddress.body))
+                    )
+                }
+            } else None
 
-            govukSummaryList(extendedSummaryList)
+            val rowsWithAddress = summaryList.rows ++ maybeAddressRow.toSeq
+
+            govukSummaryList(summaryList.copy(rows = rowsWithAddress))
         }
 
-
-        @govukRadios(
-            RadiosViewModel(
-                field = form("value"),
-                legend = LegendViewModel(messages("checkVatDetails.question")).withSize(LegendSize.Medium),
-                items = CheckVatDetails.options
-            )
-        )
-
-        <p class="govuk-body">@messages("checkVatDetails.info.p1")</p>
+        @if(isBasedInUk && hasVatNumber) {
+            <p class="govuk-body">@messages("checkVatDetails.info.p1")</p>
+        }
 
         @govukButton(
             ButtonViewModel(messages("site.continue")).withAttribute("id", "continue")
