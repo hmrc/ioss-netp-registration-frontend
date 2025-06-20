@@ -109,13 +109,29 @@ GET         /business-contact-details           controllers.BusinessContactDetai
 POST        /business-contact-details           controllers.BusinessContactDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
 # Previously registered details section
-GET         /previous-oss                       controllers.previousRegistrations.PreviouslyRegisteredController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-POST        /previous-oss                       controllers.previousRegistrations.PreviouslyRegisteredController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+GET         /previous-oss                                               controllers.previousRegistrations.PreviouslyRegisteredController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /previous-oss                                               controllers.previousRegistrations.PreviouslyRegisteredController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET        /previous-country/:index             controllers.previousRegistrations.PreviousEuCountryController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
-POST       /previous-country/:index             controllers.previousRegistrations.PreviousEuCountryController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
+GET        /previous-country/:index                                     controllers.previousRegistrations.PreviousEuCountryController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
+POST       /previous-country/:index                                     controllers.previousRegistrations.PreviousEuCountryController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
 
-GET        /previousScheme                        controllers.previousRegistrations.PreviousSchemeController.onPageLoad(mode: Mode = NormalMode)
-POST       /previousScheme                        controllers.previousRegistrations.PreviousSchemeController.onSubmit(mode: Mode = NormalMode)
-GET        /changePreviousScheme                  controllers.previousRegistrations.PreviousSchemeController.onPageLoad(mode: Mode = CheckMode)
-POST       /changePreviousScheme                  controllers.previousRegistrations.PreviousSchemeController.onSubmit(mode: Mode = CheckMode)
+GET        /previous-scheme/:countryIndex/:schemeIndex                  controllers.previousRegistrations.PreviousSchemeController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index, schemeIndex: Index)
+POST       /previous-scheme/:countryIndex/:schemeIndex                  controllers.previousRegistrations.PreviousSchemeController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index, schemeIndex: Index)
+
+GET        /previous-scheme-answers/:index                              controllers.previousRegistrations.CheckPreviousSchemeAnswersController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
+POST       /previous-scheme-answers/:index                              controllers.previousRegistrations.CheckPreviousSchemeAnswersController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
+
+GET        /previous-oss-scheme-number/:countryIndex/:schemeIndex       controllers.previousRegistrations.PreviousOssNumberController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index, schemeIndex: Index)
+POST       /previous-oss-scheme-number/:countryIndex/:schemeIndex       controllers.previousRegistrations.PreviousOssNumberController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index, schemeIndex: Index)
+
+GET        /previous-ioss-number/:countryIndex/:schemeIndex             controllers.previousRegistrations.PreviousIossNumberController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index, schemeIndex: Index)
+POST       /previous-ioss-number/:countryIndex/:schemeIndex             controllers.previousRegistrations.PreviousIossNumberController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index, schemeIndex: Index)
+
+GET        /remove-previous-scheme/:countryIndex/:schemeIndex           controllers.previousRegistrations.DeletePreviousSchemeController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index, schemeIndex: Index)
+POST       /remove-previous-scheme/:countryIndex/:schemeIndex           controllers.previousRegistrations.DeletePreviousSchemeController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index, schemeIndex: Index)
+
+GET        /previous-schemes-overview                                   controllers.previousRegistrations.AddPreviousRegistrationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST       /previous-schemes-overview                                   controllers.previousRegistrations.AddPreviousRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+
+GET        /remove-registration/:index                                  controllers.previousRegistrations.DeletePreviousRegistrationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
+POST       /remove-registration/:index                                  controllers.previousRegistrations.DeletePreviousRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
