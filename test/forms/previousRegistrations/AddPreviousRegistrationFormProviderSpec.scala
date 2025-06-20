@@ -1,23 +1,23 @@
 package forms.previousRegistrations
 
-import forms.behaviours.OptionFieldBehaviours
-import models.AddPreviousRegistration
+import forms.behaviours.BooleanFieldBehaviours
 import play.api.data.FormError
 
-class AddPreviousRegistrationFormProviderSpec extends OptionFieldBehaviours {
+class AddPreviousRegistrationFormProviderSpec extends BooleanFieldBehaviours {
+
+  val requiredKey = "addPreviousRegistration.error.required"
+  val invalidKey = "error.boolean"
 
   val form = new AddPreviousRegistrationFormProvider()()
 
   ".value" - {
 
     val fieldName = "value"
-    val requiredKey = "addPreviousRegistration.error.required"
 
-    behave like optionsField[AddPreviousRegistration](
+    behave like booleanField(
       form,
       fieldName,
-      validValues  = AddPreviousRegistration.values,
-      invalidError = FormError(fieldName, "error.invalid")
+      invalidError = FormError(fieldName, invalidKey)
     )
 
     behave like mandatoryField(

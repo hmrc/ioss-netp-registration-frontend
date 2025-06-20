@@ -1,15 +1,40 @@
+/*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package controllers.previousRegistrations
 
+import config.Constants.lastSchemeForCountry
+import controllers.GetCountry
 import controllers.actions.*
+import controllers.previousRegistrations.GetPreviousScheme.getPreviousScheme
 import forms.previousRegistrations.DeletePreviousSchemeFormProvider
-import models.Mode
-import pages.previousRegistrations.DeletePreviousSchemePage
+import models.requests.DataRequest
+import models.{Country, Index, Mode, PreviousScheme}
+import pages.previousRegistrations.{DeletePreviousSchemePage, PreviousSchemePage}
 import pages.{Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.previousRegistrations.{DeriveNumberOfPreviousSchemes, PreviousSchemeForCountryQuery}
 import repositories.SessionRepository
+import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.DeletePreviousSchemeView
+import views.html.previousRegistrations.DeletePreviousSchemeView
+import utils.FutureSyntax.*
+import viewmodels.govuk.all.SummaryListViewModel
+import viewmodels.previousRegistrations.{DeletePreviousSchemeSummary, PreviousIntermediaryNumberSummary, PreviousSchemeNumberSummary}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -17,40 +42,79 @@ import scala.concurrent.{ExecutionContext, Future}
 class DeletePreviousSchemeController @Inject()(
                                        override val messagesApi: MessagesApi,
                                        sessionRepository: SessionRepository,
-                                       navigator: Navigator,
                                        identify: IdentifierAction,
                                        getData: DataRetrievalAction,
                                        requireData: DataRequiredAction,
                                        formProvider: DeletePreviousSchemeFormProvider,
                                        val controllerComponents: MessagesControllerComponents,
                                        view: DeletePreviousSchemeView
-                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
+  
 
-  val form = formProvider()
-
-  def onPageLoad(mode: Mode): Action[AnyContent] = (identify andThen getData andThen requireData) {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
+      getPreviousCountry(waypoints, countryIndex) {
+        country =>
+          getPreviousScheme(waypoints, countryIndex, schemeIndex) { previousScheme =>
+            val list =
+              SummaryListViewModel(
+                rows = Seq(
+                  DeletePreviousSchemeSummary.row(request.userAnswers, countryIndex, schemeIndex),
+                  PreviousSchemeNumberSummary.row(request.userAnswers, countryIndex, schemeIndex, Some(previousScheme)),
+                  PreviousIntermediaryNumberSummary.row(request.userAnswers, countryIndex, schemeIndex)
+                ).flatten
+              )
+              
+            val form = formProvider(country)
+            
+            val preparedForm = request.userAnswers.get(DeletePreviousSchemePage(countryIndex, schemeIndex)) match {
+              case None => form
+              case Some(value) => form.fill(value)
+            }
 
-      val preparedForm = request.userAnswers.get(DeletePreviousSchemePage) match {
-        case None => form
-        case Some(value) => form.fill(value)
+            val isLastPreviousScheme = request.userAnswers.get(DeriveNumberOfPreviousSchemes(countryIndex)).contains(lastSchemeForCountry)
+            Ok(view(preparedForm, waypoints, countryIndex, schemeIndex, country, list, isLastPreviousScheme)).toFuture
+          }
       }
-
-      Ok(view(preparedForm, mode))
   }
+  
+  def onSubmit(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
 
-  def onSubmit(mode: Mode): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
 
-      form.bindFromRequest().fold(
-        formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, mode))),
+      val isLastPreviousScheme = request.userAnswers.get(DeriveNumberOfPreviousSchemes(countryIndex)).get == lastSchemeForCountry
 
-        value =>
-          for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(DeletePreviousSchemePage, value))
-            _              <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(navigator.nextPage(DeletePreviousSchemePage, mode, updatedAnswers))
-      )
+      getPreviousCountry(waypoints, countryIndex) {
+        country =>
+          getPreviousScheme(waypoints, countryIndex, schemeIndex) { previousScheme =>
+            val list =
+              SummaryListViewModel(
+                rows = Seq(
+                  DeletePreviousSchemeSummary.row(request.userAnswers, countryIndex, schemeIndex),
+                  PreviousSchemeNumberSummary.row(request.userAnswers, countryIndex, schemeIndex, Some(previousScheme)),
+                  PreviousIntermediaryNumberSummary.row(request.userAnswers, countryIndex, schemeIndex)
+                ).flatten
+              )
+
+            val form = formProvider(country)
+
+            form.bindFromRequest().fold(
+              formWithErrors =>
+                Future.successful(BadRequest(view(formWithErrors, waypoints, countryIndex, schemeIndex, country, list, isLastPreviousScheme))),
+
+              value =>
+                if (value) {
+                  for {
+                    updatedAnswers <- Future.fromTry(request.userAnswers.remove(PreviousSchemeForCountryQuery(countryIndex, schemeIndex)))
+                    _              <- sessionRepository.set(updatedAnswers)
+                  } yield Redirect(DeletePreviousSchemePage(countryIndex, schemeIndex).navigate(waypoints, request.userAnswers, updatedAnswers).route)
+                } else {
+                  Future.successful(
+                    Redirect(DeletePreviousSchemePage(countryIndex, schemeIndex).navigate(waypoints, request.userAnswers, request.userAnswers).route)
+                  )
+                }
+            )
+          }
+      }
   }
 }
