@@ -34,6 +34,6 @@ case object PreviouslyRegisteredPage extends QuestionPage[Boolean] {
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
     answers.get(this).map {
       case true => PreviousEuCountryPage(Index(0))
-      case false => JourneyRecoveryPage
+      case false => JourneyRecoveryPage // TODO: VEI-215, need to redirect to the VAT in EU countries section
     }.orRecover
 }

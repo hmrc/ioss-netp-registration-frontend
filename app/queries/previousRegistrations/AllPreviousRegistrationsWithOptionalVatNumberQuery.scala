@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package forms.previousRegistrations
+package queries.previousRegistrations
 
-import forms.mappings.Mappings
-import play.api.data.Form
+import models.previousRegistrations.PreviousRegistrationDetailsWithOptionalVatNumber
+import play.api.libs.json.JsPath
+import queries.{Gettable, Settable}
 
-import javax.inject.Inject
+case object AllPreviousRegistrationsWithOptionalVatNumberQuery extends Gettable[List[PreviousRegistrationDetailsWithOptionalVatNumber]]
+  with Settable[List[PreviousRegistrationDetailsWithOptionalVatNumber]] {
 
-class PreviousIossNumberFormProvider @Inject() extends Mappings {
-
-  def apply(): Form[String] =
-    Form(
-      "value" -> text("previousIossNumber.error.required")
-        .verifying(maxLength(100, "previousIossNumber.error.length"))
-    )
+  override def path: JsPath = JsPath \ "previousRegistrations"
 }
+

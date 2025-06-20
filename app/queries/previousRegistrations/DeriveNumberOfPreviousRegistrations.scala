@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-package forms.previousRegistrations
+package queries.previousRegistrations
 
-import forms.mappings.Mappings
-import play.api.data.Form
+import play.api.libs.json.{JsObject, JsPath}
+import queries.Derivable
 
-import javax.inject.Inject
+case object DeriveNumberOfPreviousRegistrations extends Derivable[Seq[JsObject], Int] {
+  override val derive: Seq[JsObject] => Int = _.size
 
-class PreviousIossNumberFormProvider @Inject() extends Mappings {
-
-  def apply(): Form[String] =
-    Form(
-      "value" -> text("previousIossNumber.error.required")
-        .verifying(maxLength(100, "previousIossNumber.error.length"))
-    )
+  override def path: JsPath = JsPath \ "previousRegistrations"
 }

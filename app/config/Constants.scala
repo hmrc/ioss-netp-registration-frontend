@@ -25,4 +25,5 @@ object Constants {
   val maxSchemes: Int = 3
   val maxOssSchemes: Int = 2
   val maxIossSchemes: Int = 1
+  val lastSchemeForCountry: Int = 1
 }

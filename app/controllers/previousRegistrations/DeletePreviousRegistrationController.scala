@@ -1,15 +1,35 @@
+/*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package controllers.previousRegistrations
 
 import controllers.actions.*
 import forms.previousRegistrations.DeletePreviousRegistrationFormProvider
-import models.Mode
+import models.previousRegistrations.PreviousRegistrationDetailsWithOptionalVatNumber
+import models.requests.DataRequest
+import models.{Index, Mode}
 import pages.previousRegistrations.DeletePreviousRegistrationPage
-import pages.{Waypoint, Waypoints}
+import pages.{JourneyRecoveryPage, Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
+import queries.previousRegistrations.{PreviousRegistrationQuery, PreviousRegistrationWithOptionalVatNumberQuery}
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.DeletePreviousRegistrationView
+import views.html.previousRegistrations.DeletePreviousRegistrationView
+import utils.FutureSyntax.*
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -17,7 +37,6 @@ import scala.concurrent.{ExecutionContext, Future}
 class DeletePreviousRegistrationController @Inject()(
                                        override val messagesApi: MessagesApi,
                                        sessionRepository: SessionRepository,
-                                       navigator: Navigator,
                                        identify: IdentifierAction,
                                        getData: DataRetrievalAction,
                                        requireData: DataRequiredAction,
@@ -28,29 +47,50 @@ class DeletePreviousRegistrationController @Inject()(
 
   val form = formProvider()
 
-  def onPageLoad(mode: Mode): Action[AnyContent] = (identify andThen getData andThen requireData) {
+  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
-
-      val preparedForm = request.userAnswers.get(DeletePreviousRegistrationPage) match {
-        case None => form
-        case Some(value) => form.fill(value)
+      getPreviousRegistration(waypoints, index) {
+        details =>
+            Ok(view(form, waypoints, index, details.previousEuCountry.name)).toFuture
       }
-
-      Ok(view(preparedForm, mode))
   }
 
-  def onSubmit(mode: Mode): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  private def getPreviousRegistration(waypoints: Waypoints, index: Index)
+                                     (block: PreviousRegistrationDetailsWithOptionalVatNumber => Future[Result])
+                                     (implicit request: DataRequest[AnyContent]): Future[Result] =
+    request.userAnswers.get(PreviousRegistrationWithOptionalVatNumberQuery(index)).map {
+      details =>
+        block(details)
+    }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture)
+    
+    
+  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
+      getPreviousRegistration(waypoints, index) {
+        details =>
+            saveAndRedirect(waypoints, index, details.previousEuCountry.name)
+          
+      }
+  }
 
-      form.bindFromRequest().fold(
-        formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, mode))),
+  private def saveAndRedirect(
+                               waypoints: Waypoints,
+                               index: Index,
+                               countryName: String)
+                             (implicit request: DataRequest[AnyContent]): Future[Result] = {
+    form.bindFromRequest().fold(
+      formWithErrors =>
+        Future.successful(BadRequest(view(formWithErrors, waypoints, index, countryName))),
 
-        value =>
+      value =>
+        if (value) {
           for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(DeletePreviousRegistrationPage, value))
+            updatedAnswers <- Future.fromTry(request.userAnswers.remove(PreviousRegistrationQuery(index)))
             _              <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(navigator.nextPage(DeletePreviousRegistrationPage, mode, updatedAnswers))
-      )
+          } yield Redirect(DeletePreviousRegistrationPage(index).navigate(waypoints, request.userAnswers, updatedAnswers).route)
+        } else {
+          Redirect(DeletePreviousRegistrationPage(index).navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
+        }
+    )
   }
 }

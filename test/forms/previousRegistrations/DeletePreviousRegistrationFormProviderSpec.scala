@@ -1,24 +1,23 @@
 package forms.previousRegistrations
 
-import forms.behaviours.OptionFieldBehaviours
-import forms.previousRegistrations.DeletePreviousRegistrationFormProvider
-import models.DeletePreviousRegistration
+import forms.behaviours.BooleanFieldBehaviours
 import play.api.data.FormError
 
-class DeletePreviousRegistrationFormProviderSpec extends OptionFieldBehaviours {
+class DeletePreviousRegistrationFormProviderSpec extends BooleanFieldBehaviours {
+
+  val requiredKey = "deletePreviousRegistration.error.required"
+  val invalidKey = "error.boolean"
 
   val form = new DeletePreviousRegistrationFormProvider()()
 
   ".value" - {
 
     val fieldName = "value"
-    val requiredKey = "deletePreviousRegistration.error.required"
 
-    behave like optionsField[DeletePreviousRegistration](
+    behave like booleanField(
       form,
       fieldName,
-      validValues  = DeletePreviousRegistration.values,
-      invalidError = FormError(fieldName, "error.invalid")
+      invalidError = FormError(fieldName, invalidKey)
     )
 
     behave like mandatoryField(
