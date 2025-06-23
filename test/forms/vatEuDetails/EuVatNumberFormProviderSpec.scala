@@ -1,4 +1,4 @@
-package forms
+package forms.vatEuDetails
 
 import forms.behaviours.IntFieldBehaviours
 import play.api.data.FormError

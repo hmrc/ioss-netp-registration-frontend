@@ -1,8 +1,9 @@
-package forms
+package forms.vatEuDetails
 
 import forms.mappings.Mappings
-import javax.inject.Inject
 import play.api.data.Form
+
+import javax.inject.Inject
 
 class EuVatNumberFormProvider @Inject() extends Mappings {
 
