@@ -20,13 +20,12 @@ import controllers.actions.*
 import forms.previousRegistrations.DeletePreviousRegistrationFormProvider
 import models.previousRegistrations.PreviousRegistrationDetailsWithOptionalVatNumber
 import models.requests.DataRequest
-import models.{Index, Mode}
+import models.Index
 import pages.previousRegistrations.DeletePreviousRegistrationPage
-import pages.{JourneyRecoveryPage, Waypoint, Waypoints}
+import pages.{JourneyRecoveryPage, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import queries.previousRegistrations.{PreviousRegistrationQuery, PreviousRegistrationWithOptionalVatNumberQuery}
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.previousRegistrations.DeletePreviousRegistrationView
 import utils.FutureSyntax.*
@@ -36,18 +35,16 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class DeletePreviousRegistrationController @Inject()(
                                        override val messagesApi: MessagesApi,
-                                       sessionRepository: SessionRepository,
-                                       identify: IdentifierAction,
-                                       getData: DataRetrievalAction,
-                                       requireData: DataRequiredAction,
+                                       cc: AuthenticatedControllerComponents,
                                        formProvider: DeletePreviousRegistrationFormProvider,
-                                       val controllerComponents: MessagesControllerComponents,
                                        view: DeletePreviousRegistrationView
                                      )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
-
+  
+  protected val controllerComponents: MessagesControllerComponents = cc
+  
   val form = formProvider()
 
-  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
       getPreviousRegistration(waypoints, index) {
         details =>
@@ -64,7 +61,7 @@ class DeletePreviousRegistrationController @Inject()(
     }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture)
     
     
-  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
       getPreviousRegistration(waypoints, index) {
         details =>
@@ -86,7 +83,7 @@ class DeletePreviousRegistrationController @Inject()(
         if (value) {
           for {
             updatedAnswers <- Future.fromTry(request.userAnswers.remove(PreviousRegistrationQuery(index)))
-            _              <- sessionRepository.set(updatedAnswers)
+            _              <- cc.sessionRepository.set(updatedAnswers)
           } yield Redirect(DeletePreviousRegistrationPage(index).navigate(waypoints, request.userAnswers, updatedAnswers).route)
         } else {
           Redirect(DeletePreviousRegistrationPage(index).navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture

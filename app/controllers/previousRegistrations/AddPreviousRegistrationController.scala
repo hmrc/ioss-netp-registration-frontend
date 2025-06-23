@@ -18,28 +18,23 @@ package controllers.previousRegistrations
 
 import controllers.actions.*
 import forms.previousRegistrations.AddPreviousRegistrationFormProvider
-import models.Mode
-import pages.previousRegistrations.AddPreviousRegistrationPage
-import pages.{Waypoint, Waypoints}
+import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.previousRegistrations.AddPreviousRegistrationView
 
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class AddPreviousRegistrationController @Inject()(
                                        override val messagesApi: MessagesApi,
-                                       sessionRepository: SessionRepository,
-                                       identify: IdentifierAction,
-                                       getData: DataRetrievalAction,
-                                       requireData: DataRequiredAction,
+                                       cc: AuthenticatedControllerComponents,
                                        formProvider: AddPreviousRegistrationFormProvider,
-                                       val controllerComponents: MessagesControllerComponents,
                                        view: AddPreviousRegistrationView
                                      )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+
+  protected val controllerComponents: MessagesControllerComponents = cc
 
   val form = formProvider()
 

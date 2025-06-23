@@ -23,7 +23,6 @@ import pages.Waypoints
 import pages.previousRegistrations.PreviousIossNumberPage
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.previousRegistrations.PreviousIossNumberView
 
@@ -31,19 +30,16 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class PreviousIossNumberController @Inject()(
-                                        override val messagesApi: MessagesApi,
-                                        sessionRepository: SessionRepository,
-                                        identify: IdentifierAction,
-                                        getData: DataRetrievalAction,
-                                        requireData: DataRequiredAction,
-                                        formProvider: PreviousIossNumberFormProvider,
-                                        val controllerComponents: MessagesControllerComponents,
-                                        view: PreviousIossNumberView
-                                    )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+                                              override val messagesApi: MessagesApi,
+                                              cc: AuthenticatedControllerComponents,
+                                              formProvider: PreviousIossNumberFormProvider,
+                                              view: PreviousIossNumberView
+                                            )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
+  protected val controllerComponents: MessagesControllerComponents = cc
   val form = formProvider()
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData) {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(PreviousIossNumberPage(countryIndex, schemeIndex)) match {

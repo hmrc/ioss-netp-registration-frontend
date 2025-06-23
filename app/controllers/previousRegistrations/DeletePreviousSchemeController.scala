@@ -21,15 +21,12 @@ import controllers.GetCountry
 import controllers.actions.*
 import controllers.previousRegistrations.GetPreviousScheme.getPreviousScheme
 import forms.previousRegistrations.DeletePreviousSchemeFormProvider
-import models.requests.DataRequest
-import models.{Country, Index, Mode, PreviousScheme}
-import pages.previousRegistrations.{DeletePreviousSchemePage, PreviousSchemePage}
-import pages.{Waypoint, Waypoints}
+import models.Index
+import pages.previousRegistrations.DeletePreviousSchemePage
+import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.previousRegistrations.{DeriveNumberOfPreviousSchemes, PreviousSchemeForCountryQuery}
-import repositories.SessionRepository
-import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.previousRegistrations.DeletePreviousSchemeView
 import utils.FutureSyntax.*
@@ -41,17 +38,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class DeletePreviousSchemeController @Inject()(
                                        override val messagesApi: MessagesApi,
-                                       sessionRepository: SessionRepository,
-                                       identify: IdentifierAction,
-                                       getData: DataRetrievalAction,
-                                       requireData: DataRequiredAction,
+                                       cc: AuthenticatedControllerComponents,
                                        formProvider: DeletePreviousSchemeFormProvider,
-                                       val controllerComponents: MessagesControllerComponents,
                                        view: DeletePreviousSchemeView
                                      )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
-  
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  protected val controllerComponents: MessagesControllerComponents = cc
+
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
       getPreviousCountry(waypoints, countryIndex) {
         country =>
@@ -78,7 +72,7 @@ class DeletePreviousSchemeController @Inject()(
       }
   }
   
-  def onSubmit(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
 
     implicit request =>
 
@@ -106,7 +100,7 @@ class DeletePreviousSchemeController @Inject()(
                 if (value) {
                   for {
                     updatedAnswers <- Future.fromTry(request.userAnswers.remove(PreviousSchemeForCountryQuery(countryIndex, schemeIndex)))
-                    _              <- sessionRepository.set(updatedAnswers)
+                    _              <- cc.sessionRepository.set(updatedAnswers)
                   } yield Redirect(DeletePreviousSchemePage(countryIndex, schemeIndex).navigate(waypoints, request.userAnswers, updatedAnswers).route)
                 } else {
                   Future.successful(

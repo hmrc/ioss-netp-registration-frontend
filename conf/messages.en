@@ -300,7 +300,7 @@ previousScheme.oss = One Stop Shop (OSS)
 previousScheme.ioss = Import One Stop Shop (IOSS)
 previousScheme.ossu = One Stop Shop Union
 previousScheme.ossnu = One Stop Shop non-Union
-previousScheme.iosswoi = Import One Stop Shop without intermediary
+previousScheme.iosswoi = Import One Stop Shop
 previousScheme.iosswi = Import One Stop Shop with intermediary
 previousScheme.oss.schemes.exceed.error = Cannot select another {0} OSS registration for {1}
 

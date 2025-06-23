@@ -18,6 +18,7 @@ package pages.tradingNames
 
 import controllers.tradingNames.routes
 import models.{Index, UserAnswers}
+import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.{JourneyRecoveryPage, NonEmptyWaypoints, Page, QuestionPage, RecoveryOps, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
@@ -36,8 +37,7 @@ case object HasTradingNamePage extends QuestionPage[Boolean] {
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
     answers.get(this).map {
       case true => TradingNamePage(Index(0))
-      case false => JourneyRecoveryPage
-       // TODO VEI-211 -> NETP Previous Registrations Section
+      case false => PreviouslyRegisteredPage
     }.orRecover
 
   override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page = {
@@ -45,8 +45,7 @@ case object HasTradingNamePage extends QuestionPage[Boolean] {
       case (Some(true), Some(tradingNames)) if tradingNames.nonEmpty => AddTradingNamePage()
       case (Some(true), _) => TradingNamePage(Index(0))
       case (Some(false), Some(tradingNames)) if tradingNames.nonEmpty => DeleteAllTradingNamesPage
-      case (Some(false), _) =>  JourneyRecoveryPage
-      // TODO VEI-211 -> NETP Previous Registrations Section
+      case (Some(false), _) => PreviouslyRegisteredPage
       case _ => JourneyRecoveryPage
     }
   }

@@ -26,7 +26,6 @@ import pages.{JourneyRecoveryPage, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.previousRegistrations.AllPreviousSchemesForCountryWithOptionalVatNumberQuery
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import viewmodels.previousRegistrations.PreviousSchemeSummary
 import views.html.previousRegistrations.CheckPreviousSchemeAnswersView
@@ -37,16 +36,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class CheckPreviousSchemeAnswersController @Inject()(
                                        override val messagesApi: MessagesApi,
-                                       sessionRepository: SessionRepository,
-                                       identify: IdentifierAction,
-                                       getData: DataRetrievalAction,
-                                       requireData: DataRequiredAction,
+                                       cc: AuthenticatedControllerComponents,
                                        formProvider: CheckPreviousSchemeAnswersFormProvider,
-                                       val controllerComponents: MessagesControllerComponents,
                                        view: CheckPreviousSchemeAnswersView
                                      )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
 
-  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  protected val controllerComponents: MessagesControllerComponents = cc
+
+  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
       getPreviousCountry(waypoints, index) {
         country =>
@@ -61,7 +58,7 @@ class CheckPreviousSchemeAnswersController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       getPreviousCountry(waypoints, index) { country =>
@@ -83,7 +80,7 @@ class CheckPreviousSchemeAnswersController @Inject()(
             value =>
               for {
                 updatedAnswers <- Future.fromTry(request.userAnswers.set(CheckPreviousSchemeAnswersPage(index), value))
-                _              <- sessionRepository.set(updatedAnswers)
+                _              <- cc.sessionRepository.set(updatedAnswers)
               } yield Redirect(CheckPreviousSchemeAnswersPage(index).navigate(waypoints, request.userAnswers, updatedAnswers).route)
           )
         }.getOrElse(Future.successful(Redirect(JourneyRecoveryPage.route(waypoints).url)))

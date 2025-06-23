@@ -39,18 +39,12 @@ case class DeletePreviousSchemePage(countryIndex: Index, schemeIndex: Index) ext
       originalCountry.exists(originalCountryCode => updatedCountry.contains(originalCountryCode))
     }
 
-    println("=============== INSIDE NEXT PAGE NORMAL MODE ============ ")
-    println("=============== INSIDE NEXT PAGE NORMAL MODE ============ isSameCountry " + isSameCountry)
-
     (updatedAnswers.get(DeriveNumberOfPreviousRegistrations), updatedAnswers.get(DeriveNumberOfPreviousSchemes(countryIndex))) match {
       case (_, Some(numberOfSchemes)) if numberOfSchemes > 0 && isSameCountry =>
-        println("=============== INSIDE NEXT PAGE NORMAL MODE ============ case CheckPreviousSchemeAnswersPage ")
         CheckPreviousSchemeAnswersPage(countryIndex)
       case (Some(numberOfCountries), _) if numberOfCountries > 0 =>
-        println("=============== INSIDE NEXT PAGE NORMAL MODE ============ case AddPreviousRegistrationPage ")
         AddPreviousRegistrationPage()
       case _ =>
-        println("=============== INSIDE NEXT PAGE NORMAL MODE ============ case PreviouslyRegisteredPage ")
         PreviouslyRegisteredPage
     }
   }
