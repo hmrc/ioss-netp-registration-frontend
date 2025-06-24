@@ -53,7 +53,7 @@ class ApplicationCompleteController @Inject()(
               .ofInstant(savedPendingRegistration.lastUpdated, ZoneId.systemDefault())
               .plusDays(pendingRegistrationTTL).format(dateFormatter)
 
-            Ok(view(clientCompanyName, savedPendingRegistration.uniqueCode, activationExpiryDate)).toFuture
+            Ok(view(clientCompanyName, savedPendingRegistration.uniqueUrlCode, activationExpiryDate)).toFuture
 
           case Left(errors) =>
             val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given journey ID: $errors."

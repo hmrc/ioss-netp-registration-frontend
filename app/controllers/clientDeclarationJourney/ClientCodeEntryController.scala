@@ -23,6 +23,7 @@ import controllers.actions.*
 import controllers.routes
 import formats.Format.dateFormatter
 import forms.clientDeclarationJourney.ClientCodeEntryFormProvider
+import logging.Logging
 import models.UserAnswers
 import pages.Waypoints
 import pages.clientDeclarationJourney.ClientCodeEntryPage
@@ -48,39 +49,29 @@ class ClientCodeEntryController @Inject()(
                                            registrationConnector: RegistrationConnector,
                                            val controllerComponents: MessagesControllerComponents,
                                            view: ClientCodeEntryView
-                                         )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+                                         )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
 
   val form = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData) {
+  def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (identify andThen getData) {
     implicit request =>
-      //
-      //      registrationConnector.getPendingRegistration(request.userAnswers.journeyId).flatMap {
-      //        case Right(savedPendingRegistration) =>
-      //
-      //          val activationExpiryDate: String = LocalDateTime
-      //            .ofInstant(savedPendingRegistration.lastUpdated, ZoneId.systemDefault())
-      //            .plusDays(pendingRegistrationTTL).format(dateFormatter)
-      //
-      //          Ok(view(clientCompanyName, savedPendingRegistration.uniqueCode, activationExpiryDate)).toFuture
-      //
-      //        case Left(errors) =>
-      //          val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given journey ID: $errors."
-      //          val exception: Exception = new Exception(message)
-      //          logger.error(exception.getMessage, exception)
-      //          throw exception
-      //      }
-      //  }
 
-      val clientEmailAddress = "iAmAnEmail@gmail.com"
+      registrationConnector.getPendingRegistration(uniqueUrlCode).flatMap {
+        case Right(savedPendingRegistration) =>
 
+          val preparedForm = request.userAnswers.flatMap(_.get(ClientCodeEntryPage)) match {
+            case None => form
+            case Some(value) => form.fill(value)
+          }
 
-      val preparedForm = request.userAnswers.flatMap(_.get(ClientCodeEntryPage)) match {
-        case None => form
-        case Some(value) => form.fill(value)
+          Ok(view(preparedForm, waypoints, savedPendingRegistration.clientEmailAddress)).toFuture
+
+        case Left(errors) =>
+          val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given journey ID: $errors."
+          val exception: Exception = new Exception(message)
+          logger.error(exception.getMessage, exception)
+          throw exception
       }
-
-      Ok(view(preparedForm, waypoints, clientEmailAddress))
   }
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData).async {

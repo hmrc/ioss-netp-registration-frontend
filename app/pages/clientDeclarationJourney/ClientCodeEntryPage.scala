@@ -28,8 +28,8 @@ case object ClientCodeEntryPage extends QuestionPage[String] {
 
   override def toString: String = "clientCodeEntry"
 
-  override def route(waypoints: Waypoints): Call = {
-    controllers.clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(waypoints)
+  override def route(waypoints: Waypoints, uniqueUrlCode:String): Call = {
+    controllers.clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(waypoints, uniqueUrlCode)
   }
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {

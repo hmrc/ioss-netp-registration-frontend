@@ -30,7 +30,8 @@ object ClientCodeEntrySummary  {
 
   def row(
            waypoints: Waypoints,
-           answers: UserAnswers
+           answers: UserAnswers,
+           uniqueUrlCode: String
          )(implicit messages: Messages): Option[SummaryListRow] = {
     answers.get(ClientCodeEntryPage).map { answer =>
 
@@ -38,7 +39,7 @@ object ClientCodeEntrySummary  {
           key     = "clientCodeEntry.checkYourAnswersLabel",
           value   = ValueViewModel(HtmlFormat.escape(answer).toString),
           actions = Seq(
-            ActionItemViewModel("site.change", controllers.clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(waypoints).url)
+            ActionItemViewModel("site.change", controllers.clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(waypoints, uniqueUrlCode).url)
               .withVisuallyHiddenText(messages("clientCodeEntry.change.hidden"))
           )
         )

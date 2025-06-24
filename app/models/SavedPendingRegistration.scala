@@ -22,7 +22,9 @@ import java.time.Instant
 
 case class SavedPendingRegistration(
                                      journeyId: String,
-                                     uniqueCode: String,
+                                     uniqueUrlCode: String,
+                                     uniqueActivationCode: String,
+                                     clientEmailAddress: String,
                                      userAnswers: UserAnswers,
                                      lastUpdated: Instant
                                    )
@@ -30,4 +32,13 @@ case class SavedPendingRegistration(
 object SavedPendingRegistration {
 
   implicit lazy val format: OFormat[SavedPendingRegistration] = Json.format[SavedPendingRegistration]
+}
+case class PendingRegistration(
+                                     userAnswers: UserAnswers,
+                                     clientEmailAddress: String
+                                   )
+
+object PendingRegistration {
+
+  implicit lazy val format: OFormat[PendingRegistration] = Json.format[PendingRegistration]
 }
