@@ -216,4 +216,11 @@ trait ModelGenerators extends EitherValues {
     Arbitrary {
       Gen.oneOf(PreviousSchemeType.values)
     }
+
+  implicit lazy val arbitraryEuVatNumber: Gen[String] = {
+    for {
+      countryCode <- Gen.oneOf(Country.euCountries.map(_.code))
+      matchedCountryRule = CountryWithValidationDetails.euCountriesWithVRNValidationRules.find(_.country.code == countryCode).head
+    } yield s"$countryCode${matchedCountryRule.exampleVrn}"
+  }
 }
