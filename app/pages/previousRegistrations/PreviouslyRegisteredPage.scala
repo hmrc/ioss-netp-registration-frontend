@@ -17,10 +17,10 @@
 package pages.previousRegistrations
 
 import models.{Index, UserAnswers}
-import pages.{JourneyRecoveryPage, Page, QuestionPage, Waypoints}
+import pages.{JourneyRecoveryPage, NonEmptyWaypoints, Page, QuestionPage, RecoveryOps, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
-import pages.RecoveryOps
+import queries.previousRegistrations.DeriveNumberOfPreviousRegistrations
 
 case object PreviouslyRegisteredPage extends QuestionPage[Boolean] {
 
@@ -36,4 +36,12 @@ case object PreviouslyRegisteredPage extends QuestionPage[Boolean] {
       case true => PreviousEuCountryPage(Index(0))
       case false => JourneyRecoveryPage // TODO: VEI-215, need to redirect to the VAT in EU countries section
     }.orRecover
+
+  override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page =
+    (answers.get(this), answers.get(DeriveNumberOfPreviousRegistrations)) match {
+      case (Some(true), Some(size)) if size > 0 => AddPreviousRegistrationPage()
+      case (Some(true), _) => PreviousEuCountryPage(Index(0))
+      case (Some(false), Some(size)) if size > 0 => DeleteAllPreviousRegistrationsPage
+      case _ => JourneyRecoveryPage
+    }
 }

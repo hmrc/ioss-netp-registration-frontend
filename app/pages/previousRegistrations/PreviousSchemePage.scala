@@ -33,4 +33,5 @@ case class PreviousSchemePage(countryIndex: Index, schemeIndex: Index) extends Q
   
   override def route(waypoints: Waypoints): Call =
     controllers.previousRegistrations.routes.PreviousSchemeController.onPageLoad(waypoints, countryIndex, schemeIndex)
+  
 }

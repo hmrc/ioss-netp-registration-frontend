@@ -21,12 +21,13 @@ import controllers.GetCountry
 import controllers.actions.*
 import controllers.previousRegistrations.GetPreviousScheme.getPreviousScheme
 import forms.previousRegistrations.DeletePreviousSchemeFormProvider
-import models.Index
+import models.{Index, PreviousScheme}
 import pages.previousRegistrations.DeletePreviousSchemePage
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.previousRegistrations.{DeriveNumberOfPreviousSchemes, PreviousSchemeForCountryQuery}
+import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.previousRegistrations.DeletePreviousSchemeView
 import utils.FutureSyntax.*
@@ -50,13 +51,19 @@ class DeletePreviousSchemeController @Inject()(
       getPreviousCountry(waypoints, countryIndex) {
         country =>
           getPreviousScheme(waypoints, countryIndex, schemeIndex) { previousScheme =>
+
+            val maybeOssRow = PreviousSchemeNumberSummary.row(request.userAnswers, countryIndex, schemeIndex, Some(previousScheme))
+            val maybeIossRow = PreviousIossNumberSummary.row(request.userAnswers, countryIndex, schemeIndex, Some(previousScheme))
+
+            val schemeRow = previousScheme match {
+              case PreviousScheme.OSSU | PreviousScheme.OSSNU => maybeOssRow.toSeq
+              case PreviousScheme.IOSSWI | PreviousScheme.IOSSWOI => maybeIossRow.toSeq
+            }
             val list =
               SummaryListViewModel(
                 rows = Seq(
-                  DeletePreviousSchemeSummary.row(request.userAnswers, countryIndex, schemeIndex),
-                  PreviousSchemeNumberSummary.row(request.userAnswers, countryIndex, schemeIndex, Some(previousScheme)),
-                  PreviousIossNumberSummary.row(request.userAnswers, countryIndex, schemeIndex, Some(previousScheme))
-                ).flatten
+                  DeletePreviousSchemeSummary.row(request.userAnswers, countryIndex, schemeIndex)
+                ).flatten ++ schemeRow
               )
               
             val form = formProvider(country)
@@ -81,13 +88,19 @@ class DeletePreviousSchemeController @Inject()(
       getPreviousCountry(waypoints, countryIndex) {
         country =>
           getPreviousScheme(waypoints, countryIndex, schemeIndex) { previousScheme =>
+            val maybeOssRow = PreviousSchemeNumberSummary.row(request.userAnswers, countryIndex, schemeIndex, Some(previousScheme))
+            val maybeIossRow = PreviousIossNumberSummary.row(request.userAnswers, countryIndex, schemeIndex, Some(previousScheme))
+
+            val schemeRow = previousScheme match {
+              case PreviousScheme.OSSU | PreviousScheme.OSSNU => maybeOssRow.toSeq
+              case PreviousScheme.IOSSWI | PreviousScheme.IOSSWOI => maybeIossRow.toSeq
+            }
+
             val list =
               SummaryListViewModel(
                 rows = Seq(
-                  DeletePreviousSchemeSummary.row(request.userAnswers, countryIndex, schemeIndex),
-                  PreviousSchemeNumberSummary.row(request.userAnswers, countryIndex, schemeIndex, Some(previousScheme)),
-                  PreviousIossNumberSummary.row(request.userAnswers, countryIndex, schemeIndex, Some(previousScheme))
-                ).flatten
+                  DeletePreviousSchemeSummary.row(request.userAnswers, countryIndex, schemeIndex)
+                ).flatten ++ schemeRow
               )
 
             val form = formProvider(country)

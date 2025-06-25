@@ -24,6 +24,11 @@ import play.api.mvc.Call
 import queries.Derivable
 import queries.previousRegistrations.DeriveNumberOfPreviousRegistrations
 
+object AddPreviousRegistrationPage {
+  val normalModeUrlFragment: String = "previous-schemes-overview"
+  val checkModeUrlFragment: String = "change-previous-schemes-overview"
+}
+
 case class AddPreviousRegistrationPage(override val index: Option[Index] = None) extends AddItemPage(index) with QuestionPage[Boolean] {
 
   override def isTheSamePage(other: Page): Boolean = other match {
@@ -64,9 +69,4 @@ case class AddPreviousRegistrationPage(override val index: Option[Index] = None)
 
   override def deriveNumberOfItems: Derivable[Seq[JsObject], Int] = DeriveNumberOfPreviousRegistrations
 
-}
-
-object AddPreviousRegistrationPage {
-  val normalModeUrlFragment: String = "previous-schemes-overview"
-  val checkModeUrlFragment: String = "change-previous-schemes-overview"
 }

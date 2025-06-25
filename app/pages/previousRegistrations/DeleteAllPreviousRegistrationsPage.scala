@@ -17,21 +17,24 @@
 package pages.previousRegistrations
 
 import controllers.previousRegistrations.routes
-import models.{Index, UserAnswers}
-import pages.{Page, Waypoints}
+import models.UserAnswers
+import pages.{CheckYourAnswersPage, JourneyRecoveryPage, NonEmptyWaypoints, Page, QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
-case class PreviousIossNumberPage(countryIndex: Index, schemeIndex: Index) extends PreviousSchemeNumbersPage {
+case object DeleteAllPreviousRegistrationsPage extends QuestionPage[Boolean] {
 
-  override def path: JsPath = JsPath \ "previousRegistrations" \ countryIndex.position \ "previousSchemesDetails" \ schemeIndex.position \ toString
+  override def path: JsPath = JsPath \ toString
 
-  override def toString: String = "previousIossNumber"
-  
+  override def toString: String = "deleteAllPreviousRegistrations"
+
   override def route(waypoints: Waypoints): Call =
-    routes.PreviousIossNumberController.onPageLoad(waypoints, countryIndex, schemeIndex)
+    routes.DeleteAllPreviousRegistrationsController.onPageLoad(waypoints)
 
-  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
-    CheckPreviousSchemeAnswersPage(countryIndex)
-  }
+  override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page =
+    answers.get(this) match {
+      case Some(_) => CheckYourAnswersPage
+
+      case _ => JourneyRecoveryPage
+    }
 }

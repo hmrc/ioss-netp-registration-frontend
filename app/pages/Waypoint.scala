@@ -17,7 +17,7 @@
 package pages
 
 import models.{CheckMode, Mode, NormalMode}
-import pages.previousRegistrations.AddPreviousRegistrationPage
+import pages.previousRegistrations.{AddPreviousRegistrationPage, CheckPreviousSchemeAnswersPage}
 import pages.tradingNames.AddTradingNamePage
 import pages.website.AddWebsitePage
 
@@ -45,4 +45,5 @@ object Waypoint {
 
   def fromString(s: String): Option[Waypoint] =
     fragments.get(s)
+      .orElse(CheckPreviousSchemeAnswersPage.waypointFromString(s))
 }
