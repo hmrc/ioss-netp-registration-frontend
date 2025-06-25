@@ -16,19 +16,21 @@
 
 @import viewmodels.InputWidth._
 @import pages.Waypoints
+@import pages.previousRegistrations.PreviousIossNumberPage
 @import models.Index
+@import views.html.components.ButtonGroup
 
 @this(
     layout: templates.Layout,
     formHelper: FormWithCSRF,
     govukErrorSummary: GovukErrorSummary,
     govukInput: GovukInput,
-    govukButton: GovukButton
+    button: ButtonGroup
 )
 
-@(form: Form[_], waypoints: Waypoints, countryIndex: Index, schemeIndex: Index)(implicit request: Request[_], messages: Messages)
+@(form: Form[_], waypoints: Waypoints, countryIndex: Index, schemeIndex: Index, country: Country, iossHintText: String)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = title(form, messages("previousIossNumber.title"))) {
+@layout(pageTitle = title(form, messages("previousIossNumber.title", country.name))) {
 
     @formHelper(action = controllers.previousRegistrations.routes.PreviousIossNumberController.onSubmit(waypoints, countryIndex, schemeIndex)) {
 
@@ -39,13 +41,12 @@
         @govukInput(
             InputViewModel(
                 field = form("value"),
-                label = LabelViewModel(messages("previousIossNumber.heading")).asPageHeading()
+                label = LabelViewModel(messages("previousIossNumber.heading", country.name)).asPageHeading()
             )
             .withWidth(Full)
+            .withHint(HintViewModel(messages("previousIossNumber.iossNumber.hint", iossHintText)))
         )
 
-        @govukButton(
-            ButtonViewModel(messages("site.continue"))
-        )
+        @button("site.continue", PreviousIossNumberPage(countryIndex, schemeIndex).route(waypoints).url, waypoints)
     }
 }

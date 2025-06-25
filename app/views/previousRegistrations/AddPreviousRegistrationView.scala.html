@@ -14,33 +14,55 @@
  * limitations under the License.
  *@
 
+@import uk.gov.hmrc.hmrcfrontend.views.viewmodels.addtoalist.Long
+@import viewmodels.{LegendSize, ListItemWrapper}
+@import models.previousRegistrations._
+@import components.ButtonGroup
+@import pages.previousRegistrations.AddPreviousRegistrationPage
+
 @this(
     layout: templates.Layout,
     formHelper: FormWithCSRF,
     govukErrorSummary: GovukErrorSummary,
     govukRadios: GovukRadios,
-    govukButton: GovukButton
+    button: ButtonGroup,
+    addToList: components.addToList,
+    govukWarningText: GovukWarningText
 )
 
-@(form: Form[_], mode: Mode)(implicit request: Request[_], messages: Messages)
+@(form: Form[_],
+    waypoints: Waypoints,
+    list: Seq[ListItemWrapper],
+    canAddCountries: Boolean
+)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = title(form, messages("addPreviousRegistration.title"))) {
+@defining(if(list.size == 1) ".singular" else "") { messageSuffix =>
 
-    @formHelper(action = controllers.previousRegistrations.routes.AddPreviousRegistrationController.onSubmit(), Symbol("autoComplete") -> "off") {
+    @layout(pageTitle = title(form, messages("addPreviousRegistration.title" + messageSuffix, list.size))) {
 
-        @if(form.errors.nonEmpty) {
-            @govukErrorSummary(ErrorSummaryViewModel(form,  errorLinkOverrides = Map("value" -> "value_0")))
+        @formHelper(action = controllers.previousRegistrations.routes.AddPreviousRegistrationController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
+
+            @if(form.errors.nonEmpty) {
+                @govukErrorSummary(ErrorSummaryViewModel(form))
+            }
+
+            <h1 class="govuk-heading-l">@messages("addPreviousRegistration.heading" + messageSuffix, list.size)</h1>
+
+            @addToList(list, Long, "addPreviousRegistration.change.hidden", "addPreviousRegistration.remove.hidden")
+
+            @if(canAddCountries) {
+                @govukRadios(
+                    RadiosViewModel.yesNo(
+                        field = form("value"),
+                        legend = LegendViewModel(messages("addPreviousRegistration.addAnother")).withSize(LegendSize.Medium)
+                    ).withHint(HintViewModel(messages("addPreviousRegistration.addAnother.hint")))
+                )
+            } else {
+                <p class="govuk-body">@messages("addPreviousRegistration.maximumReached")</p>
+                <input type="hidden" name="value" id="value" value="false"/>
+            }
+
+            @button("site.continue", AddPreviousRegistrationPage().route(waypoints).url, waypoints)
         }
-
-        @govukRadios(
-            RadiosViewModel.yesNo(
-                field  = form("value"),
-                legend = LegendViewModel(messages("addPreviousRegistration.heading")).asPageHeading(),
-            )
-        )
-
-        @govukButton(
-            ButtonViewModel(messages("site.continue"))
-        )
     }
 }

@@ -17,37 +17,40 @@
 package forms.previousRegistrations
 
 import forms.behaviours.StringFieldBehaviours
+import models.Country
 import play.api.data.FormError
 
 class PreviousIossNumberFormProviderSpec extends StringFieldBehaviours {
 
-  val requiredKey = "previousIossNumber.error.required"
-  val lengthKey = "previousIossNumber.error.length"
-  val maxLength = 100
-
-  val form = new PreviousIossNumberFormProvider()()
+  private val country = Country.euCountries.head
+  private val form = new PreviousIossNumberFormProvider()(country)
+  private val fieldName = "value"
 
   ".value" - {
 
-    val fieldName = "value"
+    "must bind valid data" in {
+      val validInput = "IM0401234567"
+      val result = form.bind(Map(fieldName -> validInput))
+      result.errors mustBe empty
+      result.value.value mustBe "IM0401234567"
+    }
 
-    behave like fieldThatBindsValidData(
-      form,
-      fieldName,
-      stringsWithMaxLength(maxLength)
-    )
+    "must trim whitespace and uppercase input" in {
+      val messyInput = "  im040 123 456 7 "
+      val result = form.bind(Map(fieldName -> messyInput))
+      result.errors mustBe empty
+      result.value.value mustBe "IM0401234567"
+    }
 
-    behave like fieldWithMaxLength(
-      form,
-      fieldName,
-      maxLength = maxLength,
-      lengthError = FormError(fieldName, lengthKey, Seq(maxLength))
-    )
+    "must not bind empty input" in {
+      val result = form.bind(Map(fieldName -> ""))
+      result.errors must contain only FormError(fieldName, "previousIossNumber.error.schemeNumber.required", Seq(country.name))
+    }
 
-    behave like mandatoryField(
-      form,
-      fieldName,
-      requiredError = FormError(fieldName, requiredKey)
-    )
+    "must return an error for invalid format" in {
+      val invalidInput = "INVALID!@#"
+      val result = form.bind(Map(fieldName -> invalidInput))
+      result.errors must contain only FormError(fieldName, "previousIossNumber.error.invalid")
+    }
   }
 }

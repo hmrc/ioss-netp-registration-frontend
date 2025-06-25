@@ -95,7 +95,6 @@ class PreviousOssNumberFormProviderSpec extends StringFieldBehaviours {
   private val countriesAndValidOSSSchemes: Seq[(Country, Seq[PreviousScheme], Seq[String])] = Seq(
     (Country("AT", "Austria"), Seq(PreviousScheme.OSSNU), Seq("ATU23456789")),
     (Country("BE", "Belgium"), Seq(PreviousScheme.OSSU), Seq("EU234567891")),
-    (Country("BG", "Bulgaria"), Seq(PreviousScheme.IOSSWI, PreviousScheme.OSSU), Seq("EU345678912")),
     (Country("HR", "Croatia"), Seq(PreviousScheme.IOSSWOI, PreviousScheme.OSSNU), Seq("HR12345678901")),
     (Country("CY", "Cyprus"), Seq.empty, Seq.empty),
     (Country("DK", "Denmark"), Seq.empty, Seq("DK12345678", "EU234567891"))
@@ -104,7 +103,6 @@ class PreviousOssNumberFormProviderSpec extends StringFieldBehaviours {
   private val countriesAndInvalidDuplicateOSSSchemes: Seq[(Country, Seq[PreviousScheme], Seq[String])] = Seq(
     (Country("AT", "Austria"), Seq(PreviousScheme.OSSNU), Seq("EU123456789")),
     (Country("BE", "Belgium"), Seq(PreviousScheme.OSSU), Seq("BE1234567891")),
-    (Country("BG", "Bulgaria"), Seq(PreviousScheme.IOSSWI, PreviousScheme.OSSU), Seq("BG1234567890")),
     (Country("HR", "Croatia"), Seq(PreviousScheme.IOSSWOI, PreviousScheme.OSSNU), Seq("EU123567901")),
     (Country("CY", "Cyprus"), Seq(PreviousScheme.OSSU, PreviousScheme.OSSNU), Seq("CY12345678L", "EU234567891"))
   )

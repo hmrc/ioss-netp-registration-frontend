@@ -16,17 +16,57 @@
 
 package pages.previousRegistrations
 
-import models.Index
-import pages.{QuestionPage, Waypoints}
-import play.api.libs.json.JsPath
+import controllers.previousRegistrations.routes
+import models.{Country, Index, UserAnswers}
+import pages.{AddItemPage, CheckYourAnswersPage, Page, QuestionPage, RecoveryOps, Waypoints}
+import play.api.libs.json.{JsObject, JsPath}
 import play.api.mvc.Call
+import queries.Derivable
+import queries.previousRegistrations.DeriveNumberOfPreviousRegistrations
 
-case class AddPreviousRegistrationPage(val index: Option[Index] = None) extends QuestionPage[Boolean] {
+case class AddPreviousRegistrationPage(override val index: Option[Index] = None) extends AddItemPage(index) with QuestionPage[Boolean] {
 
+  override def isTheSamePage(other: Page): Boolean = other match {
+    case _: AddPreviousRegistrationPage => true
+    case _ => false
+  }
+
+  override val normalModeUrlFragment: String = AddPreviousRegistrationPage.normalModeUrlFragment
+  override val checkModeUrlFragment: String = AddPreviousRegistrationPage.checkModeUrlFragment
+  
   override def path: JsPath = JsPath \ toString
 
   override def toString: String = "addPreviousRegistration"
 
   override def route(waypoints: Waypoints): Call =
-    controllers.previousRegistrations.routes.AddPreviousRegistrationController.onPageLoad(waypoints)
+    routes.AddPreviousRegistrationController.onPageLoad(waypoints)
+
+  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
+    answers.get(this).map {
+      case true =>
+        index
+          .map { i =>
+            if (i.position + 1 < Country.euCountries.size) {
+              PreviousEuCountryPage(Index(i.position + 1))
+            } else {
+              CheckYourAnswersPage //todo EU details page
+            }
+          }
+          .getOrElse {
+            answers
+              .get(deriveNumberOfItems)
+              .map(n => PreviousEuCountryPage(Index(n)))
+              .orRecover
+          }
+      case false => CheckYourAnswersPage //todo EU details page
+    }.orRecover
+  }
+
+  override def deriveNumberOfItems: Derivable[Seq[JsObject], Int] = DeriveNumberOfPreviousRegistrations
+
+}
+
+object AddPreviousRegistrationPage {
+  val normalModeUrlFragment: String = "previous-schemes-overview"
+  val checkModeUrlFragment: String = "change-previous-schemes-overview"
 }

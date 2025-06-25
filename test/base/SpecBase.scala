@@ -24,7 +24,7 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.{OptionValues, TryValues}
-import pages.{CheckAnswersPage, EmptyWaypoints, NonEmptyWaypoints, Waypoint, Waypoints}
+import pages.{BusinessBasedInUKPage, CheckAnswersPage, EmptyWaypoints, NonEmptyWaypoints, Waypoint, Waypoints}
 import play.api.Application
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.bind
@@ -63,6 +63,8 @@ trait SpecBase
   def emptyUserAnswers: UserAnswers = UserAnswers(id = userAnswersId, journeyId = journeyId, lastUpdated = arbitraryInstant)
 
   def emptyUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.copy(vatInfo = Some(vatCustomerInfo))
+  
+  def basicUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.set(BusinessBasedInUKPage, true).success.value.copy(vatInfo = Some(vatCustomerInfo))
 
   val vatNumber = "GB123456789"
   val intermediaryNumber = "IN9001234567"

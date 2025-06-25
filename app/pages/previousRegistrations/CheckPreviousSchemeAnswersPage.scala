@@ -17,7 +17,7 @@
 package pages.previousRegistrations
 
 import models.{CheckMode, Index, NormalMode, UserAnswers}
-import pages.{AddItemPage, JourneyRecoveryPage, Page, QuestionPage, RecoveryOps, Waypoint, Waypoints}
+import pages.{AddItemPage, Page, QuestionPage, RecoveryOps, Waypoint, Waypoints}
 import play.api.libs.json.{JsObject, JsPath}
 import play.api.mvc.Call
 import queries.Derivable
@@ -55,7 +55,7 @@ case class CheckPreviousSchemeAnswersPage(countryIndex: Index, schemeIndex: Opti
           }
 
       case false =>
-        JourneyRecoveryPage
+        AddPreviousRegistrationPage()
     }.orRecover
 }
 

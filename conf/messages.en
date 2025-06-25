@@ -324,20 +324,11 @@ previousOssNumber.error.invalid = Enter a registration number in the correct for
 previousOssNumber.change.hidden = PreviousOssNumber
 
 previousIossNumber.title = Enter your client''s previous registration number for {0}
-previousIossNumber.titleWithIntermediary = Enter your client''s previous registration number for {0}
 previousIossNumber.heading = Enter your client''s previous registration number for {0}
-previousIossNumber.headingWithIntermediary = Enter your client''s previous registration number for {0}
-previousIossNumber.iossNumber = IOSS number
 previousIossNumber.iossNumber.hint = {0}
-previousIossNumber.intermediaryNumber = Intermediary identification number
-previousIossNumber.intermediaryNumber.hint = {0}
-previousIossNumber.intermediaryNumber.checkYourAnswersLabel = Intermediary number
 previousIossNumber.checkYourAnswersLabel = Registration number
-previousIossNumber.error.previousScheme.required = Enter your client''s scheme number
-previousIossNumber.error.schemeNumber.required = Enter your client''s previous registration number for
-previousIossNumber.error.length = PreviousIossNumber must be 100 characters or less
+previousIossNumber.error.schemeNumber.required = Enter your client''s previous registration number for {0}
 previousIossNumber.error.invalid = Enter a valid IOSS registration number
-previousIntermediaryNumber.error.invalid = Enter a valid intermediary identification number
 
 deletePreviousScheme.title = Remove this registration for {0}?
 deletePreviousScheme.heading = Remove this registration for {0}?

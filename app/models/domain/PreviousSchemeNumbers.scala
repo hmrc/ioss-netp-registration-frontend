@@ -19,8 +19,7 @@ package models.domain
 import play.api.libs.json.{Json, OFormat}
 
 case class PreviousSchemeNumbers(
-                                  previousSchemeNumber: String,
-                                  previousIntermediaryNumber: Option[String]
+                                  previousSchemeNumber: String
                                 )
 
 object PreviousSchemeNumbers {

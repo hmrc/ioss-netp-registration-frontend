@@ -23,7 +23,6 @@ import models.{Country, Index, PreviousScheme, PreviousSchemeType}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{EmptyWaypoints, Waypoints}
 import pages.previousRegistrations.{PreviousEuCountryPage, PreviousSchemeTypePage}
-import play.api.mvc.Call
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{status, *}
 import views.html.previousRegistrations.PreviousSchemeView

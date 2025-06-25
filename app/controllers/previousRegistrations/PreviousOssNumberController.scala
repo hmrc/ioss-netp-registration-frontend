@@ -82,22 +82,20 @@ class PreviousOssNumberController @Inject()(
                                                             ): (Boolean, Form[String]) = {
 
     val previousSchemes = previousSchemeDetails.flatMap(_.previousScheme)
-    val editingOssScheme = previousSchemes.filter(previousScheme => previousScheme == PreviousScheme.OSSU || previousScheme == PreviousScheme.OSSNU)
-    val isEditing = maybeCurrentAnswer.isDefined
-    val thereIsAnotherOssScheme = editingOssScheme.size > 1
-    val isEditingAndSecondSchemeExists = isEditing && thereIsAnotherOssScheme
-    val editingSchemeType = request.userAnswers.get(PreviousSchemePage(countryIndex, schemeIndex))
-    val providingForm = (maybeCurrentAnswer, editingSchemeType) match {
-      case (Some(_), Some(currentAnswerSchemeType)) => if (thereIsAnotherOssScheme) {
-        formProvider(country, previousSchemes.filterNot(_ == currentAnswerSchemeType))
-      } else {
-        formProvider(country, Seq.empty)
-      }
-      case _ =>
-        formProvider(country, Seq.empty)
+    val filteredSchemes = request.userAnswers.get(PreviousSchemePage(countryIndex, schemeIndex)) match {
+      case Some(currentSchemeType) => previousSchemes.filterNot(_ == currentSchemeType)
+      case None => previousSchemes
     }
+    
+    val isEditing = maybeCurrentAnswer.isDefined
+    val schemeCountOfSameType = previousSchemes.count {
+      case scheme if maybeCurrentAnswer.isDefined =>
+        request.userAnswers.get(PreviousSchemePage(countryIndex, schemeIndex)).contains(scheme)
+      case _ => false
+    }
+    val isEditingAndAnotherOssScheme = isEditing && schemeCountOfSameType > 1
 
-    (isEditingAndSecondSchemeExists, providingForm)
+    (isEditingAndAnotherOssScheme, formProvider(country, filteredSchemes))
   }
 
   private def determinePreviousSchemeHintText(
@@ -167,7 +165,7 @@ class PreviousOssNumberController @Inject()(
     for {
       updatedAnswers <- Future.fromTry(request.userAnswers.set(
         PreviousOssNumberPage(countryIndex, schemeIndex),
-        PreviousSchemeNumbers(registrationNumber, None),
+        PreviousSchemeNumbers(registrationNumber),
       ))
       updatedAnswersWithScheme <- Future.fromTry(updatedAnswers.set(
         PreviousSchemePage(countryIndex, schemeIndex),

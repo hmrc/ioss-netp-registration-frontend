@@ -33,13 +33,11 @@ class PreviousRegistrationDetailsSpec extends AnyFreeSpec with Matchers with Sca
     "serialize to JSON correctly" in {
       val previousEuCountry = Country("FR", "France")
       val schemeNumbers = PreviousSchemeNumbers(
-        previousSchemeNumber = "12345",
-        previousIntermediaryNumber = Some("67890")
+        previousSchemeNumber = "12345"
       )
       val schemeDetails = PreviousSchemeDetails(
         previousScheme = PreviousScheme.OSSU,
-        previousSchemeNumbers = schemeNumbers,
-        nonCompliantDetails = Some(NonCompliantDetails(nonCompliantReturns = Some(1), nonCompliantPayments = Some(1)))
+        previousSchemeNumbers = schemeNumbers
       )
       val previousRegistrationDetails = PreviousRegistrationDetails(
         previousEuCountry = previousEuCountry,
@@ -57,12 +55,7 @@ class PreviousRegistrationDetailsSpec extends AnyFreeSpec with Matchers with Sca
            |    {
            |      "previousScheme": "ossu",
            |      "previousSchemeNumbers": {
-           |        "previousSchemeNumber": "12345",
-           |        "previousIntermediaryNumber": "67890"
-           |      },
-           |      "nonCompliantDetails": {
-           |        "nonCompliantReturns":1,
-           |		    "nonCompliantPayments":1
+           |        "previousSchemeNumber": "12345"
            |      }
            |    }
            |  ]
@@ -85,12 +78,7 @@ class PreviousRegistrationDetailsSpec extends AnyFreeSpec with Matchers with Sca
            |    {
            |      "previousScheme": "ossu",
            |      "previousSchemeNumbers": {
-           |        "previousSchemeNumber": "12345",
-           |        "previousIntermediaryNumber": "67890"
-           |      },
-           |      "nonCompliantDetails": {
-           |        "nonCompliantReturns":1,
-           |		    "nonCompliantPayments":1
+           |        "previousSchemeNumber": "12345"
            |      }
            |    }
            |  ]
@@ -103,10 +91,8 @@ class PreviousRegistrationDetailsSpec extends AnyFreeSpec with Matchers with Sca
         previousSchemesDetails = Seq(PreviousSchemeDetails(
           previousScheme = PreviousScheme.OSSU,
           previousSchemeNumbers = PreviousSchemeNumbers(
-            previousSchemeNumber = "12345",
-            previousIntermediaryNumber = Some("67890")
-          ),
-          nonCompliantDetails = Some(NonCompliantDetails(nonCompliantReturns = Some(1), nonCompliantPayments = Some(1)))
+            previousSchemeNumber = "12345"
+          )
         ))
       )
 
@@ -182,8 +168,7 @@ class PreviousRegistrationDetailsSpec extends AnyFreeSpec with Matchers with Sca
            |    {
            |      "previousScheme": "ossu",
            |      "previousSchemeNumbers": {
-           |        "previousSchemeNumber": "12345",
-           |        "previousIntermediaryNumber": "67890"
+           |        "previousSchemeNumber": "12345"
            |      }
            |    }
            |  ]
@@ -196,10 +181,8 @@ class PreviousRegistrationDetailsSpec extends AnyFreeSpec with Matchers with Sca
         previousSchemesDetails = Seq(PreviousSchemeDetails(
           previousScheme = PreviousScheme.OSSU,
           previousSchemeNumbers = PreviousSchemeNumbers(
-            previousSchemeNumber = "12345",
-            previousIntermediaryNumber = Some("67890")
-          ),
-          nonCompliantDetails = None
+            previousSchemeNumber = "12345"
+          )
         ))
       )
 
@@ -219,10 +202,6 @@ class PreviousRegistrationDetailsSpec extends AnyFreeSpec with Matchers with Sca
            |      "previousScheme": "ossu",
            |      "previousSchemeNumbers": {
            |        "previousSchemeNumber": "12345"
-           |      },
-           |      "nonCompliantDetails": {
-           |        "nonCompliantReturns": 2,
-           |        "nonCompliantPayments": 3
            |      }
            |    }
            |  ]
@@ -235,10 +214,8 @@ class PreviousRegistrationDetailsSpec extends AnyFreeSpec with Matchers with Sca
         previousSchemesDetails = Seq(PreviousSchemeDetails(
           previousScheme = PreviousScheme.OSSU,
           previousSchemeNumbers = PreviousSchemeNumbers(
-            previousSchemeNumber = "12345",
-            previousIntermediaryNumber = None
-          ),
-          nonCompliantDetails = Some(NonCompliantDetails(nonCompliantReturns = Some(2), nonCompliantPayments = Some(3)))
+            previousSchemeNumber = "12345"
+          )
         ))
       )
 

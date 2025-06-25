@@ -48,8 +48,12 @@ class CheckPreviousSchemeAnswersController @Inject()(
       getPreviousCountry(waypoints, index) {
         country =>
           request.userAnswers.get(AllPreviousSchemesForCountryWithOptionalVatNumberQuery(index)).map { previousSchemes =>
+
+            println(s"previousSchemes: $previousSchemes")
+
             val canAddScheme = previousSchemes.size < Constants.maxSchemes
-            val lists = PreviousSchemeSummary.getSummaryLists(previousSchemes, index, country, Seq.empty, waypoints)
+            val existingSchemes = Seq.empty
+            val lists = PreviousSchemeSummary.getSummaryLists(previousSchemes, index, country, existingSchemes, waypoints)
 
             val form = formProvider(country)
 

@@ -48,8 +48,11 @@ class PreviousSchemeController @Inject()(
 
           val form = request.userAnswers.get(AllPreviousSchemesForCountryWithOptionalVatNumberQuery(countryIndex)) match {
             case Some(previousSchemesDetails) =>
+              println(s"previous scheme details opl: $previousSchemesDetails")
+              println(s"userAnswers opl: ${request.userAnswers}")
 
               val previousSchemes = previousSchemesDetails.flatMap(_.previousScheme)
+              println(s"previous scheme opl: $previousSchemes")
               formProvider(country.name, previousSchemes, schemeIndex)
 
             case None =>
@@ -74,8 +77,11 @@ class PreviousSchemeController @Inject()(
 
           val form = request.userAnswers.get(AllPreviousSchemesForCountryWithOptionalVatNumberQuery(countryIndex)) match {
             case Some(previousSchemesDetails) =>
+              println(s"previous scheme details os: $previousSchemesDetails")
+              println(s"userAnswers os: ${request.userAnswers}")
 
               val previousSchemes = previousSchemesDetails.flatMap(_.previousScheme)
+              println(s"previous scheme os: $previousSchemes")
               formProvider(country.name, previousSchemes, schemeIndex)
 
             case None =>

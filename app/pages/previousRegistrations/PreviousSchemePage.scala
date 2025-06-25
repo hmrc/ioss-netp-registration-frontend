@@ -27,7 +27,7 @@ case class PreviousSchemePage(countryIndex: Index, schemeIndex: Index) extends Q
   
   override val addItemWaypoint: Waypoint = CheckPreviousSchemeAnswersPage(countryIndex).waypoint(NormalMode)
   
-  override def path: JsPath = JsPath \ "previousRegistrations" \ countryIndex.position \ "previousSchemeDetails" \ schemeIndex.position \ toString
+  override def path: JsPath = JsPath \ "previousRegistrations" \ countryIndex.position \ "previousSchemesDetails" \ schemeIndex.position \ toString
 
   override def toString: String = "previousScheme"
   

@@ -31,7 +31,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.previousRegistrations.DeletePreviousSchemeView
 import utils.FutureSyntax.*
 import viewmodels.govuk.all.SummaryListViewModel
-import viewmodels.previousRegistrations.{DeletePreviousSchemeSummary, PreviousIntermediaryNumberSummary, PreviousSchemeNumberSummary}
+import viewmodels.previousRegistrations.{DeletePreviousSchemeSummary, PreviousIossNumberSummary, PreviousSchemeNumberSummary}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -55,7 +55,7 @@ class DeletePreviousSchemeController @Inject()(
                 rows = Seq(
                   DeletePreviousSchemeSummary.row(request.userAnswers, countryIndex, schemeIndex),
                   PreviousSchemeNumberSummary.row(request.userAnswers, countryIndex, schemeIndex, Some(previousScheme)),
-                  PreviousIntermediaryNumberSummary.row(request.userAnswers, countryIndex, schemeIndex)
+                  PreviousIossNumberSummary.row(request.userAnswers, countryIndex, schemeIndex, Some(previousScheme))
                 ).flatten
               )
               
@@ -86,7 +86,7 @@ class DeletePreviousSchemeController @Inject()(
                 rows = Seq(
                   DeletePreviousSchemeSummary.row(request.userAnswers, countryIndex, schemeIndex),
                   PreviousSchemeNumberSummary.row(request.userAnswers, countryIndex, schemeIndex, Some(previousScheme)),
-                  PreviousIntermediaryNumberSummary.row(request.userAnswers, countryIndex, schemeIndex)
+                  PreviousIossNumberSummary.row(request.userAnswers, countryIndex, schemeIndex, Some(previousScheme))
                 ).flatten
               )
 

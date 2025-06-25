@@ -17,7 +17,6 @@
 package forms.previousRegistrations
 
 import forms.behaviours.OptionFieldBehaviours
-import forms.previousRegistrations.PreviousSchemeFormProvider
 import models.PreviousScheme
 import play.api.data.FormError
 

@@ -23,6 +23,7 @@ import models.requests.DataRequest
 import models.Index
 import pages.previousRegistrations.DeletePreviousRegistrationPage
 import pages.{JourneyRecoveryPage, Waypoints}
+import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import queries.previousRegistrations.{PreviousRegistrationQuery, PreviousRegistrationWithOptionalVatNumberQuery}
@@ -42,7 +43,7 @@ class DeletePreviousRegistrationController @Inject()(
   
   protected val controllerComponents: MessagesControllerComponents = cc
   
-  val form = formProvider()
+  val form: Form[Boolean] = formProvider()
 
   def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>

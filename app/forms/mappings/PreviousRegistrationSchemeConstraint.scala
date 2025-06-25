@@ -38,7 +38,7 @@ trait PreviousRegistrationSchemeConstraint {
           case PreviousSchemeType.IOSS if isEditingOrLessThanAllowedAmount(
             existingAnswers = existingAnswers,
             schemeIndex = schemeIndex,
-            allowedSchemes = Seq(PreviousScheme.IOSSWI, PreviousScheme.IOSSWOI),
+            allowedSchemes = Seq(PreviousScheme.IOSSWOI),
             amountOfSchemesAllowed = maxIossSchemes
           ) =>
             Invalid(errorKeyIoss, countryName)

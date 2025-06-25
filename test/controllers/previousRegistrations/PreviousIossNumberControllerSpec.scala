@@ -19,35 +19,34 @@ package controllers.previousRegistrations
 import base.SpecBase
 import controllers.routes
 import forms.previousRegistrations.PreviousIossNumberFormProvider
-import models.{NormalMode, UserAnswers}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import models.domain.PreviousSchemeNumbers
+import models.{Country, Index}
 import org.scalatestplus.mockito.MockitoSugar
-import pages.previousRegistrations.PreviousIossNumberPage
-import play.api.inject.bind
-import play.api.mvc.Call
+import pages.previousRegistrations.{PreviousEuCountryPage, PreviousIossNumberPage}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import repositories.SessionRepository
 import views.html.previousRegistrations.PreviousIossNumberView
 
-import scala.concurrent.Future
 
 class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar {
 
-  def onwardRoute = Call("GET", "/foo")
+  private val index = Index(0)
 
-  val formProvider = new PreviousIossNumberFormProvider()
-  val form = formProvider()
+  private val country = Country.euCountries.head
+  private val formProvider = new PreviousIossNumberFormProvider()
+  private val form = formProvider(country)
 
-//  lazy val previousIossNumberRoute = controllers.previousRegistrations.routes.PreviousIossNumberController.onPageLoad(NormalMode).url
+  private lazy val previousIossNumberRoute = controllers.previousRegistrations.routes.PreviousIossNumberController.onPageLoad(waypoints, index, index).url
+
+  private val iossHintText = "This will start with IM040 followed by 7 numbers"
+
+  private val baseAnswers = emptyUserAnswersWithVatInfo.set(PreviousEuCountryPage(index), country).success.value
 
   "PreviousIossNumber Controller" - {
 
-    /*
     "must return OK and the correct view for a GET" in {
 
-      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
+      val application = applicationBuilder(userAnswers = Some(baseAnswers)).build()
 
       running(application) {
         val request = FakeRequest(GET, previousIossNumberRoute)
@@ -56,14 +55,14 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar {
 
         val view = application.injector.instanceOf[PreviousIossNumberView]
 
-        status(result) mustEqual OK
-        contentAsString(result) mustEqual view(form, NormalMode)(request, messages(application)).toString
+        status(result) `mustBe` OK
+        contentAsString(result) mustBe view(form, waypoints, index, index, country, iossHintText)(request, messages(application)).toString
       }
     }
 
     "must populate the view correctly on a GET when the question has previously been answered" in {
 
-      val userAnswers = UserAnswers(userAnswersId).set(PreviousIossNumberPage, "answer").success.value
+      val userAnswers = baseAnswers.set(PreviousIossNumberPage(index, index), PreviousSchemeNumbers("answer")).success.value
 
       val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
 
@@ -74,40 +73,14 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) mustEqual OK
-        contentAsString(result) mustEqual view(form.fill("answer"), NormalMode)(request, messages(application)).toString
-      }
-    }
-
-    "must redirect to the next page when valid data is submitted" in {
-
-      val mockSessionRepository = mock[SessionRepository]
-
-      when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
-
-      val application =
-        applicationBuilder(userAnswers = Some(emptyUserAnswers))
-          .overrides(
-            bind[Navigator].toInstance(new FakeNavigator(onwardRoute)),
-            bind[SessionRepository].toInstance(mockSessionRepository)
-          )
-          .build()
-
-      running(application) {
-        val request =
-          FakeRequest(POST, previousIossNumberRoute)
-            .withFormUrlEncodedBody(("value", "answer"))
-
-        val result = route(application, request).value
-
-        status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual onwardRoute.url
+        status(result) `mustBe` OK
+        contentAsString(result) mustBe view(form.fill("answer"), waypoints, index, index, country, iossHintText)(request, messages(application)).toString
       }
     }
 
     "must return a Bad Request and errors when invalid data is submitted" in {
 
-      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
+      val application = applicationBuilder(userAnswers = Some(baseAnswers)).build()
 
       running(application) {
         val request =
@@ -120,8 +93,8 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) mustEqual BAD_REQUEST
-        contentAsString(result) mustEqual view(boundForm, NormalMode)(request, messages(application)).toString
+        status(result) `mustBe` BAD_REQUEST
+        contentAsString(result) mustBe view(boundForm, waypoints, index, index, country, iossHintText)(request, messages(application)).toString
       }
     }
 
@@ -134,8 +107,8 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value mustBe routes.JourneyRecoveryController.onPageLoad().url
       }
     }
 
@@ -150,11 +123,10 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value mustBe routes.JourneyRecoveryController.onPageLoad().url
       }
     }
 
-     */
   }
 }

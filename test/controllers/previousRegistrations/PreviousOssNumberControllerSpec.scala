@@ -63,7 +63,7 @@ class PreviousOssNumberControllerSpec extends SpecBase with MockitoSugar with Ta
     }
 
     "must populate the view correctly on a GET when the question has previously been answered" in {
-      val userAnswers = baseAnswers.set(PreviousOssNumberPage(index, index), PreviousSchemeNumbers("answer", None)).success.value
+      val userAnswers = baseAnswers.set(PreviousOssNumberPage(index, index), PreviousSchemeNumbers("answer")).success.value
 
       val application = applicationBuilder(userAnswers = Some(userAnswers))
         .build()

@@ -26,7 +26,7 @@ import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{EmptyWaypoints, Waypoints}
-import pages.previousRegistrations.{CheckPreviousSchemeAnswersPage, PreviousEuCountryPage, PreviousOssNumberPage, PreviousSchemePage, PreviouslyRegisteredPage}
+import pages.previousRegistrations.*
 import play.api.i18n.Messages
 import play.api.inject.bind
 import play.api.test.FakeRequest
@@ -52,7 +52,7 @@ class CheckPreviousSchemeAnswersControllerSpec extends SpecBase with MockitoSuga
       .set(PreviouslyRegisteredPage, true).success.value
       .set(PreviousEuCountryPage(index), country).success.value
       .set(PreviousSchemePage(index, index), PreviousScheme.values.head).success.value
-      .set(PreviousOssNumberPage(index, index), PreviousSchemeNumbers("123456789", None)).success.value
+      .set(PreviousOssNumberPage(index, index), PreviousSchemeNumbers("123456789")).success.value
 
   private lazy val checkPreviousSchemeAnswersRoute =
     controllers.previousRegistrations.routes.CheckPreviousSchemeAnswersController.onPageLoad(waypoints, index).url
@@ -75,7 +75,7 @@ class CheckPreviousSchemeAnswersControllerSpec extends SpecBase with MockitoSuga
 
         val lists = PreviousSchemeSummary.getSummaryLists(previousSchemes, index, country, Seq.empty, waypoints)(dataRequest, messages(application))
 
-        status(result) mustEqual OK
+        status(result) `mustEqual` OK
         contentAsString(result) mustEqual view(form, waypoints, lists, index, country, canAddScheme = true)(request, messages(application)).toString
       }
     }
@@ -97,7 +97,7 @@ class CheckPreviousSchemeAnswersControllerSpec extends SpecBase with MockitoSuga
         val result = route(application, request).value
         val expectedAnswers = baseUserAnswers.set(CheckPreviousSchemeAnswersPage(index), true).success.value
 
-        status(result) mustEqual SEE_OTHER
+        status(result) `mustEqual` SEE_OTHER
         redirectLocation(result).value mustEqual CheckPreviousSchemeAnswersPage(index).navigate(waypoints, emptyUserAnswers, expectedAnswers).url
         verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
@@ -125,7 +125,7 @@ class CheckPreviousSchemeAnswersControllerSpec extends SpecBase with MockitoSuga
 
         val result = route(application, request).value
 
-        status(result) mustEqual BAD_REQUEST
+        status(result) `mustEqual` BAD_REQUEST
         contentAsString(result) mustEqual view(boundForm, waypoints, lists, index, country, canAddScheme = true)(request, implicitly).toString
       }
     }
@@ -138,7 +138,7 @@ class CheckPreviousSchemeAnswersControllerSpec extends SpecBase with MockitoSuga
         val request = FakeRequest(GET, checkPreviousSchemeAnswersRoute)
         val result = route(application, request).value
 
-        status(result) mustEqual SEE_OTHER
+        status(result) `mustEqual` SEE_OTHER
         redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
       }
     }
@@ -153,7 +153,7 @@ class CheckPreviousSchemeAnswersControllerSpec extends SpecBase with MockitoSuga
 
         val result = route(application, request).value
 
-        status(result) mustEqual SEE_OTHER
+        status(result) `mustEqual` SEE_OTHER
         redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
       }
     }

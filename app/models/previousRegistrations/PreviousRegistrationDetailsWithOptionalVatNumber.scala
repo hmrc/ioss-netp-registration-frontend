@@ -41,8 +41,7 @@ object SchemeDetailsWithOptionalVatNumber {
 }
 
 case class SchemeNumbersWithOptionalVatNumber(
-                                               previousSchemeNumber: Option[String],
-                                               previousIntermediaryNumber: Option[String]
+                                               previousSchemeNumber: Option[String]
                                              )
 
 object SchemeNumbersWithOptionalVatNumber {

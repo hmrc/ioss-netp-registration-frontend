@@ -27,7 +27,7 @@ import org.mockito.Mockito.{times, verify, verifyNoInteractions, when}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatestplus.mockito.MockitoSugar
 import pages.Waypoints
-import pages.previousRegistrations.{DeletePreviousSchemePage, PreviousEuCountryPage, PreviousOssNumberPage, PreviousSchemePage, PreviouslyRegisteredPage}
+import pages.previousRegistrations.*
 import play.api.i18n.Messages
 import play.api.inject.bind
 import play.api.test.FakeRequest
@@ -46,8 +46,8 @@ class DeletePreviousSchemeControllerSpec extends SpecBase with MockitoSugar {
   private val formProvider = new DeletePreviousSchemeFormProvider()
   private val form = formProvider(country)
   private val index = Index(0)
-  private val previousSchemeNumbers = PreviousSchemeNumbers("012345678", None)
-  private val previousScheme = PreviousSchemeDetails(PreviousScheme.OSSU, previousSchemeNumbers, None)
+  private val previousSchemeNumbers = PreviousSchemeNumbers("012345678")
+  private val previousScheme = PreviousSchemeDetails(PreviousScheme.OSSU, previousSchemeNumbers)
   private val previousRegistration = PreviousRegistrationDetails(country, Seq(previousScheme))
 
 
@@ -82,7 +82,7 @@ class DeletePreviousSchemeControllerSpec extends SpecBase with MockitoSugar {
 
         val view = application.injector.instanceOf[DeletePreviousSchemeView]
 
-        status(result) mustEqual OK
+        status(result) `mustEqual` OK
         contentAsString(result) mustEqual
           view(form, waypoints, index, index, country, list, isLastPreviousScheme = true)(request, messages(application)).toString
       }
@@ -108,7 +108,7 @@ class DeletePreviousSchemeControllerSpec extends SpecBase with MockitoSugar {
 
         val view = application.injector.instanceOf[DeletePreviousSchemeView]
 
-        status(result) mustEqual OK
+        status(result) `mustEqual` OK
         contentAsString(result) mustEqual
           view(form.fill(true), waypoints, index, index, country, list, isLastPreviousScheme = true)(request, messages(application)).toString
       }
@@ -134,7 +134,7 @@ class DeletePreviousSchemeControllerSpec extends SpecBase with MockitoSugar {
         val result = route(application, request).value
         val expectedAnswers = baseUserAnswers.remove(PreviousSchemeForCountryQuery(index, index)).success.value
 
-        status(result) mustEqual SEE_OTHER
+        status(result) `mustEqual` SEE_OTHER
         redirectLocation(result).value mustEqual
           DeletePreviousSchemePage(index, index).navigate(waypoints, emptyUserAnswers, expectedAnswers).url
         verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
@@ -157,7 +157,7 @@ class DeletePreviousSchemeControllerSpec extends SpecBase with MockitoSugar {
             .withFormUrlEncodedBody(("value", "false"))
 
         val result = route(application, request).value
-        status(result) mustEqual SEE_OTHER
+        status(result) `mustEqual` SEE_OTHER
         redirectLocation(result).value mustBe
           DeletePreviousSchemePage(index, index).navigate(waypoints, baseUserAnswers, baseUserAnswers).url
         verifyNoInteractions(mockSessionRepository)
@@ -187,7 +187,7 @@ class DeletePreviousSchemeControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) mustEqual BAD_REQUEST
+        status(result) `mustEqual` BAD_REQUEST
         contentAsString(result) mustEqual view(boundForm, waypoints, index, index, country, list, isLastPreviousScheme = true)(request, messages(application)).toString
       }
     }
@@ -201,7 +201,7 @@ class DeletePreviousSchemeControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) mustEqual SEE_OTHER
+        status(result) `mustEqual` SEE_OTHER
         redirectLocation(result).value mustEqual controllers.routes.JourneyRecoveryController.onPageLoad().url
       }
     }

@@ -16,16 +16,19 @@
 
 package forms.previousRegistrations
 
-import forms.mappings.Mappings
+import forms.mappings.{IossRegistrationNumberConstraints, Mappings}
+import models.Country
 import play.api.data.Form
 
 import javax.inject.Inject
 
-class PreviousIossNumberFormProvider @Inject() extends Mappings {
+class PreviousIossNumberFormProvider @Inject() extends Mappings with IossRegistrationNumberConstraints {
 
-  def apply(): Form[String] =
+  def apply(country: Country): Form[String] =
     Form(
-      "value" -> text("previousIossNumber.error.required")
-        .verifying(maxLength(100, "previousIossNumber.error.length"))
-    )
+      "value" -> text("previousIossNumber.error.schemeNumber.required", Seq(country.name))
+        .transform[String](_.trim.replaceAll("\\s", "").toUpperCase, value => value)
+        .verifying(validateIossRegistrationNumber(country.code, "previousIossNumber.error.invalid"))
+
+      )
 }

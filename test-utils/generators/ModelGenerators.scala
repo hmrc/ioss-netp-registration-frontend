@@ -18,9 +18,8 @@ package generators
 
 import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
-import models.{BusinessContactDetails, ClientBusinessName, Country, DesAddress, InternationalAddress, SavedPendingRegistration, UserAnswers}
+import models.*
 import models.etmp.SchemeType
-import models.{BusinessContactDetails, ClientBusinessName, Country, DesAddress, InternationalAddress}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.{choose, listOfN}
 import org.scalacheck.{Arbitrary, Gen}

@@ -30,8 +30,7 @@ class PreviousRegistrationDetailsWithOptionalVatNumberSpec extends AnyFreeSpec w
     "serialize to JSON correctly" in {
       val previousEuCountry = Country("FR", "France")
       val schemeNumbers = SchemeNumbersWithOptionalVatNumber(
-        previousSchemeNumber = Some("12345"),
-        previousIntermediaryNumber = Some("67890")
+        previousSchemeNumber = Some("12345")
       )
       val schemeDetails = SchemeDetailsWithOptionalVatNumber(
         previousScheme = Some(PreviousScheme.OSSU),
@@ -53,8 +52,7 @@ class PreviousRegistrationDetailsWithOptionalVatNumberSpec extends AnyFreeSpec w
            |    {
            |      "previousScheme": "ossu",
            |      "previousSchemeNumbers": {
-           |        "previousSchemeNumber": "12345",
-           |        "previousIntermediaryNumber": "67890"
+           |        "previousSchemeNumber": "12345"
            |      }
            |    }
            |  ]
@@ -77,8 +75,7 @@ class PreviousRegistrationDetailsWithOptionalVatNumberSpec extends AnyFreeSpec w
            |    {
            |      "previousScheme": "ossu",
            |      "previousSchemeNumbers": {
-           |        "previousSchemeNumber": "12345",
-           |        "previousIntermediaryNumber": "67890"
+           |        "previousSchemeNumber": "12345"
            |      }
            |    }
            |  ]
@@ -91,8 +88,7 @@ class PreviousRegistrationDetailsWithOptionalVatNumberSpec extends AnyFreeSpec w
         previousSchemesDetails = Some(List(SchemeDetailsWithOptionalVatNumber(
           previousScheme = Some(PreviousScheme.OSSU),
           previousSchemeNumbers = Some(SchemeNumbersWithOptionalVatNumber(
-            previousSchemeNumber = Some("12345"),
-            previousIntermediaryNumber = Some("67890")
+            previousSchemeNumber = Some("12345")
           ))
         )))
       )
@@ -139,8 +135,7 @@ class PreviousRegistrationDetailsWithOptionalVatNumberSpec extends AnyFreeSpec w
 
     "serialize to JSON correctly" in {
       val schemeNumbers = SchemeNumbersWithOptionalVatNumber(
-        previousSchemeNumber = Some("12345"),
-        previousIntermediaryNumber = Some("67890")
+        previousSchemeNumber = Some("12345")
       )
       val schemeDetails = SchemeDetailsWithOptionalVatNumber(
         previousScheme = Some(PreviousScheme.OSSU),
@@ -152,8 +147,7 @@ class PreviousRegistrationDetailsWithOptionalVatNumberSpec extends AnyFreeSpec w
            |{
            |  "previousScheme": "ossu",
            |  "previousSchemeNumbers": {
-           |    "previousSchemeNumber": "12345",
-           |    "previousIntermediaryNumber": "67890"
+           |    "previousSchemeNumber": "12345"
            |  }
            |}
            |""".stripMargin
@@ -168,8 +162,7 @@ class PreviousRegistrationDetailsWithOptionalVatNumberSpec extends AnyFreeSpec w
            |{
            |  "previousScheme": "ossu",
            |  "previousSchemeNumbers": {
-           |    "previousSchemeNumber": "12345",
-           |    "previousIntermediaryNumber": "67890"
+           |    "previousSchemeNumber": "12345"
            |  }
            |}
            |""".stripMargin
@@ -178,8 +171,7 @@ class PreviousRegistrationDetailsWithOptionalVatNumberSpec extends AnyFreeSpec w
       val expectedSchemeDetails = SchemeDetailsWithOptionalVatNumber(
         previousScheme = Some(PreviousScheme.OSSU),
         previousSchemeNumbers = Some(SchemeNumbersWithOptionalVatNumber(
-          previousSchemeNumber = Some("12345"),
-          previousIntermediaryNumber = Some("67890")
+          previousSchemeNumber = Some("12345")
         ))
       )
 

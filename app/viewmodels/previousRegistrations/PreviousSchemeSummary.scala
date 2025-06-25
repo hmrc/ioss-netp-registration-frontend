@@ -40,13 +40,25 @@ object PreviousSchemeSummary  {
 
 
     previousSchemes.zipWithIndex.flatMap { case (scheme, schemeIndex) =>
-      request.userAnswers.get(PreviousSchemePage(countryIndex, Index(schemeIndex))).map { (previousAnsweredScheme: PreviousScheme) =>
+      val index = Index(schemeIndex)
+      request.userAnswers.get(PreviousSchemePage(countryIndex, index)).map { (previousAnsweredScheme: PreviousScheme) =>
         val isExistingScheme = existingSchemes.contains(previousAnsweredScheme)
+
+        val maybeOssRow = PreviousSchemeNumberSummary.row(request.userAnswers, countryIndex, index, scheme.previousScheme)
+        val maybeIossRow = PreviousIossNumberSummary.row(request.userAnswers, countryIndex, index, scheme.previousScheme)
+
+        val rows: Seq[SummaryListRow] = previousAnsweredScheme match {
+          case PreviousScheme.OSSU | PreviousScheme.OSSNU =>
+            Seq(maybeOssRow).flatten
+
+          case PreviousScheme.IOSSWI =>
+            Seq(maybeIossRow).flatten
+
+          case PreviousScheme.IOSSWOI =>
+            Seq(maybeIossRow).flatten
+        }
         SummaryListViewModel(
-          rows = Seq(
-            PreviousSchemeNumberSummary.row(request.userAnswers, countryIndex, Index(schemeIndex), scheme.previousScheme),
-            PreviousIntermediaryNumberSummary.row(request.userAnswers, countryIndex, Index(schemeIndex))
-          ).flatten
+          rows = rows
         ).withCard(
           card = Card(
             title = Some(CardTitle(content = HtmlContent(HtmlFormat.escape(messages(s"previousScheme.$previousAnsweredScheme"))))),

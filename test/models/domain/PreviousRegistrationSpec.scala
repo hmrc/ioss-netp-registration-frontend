@@ -19,7 +19,6 @@ package models.domain
 import models.Country
 import models.PreviousScheme.{IOSSWI, IOSSWOI, OSSNU, OSSU, toEmtpSchemeType}
 import models.etmp.{EtmpPreviousEuRegistrationDetails, SchemeType}
-import models.previousRegistrations.NonCompliantDetails
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.libs.json.{JsError, Json}
@@ -34,9 +33,9 @@ class PreviousRegistrationSpec extends AnyFreeSpec with Matchers {
   val germanCountry: Country = Country.fromCountryCodeUnsafe("DE")
 
   private val remappedGermanResults = PreviousRegistration(germanCountry, List(
-    PreviousSchemeDetails(OSSNU, PreviousSchemeNumbers("DE-reg-1", None), None),
-    PreviousSchemeDetails(IOSSWI, PreviousSchemeNumbers("DE-reg-3", None), None),
-    PreviousSchemeDetails(OSSU, PreviousSchemeNumbers("DEDE-reg-4", None), None)
+    PreviousSchemeDetails(OSSNU, PreviousSchemeNumbers("DE-reg-1")),
+    PreviousSchemeDetails(IOSSWI, PreviousSchemeNumbers("DE-reg-3")),
+    PreviousSchemeDetails(OSSU, PreviousSchemeNumbers("DEDE-reg-4"))
   ))
 
   "fromEtmpPreviousEuRegistrationDetailsByCountry group results by expected country" in {
@@ -58,10 +57,10 @@ class PreviousRegistrationSpec extends AnyFreeSpec with Matchers {
       List(
         PreviousRegistration(
           Country.fromCountryCodeUnsafe("CY"),
-          List(PreviousSchemeDetails(OSSU, PreviousSchemeNumbers("CYCY-reg-0", None), None))),
+          List(PreviousSchemeDetails(OSSU, PreviousSchemeNumbers("CYCY-reg-0")))),
         PreviousRegistration(
           Country.fromCountryCodeUnsafe("IT"),
-          List(PreviousSchemeDetails(IOSSWOI, PreviousSchemeNumbers("IT-reg-2", None), None))),
+          List(PreviousSchemeDetails(IOSSWOI, PreviousSchemeNumbers("IT-reg-2")))),
         remappedGermanResults
       )
 
@@ -84,7 +83,7 @@ class PreviousRegistrationSpec extends AnyFreeSpec with Matchers {
     val input = Seq(
       EtmpPreviousEuRegistrationDetails("DE", "DE-reg-1", toEmtpSchemeType(OSSU), None),
       EtmpPreviousEuRegistrationDetails("FR", "FR-reg-2", toEmtpSchemeType(OSSNU), None),
-      EtmpPreviousEuRegistrationDetails("DE", "DE-reg-3", toEmtpSchemeType(IOSSWI), None)
+      EtmpPreviousEuRegistrationDetails("DE", "DE-reg-3", toEmtpSchemeType(IOSSWOI), None)
     )
 
     val result = PreviousRegistration.fromEtmpPreviousEuRegistrationDetails(input)
@@ -93,13 +92,13 @@ class PreviousRegistrationSpec extends AnyFreeSpec with Matchers {
       PreviousRegistration(
         Country.fromCountryCodeUnsafe("DE"),
         List(
-          PreviousSchemeDetails(OSSU, PreviousSchemeNumbers("DEDE-reg-1", None), None),
-          PreviousSchemeDetails(IOSSWI, PreviousSchemeNumbers("DE-reg-3", None), None)
+          PreviousSchemeDetails(OSSU, PreviousSchemeNumbers("DEDE-reg-1")),
+          PreviousSchemeDetails(IOSSWOI, PreviousSchemeNumbers("DE-reg-3"))
         )
       ),
       PreviousRegistration(
         Country.fromCountryCodeUnsafe("FR"),
-        List(PreviousSchemeDetails(OSSNU, PreviousSchemeNumbers("FR-reg-2", None), None))
+        List(PreviousSchemeDetails(OSSNU, PreviousSchemeNumbers("FR-reg-2")))
       )
     )
   }
@@ -110,8 +109,7 @@ class PreviousRegistrationSpec extends AnyFreeSpec with Matchers {
       List(
         PreviousSchemeDetails(
           OSSU,
-          PreviousSchemeNumbers("DEDE-reg-1", Some("INT-123")),
-          Some(NonCompliantDetails(Some(1), Some(1)))
+          PreviousSchemeNumbers("DEDE-reg-1")
         )
       )
     )

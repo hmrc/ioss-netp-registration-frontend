@@ -17,6 +17,7 @@
 package pages
 
 import models.{CheckMode, Mode, NormalMode}
+import pages.previousRegistrations.AddPreviousRegistrationPage
 import pages.tradingNames.AddTradingNamePage
 import pages.website.AddWebsitePage
 
@@ -34,6 +35,8 @@ object Waypoint {
     Map(
       AddTradingNamePage().normalModeUrlFragment -> AddTradingNamePage().waypoint(NormalMode),
       AddTradingNamePage().checkModeUrlFragment -> AddTradingNamePage().waypoint(CheckMode),
+      AddPreviousRegistrationPage().normalModeUrlFragment -> AddPreviousRegistrationPage().waypoint(NormalMode),
+      AddPreviousRegistrationPage().checkModeUrlFragment -> AddPreviousRegistrationPage().waypoint(CheckMode),
       AddWebsitePage().normalModeUrlFragment ->  AddWebsitePage().waypoint(NormalMode),
       AddWebsitePage().checkModeUrlFragment ->  AddWebsitePage().waypoint(CheckMode),
       CheckVatDetailsPage().urlFragment -> CheckVatDetailsPage().waypoint,
