@@ -33,7 +33,6 @@ object PreviousRegistrationDetails {
 
     val previousRegistrationDetails = etmpPreviousEuRegistrationDetails.collect {
       case registrationDetails: EtmpPreviousEuRegistrationDetails if registrationDetails.issuedBy == country.code =>
-        println(s"helloo: ${PreviousSchemeDetails.fromEtmpPreviousEuRegistrationDetails(registrationDetails)}")
         PreviousSchemeDetails.fromEtmpPreviousEuRegistrationDetails(registrationDetails)
     }
 
