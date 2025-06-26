@@ -63,7 +63,7 @@ class CheckVatDetailsController @Inject()(
               Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
           }
         } else {
-            Ok(view(waypoints, None, summaryList, clientCompanyName, isBasedInUk, hasVatNumber)).toFuture
+          Ok(view(waypoints, None, summaryList, clientCompanyName, isBasedInUk, hasVatNumber)).toFuture
         }
       }
   }

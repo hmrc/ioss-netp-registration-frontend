@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-package config
+package models.emails
 
-object Constants {
+import play.api.libs.json.{Json, Reads, Writes}
 
-  val maxWebsites: Int = 10
-  val intermediaryEnrolmentKey: String = "IntNumber"
-  val pendingRegistrationTTL: Int = 28
-  
-  val clientDeclarationEmailTemplateId: String = "ioss_netp_email_declaration_code"
+case class EmailToSendRequest(
+   to: List[String],
+   templateId: String,
+   parameters: ClientDeclarationEmailParameters,
+   force: Boolean = false
+)
+
+object EmailToSendRequest {
+  implicit val reads: Reads[EmailToSendRequest] = Json.reads[EmailToSendRequest]
+  implicit val writes: Writes[EmailToSendRequest] = Json.writes[EmailToSendRequest]
 }
