@@ -19,7 +19,7 @@ package controllers
 import base.SpecBase
 import connectors.RegistrationConnector
 import models.responses.InternalServerError
-import models.{BusinessContactDetails, CheckMode, Index, UserAnswers, Website}
+import models.{BusinessContactDetails, CheckMode, Index, TradingName, UserAnswers, Website}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{times, verify, when}
