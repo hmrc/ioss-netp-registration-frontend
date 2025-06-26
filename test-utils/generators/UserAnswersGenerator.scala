@@ -20,6 +20,7 @@ import models.UserAnswers
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.TryValues
+import pages.previousRegistrations.*
 import pages.{ClientBusinessAddressPage, *}
 import play.api.libs.json.{JsValue, Json}
 
@@ -29,6 +30,13 @@ trait UserAnswersGenerator extends TryValues {
   val generators: Seq[Gen[(QuestionPage[_], JsValue)]] = {
     arbitrary[(ClientBusinessAddressPage.type, JsValue)] ::
       arbitrary[(BusinessContactDetailsPage.type, JsValue)] ::
+      arbitrary[(PreviouslyRegisteredPage.type, JsValue)] ::
+      arbitrary[(PreviousEuCountryPage, JsValue)] ::
+      arbitrary[(PreviousSchemePage, JsValue)] ::
+      arbitrary[(PreviousSchemeTypePage, JsValue)] ::
+      arbitrary[(PreviousOssNumberPage, JsValue)] ::
+      arbitrary[(PreviousIossNumberPage, JsValue)] ::
+      arbitrary[(DeleteAllPreviousRegistrationsPage.type, JsValue)] ::
       Nil
   }
 

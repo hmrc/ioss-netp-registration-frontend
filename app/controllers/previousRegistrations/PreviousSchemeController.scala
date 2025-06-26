@@ -76,7 +76,6 @@ class PreviousSchemeController @Inject()(
             case Some(previousSchemesDetails) =>
 
               val previousSchemes = previousSchemesDetails.flatMap(_.previousScheme)
-              
               formProvider(country.name, previousSchemes, schemeIndex)
 
             case None =>

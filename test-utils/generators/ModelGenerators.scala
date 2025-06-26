@@ -206,4 +206,14 @@ trait ModelGenerators extends EitherValues {
     Arbitrary {
       Gen.oneOf(SchemeType.values)
     }
+
+  implicit lazy val arbitraryPreviousScheme: Arbitrary[PreviousScheme] =
+    Arbitrary {
+      Gen.oneOf(PreviousScheme.values)
+    }
+
+  implicit lazy val arbitraryPreviousSchemeType: Arbitrary[PreviousSchemeType] =
+    Arbitrary {
+      Gen.oneOf(PreviousSchemeType.values)
+    }
 }

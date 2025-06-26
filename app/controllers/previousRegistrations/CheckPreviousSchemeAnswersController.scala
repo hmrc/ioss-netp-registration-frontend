@@ -62,15 +62,12 @@ class CheckPreviousSchemeAnswersController @Inject()(
 
   def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
-
-      getPreviousCountry(waypoints, index) { country =>
-
-        request.userAnswers.get(AllPreviousSchemesForCountryWithOptionalVatNumberQuery(index)).map { previousSchemes =>
+      getPreviousCountry(waypoints, index) {
+        country =>
+          request.userAnswers.get(AllPreviousSchemesForCountryWithOptionalVatNumberQuery(index)).map { previousSchemes =>
 
           val canAddScheme = previousSchemes.size < Constants.maxSchemes
-
           val existingSchemes = Seq.empty
-
           val lists = PreviousSchemeSummary.getSummaryLists(previousSchemes, index, country, existingSchemes, waypoints)
 
           val form = formProvider(country)

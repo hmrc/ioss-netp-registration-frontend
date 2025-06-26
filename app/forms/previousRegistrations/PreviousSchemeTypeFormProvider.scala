@@ -26,7 +26,7 @@ class PreviousSchemeTypeFormProvider @Inject() extends Mappings with PreviousReg
 
   def apply(countryName: String, existingAnswers: Seq[PreviousScheme], schemeIndex: Index): Form[PreviousSchemeType] =
     Form(
-      "value" -> enumerable[PreviousSchemeType]("previousScheme.error.required")
+      "value" -> enumerable[PreviousSchemeType]("previousSchemeType.error.required")
         .verifying(validatePreviousRegistrationSchemes(countryName, existingAnswers,
           "previousScheme.oss.exceed.error", "previousScheme.ioss.exceed.error", schemeIndex))
     )
