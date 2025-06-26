@@ -211,12 +211,7 @@ trait ModelGenerators extends EitherValues {
         userAnswers <- arbitraryUserAnswers.arbitrary
         uniqueCode = UUID.randomUUID().toString
       } yield {
-        SavedPendingRegistration(
-          journeyId = userAnswers.journeyId,
-          uniqueCode = uniqueCode,
-          userAnswers = userAnswers,
-          lastUpdated = userAnswers.lastUpdated
-        )
+        SavedPendingRegistration(journeyId = userAnswers.journeyId, uniqueUrlCode = uniqueCode, userAnswers = userAnswers, lastUpdated = userAnswers.lastUpdated,)
       }
     }
   }

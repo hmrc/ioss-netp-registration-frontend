@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-package config
+package queries
 
-object Constants {
+import play.api.libs.json.JsPath
 
-  val maxWebsites: Int = 10
-  val intermediaryEnrolmentKey: String = "IntNumber"
-  val pendingRegistrationTTL: Int = 28
+case object EmailConfirmationQuery extends Gettable[Boolean] with Settable[Boolean] {
 
-  val clientDeclarationEmailTemplateId: String = "ioss_netp_email_declaration_code"
-
-  val maxSchemes: Int = 3
-  val maxOssSchemes: Int = 2
-  val maxIossSchemes: Int = 1
-  val lastSchemeForCountry: Int = 1
+  override def path: JsPath = JsPath \ "emailConfirmation"
 }

@@ -39,7 +39,7 @@ class ApplicationCompleteControllerSpec extends SpecBase {
 
   private val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
   private val clientName: String = savedPendingRegistration.userAnswers.vatInfo.flatMap(_.organisationName).value
-  private val clientDeclarationLink: String = savedPendingRegistration.uniqueCode
+  private val clientDeclarationLink: String = savedPendingRegistration.uniqueUrlCode
   private val activationExpiryDate = LocalDateTime
     .ofInstant(savedPendingRegistration.lastUpdated, ZoneId.systemDefault())
     .plusDays(pendingRegistrationTTL)

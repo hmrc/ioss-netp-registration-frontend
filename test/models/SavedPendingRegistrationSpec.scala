@@ -24,12 +24,7 @@ import java.util.UUID
 class SavedPendingRegistrationSpec extends SpecBase {
 
   private val userAnswers: UserAnswers = arbitraryUserAnswers.arbitrary.sample.value
-  private val savedPendingRegistration: SavedPendingRegistration = SavedPendingRegistration(
-    journeyId = userAnswers.journeyId,
-    uniqueCode = UUID.randomUUID().toString,
-    userAnswers = userAnswers,
-    lastUpdated = userAnswers.lastUpdated
-  )
+  private val savedPendingRegistration: SavedPendingRegistration = SavedPendingRegistration(journeyId = userAnswers.journeyId, uniqueUrlCode = UUID.randomUUID().toString, userAnswers = userAnswers, lastUpdated = userAnswers.lastUpdated,)
 
   "SavedPendingRegistration" - {
 
@@ -37,17 +32,12 @@ class SavedPendingRegistrationSpec extends SpecBase {
 
       val json = Json.obj(
         "journeyId" -> savedPendingRegistration.journeyId,
-        "uniqueCode" -> savedPendingRegistration.uniqueCode,
+        "uniqueCode" -> savedPendingRegistration.uniqueUrlCode,
         "userAnswers" -> savedPendingRegistration.userAnswers,
         "lastUpdated" -> savedPendingRegistration.lastUpdated
       )
 
-      val expectedResult: SavedPendingRegistration = SavedPendingRegistration(
-        journeyId = savedPendingRegistration.journeyId,
-        uniqueCode = savedPendingRegistration.uniqueCode,
-        userAnswers = savedPendingRegistration.userAnswers,
-        lastUpdated = savedPendingRegistration.lastUpdated
-      )
+      val expectedResult: SavedPendingRegistration = SavedPendingRegistration(journeyId = savedPendingRegistration.journeyId, uniqueUrlCode = savedPendingRegistration.uniqueUrlCode, userAnswers = savedPendingRegistration.userAnswers, lastUpdated = savedPendingRegistration.lastUpdated,)
 
       json.validate[SavedPendingRegistration] mustBe JsSuccess(expectedResult)
       Json.toJson(expectedResult) mustBe json

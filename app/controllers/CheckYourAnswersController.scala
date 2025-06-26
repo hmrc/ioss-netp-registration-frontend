@@ -123,24 +123,18 @@ class CheckYourAnswersController @Inject()(
   def onSubmit(waypoints: Waypoints, incompletePrompt: Boolean): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
-      registrationConnector.submitPendingRegistration(request.userAnswers).flatMap {
-        case Right(_) =>
-          getFirstValidationErrorRedirect(waypoints) match {
-            case Some(errorRedirect) => if (incompletePrompt) {
-              errorRedirect.toFuture
-            } else {
-              Redirect(CheckYourAnswersPage.route(waypoints).url).toFuture
-            }
+      getFirstValidationErrorRedirect(waypoints) match {
+        case Some(errorRedirect) => if (incompletePrompt) {
+          errorRedirect.toFuture
+        } else {
+          Redirect(CheckYourAnswersPage.route(waypoints).url).toFuture
+        }
+        case None =>
 
-            case None =>
+          for {
+            _ <- cc.sessionRepository.set(request.userAnswers)
+          } yield Redirect(CheckYourAnswersPage.navigate(waypoints, request.userAnswers, request.userAnswers).route)
 
-              for {
-                _ <- cc.sessionRepository.set(request.userAnswers)
-              } yield Redirect(CheckYourAnswersPage.navigate(waypoints, request.userAnswers, request.userAnswers).route)
-          }
-        case Left(error) =>
-          logger.error(s"Received an unexpected error on pending registration submission: ${error.body}")
-          Redirect(ErrorSubmittingPendingRegistrationPage.route(waypoints).url).toFuture
       }
   }
 }

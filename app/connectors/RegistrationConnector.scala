@@ -17,7 +17,7 @@
 package connectors
 
 import config.Service
-import connectors.PendingRegistrationHttpParser.{PendingRegistrationResultResponse, PendingRegistrationResultResponseReads, SavedPendingRegistrationResponse, SavedPendingRegistrationResponseReads}
+import connectors.PendingRegistrationHttpParser.{PendingRegistrationResultResponse, SavedPendingRegistrationResponse, SavedPendingRegistrationResponseReads}
 import connectors.VatCustomerInfoHttpParser.{VatCustomerInfoResponse, VatCustomerInfoResponseReads}
 import logging.Logging
 import models.UserAnswers
