@@ -19,28 +19,14 @@ package connectors
 import logging.Logging
 import models.SavedPendingRegistration
 import models.responses.{ErrorResponse, InvalidJson, UnexpectedResponseStatus}
-import play.api.http.Status.{NO_CONTENT, OK}
+import play.api.http.Status.OK
 import play.api.libs.json.{JsError, JsSuccess}
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 object PendingRegistrationHttpParser extends Logging {
 
-  type PendingRegistrationResultResponse = Either[ErrorResponse, Unit]
+  type PendingRegistrationResultResponse = Either[ErrorResponse, SavedPendingRegistration]
   type SavedPendingRegistrationResponse = Either[ErrorResponse, SavedPendingRegistration]
-
-  implicit object PendingRegistrationResultResponseReads extends HttpReads[PendingRegistrationResultResponse] {
-
-    override def read(method: String, url: String, response: HttpResponse): PendingRegistrationResultResponse = {
-      response.status match {
-        case NO_CONTENT => Right(())
-
-        case status =>
-          logger.error(s"Received unexpected error when trying to submit a Pending Registration " +
-            s"with status $status and body ${response.body}")
-          Left(UnexpectedResponseStatus(response.status, s"Unexpected response when submitting the pending registration, status $status returned"))
-      }
-    }
-  }
 
   implicit object SavedPendingRegistrationResponseReads extends HttpReads[SavedPendingRegistrationResponse] {
 
@@ -52,7 +38,7 @@ object PendingRegistrationHttpParser extends Logging {
             logger.error(s"Failed trying to parse Saved Pending Registration JSON with errors $errors.")
             Left(InvalidJson)
         }
-        
+
         case status =>
           logger.error(s"Received unexpected error when trying to retrieve a Saved Pending Registration with the given journey id " +
             s"with status $status and body ${response.body}")
