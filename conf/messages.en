@@ -276,3 +276,82 @@ errorSubmittingPendingRegistration.contactUs = If the problem continues, you can
 
 expiredVrnDate.title = The VAT number for this trader has expired
 expiredVrnDate.heading = The VAT number for this trader has expired
+
+previouslyRegistered.title = Has your client''s business ever registered for an IOSS scheme?
+previouslyRegistered.heading = Has your client''s business ever registered for an IOSS scheme?
+previouslyRegistered.hint = This includes One Stop Shop (OSS) schemes.
+previouslyRegistered.checkYourAnswersLabel = Other One Stop Shop registrations
+previouslyRegistered.error.required = Select yes if your client''s business has ever registered for an Import One Stop Shop scheme in an EU country
+previouslyRegistered.change.hidden = Select yes if your client''s business has ever registered for an Import One Stop Shop scheme in an EU country
+
+previousEuCountry.title = Which country was it registered in?
+previousEuCountry.heading = Which country was it registered in?
+previousEuCountry.error.required = Select an EU country
+previousEuCountry.error.duplicate = You selected this EU country already. Select a different one.
+
+previousScheme.title = Which scheme did your client''s business register for?
+previousScheme.heading = Which scheme did your client''s business register for?
+previousScheme.checkYourAnswersLabel = Scheme
+previousScheme.error.required = Select which scheme your client''s business registered for
+previousScheme.change.hidden = Which scheme did your client''s business register for
+previousScheme.oss.exceed.error = Cannot select another OSS registration for {0}
+previousScheme.ioss.exceed.error = Cannot select another IOSS registration for {0}
+previousScheme.oss = One Stop Shop (OSS)
+previousScheme.ioss = Import One Stop Shop (IOSS)
+previousScheme.ossu = One Stop Shop Union
+previousScheme.ossnu = One Stop Shop non-Union
+previousScheme.iosswoi = Import One Stop Shop
+previousScheme.iosswi = Import One Stop Shop with intermediary
+previousScheme.oss.schemes.exceed.error = Cannot select another {0} OSS registration for {1}
+
+previousSchemeNumber.checkYourAnswersLabel = Registration number
+
+checkPreviousSchemeAnswers.title = Check your answers for {0}
+checkPreviousSchemeAnswers.heading = Check your answers for {0}
+checkPreviousSchemeAnswers.error.required = Select yes if you want to add another scheme registration for {0}
+checkPreviousSchemeAnswers.remove.hidden = Remove {0}
+checkPreviousSchemeAnswers.addAnother = Add another scheme registration from {0}?
+checkPreviousSchemeAnswers.maximumReached = You have added details for every scheme in {0}
+
+previousOssNumber.title = Enter your client''s previous registration number for {0}
+previousOssNumber.heading = Enter your client''s previous registration number for {0}
+previousOssNumber.hint.default = This will start with {0} or EU, for example {0}{1}
+previousOssNumber.checkYourAnswersLabel = previousOssNumber
+previousOssNumber.hint.union = This will start with {0}, for example {0}{1}
+previousOssNumber.hint.nonunion = This will start with EU, for example EU123456789
+previousOssNumber.error.required = Enter your client''s previous registration number for {0}
+previousOssNumber.error.invalid = Enter a registration number in the correct format
+previousOssNumber.change.hidden = PreviousOssNumber
+
+previousIossNumber.title = Enter your client''s previous registration number for {0}
+previousIossNumber.heading = Enter your client''s previous registration number for {0}
+previousIossNumber.iossNumber.hint = {0}
+previousIossNumber.checkYourAnswersLabel = Registration number
+previousIossNumber.error.schemeNumber.required = Enter your client''s previous registration number for {0}
+previousIossNumber.error.invalid = Enter a valid IOSS registration number
+
+deletePreviousScheme.title = Remove this registration for {0}?
+deletePreviousScheme.heading = Remove this registration for {0}?
+deletePreviousScheme.paragraph = This will remove {0} from your previous registrations.
+deletePreviousScheme.error.required = Select yes if you want to remove this registration for {0}
+
+addPreviousRegistration.title.singular = You added registration details for one country
+addPreviousRegistration.heading.singular = You added registration details for one country
+addPreviousRegistration.title = You added registration details for {0} countries
+addPreviousRegistration.heading = You added registration details for {0} countries
+addPreviousRegistration.maximumReached = You have added details for every country
+addPreviousRegistration.error.required = Select yes if you want to add another registration
+addPreviousRegistration.change.hidden = if you have registered in {0}
+addPreviousRegistration.remove.hidden = registration details in {0}
+addPreviousRegistration.addAnother = Add another registration?
+addPreviousRegistration.addAnother.hint = You must tell us about all previous and current registrations from all OSS and IOSS schemes.
+
+deletePreviousRegistration.title = Are you sure you want to remove the registration for {0}?
+deletePreviousRegistration.heading = Are you sure you want to remove the registration for {0}?
+deletePreviousRegistration.error.required = Select yes if you are sure you want to remove the registration
+
+deleteAllPreviousRegistrations.title = Remove all your previous registrations information from this scheme?
+deleteAllPreviousRegistrations.heading = Remove all your previous registrations information from this scheme?
+deleteAllPreviousRegistrations.warning = This will delete all your previous registrations you have added.
+deleteAllPreviousRegistrations.error.required = Select yes if you want to remove all your previous registrations from this scheme
+

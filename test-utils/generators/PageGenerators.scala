@@ -16,9 +16,11 @@
 
 package generators
 
+import models.Index
 import org.scalacheck.Arbitrary
 import pages.BusinessContactDetailsPage
 import pages.ClientBusinessAddressPage
+import pages.previousRegistrations.*
 
 
 trait PageGenerators {
@@ -28,5 +30,41 @@ trait PageGenerators {
 
   implicit lazy val arbitraryBusinessContactDetailsPage: Arbitrary[BusinessContactDetailsPage.type] = {
     Arbitrary(BusinessContactDetailsPage)
+  }
+  
+  implicit lazy val arbitraryPreviouslyRegisteredPage: Arbitrary[PreviouslyRegisteredPage.type] = {
+    Arbitrary(PreviouslyRegisteredPage)
+  }
+
+  implicit lazy val arbitraryPreviousEuCountryPage: Arbitrary[PreviousEuCountryPage] = {
+    Arbitrary(PreviousEuCountryPage(Index(0)))
+  }
+
+  implicit lazy val arbitraryPreviousSchemePage: Arbitrary[PreviousSchemePage] = {
+    Arbitrary(PreviousSchemePage(Index(0), Index(0)))
+  }
+
+  implicit lazy val arbitraryPreviousSchemeTypePage: Arbitrary[PreviousSchemeTypePage] = {
+    Arbitrary(PreviousSchemeTypePage(Index(0), Index(0)))
+  }
+
+  implicit lazy val arbitraryPreviousOssNumberPage: Arbitrary[PreviousOssNumberPage] = {
+    Arbitrary(PreviousOssNumberPage(Index(0), Index(0)))
+  }
+
+  implicit lazy val arbitraryPreviousIossNumberPage: Arbitrary[PreviousIossNumberPage] = {
+    Arbitrary(PreviousIossNumberPage(Index(0), Index(0)))
+  }
+
+  implicit lazy val arbitraryAddPreviousRegistrationPage: Arbitrary[AddPreviousRegistrationPage.type] = {
+    Arbitrary(AddPreviousRegistrationPage)
+  }
+
+  implicit lazy val arbitraryDeletePreviousSchemePage: Arbitrary[DeletePreviousSchemePage.type] = {
+    Arbitrary(DeletePreviousSchemePage)
+  }
+
+  implicit lazy val arbitraryDeleteAllPreviousRegistrationsPage: Arbitrary[DeleteAllPreviousRegistrationsPage.type] = {
+    Arbitrary(DeleteAllPreviousRegistrationsPage)
   }
 }

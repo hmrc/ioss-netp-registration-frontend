@@ -18,7 +18,8 @@ package generators
 
 import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
-import models.{BusinessContactDetails, ClientBusinessName, Country, DesAddress, InternationalAddress, SavedPendingRegistration, UserAnswers}
+import models.*
+import models.etmp.SchemeType
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.{choose, listOfN}
 import org.scalacheck.{Arbitrary, Gen}
@@ -200,4 +201,19 @@ trait ModelGenerators extends EitherValues {
       }
     }
   }
+
+  implicit lazy val arbitrarySchemeType: Arbitrary[SchemeType] =
+    Arbitrary {
+      Gen.oneOf(SchemeType.values)
+    }
+
+  implicit lazy val arbitraryPreviousScheme: Arbitrary[PreviousScheme] =
+    Arbitrary {
+      Gen.oneOf(PreviousScheme.values)
+    }
+
+  implicit lazy val arbitraryPreviousSchemeType: Arbitrary[PreviousSchemeType] =
+    Arbitrary {
+      Gen.oneOf(PreviousSchemeType.values)
+    }
 }
