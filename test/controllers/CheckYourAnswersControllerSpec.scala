@@ -180,7 +180,11 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
 
       "must submit completed answers" in {
 
-        val application = applicationBuilder(userAnswers = Some(completeUserAnswers)).build()
+        val application = applicationBuilder(userAnswers = Some(completeUserAnswers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(()).toFuture
 
         running(application) {
 
@@ -190,11 +194,12 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
 
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value `mustBe` CheckYourAnswersPage.navigate(waypoints, completeUserAnswers, completeUserAnswers).url
+          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(completeUserAnswers))(any())
         }
       }
 
       "must redirect to the correct page when there is incomplete data" in {
-        
+
         val incompleteAnswers: UserAnswers = completeUserAnswers
           .remove(WebsitePage(Index(0))).success.value
 
