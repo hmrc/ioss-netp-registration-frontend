@@ -291,6 +291,10 @@ previousEuCountry.heading = Which country was it registered in?
 previousEuCountry.error.required = Select an EU country
 previousEuCountry.error.duplicate = You selected this EU country already. Select a different one.
 
+previousRegistrations.checkYourAnswersLabel = Countries registered in
+previousRegistrations.change.hidden = countries registered in
+previousRegistrations.add.hidden = countries registered in
+
 previousScheme.title = Which scheme did your client''s business register for?
 previousScheme.heading = Which scheme did your client''s business register for?
 previousScheme.checkYourAnswersLabel = Scheme

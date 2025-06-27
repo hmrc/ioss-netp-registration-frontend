@@ -24,6 +24,7 @@ import viewmodels.WebsiteSummary
 import viewmodels.checkAnswers.*
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
 import viewmodels.govuk.SummaryListFluency
+import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
 
 object CheckYourAnswersSummaries extends SummaryListFluency {
 
@@ -60,6 +61,8 @@ object CheckYourAnswersSummaries extends SummaryListFluency {
 
     val hasTradingNameSummaryRow: Option[SummaryListRow] = HasTradingNameSummary.row(answers, waypoints, sourcePage)
     val tradingNameSummaryRow: Option[SummaryListRow] = TradingNameSummary.checkAnswersRow(waypoints, answers, sourcePage)
+    val hasPreviouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.row(answers, waypoints, sourcePage)
+    val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(answers, Seq.empty, waypoints, sourcePage)
     val websiteSummaryRow = WebsiteSummary.checkAnswersRow(waypoints, answers, sourcePage)
     val contactDetailsContactNameSummaryRow = BusinessContactDetailsSummary.rowFullName(waypoints, answers, sourcePage)
     val contactDetailsTelephoneSummaryRow = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, answers, sourcePage)
@@ -74,6 +77,14 @@ object CheckYourAnswersSummaries extends SummaryListFluency {
         }
       },
       tradingNameSummaryRow,
+      hasPreviouslyRegisteredSummaryRow.map { sr =>
+        if(previousRegistrationSummaryRow.isDefined) {
+          sr.withCssClass("govuk-summary-list__row--no-border")
+        } else {
+          sr
+        }
+      },
+      previousRegistrationSummaryRow,
       websiteSummaryRow,
       contactDetailsContactNameSummaryRow.map(_.withCssClass("govuk-summary-list__row--no-border")),
       contactDetailsTelephoneSummaryRow.map(_.withCssClass("govuk-summary-list__row--no-border")),

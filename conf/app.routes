@@ -131,7 +131,7 @@ GET        /remove-previous-scheme/:countryIndex/:schemeIndex           controll
 POST       /remove-previous-scheme/:countryIndex/:schemeIndex           controllers.previousRegistrations.DeletePreviousSchemeController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index, schemeIndex: Index)
 
 GET        /previous-schemes-overview                                   controllers.previousRegistrations.AddPreviousRegistrationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-POST       /previous-schemes-overview                                   controllers.previousRegistrations.AddPreviousRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+POST       /previous-schemes-overview                                   controllers.previousRegistrations.AddPreviousRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, incompletePromptShown: Boolean)
 
 GET        /remove-registration/:index                                  controllers.previousRegistrations.DeletePreviousRegistrationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
 POST       /remove-registration/:index                                  controllers.previousRegistrations.DeletePreviousRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, index: Index)

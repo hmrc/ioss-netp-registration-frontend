@@ -25,6 +25,7 @@ import play.api.mvc.{AnyContent, Result}
 import queries.AllWebsites
 import queries.tradingNames.AllTradingNamesQuery
 import utils.VatInfoCompletionChecks.*
+import utils.PreviousRegistrationsCompletionChecks.*
 
 import scala.concurrent.Future
 
@@ -63,6 +64,8 @@ trait CompletionChecks {
       clientBusinessAddressDefined() &&
       isTradingNamesValid() &&
       !hasUnfilledTradingNamePageAttempt() &&
+      getAllIncompleteRegistrationDetails().isEmpty &&
+      isPreviouslyRegisteredDefined() &&
       hasWebsiteValid()
   }
 
@@ -80,6 +83,8 @@ trait CompletionChecks {
       incompleteHasTradingNameRedirect(waypoints) ++
       incompleteTradingNameRedirect(waypoints) ++
       incompleteAdditionalTradingNameRedirect(waypoints) ++
+      emptyPreviousRegistrationRedirect(waypoints) ++
+      incompletePreviousRegistrationRedirect(waypoints) ++
       incompleteWebsiteUrlsRedirect(waypoints)
       ).headOption
   }
