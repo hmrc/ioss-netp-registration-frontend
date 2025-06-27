@@ -101,7 +101,6 @@ trait ModelGenerators extends EitherValues {
       Gen.oneOf(Country.allCountries)
     }
 
-
   implicit val arbitraryVatCustomerInfo: Arbitrary[VatCustomerInfo] = {
     Arbitrary {
       for {
@@ -226,7 +225,4 @@ trait ModelGenerators extends EitherValues {
     } yield s"$countryCode${matchedCountryRule.exampleVrn}"
   }
 
-  implicit lazy val genEuTaxReference: Gen[String] = {
-    Gen.listOfN(maxEuTaxReferenceLength, Gen.alphaNumChar).map(_.mkString)
-  }
 }
