@@ -1,43 +1,91 @@
-@import viewmodels.InputWidth._
+@*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import controllers.vatEuDetails.routes
+@import models.{Country, Index}
+@import pages.Waypoints
+@import pages.vatEuDetails.TradingNameAndBusinessAddressPage
+@import viewmodels.InputWidth.*
+@import views.html.components.ButtonGroup
 
 @this(
-    layout: templates.Layout,
-    formHelper: FormWithCSRF,
-    govukErrorSummary: GovukErrorSummary,
-    govukInput: GovukInput,
-    govukButton: GovukButton
+        layout: templates.Layout,
+        formHelper: FormWithCSRF,
+        govukErrorSummary: GovukErrorSummary,
+        govukInput: GovukInput,
+        button: ButtonGroup
 )
 
-@(form: Form[_], mode: Mode)(implicit request: Request[_], messages: Messages)
+@(form: Form[_], waypoints: Waypoints, countryIndex: Index, country: Country)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = title(form, messages("tradingNameAndBusinessAddress.title"))) {
+@layout(pageTitle = title(form, messages("fixedEstablishmentAddress.title", country.name))) {
 
-    @formHelper(action = routes.TradingNameAndBusinessAddressController.onSubmit(mode), Symbol("autoComplete") -> "off") {
+  @formHelper(action = routes.TradingNameAndBusinessAddressController.onSubmit(waypoints, countryIndex), Symbol("autoComplete") -> "off") {
 
-        @if(form.errors.nonEmpty) {
-            @govukErrorSummary(ErrorSummaryViewModel(form))
-        }
-
-        <h1 class="govuk-heading-xl">@messages("tradingNameAndBusinessAddress.heading")</h1>
-
-        @govukInput(
-            InputViewModel(
-                field = form("field1"),
-                label = LabelViewModel(messages("tradingNameAndBusinessAddress.field1"))
-            )
-            .withWidth(Full)
-        )
-
-        @govukInput(
-            InputViewModel(
-                field = form("field2"),
-                label = LabelViewModel(messages("tradingNameAndBusinessAddress.field2"))
-            )
-            .withWidth(Full)
-        )
-
-        @govukButton(
-            ButtonViewModel(messages("site.continue"))
-        )
+    @if(form.errors.nonEmpty) {
+      @govukErrorSummary(ErrorSummaryViewModel(form))
     }
+
+    <h1 class="govuk-heading-l">@messages("fixedEstablishmentAddress.heading", country.name)</h1>
+
+    @govukInput(
+      InputViewModel(
+        field = form("line1"),
+        label = LabelViewModel(messages("fixedEstablishmentAddress.line1"))
+      )
+      .withWidth(Full)
+      .withAutocomplete("address-line1")
+    )
+
+    @govukInput(
+      InputViewModel(
+        field = form("line2"),
+        label = LabelViewModel(messages("fixedEstablishmentAddress.line2"))
+      )
+      .withWidth(Full)
+      .withAutocomplete("address-line2")
+    )
+
+    @govukInput(
+      InputViewModel(
+        field = form("townOrCity"),
+        label = LabelViewModel(messages("fixedEstablishmentAddress.townOrCity"))
+      )
+      .withWidth(TwoThirds)
+      .withAutocomplete("address-level2")
+    )
+
+    @govukInput(
+      InputViewModel(
+        field = form("stateOrRegion"),
+        label = LabelViewModel(messages("fixedEstablishmentAddress.stateOrRegion"))
+      )
+      .withWidth(TwoThirds)
+      .withAutocomplete("address-level1")
+    )
+
+    @govukInput(
+      InputViewModel(
+        field = form("postCode"),
+        label = LabelViewModel(messages("fixedEstablishmentAddress.postCode"))
+      )
+      .withWidth(Fixed10)
+      .withAutocomplete("postal-code")
+    )
+
+    @button("site.continue", TradingNameAndBusinessAddressPage(countryIndex).route(waypoints).url, waypoints)
+  }
 }
