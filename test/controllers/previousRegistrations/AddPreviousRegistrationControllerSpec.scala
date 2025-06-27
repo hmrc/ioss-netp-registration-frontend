@@ -21,8 +21,9 @@ import controllers.previousRegistrations.routes as prevRoutes
 import controllers.routes
 import forms.previousRegistrations.AddPreviousRegistrationFormProvider
 import models.domain.PreviousSchemeNumbers
-import models.{Country, Index, PreviousScheme}
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import models.previousRegistrations.{PreviousRegistrationDetailsWithOptionalVatNumber, SchemeDetailsWithOptionalVatNumber}
+import models.{Country, Index, PreviousScheme, PreviousSchemeType}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.*
@@ -44,8 +45,8 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
 
   private lazy val addPreviousRegistrationRoute = prevRoutes.AddPreviousRegistrationController.onPageLoad(EmptyWaypoints).url
 
-  private def addPreviousRegistrationRoutePost(waypoints: Waypoints = EmptyWaypoints): String =
-    prevRoutes.AddPreviousRegistrationController.onSubmit(waypoints).url
+  private def addPreviousRegistrationRoutePost(prompt: Boolean, waypoints: Waypoints = EmptyWaypoints): String =
+    prevRoutes.AddPreviousRegistrationController.onSubmit(waypoints, prompt).url
 
   private val baseAnswers =
     basicUserAnswersWithVatInfo
@@ -102,9 +103,20 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
         )
 
         status(result) `mustEqual` OK
-        contentAsString(result) mustEqual view(form, EmptyWaypoints, list, canAddCountries = true)(request, implicitly).toString
+        contentAsString(result) mustEqual
+          view(
+            form,
+            EmptyWaypoints,
+            list,
+            canAddCountries = true,
+            Seq(
+              PreviousRegistrationDetailsWithOptionalVatNumber(
+                Country.euCountries.head,
+                Some(List(SchemeDetailsWithOptionalVatNumber(Some(PreviousScheme.OSSU), None)))
+              )
+            )
+          )(request, implicitly).toString
       }
-
     }
 
     "must save the answer and redirect to the next page when valid data is submitted" in {
@@ -120,7 +132,7 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val request =
-          FakeRequest(POST, addPreviousRegistrationRoutePost())
+          FakeRequest(POST, addPreviousRegistrationRoutePost(false))
             .withFormUrlEncodedBody(("value", "true"))
 
         val result = route(application, request).value
@@ -138,7 +150,7 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val request =
-          FakeRequest(POST, addPreviousRegistrationRoute)
+          FakeRequest(POST, addPreviousRegistrationRoutePost(false))
             .withFormUrlEncodedBody(("value", ""))
 
         val boundForm = form.bind(Map("value" -> ""))
@@ -151,8 +163,6 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
         status(result) `mustEqual` BAD_REQUEST
         contentAsString(result) mustEqual view(boundForm, waypoints, list, canAddCountries = true)(request, implicitly).toString
       }
-
-
     }
 
     "must redirect to Journey Recovery for a GET if no existing data is found" in {
@@ -167,7 +177,6 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
         status(result) `mustEqual` SEE_OTHER
         redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
       }
-
     }
 
     "must redirect to Journey Recovery for a GET if user answers are empty" in {
@@ -182,7 +191,6 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
         status(result) `mustEqual` SEE_OTHER
         redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
       }
-
     }
 
     "must redirect to Journey Recovery for a POST if no existing data is found" in {
@@ -191,7 +199,7 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val request =
-          FakeRequest(POST, addPreviousRegistrationRoute)
+          FakeRequest(POST, addPreviousRegistrationRoutePost(false))
             .withFormUrlEncodedBody(("value", "true"))
 
         val result = route(application, request).value
@@ -200,7 +208,97 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
 
         redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
       }
+    }
 
+    "must refresh the page for a POST if answers are incomplete and prompt has not been shown" in {
+
+      val application = applicationBuilder(userAnswers = Some(incompleteAnswers)).build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, addPreviousRegistrationRoutePost(false))
+            .withFormUrlEncodedBody(("value", "true"))
+
+        val result = route(application, request).value
+
+        status(result) `mustEqual` SEE_OTHER
+        redirectLocation(result).value mustEqual prevRoutes.AddPreviousRegistrationController.onPageLoad(EmptyWaypoints).url
+      }
+    }
+
+    "must redirect to the PreviousEuVatNumber page for a POST if answers are incomplete and prompt has been shown" in {
+
+      val incompleteAnswersWithPreviousSchemeType = incompleteAnswers
+        .set(PreviousSchemeTypePage(Index(0), Index(0)), PreviousSchemeType.OSS).success.value
+      val application = applicationBuilder(userAnswers = Some(incompleteAnswersWithPreviousSchemeType)).build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, addPreviousRegistrationRoutePost(true))
+            .withFormUrlEncodedBody(("value", "true"))
+
+        val result = route(application, request).value
+
+        status(result) mustEqual SEE_OTHER
+        redirectLocation(result).value mustEqual prevRoutes.PreviousOssNumberController.onPageLoad(EmptyWaypoints, Index(0), Index(0)).url
+      }
+    }
+
+    "must redirect to the PreviousIOSSNumber page for a POST if answers are incomplete and prompt has been shown and previousScheme is set" in {
+
+      val incompleteAnswersWithPreviousSchemeType = basicUserAnswersWithVatInfo
+        .set(PreviousEuCountryPage(Index(0)), Country.euCountries.head).success.value
+        .set(PreviousSchemeTypePage(Index(0), Index(0)), PreviousSchemeType.IOSS).success.value
+        .set(PreviousSchemePage(Index(0), Index(0)), PreviousScheme.IOSSWI).success.value
+      val application = applicationBuilder(userAnswers = Some(incompleteAnswersWithPreviousSchemeType)).build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, addPreviousRegistrationRoutePost(true))
+            .withFormUrlEncodedBody(("value", "true"))
+
+        val result = route(application, request).value
+
+        status(result) `mustEqual` SEE_OTHER
+        redirectLocation(result).value mustEqual prevRoutes.PreviousIossNumberController.onPageLoad(EmptyWaypoints, Index(0), Index(0)).url
+      }
+    }
+
+    "must redirect to the PreviousIOSSNumber page for a POST if answers are incomplete and prompt has been shown and previousScheme is not set" in {
+
+      val incompleteAnswersWithPreviousSchemeType = basicUserAnswersWithVatInfo
+        .set(PreviousEuCountryPage(Index(0)), Country.euCountries.head).success.value
+        .set(PreviousSchemeTypePage(Index(0), Index(0)), PreviousSchemeType.IOSS).success.value
+      val application = applicationBuilder(userAnswers = Some(incompleteAnswersWithPreviousSchemeType)).build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, addPreviousRegistrationRoutePost(true))
+            .withFormUrlEncodedBody(("value", "true"))
+
+        val result = route(application, request).value
+
+        status(result) `mustEqual` SEE_OTHER
+        redirectLocation(result).value mustEqual prevRoutes.PreviousIossNumberController.onPageLoad(EmptyWaypoints, Index(0), Index(0)).url
+      }
+    }
+
+    "must redirect to the PreviousScheme page for a POST if answers are incomplete and prompt has been shown and previousSchemeDetails is not set" in {
+
+      val incompleteAnswersWithPreviousSchemeType = basicUserAnswersWithVatInfo
+        .set(PreviousEuCountryPage(Index(0)), Country.euCountries.head).success.value
+      val application = applicationBuilder(userAnswers = Some(incompleteAnswersWithPreviousSchemeType)).build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, addPreviousRegistrationRoutePost(true))
+            .withFormUrlEncodedBody(("value", "true"))
+
+        val result = route(application, request).value
+
+        status(result) `mustEqual` SEE_OTHER
+        redirectLocation(result).value mustEqual prevRoutes.PreviousSchemeController.onPageLoad(EmptyWaypoints, Index(0), Index(0)).url
+      }
     }
   }
 }
