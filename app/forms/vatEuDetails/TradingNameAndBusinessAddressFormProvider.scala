@@ -27,7 +27,7 @@ import javax.inject.Inject
 
 class TradingNameAndBusinessAddressFormProvider @Inject() extends Mappings {
 
-  def apply(country: Country): Form[InternationalAddress] = Form(
+  def apply(country: Option[Country]): Form[InternationalAddress] = Form(
     mapping(
       "line1" -> text("fixedEstablishmentAddress.error.line1.required")
         .verifying(maxLength(35, "fixedEstablishmentAddress.error.line1.length"))
@@ -49,6 +49,6 @@ class TradingNameAndBusinessAddressFormProvider @Inject() extends Mappings {
         .verifying(firstError(
           maxLength(40, "fixedEstablishmentAddress.error.postCode.length"),
           regexp(postcodePattern, "fixedEstablishmentAddress.error.postCode.invalid"))))
-    )(InternationalAddress(_, _, _, _, _, Some(country)))(a => Some((a.line1, a.line2, a.townOrCity, a.stateOrRegion, a.postCode)))
+    )(InternationalAddress(_, _, _, _, _, country))(a => Some((a.line1, a.line2, a.townOrCity, a.stateOrRegion, a.postCode)))
   )
  }
