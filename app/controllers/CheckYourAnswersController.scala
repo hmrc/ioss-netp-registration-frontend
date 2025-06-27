@@ -32,6 +32,7 @@ import views.html.CheckYourAnswersView
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
+import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
 
 import scala.concurrent.ExecutionContext
 
@@ -71,6 +72,8 @@ class CheckYourAnswersController @Inject()(
 
       val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(userAnswers, waypoints, thisPage)
       val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, userAnswers, thisPage)
+      val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.row(userAnswers, waypoints, thisPage)
+      val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(userAnswers, Seq.empty, waypoints, thisPage)
       val websiteSummaryRow = WebsiteSummary.checkAnswersRow(waypoints, userAnswers, thisPage)
       val contactDetailsFullNameRow = BusinessContactDetailsSummary.rowFullName(waypoints, userAnswers, thisPage)
       val contactDetailsTelephoneNumberRow = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, userAnswers, thisPage)
@@ -78,14 +81,22 @@ class CheckYourAnswersController @Inject()(
 
       val list = SummaryListViewModel(
         rows = Seq(
-         maybeHasTradingNameSummaryRow.map { hasTradingNameSummaryRow =>
-                      if (tradingNameSummaryRow.nonEmpty) {
-                        hasTradingNameSummaryRow.withCssClass("govuk-summary-list__row--no-border")
-                      } else {
-                        hasTradingNameSummaryRow
-                      }
-                    },
+          maybeHasTradingNameSummaryRow.map { hasTradingNameSummaryRow =>
+            if (tradingNameSummaryRow.nonEmpty) {
+              hasTradingNameSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+            } else {
+              hasTradingNameSummaryRow
+            }
+          },
           tradingNameSummaryRow,
+          previouslyRegisteredSummaryRow.map { sr =>
+            if (previousRegistrationSummaryRow.isDefined) {
+              sr.withCssClass("govuk-summary-list__row--no-border")
+            } else {
+              sr
+            }
+          },
+          previousRegistrationSummaryRow,
           websiteSummaryRow,
           contactDetailsFullNameRow.map(_.withCssClass("govuk-summary-list__row--no-border")),
           contactDetailsTelephoneNumberRow.map(_.withCssClass("govuk-summary-list__row--no-border")),

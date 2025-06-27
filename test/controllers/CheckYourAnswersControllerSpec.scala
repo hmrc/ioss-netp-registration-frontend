@@ -26,6 +26,7 @@ import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar.mock
 import pages.*
+import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.{HasTradingNamePage, TradingNamePage}
 import pages.website.WebsitePage
 import play.api.i18n.Messages
@@ -54,6 +55,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
   private val completeUserAnswers: UserAnswers = updatedAnswersWithVatInfo
     .set(HasTradingNamePage, true).success.value
     .set(TradingNamePage(Index(0)), TradingName("Test trading name")).success.value
+    .set(PreviouslyRegisteredPage, false).success.value
     .set(WebsitePage(Index(0)), Website("www.test-website.com")).success.value
     .set(BusinessContactDetailsPage, businessContactDetails).success.value
 
@@ -97,6 +99,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
             .remove(BusinessBasedInUKPage).success.value
             .remove(ClientHasVatNumberPage).success.value
             .remove(ClientVatNumberPage).success.value
+            .remove(PreviouslyRegisteredPage).success.value
             .remove(WebsitePage(Index(0))).success.value
             .remove(BusinessContactDetailsPage).success.value
 
@@ -175,9 +178,23 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
         }
       }
 
+      "must submit completed answers" in {
+
+        val application = applicationBuilder(userAnswers = Some(completeUserAnswers)).build()
+
+        running(application) {
+
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = false).url)
+
+          val result = route(application, request).value
+
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` CheckYourAnswersPage.navigate(waypoints, completeUserAnswers, completeUserAnswers).url
+        }
+      }
+
       "must redirect to the correct page when there is incomplete data" in {
-
-
+        
         val incompleteAnswers: UserAnswers = completeUserAnswers
           .remove(WebsitePage(Index(0))).success.value
 

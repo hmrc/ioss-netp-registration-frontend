@@ -17,7 +17,7 @@
 package viewmodels.previousRegistrations
 
 import models.UserAnswers
-import pages.Waypoints
+import pages.{CheckAnswersPage, Waypoints}
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import play.api.i18n.Messages
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
@@ -26,7 +26,12 @@ import viewmodels.implicits.*
 
 object PreviouslyRegisteredSummary  {
 
-  def row(answers: UserAnswers, waypoints: Waypoints)(implicit messages: Messages): Option[SummaryListRow] =
+  def row(
+           answers: UserAnswers,
+           waypoints: Waypoints,
+           sourcePage: CheckAnswersPage
+         )(implicit messages: Messages): Option[SummaryListRow] =
+    
     answers.get(PreviouslyRegisteredPage).map {
       answer =>
 
