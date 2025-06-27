@@ -154,3 +154,6 @@ POST        /registration-tax-type/:countryIndex                            cont
 
 GET         /eu-vat-number/:countryIndex                                    controllers.vatEuDetails.EuVatNumberController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
 POST        /eu-vat-number/:countryIndex                                    controllers.vatEuDetails.EuVatNumberController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
+
+GET         /trading-name-business-address/:countryIndex                                    controllers.vatEuDetails.TradingNameAndBusinessAddressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
+POST        /trading-name-business-address/:countryIndex                                    controllers.vatEuDetails.TradingNameAndBusinessAddressController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
