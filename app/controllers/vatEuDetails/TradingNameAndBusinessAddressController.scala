@@ -50,7 +50,7 @@ class TradingNameAndBusinessAddressController @Inject()(
 
       getCountryWithIndex(waypoints, countryIndex) { country =>
 
-        val form: Form[InternationalAddress] = formProvider(country)
+        val form: Form[InternationalAddress] = formProvider(Some(country))
 
         val preparedForm = request.userAnswers.get(TradingNameAndBusinessAddressPage(countryIndex)) match {
           case None => form
@@ -66,7 +66,7 @@ class TradingNameAndBusinessAddressController @Inject()(
 
       getCountryWithIndex(waypoints: Waypoints, countryIndex: Index) { country =>
 
-        val form: Form[InternationalAddress] = formProvider(country)
+        val form: Form[InternationalAddress] = formProvider(Some(country))
 
         form.bindFromRequest().fold(
           formWithErrors =>
