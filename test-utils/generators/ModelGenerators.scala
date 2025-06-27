@@ -34,6 +34,8 @@ trait ModelGenerators extends EitherValues {
 
   private val maxFieldLength: Int = 35
 
+  private val maxEuTaxReferenceLength: Int = 20
+
   private def commonFieldString(maxLength: Int): Gen[String] = (for {
     length <- choose(1, maxLength)
     chars <- listOfN(length, commonFieldSafeInputs)
@@ -222,5 +224,9 @@ trait ModelGenerators extends EitherValues {
       countryCode <- Gen.oneOf(Country.euCountries.map(_.code))
       matchedCountryRule = CountryWithValidationDetails.euCountriesWithVRNValidationRules.find(_.country.code == countryCode).head
     } yield s"$countryCode${matchedCountryRule.exampleVrn}"
+  }
+
+  implicit lazy val genEuTaxReference: Gen[String] = {
+    Gen.listOfN(maxEuTaxReferenceLength, Gen.alphaNumChar).map(_.mkString)
   }
 }
