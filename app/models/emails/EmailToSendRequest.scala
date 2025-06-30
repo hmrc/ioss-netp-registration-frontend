@@ -19,10 +19,10 @@ package models.emails
 import play.api.libs.json.{Json, Reads, Writes}
 
 case class EmailToSendRequest(
-   to: List[String],
-   templateId: String,
-   parameters: ClientDeclarationEmailParameters,
-   force: Boolean = false
+                               to: List[String],
+                               templateId: String,
+                               parameters: ClientDeclarationEmailParameters,
+                               force: Boolean = false
 )
 
 object EmailToSendRequest {

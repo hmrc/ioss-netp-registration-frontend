@@ -20,12 +20,13 @@ import play.api.libs.json.*
 
 import java.time.{Instant, LocalDate}
 
-case class SavedPendingRegistration(journeyId: String,
-                                    uniqueUrlCode: String,
-                                    userAnswers: UserAnswers,
-                                    lastUpdated: Instant,
-                                    uniqueActivationCode: String,
-                                    ExpirationDate: LocalDate)
+case class SavedPendingRegistration(
+                                     journeyId: String,
+                                     uniqueUrlCode: String,
+                                     userAnswers: UserAnswers,
+                                     lastUpdated: Instant,
+                                     uniqueActivationCode: String,
+                                     expirationDate: Instant)
 
 object SavedPendingRegistration {
 

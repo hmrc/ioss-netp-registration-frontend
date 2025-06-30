@@ -17,14 +17,24 @@
 package models
 
 import base.SpecBase
+import config.Constants.pendingRegistrationTTL
 import play.api.libs.json.{JsError, JsSuccess, Json}
 
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class SavedPendingRegistrationSpec extends SpecBase {
 
   private val userAnswers: UserAnswers = arbitraryUserAnswers.arbitrary.sample.value
-  private val savedPendingRegistration: SavedPendingRegistration = SavedPendingRegistration(journeyId = userAnswers.journeyId, uniqueUrlCode = UUID.randomUUID().toString, userAnswers = userAnswers, lastUpdated = userAnswers.lastUpdated,)
+  private val savedPendingRegistration: SavedPendingRegistration =
+    SavedPendingRegistration(
+      journeyId = userAnswers.journeyId,
+      uniqueUrlCode = UUID.randomUUID().toString,
+      userAnswers = userAnswers,
+      lastUpdated = userAnswers.lastUpdated,
+      uniqueActivationCode = UUID.randomUUID().toString,
+      expirationDate = userAnswers.lastUpdated.plus(pendingRegistrationTTL + 1, ChronoUnit.DAYS)
+    )
 
   "SavedPendingRegistration" - {
 
@@ -37,7 +47,15 @@ class SavedPendingRegistrationSpec extends SpecBase {
         "lastUpdated" -> savedPendingRegistration.lastUpdated
       )
 
-      val expectedResult: SavedPendingRegistration = SavedPendingRegistration(journeyId = savedPendingRegistration.journeyId, uniqueUrlCode = savedPendingRegistration.uniqueUrlCode, userAnswers = savedPendingRegistration.userAnswers, lastUpdated = savedPendingRegistration.lastUpdated,)
+      val expectedResult: SavedPendingRegistration =
+        SavedPendingRegistration(
+          journeyId = savedPendingRegistration.journeyId,
+          uniqueUrlCode = savedPendingRegistration.uniqueUrlCode,
+          userAnswers = savedPendingRegistration.userAnswers,
+          lastUpdated = savedPendingRegistration.lastUpdated,
+          uniqueActivationCode = savedPendingRegistration.uniqueActivationCode,
+          expirationDate = savedPendingRegistration.expirationDate
+        )
 
       json.validate[SavedPendingRegistration] mustBe JsSuccess(expectedResult)
       Json.toJson(expectedResult) mustBe json
