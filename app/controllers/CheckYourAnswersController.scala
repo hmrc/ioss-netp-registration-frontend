@@ -99,10 +99,10 @@ class CheckYourAnswersController @Inject()(
                          intermediaryName: String
                        )(implicit hc: HeaderCarrier, messages: Messages) = {
 
-    emailService.sendConfirmationEmail(
+    emailService.sendClientActivationEmail(
       intermediary_name = intermediaryName,
       recipientName_line1 = clientCompanyName,
-      activation_code_expiry_date = submittedRegistration.ExpirationDate,
+      activation_code_expiry_date = submittedRegistration.expirationDate,
       activation_code = submittedRegistration.uniqueActivationCode,
       emailAddress = clientEmail
     )
