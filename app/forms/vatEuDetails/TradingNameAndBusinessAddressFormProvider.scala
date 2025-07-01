@@ -16,10 +16,11 @@
 
 package forms.vatEuDetails
 
-import forms.Validation.commonTextPattern
+
 import forms.mappings.Mappings
-import forms.validation.Validation.postcodePattern
-import models.{Country, InternationalAddress, TradingNameAndBusinessAddress}
+import forms.validation.Validation.{commonTextPattern, postcodePattern}
+import models.vatEuDetails.TradingNameAndBusinessAddress
+import models.{Country, InternationalAddress, TradingName}
 import play.api.data.Form
 import play.api.data.Forms.*
 
@@ -27,28 +28,44 @@ import javax.inject.Inject
 
 class TradingNameAndBusinessAddressFormProvider @Inject() extends Mappings {
 
-  def apply(country: Option[Country]): Form[InternationalAddress] = Form(
+  def apply(country: Country): Form[TradingNameAndBusinessAddress] = Form(
     mapping(
-      "line1" -> text("fixedEstablishmentAddress.error.line1.required")
-        .verifying(maxLength(35, "fixedEstablishmentAddress.error.line1.length"))
-        .verifying(regexp(commonTextPattern, "fixedEstablishmentAddress.error.line1.format")),
-
-      "line2" -> optional(text("fixedEstablishmentAddress.error.line2.required")
-        .verifying(maxLength(35, "fixedEstablishmentAddress.error.line2.length"))
-        .verifying(regexp(commonTextPattern, "fixedEstablishmentAddress.error.line2.format"))),
-
-      "townOrCity" -> text("fixedEstablishmentAddress.error.townOrCity.required")
-        .verifying(maxLength(35, "fixedEstablishmentAddress.error.townOrCity.length"))
-        .verifying(regexp(commonTextPattern, "fixedEstablishmentAddress.error.townOrCity.format")),
-
-      "stateOrRegion" -> optional(text("fixedEstablishmentAddress.error.stateOrRegion.required")
-        .verifying(maxLength(35, "fixedEstablishmentAddress.error.stateOrRegion.length"))
-        .verifying(regexp(commonTextPattern, "fixedEstablishmentAddress.error.stateOrRegion.format"))),
-
-      "postCode" -> optional(text("fixedEstablishmentAddress.error.postCode.required")
+      "tradingName" -> text("tradingName.error.required")
         .verifying(firstError(
-          maxLength(40, "fixedEstablishmentAddress.error.postCode.length"),
-          regexp(postcodePattern, "fixedEstablishmentAddress.error.postCode.invalid"))))
-    )(InternationalAddress(_, _, _, _, _, country))(a => Some((a.line1, a.line2, a.townOrCity, a.stateOrRegion, a.postCode)))
-  )
- }
+          maxLength(100, "tradingName.error.length"),
+          regexp(commonTextPattern, "tradingName.error.invalid")
+        )),
+      "line1" -> text("TradingNameAndBusinessAddress.error.line1.required")
+        .verifying(maxLength(35, "TradingNameAndBusinessAddress.error.line1.length"))
+        .verifying(regexp(commonTextPattern, "TradingNameAndBusinessAddress.error.line1.format")),
+      "line2" -> optional(text("TradingNameAndBusinessAddress.error.line2.required")
+        .verifying(maxLength(35, "TradingNameAndBusinessAddress.error.line2.length"))
+        .verifying(regexp(commonTextPattern, "TradingNameAndBusinessAddress.error.line2.format"))),
+      "townOrCity" -> text("TradingNameAndBusinessAddress.error.townOrCity.required")
+        .verifying(maxLength(35, "TradingNameAndBusinessAddress.error.townOrCity.length"))
+        .verifying(regexp(commonTextPattern, "TradingNameAndBusinessAddress.error.townOrCity.format")),
+      "stateOrRegion" -> optional(text("TradingNameAndBusinessAddress.error.stateOrRegion.required")
+        .verifying(maxLength(35, "TradingNameAndBusinessAddress.error.stateOrRegion.length"))
+        .verifying(regexp(commonTextPattern, "TradingNameAndBusinessAddress.error.stateOrRegion.format"))),
+      "postCode" -> optional(text("TradingNameAndBusinessAddress.error.postCode.required")
+        .verifying(firstError(
+          maxLength(40, "TradingNameAndBusinessAddress.error.postCode.length"),
+          regexp(postcodePattern, "TradingNameAndBusinessAddress.error.postCode.invalid"))))
+    ) {
+      (tradingName, line1, line2, townOrCity, stateOrRegion, postCode) =>
+        TradingNameAndBusinessAddress(
+          TradingName(tradingName),
+          InternationalAddress(line1, line2, townOrCity, stateOrRegion, postCode, Some(country))
+        )
+    } (model =>
+          Some((
+            model.tradingName.name,
+            model.address.line1,
+            model.address.line2,
+            model.address.townOrCity,
+            model.address.stateOrRegion,
+            model.address.postCode
+          ))
+  ))
+}
+
