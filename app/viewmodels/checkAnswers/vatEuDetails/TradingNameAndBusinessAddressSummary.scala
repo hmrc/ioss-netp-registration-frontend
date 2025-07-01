@@ -39,19 +39,20 @@ object TradingNameAndBusinessAddressSummary {
     answers.get(TradingNameAndBusinessAddressPage(countryIndex)).map { answer =>
 
       val value = Seq(
-        Some(HtmlFormat.escape(answer.line1).toString),
-        answer.line2.map(HtmlFormat.escape),
-        Some(HtmlFormat.escape(answer.townOrCity).toString),
-        answer.stateOrRegion.map(HtmlFormat.escape),
-        answer.postCode.map(HtmlFormat.escape)
+        Some(HtmlFormat.escape(answer.tradingName.name)),
+        Some(HtmlFormat.escape(answer.address.line1).toString),
+        answer.address.line2.map(HtmlFormat.escape),
+        Some(HtmlFormat.escape(answer.address.townOrCity).toString),
+        answer.address.stateOrRegion.map(HtmlFormat.escape),
+        answer.address.postCode.map(HtmlFormat.escape)
       ).flatten.mkString("<br/>")
 
       SummaryListRowViewModel(
-        key = "fixedEstablishmentAddress.checkYourAnswersLabel",
+        key = "TradingNameAndBusinessAddress.checkYourAnswersLabel",
         value = ValueViewModel(HtmlContent(value)),
         actions = Seq(
           ActionItemViewModel("site.change", TradingNameAndBusinessAddressPage(countryIndex).changeLink(waypoints, sourcePage).url)
-            .withVisuallyHiddenText(messages("fixedEstablishmentAddress.change.hidden"))
+            .withVisuallyHiddenText(messages("TradingNameAndBusinessAddress.change.hidden"))
         )
       )
     }
