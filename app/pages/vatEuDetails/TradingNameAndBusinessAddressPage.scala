@@ -17,12 +17,13 @@
 package pages.vatEuDetails
 
 import controllers.vatEuDetails.routes
-import models.{Index, InternationalAddress, TradingNameAndBusinessAddress}
+import models.vatEuDetails.TradingNameAndBusinessAddress
+import models.Index
 import pages.{QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
-case class TradingNameAndBusinessAddressPage(countryIndex: Index) extends QuestionPage[InternationalAddress] {
+case class TradingNameAndBusinessAddressPage(countryIndex: Index) extends QuestionPage[TradingNameAndBusinessAddress] {
 
   override def path: JsPath = JsPath \ "euDetails" \ countryIndex.position \ toString
 
