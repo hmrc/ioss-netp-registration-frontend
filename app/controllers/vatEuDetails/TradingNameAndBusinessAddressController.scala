@@ -19,9 +19,10 @@ package controllers.vatEuDetails
 import controllers.GetCountry
 import controllers.actions.*
 import forms.vatEuDetails.TradingNameAndBusinessAddressFormProvider
-import models.{Index, InternationalAddress, Mode}
+import models.vatEuDetails.TradingNameAndBusinessAddress
+import models.Index
 import pages.vatEuDetails.TradingNameAndBusinessAddressPage
-import pages.{Waypoint, Waypoints}
+import pages.Waypoints
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -50,7 +51,7 @@ class TradingNameAndBusinessAddressController @Inject()(
 
       getCountryWithIndex(waypoints, countryIndex) { country =>
 
-        val form: Form[InternationalAddress] = formProvider(Some(country))
+        val form: Form[TradingNameAndBusinessAddress] = formProvider(country)
 
         val preparedForm = request.userAnswers.get(TradingNameAndBusinessAddressPage(countryIndex)) match {
           case None => form
@@ -66,7 +67,7 @@ class TradingNameAndBusinessAddressController @Inject()(
 
       getCountryWithIndex(waypoints: Waypoints, countryIndex: Index) { country =>
 
-        val form: Form[InternationalAddress] = formProvider(Some(country))
+        val form: Form[TradingNameAndBusinessAddress] = formProvider(country)
 
         form.bindFromRequest().fold(
           formWithErrors =>
