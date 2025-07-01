@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package models
+package models.vatEuDetails
 
-import play.api.libs.json._
+import models.{InternationalAddress, TradingName}
+import play.api.libs.json.{Json, OFormat}
 
-case class TradingNameAndBusinessAddress (field1: String, field2: String)
+case class TradingNameAndBusinessAddress(tradingName: TradingName, address: InternationalAddress)
 
 object TradingNameAndBusinessAddress {
-
-  implicit val format: OFormat[TradingNameAndBusinessAddress] = Json.format
+  implicit val format: OFormat[TradingNameAndBusinessAddress] = Json.format[TradingNameAndBusinessAddress]
 }
