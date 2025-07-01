@@ -396,6 +396,10 @@ TradingNameAndBusinessAddress.townOrCity = Town or city
 TradingNameAndBusinessAddress.stateOrRegion = Region or state (optional)
 TradingNameAndBusinessAddress.postCode = Postcode (optional)
 TradingNameAndBusinessAddress.checkYourAnswersLabel = Address
+TradingNameAndBusinessAddress.error.tradingName.required = Enter your trading name
+TradingNameAndBusinessAddress.error.tradingName.length = Trading name must be 100 characters or less
+TradingNameAndBusinessAddress.error.tradingName.invalid = Trading name must only include letters, numbers, hyphens, spaces and apostrophes
+TradingNameAndBusinessAddress.change.tradingName.hidden = your trading name
 TradingNameAndBusinessAddress.error.line1.required = Enter address line 1
 TradingNameAndBusinessAddress.error.townOrCity.required = Enter the town or city
 TradingNameAndBusinessAddress.error.line1.length = Address line 1 must be 35 characters or less
@@ -408,3 +412,4 @@ TradingNameAndBusinessAddress.error.stateOrRegion.length = State or region must 
 TradingNameAndBusinessAddress.error.stateOrRegion.format = State or region must only include letters, numbers, hyphens, spaces and apostrophes
 TradingNameAndBusinessAddress.error.postCode.length = Postcode must be 40 characters or less
 TradingNameAndBusinessAddress.error.postCode.invalid = Postcode must only include letters, numbers and spaces
+
