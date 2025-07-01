@@ -42,9 +42,11 @@ class SavedPendingRegistrationSpec extends SpecBase {
 
       val json = Json.obj(
         "journeyId" -> savedPendingRegistration.journeyId,
-        "uniqueCode" -> savedPendingRegistration.uniqueUrlCode,
+        "uniqueUrlCode" -> savedPendingRegistration.uniqueUrlCode,
         "userAnswers" -> savedPendingRegistration.userAnswers,
-        "lastUpdated" -> savedPendingRegistration.lastUpdated
+        "lastUpdated" -> savedPendingRegistration.lastUpdated,
+        "uniqueActivationCode" -> savedPendingRegistration.uniqueActivationCode,
+        "expirationDate" -> savedPendingRegistration.expirationDate,
       )
 
       val expectedResult: SavedPendingRegistration =
