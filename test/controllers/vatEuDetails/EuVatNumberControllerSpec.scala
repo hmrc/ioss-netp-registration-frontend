@@ -18,16 +18,17 @@ package controllers.vatEuDetails
 
 import base.SpecBase
 import forms.vatEuDetails.EuVatNumberFormProvider
-import models.{Country, CountryWithValidationDetails, UserAnswers}
+import models.RegistrationType.VatNumber
+import models.vatEuDetails.TradingNameAndBusinessAddress
+import models.{Country, CountryWithValidationDetails, Index, InternationalAddress, TradingName, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.JourneyRecoveryPage
-import pages.vatEuDetails.{EuCountryPage, EuVatNumberPage, VatRegisteredInEuPage}
+import pages.vatEuDetails.{EuCountryPage, EuVatNumberPage, RegistrationTypePage, TradingNameAndBusinessAddressPage, VatRegisteredInEuPage}
 import play.api.Application
 import play.api.data.Form
 import play.api.inject.bind
-
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
@@ -40,16 +41,21 @@ class EuVatNumberControllerSpec extends SpecBase with MockitoSugar {
   private val countryCode: String = euVatNumber.substring(0, 2)
   private val country: Country = Country(countryCode, Country.euCountries.find(_.code == countryCode).head.name)
   private val countryWithValidation = CountryWithValidationDetails.euCountriesWithVRNValidationRules.find(_.country.code == country.code).value
+  private val tradingName: TradingName = arbitraryTradingName.arbitrary.sample.value
+  private val businessAddress: InternationalAddress = arbitraryInternationalAddress.arbitrary.sample.value
 
   private val formProvider = new EuVatNumberFormProvider()
   private val form: Form[String] = formProvider(country)
 
   private lazy val euVatNumberRoute: String = routes.EuVatNumberController.onPageLoad(waypoints, countryIndex(0)).url
 
-// TODO: update journey according to BR
   private val updatedAnswers: UserAnswers = emptyUserAnswersWithVatInfo
     .set(VatRegisteredInEuPage, true).success.value
     .set(EuCountryPage(countryIndex(0)), country).success.value
+    .set(TradingNameAndBusinessAddressPage(Index(0)),
+      TradingNameAndBusinessAddress(tradingName, businessAddress)
+    ).success.value
+    .set(RegistrationTypePage(countryIndex(0)), VatNumber).success.value
 
 
   "EuVatNumber Controller" - {

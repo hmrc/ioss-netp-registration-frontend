@@ -34,12 +34,13 @@ package controllers.vatEuDetails
 
 import base.SpecBase
 import forms.vatEuDetails.RegistrationTypeFormProvider
-import models.{Country, RegistrationType, UserAnswers}
+import models.vatEuDetails.TradingNameAndBusinessAddress
+import models.{Country, Index, InternationalAddress, RegistrationType, TradingName, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.JourneyRecoveryPage
-import pages.vatEuDetails.{EuCountryPage, HasFixedEstablishmentPage, RegistrationTypePage, VatRegisteredInEuPage}
+import pages.vatEuDetails.{EuCountryPage, HasFixedEstablishmentPage, RegistrationTypePage, TradingNameAndBusinessAddressPage, VatRegisteredInEuPage}
 import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
@@ -52,6 +53,8 @@ import utils.FutureSyntax.FutureOps
 class RegistrationTypeControllerSpec extends SpecBase with MockitoSugar {
 
   private val country: Country = arbitraryCountry.arbitrary.sample.value
+  private val tradingName: TradingName = arbitraryTradingName.arbitrary.sample.value
+  private val businessAddress: InternationalAddress = arbitraryInternationalAddress.arbitrary.sample.value
 
   private val formProvider = new RegistrationTypeFormProvider()
   private val form: Form[RegistrationType] = formProvider(country)
@@ -59,7 +62,9 @@ class RegistrationTypeControllerSpec extends SpecBase with MockitoSugar {
   private val updatedAnswers: UserAnswers = emptyUserAnswersWithVatInfo
     .set(VatRegisteredInEuPage, true).success.value
     .set(EuCountryPage(countryIndex(0)), country).success.value
-    .set(HasFixedEstablishmentPage(countryIndex(0)), true).success.value
+    .set(TradingNameAndBusinessAddressPage(Index(0)),
+      TradingNameAndBusinessAddress(tradingName, businessAddress)
+    ).success.value
 
   private lazy val registrationTypeRoute: String = routes.RegistrationTypeController.onPageLoad(waypoints, countryIndex(0)).url
 
