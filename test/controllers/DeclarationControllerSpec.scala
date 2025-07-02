@@ -19,165 +19,280 @@ package controllers
 import base.SpecBase
 import connectors.RegistrationConnector
 import forms.DeclarationFormProvider
-import models.ClientBusinessName
+import models.emails.EmailSendingResult.EMAIL_NOT_SENT
+import models.responses.UnexpectedResponseStatus
+import models.{BusinessContactDetails, ClientBusinessName, SavedPendingRegistration}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito
 import org.mockito.Mockito.{times, verify, when}
+import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
-import pages.{ClientBusinessNamePage, ClientVatNumberPage, DeclarationPage}
+import pages.{BusinessContactDetailsPage, ClientBusinessNamePage, ClientVatNumberPage, DeclarationPage, EmptyWaypoints, ErrorSubmittingPendingRegistrationPage, Waypoints}
 import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
+import services.EmailService
+import utils.FutureSyntax.FutureOps
 import views.html.DeclarationView
 
 import scala.concurrent.Future
 
-class DeclarationControllerSpec extends SpecBase with MockitoSugar {
+class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
+  private val waypoints: Waypoints = EmptyWaypoints
   private val intermediaryCompanyName: String = intermediaryVatCustomerInfo.organisationName.get
   private val clientBusinessName: ClientBusinessName = ClientBusinessName(vatCustomerInfo.organisationName.value)
+  private val businessContactDetails: BusinessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
 
   private val userAnswers = emptyUserAnswersWithVatInfo
     .set(ClientBusinessNamePage, clientBusinessName).success.value
     .set(ClientVatNumberPage, vatNumber).success.value
+    .set(BusinessContactDetailsPage, businessContactDetails).success.value
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
 
   val formProvider = new DeclarationFormProvider()
   val form: Form[Boolean] = formProvider()
 
-  lazy val declarationRoute: String = routes.DeclarationController.onPageLoad().url
+  val declarationRoute = routes.DeclarationController.onPageLoad(waypoints).url
+
+  override def beforeEach(): Unit = {
+    Mockito.reset(mockRegistrationConnector)
+  }
 
   "Declaration Controller" - {
 
-    "must return OK and the correct view for a GET" in {
+    ".onPageLoad" - {
 
-      when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any()))
-        .thenReturn(Future.successful(Right(intermediaryVatCustomerInfo)))
+      "must return OK and the correct view for a GET" in {
 
-      val application = applicationBuilder(userAnswers = Some(userAnswers))
-        .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
-        .build()
+        when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any()))
+          .thenReturn(Future.successful(Right(intermediaryVatCustomerInfo)))
 
-      running(application) {
-        val request = FakeRequest(GET, declarationRoute)
-
-        val result = route(application, request).value
-
-        val view = application.injector.instanceOf[DeclarationView]
-
-        status(result) mustEqual OK
-        contentAsString(result) mustEqual view(form, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
-      }
-    }
-
-    "must populate the view correctly on a GET when the question has previously been answered" in {
-
-      when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any()))
-        .thenReturn(Future.successful(Right(intermediaryVatCustomerInfo)))
-
-      val answers = userAnswers.set(DeclarationPage, true).success.value
-
-      val application = applicationBuilder(userAnswers = Some(answers))
-        .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
-        .build()
-
-      running(application) {
-        val request = FakeRequest(GET, declarationRoute)
-
-        val view = application.injector.instanceOf[DeclarationView]
-
-        val result = route(application, request).value
-
-        status(result) mustEqual OK
-        contentAsString(result) mustEqual view(form.fill(true), intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
-      }
-    }
-
-    "must save the answers and redirect to the next page when valid data is submitted" in {
-
-      val mockSessionRepository = mock[SessionRepository]
-
-      when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
-      when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any()))
-        .thenReturn(Future.successful(Right(intermediaryVatCustomerInfo)))
-
-
-      val application =
-        applicationBuilder(userAnswers = Some(userAnswers))
-          .overrides(
-            bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[RegistrationConnector].toInstance(mockRegistrationConnector)
-          )
+        val application = applicationBuilder(userAnswers = Some(userAnswers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
           .build()
 
-      running(application) {
-        val request =
-          FakeRequest(POST, declarationRoute)
-            .withFormUrlEncodedBody(("declaration", "true"))
+        running(application) {
+          val request = FakeRequest(GET, routes.DeclarationController.onPageLoad(waypoints).url)
 
-        val result = route(application, request).value
-        val expectedAnswers = userAnswers.set(DeclarationPage, true).success.value
+          val result = route(application, request).value
 
-        status(result) `mustBe` SEE_OTHER
-        redirectLocation(result).value mustBe DeclarationPage.navigate(waypoints, userAnswers, expectedAnswers).route.url
-        verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
+          val view = application.injector.instanceOf[DeclarationView]
+
+          status(result) mustEqual OK
+          contentAsString(result) mustEqual view(form, waypoints, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
+        }
+      }
+
+      "must populate the view correctly on a GET when the question has previously been answered" in {
+
+        when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any()))
+          .thenReturn(Future.successful(Right(intermediaryVatCustomerInfo)))
+
+        val answers = userAnswers.set(DeclarationPage, true).success.value
+
+        val application = applicationBuilder(userAnswers = Some(answers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+        running(application) {
+          val request = FakeRequest(GET, routes.DeclarationController.onPageLoad(waypoints).url)
+
+          val view = application.injector.instanceOf[DeclarationView]
+
+          val result = route(application, request).value
+
+          status(result) mustEqual OK
+          contentAsString(result) mustEqual view(form.fill(true), waypoints, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
+        }
+      }
+
+      "must redirect to Journey Recovery for a GET if no existing data is found" in {
+
+        val application = applicationBuilder(userAnswers = None).build()
+
+        running(application) {
+          val request = FakeRequest(GET, routes.DeclarationController.onPageLoad(waypoints).url)
+
+          val result = route(application, request).value
+
+          status(result) mustEqual SEE_OTHER
+          redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+        }
       }
     }
 
-    "must return a Bad Request and errors when invalid data is submitted" in {
+    ".onSubmit" - {
 
-      when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any()))
-        .thenReturn(Future.successful(Right(intermediaryVatCustomerInfo)))
+      "must submit client registration, send client email, and redirect to next page when valid data and true declaration is submitted" in {
 
-      val application = applicationBuilder(userAnswers = Some(userAnswers))
-        .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
-        .build()
+        val mockSessionRepository = mock[SessionRepository]
+        val mockEmailService = mock[EmailService]
 
-      running(application) {
-        val request =
-          FakeRequest(POST, declarationRoute)
-            .withFormUrlEncodedBody(("declaration", ""))
+        val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
 
-        val boundForm = form.bind(Map("declaration" -> ""))
+        val savedPendingRegWithUserAnswers: SavedPendingRegistration = savedPendingRegistration.copy(
+          userAnswers = userAnswers
+        )
 
-        val view = application.injector.instanceOf[DeclarationView]
+        val application =
+          applicationBuilder(userAnswers = Some(userAnswers))
+            .overrides(
+              bind[SessionRepository].toInstance(mockSessionRepository),
+              bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+              bind[EmailService].toInstance(mockEmailService)
+            )
+            .build()
 
-        val result = route(application, request).value
+        when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
 
-        status(result) mustEqual BAD_REQUEST
-        contentAsString(result) mustEqual view(boundForm, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
+        when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any())) thenReturn Right(intermediaryVatCustomerInfo).toFuture
+
+        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
+
+        when(mockEmailService.sendClientActivationEmail(any, any, any, any, any)(any, any)) thenReturn Future.successful(())
+
+
+        running(application) {
+          val request =
+            FakeRequest(POST, routes.DeclarationController.onSubmit(waypoints).url)
+              .withFormUrlEncodedBody(("declaration", "true"))
+
+          val result = route(application, request).value
+
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value mustBe DeclarationPage.navigate(waypoints, userAnswers, userAnswers).route.url
+          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(userAnswers))(any())
+          verify(mockEmailService, times(1)).sendClientActivationEmail(
+            any,
+            any,
+            any,
+            any,
+            any
+          )(any, any)
+        }
       }
-    }
 
-    "must redirect to Journey Recovery for a GET if no existing data is found" in {
+      "must submit client registration and redirect to next page with valid data when client email fails to send" in {
 
-      val application = applicationBuilder(userAnswers = None).build()
+        val mockSessionRepository = mock[SessionRepository]
+        val mockEmailService = mock[EmailService]
 
-      running(application) {
-        val request = FakeRequest(GET, declarationRoute)
+        val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
 
-        val result = route(application, request).value
+        val savedPendingRegWithUserAnswers: SavedPendingRegistration = savedPendingRegistration.copy(
+          userAnswers = userAnswers
+        )
 
-        status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+        val application =
+          applicationBuilder(userAnswers = Some(userAnswers))
+            .overrides(
+              bind[SessionRepository].toInstance(mockSessionRepository),
+              bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+              bind[EmailService].toInstance(mockEmailService)
+            )
+            .build()
+
+        when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
+
+        when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any())) thenReturn Right(intermediaryVatCustomerInfo).toFuture
+
+        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
+
+        when(mockEmailService.sendClientActivationEmail(any, any, any, any, any)(any, any)) thenReturn Future.successful(EMAIL_NOT_SENT)
+
+
+        running(application) {
+          val request =
+            FakeRequest(POST, routes.DeclarationController.onSubmit(waypoints).url)
+              .withFormUrlEncodedBody(("declaration", "true"))
+
+          val result = route(application, request).value
+
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value mustBe DeclarationPage.navigate(waypoints, userAnswers, userAnswers).route.url
+          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(userAnswers))(any())
+          verify(mockEmailService, times(1)).sendClientActivationEmail(
+            any,
+            any,
+            any,
+            any,
+            any
+          )(any, any)
+        }
       }
-    }
 
-    "must redirect to Journey Recovery for a POST if no existing data is found" in {
+      "must return a Bad Request and errors when the declaration data is invalid and submitted" in {
+        val mockSessionRepository = mock[SessionRepository]
+        val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
 
-      val application = applicationBuilder(userAnswers = None).build()
+        val savedPendingRegWithUserAnswers: SavedPendingRegistration = savedPendingRegistration.copy(
+          userAnswers = userAnswers
+        )
 
-      running(application) {
-        val request =
-          FakeRequest(POST, declarationRoute)
-            .withFormUrlEncodedBody(("value", "true"))
+        when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any()))
+          .thenReturn(Future.successful(Right(intermediaryVatCustomerInfo)))
 
-        val result = route(application, request).value
+        when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
 
-        status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
+
+        val application = applicationBuilder(userAnswers = Some(userAnswers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+        running(application) {
+          val request =
+            FakeRequest(POST, routes.DeclarationController.onSubmit(waypoints).url)
+              .withFormUrlEncodedBody(("declaration", ""))
+
+          val boundForm = form.bind(Map("declaration" -> ""))
+
+          val view = application.injector.instanceOf[DeclarationView]
+
+          val result = route(application, request).value
+
+          status(result) mustEqual BAD_REQUEST
+          contentAsString(result) mustEqual view(boundForm, waypoints, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
+        }
+      }
+
+      "must redirect to Journey Recovery for a POST if no user answer data is found" in {
+
+        val application = applicationBuilder(userAnswers = None).build()
+
+        running(application) {
+          val request =
+            FakeRequest(POST, routes.DeclarationController.onSubmit(waypoints).url)
+              .withFormUrlEncodedBody(("value", "true"))
+
+          val result = route(application, request).value
+
+          status(result) mustEqual SEE_OTHER
+          redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+        }
+      }
+
+      "must redirect to the correct page when an error is returned from the backend" in {
+
+        val application = applicationBuilder(userAnswers = Some(userAnswers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Left(UnexpectedResponseStatus(500, "Generic Error from database")).toFuture
+
+
+        running(application) {
+          val request = FakeRequest(POST, routes.DeclarationController.onSubmit(waypoints).url)
+
+          val result = route(application, request).value
+
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` ErrorSubmittingPendingRegistrationPage.route(waypoints).url
+        }
       }
     }
   }

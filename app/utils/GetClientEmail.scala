@@ -30,6 +30,8 @@ trait GetClientEmail {
                     (block: String => Future[Result]): Future[Result] = {
     userAnswers.get(BusinessContactDetailsPage).map { businessContactDetails =>
       block(businessContactDetails.emailAddress)
-    }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
+    }.getOrElse {
+      Redirect(JourneyRecoveryPage.route(waypoints)).toFuture
+    }
   }
 }

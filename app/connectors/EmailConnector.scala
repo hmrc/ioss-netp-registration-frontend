@@ -40,10 +40,18 @@ class EmailConnector @Inject()(config: Configuration, httpClientV2: HttpClientV2
           (implicit ec: ExecutionContext, hc: HeaderCarrier): Future[EmailSendingResult] = {
     httpClientV2.post(url"${baseUrl}hmrc/email").withBody(Json.toJson(email)).execute[EmailSendingResult].recover {
       case e: BadGatewayException =>
-        logger.warn("There was an error sending the email: " + e.message + " " + e.responseCode)
+        logger.error("There was an error sending the email: " + e.message + " " + e.responseCode)
         EMAIL_NOT_SENT
+
       case e: GatewayTimeoutException =>
-        logger.warn("There was a time out whilst sending the email: " + e.message + " " + e.responseCode)
+        logger.error("There was a time out whilst sending the email: " + e.message + " " + e.responseCode)
+        EMAIL_NOT_SENT
+
+      case error =>
+        logger.error(
+          s"There was an error sending the email [${error.getClass.getSimpleName}]: ${error.getMessage}",
+          error
+        )
         EMAIL_NOT_SENT
     }
   }

@@ -17,9 +17,7 @@
 package controllers
 
 import base.SpecBase
-import config.Constants.pendingRegistrationTTL
 import connectors.RegistrationConnector
-import formats.Format.dateFormatter
 import models.SavedPendingRegistration
 import models.responses.InternalServerError
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
@@ -31,8 +29,6 @@ import play.api.test.Helpers.*
 import utils.FutureSyntax.FutureOps
 import views.html.ApplicationCompleteView
 
-import java.time.{LocalDateTime, ZoneId}
-
 class ApplicationCompleteControllerSpec extends SpecBase {
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
@@ -40,10 +36,7 @@ class ApplicationCompleteControllerSpec extends SpecBase {
   private val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
   private val clientName: String = savedPendingRegistration.userAnswers.vatInfo.flatMap(_.organisationName).value
   private val clientDeclarationLink: String = savedPendingRegistration.uniqueUrlCode
-  private val activationExpiryDate = LocalDateTime
-    .ofInstant(savedPendingRegistration.lastUpdated, ZoneId.systemDefault())
-    .plusDays(pendingRegistrationTTL)
-    .format(dateFormatter)
+  private val activationExpiryDate = savedPendingRegistration.activationExpiryDate
 
   "ApplicationComplete Controller" - {
 

@@ -16,10 +16,9 @@
 
 package generators
 
-import config.Constants.pendingRegistrationTTL
+import models.*
 import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
-import models.*
 import models.etmp.SchemeType
 import models.euDetails.EuDetails
 import models.vatEuDetails.TradingNameAndBusinessAddress
@@ -27,7 +26,6 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.{choose, listOfN}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.EitherValues
-import org.scalatest.time.Days
 import play.api.libs.json.{JsObject, Json}
 
 import java.time.temporal.ChronoUnit
@@ -213,9 +211,13 @@ trait ModelGenerators extends EitherValues {
         userAnswers <- arbitraryUserAnswers.arbitrary
         uniqueUrlCode = UUID.randomUUID().toString
         uniqueActivationCode = UUID.randomUUID().toString
-        expirationDate = userAnswers.lastUpdated.plus(pendingRegistrationTTL + 1, ChronoUnit.DAYS)
       } yield {
-        SavedPendingRegistration(journeyId = userAnswers.journeyId, uniqueUrlCode = uniqueUrlCode, userAnswers = userAnswers, lastUpdated = userAnswers.lastUpdated, uniqueActivationCode = uniqueActivationCode, expirationDate = expirationDate)
+        SavedPendingRegistration(
+          journeyId = userAnswers.journeyId,
+          uniqueUrlCode = uniqueUrlCode,
+          userAnswers = userAnswers,
+          lastUpdated = userAnswers.lastUpdated,
+          uniqueActivationCode = uniqueActivationCode)
       }
     }
   }

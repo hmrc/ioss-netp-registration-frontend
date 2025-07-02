@@ -131,7 +131,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
         val application = applicationBuilder(userAnswers = None).build()
 
         running(application) {
-          val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onPageLoad().url)
 
           val result = route(application, request).value
 
@@ -143,13 +143,10 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
 
     ".onSubmit" - {
 
-      "must redirect to the next page for a POST when a valid response is received from the backend" in {
+      "must redirect to the next page when navigating to the declaration" in {
 
         val application = applicationBuilder(userAnswers = Some(completeUserAnswers))
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
           .build()
-
-        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(()).toFuture
 
         running(application) {
           val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = false).url)

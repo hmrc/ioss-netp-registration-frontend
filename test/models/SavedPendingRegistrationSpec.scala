@@ -17,23 +17,21 @@
 package models
 
 import base.SpecBase
-import config.Constants.pendingRegistrationTTL
 import play.api.libs.json.{JsError, JsSuccess, Json}
 
-import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class SavedPendingRegistrationSpec extends SpecBase {
 
   private val userAnswers: UserAnswers = arbitraryUserAnswers.arbitrary.sample.value
+
   private val savedPendingRegistration: SavedPendingRegistration =
     SavedPendingRegistration(
       journeyId = userAnswers.journeyId,
       uniqueUrlCode = UUID.randomUUID().toString,
       userAnswers = userAnswers,
       lastUpdated = userAnswers.lastUpdated,
-      uniqueActivationCode = UUID.randomUUID().toString,
-      expirationDate = userAnswers.lastUpdated.plus(pendingRegistrationTTL + 1, ChronoUnit.DAYS)
+      uniqueActivationCode = UUID.randomUUID().toString
     )
 
   "SavedPendingRegistration" - {
@@ -45,8 +43,7 @@ class SavedPendingRegistrationSpec extends SpecBase {
         "uniqueUrlCode" -> savedPendingRegistration.uniqueUrlCode,
         "userAnswers" -> savedPendingRegistration.userAnswers,
         "lastUpdated" -> savedPendingRegistration.lastUpdated,
-        "uniqueActivationCode" -> savedPendingRegistration.uniqueActivationCode,
-        "expirationDate" -> savedPendingRegistration.expirationDate,
+        "uniqueActivationCode" -> savedPendingRegistration.uniqueActivationCode
       )
 
       val expectedResult: SavedPendingRegistration =
@@ -55,8 +52,7 @@ class SavedPendingRegistrationSpec extends SpecBase {
           uniqueUrlCode = savedPendingRegistration.uniqueUrlCode,
           userAnswers = savedPendingRegistration.userAnswers,
           lastUpdated = savedPendingRegistration.lastUpdated,
-          uniqueActivationCode = savedPendingRegistration.uniqueActivationCode,
-          expirationDate = savedPendingRegistration.expirationDate
+          uniqueActivationCode = savedPendingRegistration.uniqueActivationCode
         )
 
       json.validate[SavedPendingRegistration] mustBe JsSuccess(expectedResult)

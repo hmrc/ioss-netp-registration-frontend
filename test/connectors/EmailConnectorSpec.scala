@@ -19,8 +19,8 @@ package connectors
 import base.SpecBase
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import config.Constants
-import models.emails.{ClientDeclarationEmailParameters, ClientDeclarationEmailParametersSpec, EmailSendingResult, EmailToSendRequest}
 import models.emails.EmailSendingResult.{EMAIL_ACCEPTED, EMAIL_NOT_SENT, EMAIL_UNSENDABLE}
+import models.emails.{ClientDeclarationEmailParameters, EmailSendingResult, EmailToSendRequest}
 import play.api.Application
 import play.api.test.Helpers.running
 import testutils.WireMockHelper
