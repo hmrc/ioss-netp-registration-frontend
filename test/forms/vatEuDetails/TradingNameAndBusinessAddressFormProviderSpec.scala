@@ -28,6 +28,40 @@ class TradingNameAndBusinessAddressFormProviderSpec extends StringFieldBehaviour
 
   private val form: Form[TradingNameAndBusinessAddress] = new TradingNameAndBusinessAddressFormProvider()(country)
 
+    ".tradingName" - {
+      val fieldName: String = "tradingName"
+      val requiredKey: String = "tradingNameAndBusinessAddress.error.tradingName.required"
+      val lengthKey: String = "tradingNameAndBusinessAddress.error.tradingName.length"
+      val invalidKey: String = "tradingNameAndBusinessAddress.error.tradingName.invalid"
+      val validData: String = "A valid Trading Name"
+      val maxLength: Int = 100
+
+      behave like fieldThatBindsValidData(
+        form,
+        fieldName,
+        validData
+      )
+
+      behave like fieldWithMaxLength(
+        form,
+        fieldName,
+        maxLength = maxLength,
+        lengthError = FormError(fieldName, lengthKey, Seq(maxLength))
+      )
+
+      behave like mandatoryField(
+        form,
+        fieldName,
+        requiredError = FormError(fieldName, requiredKey)
+      )
+
+      "must not bind invalid Trading Name" in {
+        val invalidTradingName = "^Invalid~ tr@ding=nam£"
+        val result = form.bind(Map(fieldName -> invalidTradingName)).apply(fieldName)
+        result.errors mustBe Seq(FormError(fieldName, invalidKey, Seq(commonTextPattern)))
+      }
+    }
+
   ".line1" - {
 
     val fieldName: String = "line1"
