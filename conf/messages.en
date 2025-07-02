@@ -388,8 +388,9 @@ euVatNumber.error.required = Enter your VAT registration number for {0}
 euVatNumber.error.invalid = Enter a registration number in the correct format
 euVatNumber.change.hidden = your VAT registration number
 
-TradingNameAndBusinessAddress.title = What is the fixed establishment address in {0}?
-TradingNameAndBusinessAddress.heading = What is the fixed establishment address in {0}?
+TradingNameAndBusinessAddress.title = What is your client''s business trading name and address in {0}?
+TradingNameAndBusinessAddress.heading = What is your client''s business trading name and address in {0}?
+TradingNameAndBusinessAddress.tradingName = Trading name
 TradingNameAndBusinessAddress.line1 = Address line 1
 TradingNameAndBusinessAddress.line2 = Address line 2 (optional)
 TradingNameAndBusinessAddress.townOrCity = Town or city
