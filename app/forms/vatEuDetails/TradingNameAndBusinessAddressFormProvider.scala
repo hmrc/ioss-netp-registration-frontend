@@ -30,10 +30,10 @@ class TradingNameAndBusinessAddressFormProvider @Inject() extends Mappings {
 
   def apply(country: Country): Form[TradingNameAndBusinessAddress] = Form(
     mapping(
-      "tradingName" -> text("tradingName.error.required")
+      "tradingName" -> text("TradingNameAndBusinessAddress.error.tradingName.required")
         .verifying(firstError(
-          maxLength(100, "tradingName.error.length"),
-          regexp(commonTextPattern, "tradingName.error.invalid")
+          maxLength(100, "TradingNameAndBusinessAddress.error.tradingName.length"),
+          regexp(commonTextPattern, "TradingNameAndBusinessAddress.error.tradingName.invalid")
         )),
       "line1" -> text("TradingNameAndBusinessAddress.error.line1.required")
         .verifying(maxLength(35, "TradingNameAndBusinessAddress.error.line1.length"))
