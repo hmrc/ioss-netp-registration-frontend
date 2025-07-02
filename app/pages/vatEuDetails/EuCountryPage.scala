@@ -33,6 +33,6 @@ case class EuCountryPage(countryIndex: Index) extends QuestionPage[Country] {
   }
   
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
-    HasFixedEstablishmentPage(countryIndex)
+    TradingNameAndBusinessAddressPage(countryIndex)
   }
 }
