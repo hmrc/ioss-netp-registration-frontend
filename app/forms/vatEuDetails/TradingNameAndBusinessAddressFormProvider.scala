@@ -30,27 +30,27 @@ class TradingNameAndBusinessAddressFormProvider @Inject() extends Mappings {
 
   def apply(country: Country): Form[TradingNameAndBusinessAddress] = Form(
     mapping(
-      "tradingName" -> text("TradingNameAndBusinessAddress.error.tradingName.required")
+      "tradingName" -> text("tradingNameAndBusinessAddress.error.tradingName.required")
         .verifying(firstError(
-          maxLength(100, "TradingNameAndBusinessAddress.error.tradingName.length"),
-          regexp(commonTextPattern, "TradingNameAndBusinessAddress.error.tradingName.invalid")
+          maxLength(100, "tradingNameAndBusinessAddress.error.tradingName.length"),
+          regexp(commonTextPattern, "tradingNameAndBusinessAddress.error.tradingName.invalid")
         )),
-      "line1" -> text("TradingNameAndBusinessAddress.error.line1.required")
-        .verifying(maxLength(35, "TradingNameAndBusinessAddress.error.line1.length"))
-        .verifying(regexp(commonTextPattern, "TradingNameAndBusinessAddress.error.line1.format")),
-      "line2" -> optional(text("TradingNameAndBusinessAddress.error.line2.required")
-        .verifying(maxLength(35, "TradingNameAndBusinessAddress.error.line2.length"))
-        .verifying(regexp(commonTextPattern, "TradingNameAndBusinessAddress.error.line2.format"))),
-      "townOrCity" -> text("TradingNameAndBusinessAddress.error.townOrCity.required")
-        .verifying(maxLength(35, "TradingNameAndBusinessAddress.error.townOrCity.length"))
-        .verifying(regexp(commonTextPattern, "TradingNameAndBusinessAddress.error.townOrCity.format")),
-      "stateOrRegion" -> optional(text("TradingNameAndBusinessAddress.error.stateOrRegion.required")
-        .verifying(maxLength(35, "TradingNameAndBusinessAddress.error.stateOrRegion.length"))
-        .verifying(regexp(commonTextPattern, "TradingNameAndBusinessAddress.error.stateOrRegion.format"))),
-      "postCode" -> optional(text("TradingNameAndBusinessAddress.error.postCode.required")
+      "line1" -> text("tradingNameAndBusinessAddress.error.line1.required")
+        .verifying(maxLength(35, "tradingNameAndBusinessAddress.error.line1.length"))
+        .verifying(regexp(commonTextPattern, "tradingNameAndBusinessAddress.error.line1.format")),
+      "line2" -> optional(text("tradingNameAndBusinessAddress.error.line2.required")
+        .verifying(maxLength(35, "tradingNameAndBusinessAddress.error.line2.length"))
+        .verifying(regexp(commonTextPattern, "tradingNameAndBusinessAddress.error.line2.format"))),
+      "townOrCity" -> text("tradingNameAndBusinessAddress.error.townOrCity.required")
+        .verifying(maxLength(35, "tradingNameAndBusinessAddress.error.townOrCity.length"))
+        .verifying(regexp(commonTextPattern, "tradingNameAndBusinessAddress.error.townOrCity.format")),
+      "stateOrRegion" -> optional(text("tradingNameAndBusinessAddress.error.stateOrRegion.required")
+        .verifying(maxLength(35, "tradingNameAndBusinessAddress.error.stateOrRegion.length"))
+        .verifying(regexp(commonTextPattern, "tradingNameAndBusinessAddress.error.stateOrRegion.format"))),
+      "postCode" -> optional(text("tradingNameAndBusinessAddress.error.postCode.required")
         .verifying(firstError(
-          maxLength(40, "TradingNameAndBusinessAddress.error.postCode.length"),
-          regexp(postcodePattern, "TradingNameAndBusinessAddress.error.postCode.invalid"))))
+          maxLength(40, "tradingNameAndBusinessAddress.error.postCode.length"),
+          regexp(postcodePattern, "tradingNameAndBusinessAddress.error.postCode.invalid"))))
     ) {
       (tradingName, line1, line2, townOrCity, stateOrRegion, postCode) =>
         TradingNameAndBusinessAddress(

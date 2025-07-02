@@ -31,7 +31,7 @@
 
 @(form: Form[_], waypoints: Waypoints, countryIndex: Index, country: Country)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = title(form, messages("TradingNameAndBusinessAddress.title", country.name))) {
+@layout(pageTitle = title(form, messages("tradingNameAndBusinessAddress.title", country.name))) {
 
   @formHelper(action = routes.TradingNameAndBusinessAddressController.onSubmit(waypoints, countryIndex), Symbol("autoComplete") -> "off") {
 
@@ -39,19 +39,19 @@
       @govukErrorSummary(ErrorSummaryViewModel(form))
     }
 
-    <h1 class="govuk-heading-l">@messages("TradingNameAndBusinessAddress.heading", country.name)</h1>
+    <h1 class="govuk-heading-l">@messages("tradingNameAndBusinessAddress.heading", country.name)</h1>
 
     @govukInput(
         InputViewModel(
             field = form("tradingName"),
-            label = LabelViewModel(messages("TradingNameAndBusinessAddress.tradingName"))
+            label = LabelViewModel(messages("tradingNameAndBusinessAddress.tradingName"))
         ).withWidth(Full)
     )
 
     @govukInput(
       InputViewModel(
         field = form("line1"),
-        label = LabelViewModel(messages("TradingNameAndBusinessAddress.line1"))
+        label = LabelViewModel(messages("tradingNameAndBusinessAddress.line1"))
       )
       .withWidth(Full)
       .withAutocomplete("address-line1")
@@ -60,7 +60,7 @@
     @govukInput(
       InputViewModel(
         field = form("line2"),
-        label = LabelViewModel(messages("TradingNameAndBusinessAddress.line2"))
+        label = LabelViewModel(messages("tradingNameAndBusinessAddress.line2"))
       )
       .withWidth(Full)
       .withAutocomplete("address-line2")
@@ -69,7 +69,7 @@
     @govukInput(
       InputViewModel(
         field = form("townOrCity"),
-        label = LabelViewModel(messages("TradingNameAndBusinessAddress.townOrCity"))
+        label = LabelViewModel(messages("tradingNameAndBusinessAddress.townOrCity"))
       )
       .withWidth(TwoThirds)
       .withAutocomplete("address-level2")
@@ -78,7 +78,7 @@
     @govukInput(
       InputViewModel(
         field = form("stateOrRegion"),
-        label = LabelViewModel(messages("TradingNameAndBusinessAddress.stateOrRegion"))
+        label = LabelViewModel(messages("tradingNameAndBusinessAddress.stateOrRegion"))
       )
       .withWidth(TwoThirds)
       .withAutocomplete("address-level1")
@@ -87,7 +87,7 @@
     @govukInput(
       InputViewModel(
         field = form("postCode"),
-        label = LabelViewModel(messages("TradingNameAndBusinessAddress.postCode"))
+        label = LabelViewModel(messages("tradingNameAndBusinessAddress.postCode"))
       )
       .withWidth(Fixed10)
       .withAutocomplete("postal-code")
