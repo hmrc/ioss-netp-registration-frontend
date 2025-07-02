@@ -19,6 +19,7 @@ package models
 import base.SpecBase
 import config.Constants.pendingRegistrationTTL
 import play.api.libs.json.{JsError, JsSuccess, Json}
+import java.time.LocalDate
 
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -26,6 +27,7 @@ import java.util.UUID
 class SavedPendingRegistrationSpec extends SpecBase {
 
   private val userAnswers: UserAnswers = arbitraryUserAnswers.arbitrary.sample.value
+
   private val savedPendingRegistration: SavedPendingRegistration =
     SavedPendingRegistration(
       journeyId = userAnswers.journeyId,
@@ -33,7 +35,7 @@ class SavedPendingRegistrationSpec extends SpecBase {
       userAnswers = userAnswers,
       lastUpdated = userAnswers.lastUpdated,
       uniqueActivationCode = UUID.randomUUID().toString,
-      expirationDate = userAnswers.lastUpdated.plus(pendingRegistrationTTL + 1, ChronoUnit.DAYS)
+      expirationDate = LocalDate.now().plus(pendingRegistrationTTL + 1, ChronoUnit.DAYS)
     )
 
   "SavedPendingRegistration" - {

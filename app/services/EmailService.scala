@@ -22,7 +22,7 @@ import models.emails.{ClientDeclarationEmailParameters, EmailSendingResult, Emai
 import play.api.i18n.Messages
 import uk.gov.hmrc.http.HeaderCarrier
 
-import java.time.{Instant, LocalDate, LocalDateTime, ZoneId}
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -35,12 +35,12 @@ class EmailService @Inject()(
 
 
   def sendClientActivationEmail(
-                             intermediary_name: String,
-                             recipientName_line1: String,
-                             activation_code: String,
-                             activation_code_expiry_date: Instant,
-                             emailAddress: String,
-                           )(implicit hc: HeaderCarrier, messages: Messages): Future[EmailSendingResult] = {
+                                 intermediary_name: String,
+                                 recipientName_line1: String,
+                                 activation_code: String,
+                                 activation_code_expiry_date: LocalDate,
+                                 emailAddress: String,
+                               )(implicit hc: HeaderCarrier, messages: Messages): Future[EmailSendingResult] = {
 
     val emailParameters =
       ClientDeclarationEmailParameters(
@@ -59,8 +59,7 @@ class EmailService @Inject()(
     )
   }
 
-  private def format(instant: Instant) = {
-    val date = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
+  private def format(date: LocalDate) = {
     val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
     date.format(formatter)
   }

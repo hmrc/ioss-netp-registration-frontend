@@ -19,19 +19,9 @@ package models.emails
 import base.SpecBase
 import play.api.libs.json.{JsError, JsNull, JsSuccess, Json}
 
-import java.time.format.DateTimeFormatter
-import java.time.{Instant, LocalDateTime, ZoneId}
-
 class EmailToSendRequestSpec extends SpecBase {
 
-  private def format(instant: Instant) = {
-    val date = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
-    val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
-    date.format(formatter)
-  }
-
   "EmailToSendRequest" - {
-    // TODO- SCG: with time is it Instant or is it LocalDate? Dependent fix test. 
 
     "serialize correctly with ClientDeclarationEmailParameters" in {
       val emailRequest = EmailToSendRequest(
@@ -41,7 +31,7 @@ class EmailToSendRequestSpec extends SpecBase {
           recipientName_line1 = "Netp Name",
           intermediary_name = "Intermediary Name",
           activation_code = "123456",
-          activation_code_expiry_date = format(Instant.now())
+          activation_code_expiry_date = "2024-08-01"
         ),
         force = true
       )
@@ -89,7 +79,7 @@ class EmailToSendRequestSpec extends SpecBase {
           recipientName_line1 = "Netp Name",
           intermediary_name = "Intermediary Name",
           activation_code = "123456",
-          activation_code_expiry_date = format(Instant.now())
+          activation_code_expiry_date = "2024-08-01"
         ),
         force = true
       )

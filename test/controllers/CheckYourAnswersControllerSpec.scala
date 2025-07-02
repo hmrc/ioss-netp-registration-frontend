@@ -19,13 +19,13 @@ package controllers
 import base.SpecBase
 import connectors.RegistrationConnector
 import models.responses.InternalServerError
-import models.{BusinessContactDetails, CheckMode, UserAnswers}
+import models.{BusinessContactDetails, CheckMode, ClientBusinessName, SavedPendingRegistration, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar.mock
-import pages.{BusinessContactDetailsPage, CheckYourAnswersPage, EmptyWaypoints, ErrorSubmittingPendingRegistrationPage, NonEmptyWaypoints, Waypoint}
+import pages.{BusinessContactDetailsPage, CheckYourAnswersPage, ClientBusinessNamePage, EmptyWaypoints, ErrorSubmittingPendingRegistrationPage, NonEmptyWaypoints, Waypoint}
 import play.api.i18n.Messages
 import play.api.inject.bind
 import play.api.test.FakeRequest
@@ -40,8 +40,10 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
 
   private val businessContactDetails: BusinessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
+  private val clientBusinessName: ClientBusinessName = ClientBusinessName("Client Business Name")
   private val completeUserAnswers: UserAnswers = emptyUserAnswers
     .set(BusinessContactDetailsPage, businessContactDetails).success.value
+    .set(ClientBusinessNamePage, clientBusinessName).success.value
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockRegistrationConnector)
@@ -92,17 +94,24 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
 
       "must redirect to the next page for a POST when a valid response is received from the backend" in {
 
+        val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
+
+        val savedPendingRegWithUserAnswers: SavedPendingRegistration = savedPendingRegistration.copy(
+          userAnswers = completeUserAnswers
+        )
+
         val application = applicationBuilder(userAnswers = Some(completeUserAnswers))
           .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
           .build()
 
-        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(()).toFuture
+        when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any())) thenReturn Right(vatCustomerInfo).toFuture
+        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
 
         running(application) {
           val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints).url)
 
           val result = route(application, request).value
-
+          
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value `mustBe` CheckYourAnswersPage.navigate(waypoints, completeUserAnswers, completeUserAnswers).url
           verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(completeUserAnswers))(any())

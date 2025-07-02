@@ -26,7 +26,7 @@ case class SavedPendingRegistration(
                                      userAnswers: UserAnswers,
                                      lastUpdated: Instant,
                                      uniqueActivationCode: String,
-                                     expirationDate: Instant)
+                                     expirationDate: LocalDate)
 
 object SavedPendingRegistration {
 

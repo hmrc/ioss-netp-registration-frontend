@@ -70,10 +70,8 @@ class CheckYourAnswersController @Inject()(
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
-
       registrationConnector.submitPendingRegistration(request.userAnswers).flatMap {
         case Right(submittedRegistration) =>
-
           getClientEmail(waypoints, submittedRegistration.userAnswers) { clientEmail =>
             getClientCompanyName(waypoints) { clientCompanyName =>
               getIntermediaryName().flatMap { intermediaryOpt =>

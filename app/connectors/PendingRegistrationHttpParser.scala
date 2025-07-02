@@ -28,21 +28,30 @@ object PendingRegistrationHttpParser extends Logging {
   type PendingRegistrationResultResponse = Either[ErrorResponse, SavedPendingRegistration]
   type SavedPendingRegistrationResponse = Either[ErrorResponse, SavedPendingRegistration]
 
-  implicit object SavedPendingRegistrationResponseReads extends HttpReads[SavedPendingRegistrationResponse] {
+  implicit object PendingRegistrationResultResponseReads extends HttpReads[PendingRegistrationResultResponse] {
 
-    override def read(method: String, url: String, response: HttpResponse): SavedPendingRegistrationResponse = {
+    def operation(action: String) = action.toUpperCase match {
+      case "POST" => "create"
+      case "GET" => "retrieve"
+      case other => other.toLowerCase
+    }
+
+    override def read(method: String, url: String, response: HttpResponse): PendingRegistrationResultResponse = {
       response.status match {
         case OK => response.json.validate[SavedPendingRegistration] match {
           case JsSuccess(savedPendingRegistration, _) => Right(savedPendingRegistration)
           case JsError(errors) =>
-            logger.error(s"Failed trying to parse Saved Pending Registration JSON with errors $errors.")
+            logger.error(s"Failed trying to parse Pending Registration JSON with errors $errors.")
             Left(InvalidJson)
         }
 
         case status =>
-          logger.error(s"Received unexpected error when trying to retrieve a Saved Pending Registration with the given journey id " +
+          logger.error(s"Received unexpected error when trying to ${operation(method)} a Pending Registration with the given journey id " +
             s"with status $status and body ${response.body}")
-          Left(UnexpectedResponseStatus(response.status, s"Unexpected response when retrieving the saved pending registration, status $status returned"))
+          Left(UnexpectedResponseStatus(
+            response.status,
+            s"Unexpected response when trying to ${operation(method)} the pending registration, status $status returned")
+          )
       }
     }
   }
