@@ -26,6 +26,7 @@ import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{BadGatewayException, GatewayTimeoutException, HeaderCarrier, StringContextOps}
+import scala.util.control.NonFatal
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,8 +43,16 @@ class EmailConnector @Inject()(config: Configuration, httpClientV2: HttpClientV2
       case e: BadGatewayException =>
         logger.warn("There was an error sending the email: " + e.message + " " + e.responseCode)
         EMAIL_NOT_SENT
+
       case e: GatewayTimeoutException =>
         logger.warn("There was a time out whilst sending the email: " + e.message + " " + e.responseCode)
+        EMAIL_NOT_SENT
+
+      case error =>
+        logger.warn(
+          s"There was an error sending the email [${error.getClass.getSimpleName}]: ${error.getMessage}",
+          error
+        )
         EMAIL_NOT_SENT
     }
   }
