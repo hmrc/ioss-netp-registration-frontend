@@ -18,8 +18,8 @@ package controllers.vatEuDetails
 
 import base.SpecBase
 import forms.vatEuDetails.TradingNameAndBusinessAddressFormProvider
-
-import models.{Country, InternationalAddress, UserAnswers}
+import models.vatEuDetails.TradingNameAndBusinessAddress
+import models.{Country, InternationalAddress, TradingName, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
@@ -37,17 +37,20 @@ import utils.FutureSyntax.FutureOps
 class TradingNameAndBusinessAddressControllerSpec extends SpecBase with MockitoSugar {
 
   private val country: Country = arbitraryCountry.arbitrary.sample.value
-  private val businessAddress: InternationalAddress = InternationalAddress(
-    line1 = "line-1",
-    line2 = None,
-    townOrCity = "town-or-city",
-    stateOrRegion = None,
-    postCode = None,
-    country = Some(country)
+  private val tradingNameAndBusinessAddress: TradingNameAndBusinessAddress = TradingNameAndBusinessAddress (
+    tradingName = TradingName("Company name"),
+    address = InternationalAddress(
+      line1 = "line-1",
+      line2 = None,
+      townOrCity = "town-or-city",
+      stateOrRegion = None,
+      postCode = None,
+      country = Some(country)
+        )
   )
 
   private val formProvider = new TradingNameAndBusinessAddressFormProvider()
-  private val form: Form[InternationalAddress] = formProvider(Some(country))
+  private val form: Form[TradingNameAndBusinessAddress] = formProvider(country)
 
   private lazy val TradingNameAndBusinessAddressRoute: String =
     routes.TradingNameAndBusinessAddressController.onPageLoad(waypoints, countryIndex(0)).url
@@ -76,7 +79,9 @@ class TradingNameAndBusinessAddressControllerSpec extends SpecBase with MockitoS
 
     "must populate the view correctly on a GET when the question has previously been answered" in {
 
-      val userAnswers = updatedAnswers.set(TradingNameAndBusinessAddressPage(countryIndex(0)), businessAddress).success.value
+      val userAnswers = updatedAnswers.set(
+        TradingNameAndBusinessAddressPage(countryIndex(0)),
+        tradingNameAndBusinessAddress).success.value
 
       val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
 
@@ -88,7 +93,7 @@ class TradingNameAndBusinessAddressControllerSpec extends SpecBase with MockitoS
         val result = route(application, request).value
 
         status(result) `mustBe` OK
-        contentAsString(result) `mustBe` view(form.fill(businessAddress), waypoints, countryIndex(0), country)(request, messages(application)).toString
+        contentAsString(result) `mustBe` view(form.fill(tradingNameAndBusinessAddress), waypoints, countryIndex(0), country)(request, messages(application)).toString
       }
     }
 
@@ -109,13 +114,16 @@ class TradingNameAndBusinessAddressControllerSpec extends SpecBase with MockitoS
         val request =
           FakeRequest(POST, TradingNameAndBusinessAddressRoute)
             .withFormUrlEncodedBody(
-              ("line1", businessAddress.line1), ("townOrCity", businessAddress.townOrCity), ("country",businessAddress.country.toString)
+              ("tradingName", tradingNameAndBusinessAddress.tradingName.name),
+              ("line1", tradingNameAndBusinessAddress.address.line1),
+              ("townOrCity", tradingNameAndBusinessAddress.address.townOrCity),
+              ("country",tradingNameAndBusinessAddress.address.country.toString),
             )
 
         val result = route(application, request).value
 
         val expectedAnswers: UserAnswers = updatedAnswers
-          .set(TradingNameAndBusinessAddressPage(countryIndex(0)), businessAddress).success.value
+          .set(TradingNameAndBusinessAddressPage(countryIndex(0)), tradingNameAndBusinessAddress).success.value
 
         status(result) `mustBe` SEE_OTHER
         redirectLocation(result).value `mustBe` TradingNameAndBusinessAddressPage(countryIndex(0))
@@ -140,7 +148,8 @@ class TradingNameAndBusinessAddressControllerSpec extends SpecBase with MockitoS
         val result = route(application, request).value
 
         status(result) `mustBe` BAD_REQUEST
-        contentAsString(result) `mustBe` view(boundForm, waypoints, countryIndex(0), country)(request, messages(application)).toString
+        contentAsString(result) `mustBe` view(
+          boundForm, waypoints, countryIndex(0), country)(request, messages(application)).toString
       }
     }
 
