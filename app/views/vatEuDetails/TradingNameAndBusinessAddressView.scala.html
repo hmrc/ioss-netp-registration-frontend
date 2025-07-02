@@ -42,6 +42,13 @@
     <h1 class="govuk-heading-l">@messages("TradingNameAndBusinessAddress.heading", country.name)</h1>
 
     @govukInput(
+        InputViewModel(
+            field = form("tradingName"),
+            label = LabelViewModel(messages("tradingName.heading")).asPageHeading()
+        ).withWidth(Full)
+    )
+
+    @govukInput(
       InputViewModel(
         field = form("line1"),
         label = LabelViewModel(messages("TradingNameAndBusinessAddress.line1"))
