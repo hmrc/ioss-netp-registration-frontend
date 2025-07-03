@@ -372,13 +372,13 @@ hasFixedEstablishment.checkYourAnswersLabel = Has fixed establishment
 hasFixedEstablishment.error.required = Select yes if your business has a fixed establishment in {0}
 hasFixedEstablishment.change.hidden = if your business has a fixed establishment in {0}
 
-registrationType.title = What sort of registration do you have in {0}?
-registrationType.heading = What sort of registration do you have in {0}?
+registrationType.title = What sort of registration does your client have in {0}?
+registrationType.heading = What sort of registration does your client have in {0}?
 registrationType.vatNumber = VAT number
 registrationType.taxId = Tax ID number
 registrationType.checkYourAnswersLabel = Tax registration type
 registrationType.error.required = Select a registration type for {0}
-registrationType.change.hidden = your registration type
+registrationType.change.hidden = your client''s registration type
 
 euVatNumber.title = What is your VAT registration number for {0}?
 euVatNumber.heading = What is your VAT registration number for {0}?
