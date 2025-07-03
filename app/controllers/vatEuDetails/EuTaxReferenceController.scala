@@ -60,18 +60,23 @@ class EuTaxReferenceController @Inject()(
           }
   }
 
-  def onSubmit(mode: Mode): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
 
-      form.bindFromRequest().fold(
-        formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, mode))),
+      getCountryWithIndex(waypoints, countryIndex) { country =>
+        
+        val form = formProvider(country)
 
-        value =>
-          for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(EuTaxReferencePage, value))
-            _              <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(navigator.nextPage(EuTaxReferencePage, mode, updatedAnswers))
-      )
+        form.bindFromRequest().fold(
+          formWithErrors =>
+            Future.successful(BadRequest(view(formWithErrors, waypoints, countryIndex, country))),
+
+          value =>
+            for {
+              updatedAnswers <- Future.fromTry(request.userAnswers.set(EuTaxReferencePage(countryIndex), value))
+              _ <- sessionRepository.set(updatedAnswers)
+            } yield Redirect(EuTaxReferencePage(countryIndex).navigate(waypoints, request.userAnswers, updatedAnswers).route)
+        )
+      }
   }
 }

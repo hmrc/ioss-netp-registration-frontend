@@ -235,4 +235,7 @@ trait ModelGenerators extends EitherValues {
     } yield s"$countryCode${matchedCountryRule.exampleVrn}"
   }
 
+  implicit lazy val genEuTaxReference: Gen[String] = {
+    Gen.listOfN(maxEuTaxReferenceLength, Gen.alphaNumChar).map(_.mkString)
+  }
 }
