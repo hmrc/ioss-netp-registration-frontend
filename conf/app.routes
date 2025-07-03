@@ -149,11 +149,14 @@ POST        /vat-registered-eu-country/:countryIndex     controllers.vatEuDetail
 GET         /eu-fixed-establishment/:countryIndex                          controllers.vatEuDetails.HasFixedEstablishmentController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
 POST        /eu-fixed-establishment/:countryIndex                          controllers.vatEuDetails.HasFixedEstablishmentController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
 
+GET         /trading-name-business-address/:countryIndex                                    controllers.vatEuDetails.TradingNameAndBusinessAddressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
+POST        /trading-name-business-address/:countryIndex                                    controllers.vatEuDetails.TradingNameAndBusinessAddressController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
+
 GET         /registration-tax-type/:countryIndex                            controllers.vatEuDetails.RegistrationTypeController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
 POST        /registration-tax-type/:countryIndex                            controllers.vatEuDetails.RegistrationTypeController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
 
 GET         /eu-vat-number/:countryIndex                                    controllers.vatEuDetails.EuVatNumberController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
 POST        /eu-vat-number/:countryIndex                                    controllers.vatEuDetails.EuVatNumberController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
 
-GET         /trading-name-business-address/:countryIndex                                    controllers.vatEuDetails.TradingNameAndBusinessAddressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
-POST        /trading-name-business-address/:countryIndex                                    controllers.vatEuDetails.TradingNameAndBusinessAddressController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
+GET         /eu-tax-identification-number/:countryIndex                     controllers.vatEuDetails.EuTaxReferenceController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
+POST        /eu-tax-identification-number/:countryIndex                     controllers.vatEuDetails.EuTaxReferenceController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
