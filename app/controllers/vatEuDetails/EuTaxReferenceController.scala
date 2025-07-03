@@ -1,10 +1,9 @@
-package controllers
+package controllers.vatEuDetails
 
-import controllers.actions._
-import forms.EuTaxReferenceFormProvider
-import javax.inject.Inject
+import controllers.actions.*
+import forms.vatEuDetails.EuTaxReferenceFormProvider
 import models.Mode
-import pages.EuTaxReferencePage
+import pages.vatEuDetails.EuTaxReferencePage
 import pages.{Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -12,6 +11,7 @@ import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.EuTaxReferenceView
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class EuTaxReferenceController @Inject()(

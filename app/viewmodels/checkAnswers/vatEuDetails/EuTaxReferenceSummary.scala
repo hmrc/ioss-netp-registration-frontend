@@ -1,12 +1,12 @@
-package viewmodels.checkAnswers
+package viewmodels.checkAnswers.vatEuDetails
 
 import controllers.routes
 import models.{CheckMode, UserAnswers}
-import pages.EuTaxReferencePage
+import pages.vatEuDetails.EuTaxReferencePage
 import play.api.i18n.Messages
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
-import viewmodels.govuk.summarylist._
-import viewmodels.implicits._
+import viewmodels.govuk.summarylist.*
+import viewmodels.implicits.*
 
 object EuTaxReferenceSummary  {
 
