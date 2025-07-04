@@ -19,7 +19,7 @@ package pages.vatEuDetails
 import controllers.vatEuDetails.routes
 import models.RegistrationType.{TaxId, VatNumber}
 import models.{Index, RegistrationType, UserAnswers}
-import pages.{JourneyRecoveryPage, Page, QuestionPage, RecoveryOps, Waypoints}
+import pages.{Page, QuestionPage, RecoveryOps, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
@@ -36,7 +36,7 @@ case class RegistrationTypePage(countryIndex: Index) extends QuestionPage[Regist
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
     answers.get(this).map {
       case VatNumber => EuVatNumberPage(countryIndex)
-      case TaxId => JourneyRecoveryPage //TODO add TaxId page when created
+      case TaxId => EuTaxReferencePage(countryIndex)
     }.orRecover
   }
 }

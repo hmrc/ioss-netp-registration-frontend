@@ -19,9 +19,9 @@ package controllers.vatEuDetails
 import controllers.GetCountry
 import controllers.actions.*
 import forms.vatEuDetails.EuTaxReferenceFormProvider
-import models.{Index, Mode}
+import models.Index
 import pages.vatEuDetails.EuTaxReferencePage
-import pages.{Waypoint, Waypoints}
+import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import repositories.SessionRepository

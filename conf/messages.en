@@ -366,11 +366,11 @@ euCountry.heading = Which country is their fixed establishment in?
 euCountry.error.required = Please select which country their fixed establishment is in
 euCountry.error.duplicate = You selected this country already. Select a different one
 
-hasFixedEstablishment.title = Does your business have a fixed establishment in {0}?
-hasFixedEstablishment.heading = Does your business have a fixed establishment in {0}?
+hasFixedEstablishment.title = Does your business have a fixed establishment in an EU country?
+hasFixedEstablishment.heading = Does your business have a fixed establishment in an EU country?
 hasFixedEstablishment.checkYourAnswersLabel = Has fixed establishment
-hasFixedEstablishment.error.required = Select yes if your business has a fixed establishment in {0}
-hasFixedEstablishment.change.hidden = if your business has a fixed establishment in {0}
+hasFixedEstablishment.error.required = Select yes if your business has a fixed establishment in an EU country
+hasFixedEstablishment.change.hidden = if your business has a fixed establishment in an EU country
 
 registrationType.title = What sort of registration does your client have in {0}?
 registrationType.heading = What sort of registration does your client have in {0}?
@@ -387,6 +387,9 @@ euVatNumber.checkYourAnswersLabel = VAT number
 euVatNumber.error.required = Enter your client''s VAT registration number for {0}
 euVatNumber.error.invalid = Enter a registration number in the correct format
 euVatNumber.change.hidden = your client''s VAT registration number
+
+euVatNumber.title = What is your client''s business tax identification number for {0}?
+euTaxReference.heading = What is your client''s business tax identification number for {0}?
 
 tradingNameAndBusinessAddress.title = What is your client''s business trading name and address in {0}?
 tradingNameAndBusinessAddress.heading = What is your client''s business trading name and address in {0}?

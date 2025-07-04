@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-package forms
+package forms.vatEuDetails
 
 import forms.behaviours.BooleanFieldBehaviours
-import forms.vatEuDetails.HasFixedEstablishmentFormProvider
-import models.Country
+
 import play.api.data.{Form, FormError}
 
 class HasFixedEstablishmentFormProviderSpec extends BooleanFieldBehaviours {
 
   private val requiredKey: String = "hasFixedEstablishment.error.required"
   private val invalidKey: String = "error.boolean"
-
-  private val country: Country = arbitraryCountry.arbitrary.sample.value
-
-  private val form: Form[Boolean] = new HasFixedEstablishmentFormProvider()(country)
+  
+  private val form: Form[Boolean] = new HasFixedEstablishmentFormProvider()()
 
   ".value" - {
 
@@ -37,13 +34,13 @@ class HasFixedEstablishmentFormProviderSpec extends BooleanFieldBehaviours {
     behave like booleanField(
       form,
       fieldName,
-      invalidError = FormError(fieldName, invalidKey, args = Seq(country.name))
+      invalidError = FormError(fieldName, invalidKey)
     )
 
     behave like mandatoryField(
       form,
       fieldName,
-      requiredError = FormError(fieldName, requiredKey, args = Seq(country.name))
+      requiredError = FormError(fieldName, requiredKey)
     )
   }
 }

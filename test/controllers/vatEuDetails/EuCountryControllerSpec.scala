@@ -21,7 +21,6 @@ import forms.vatEuDetails.EuCountryFormProvider
 import models.{Country, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
-import org.scalacheck.Gen
 import org.scalatestplus.mockito.MockitoSugar
 import pages.JourneyRecoveryPage
 import pages.vatEuDetails.{EuCountryPage, VatRegisteredInEuPage}

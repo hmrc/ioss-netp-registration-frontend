@@ -19,7 +19,6 @@ package controllers.vatEuDetails
 import controllers.GetCountry
 import controllers.actions.*
 import forms.vatEuDetails.HasFixedEstablishmentFormProvider
-import models.Index
 import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.Waypoints
 import play.api.data.Form
@@ -45,39 +44,33 @@ class HasFixedEstablishmentController @Inject()(
                                  )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
   
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
 
-      getCountryWithIndex(waypoints, countryIndex) { country =>
+      val form: Form[Boolean] = formProvider()
 
-        val form: Form[Boolean] = formProvider(country)
-
-        val preparedForm = request.userAnswers.get(HasFixedEstablishmentPage(countryIndex)) match {
-          case None => form
-          case Some(value) => form.fill(value)
-        }
-
-        Ok(view(preparedForm, waypoints, countryIndex, country)).toFuture
+      val preparedForm = request.userAnswers.get(HasFixedEstablishmentPage) match {
+        case None => form
+        case Some(value) => form.fill(value)
       }
+
+      Ok(view(preparedForm, waypoints)).toFuture
   }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
     implicit request =>
 
-      getCountryWithIndex(waypoints, countryIndex) { country =>
+      val form: Form[Boolean] = formProvider()
 
-        val form: Form[Boolean] = formProvider(country)
+      form.bindFromRequest().fold(
+        formWithErrors =>
+          BadRequest(view(formWithErrors, waypoints)).toFuture,
 
-        form.bindFromRequest().fold(
-          formWithErrors =>
-            BadRequest(view(formWithErrors, waypoints, countryIndex, country)).toFuture,
-
-          value =>
-            for {
-              updatedAnswers <- Future.fromTry(request.userAnswers.set(HasFixedEstablishmentPage(countryIndex), value))
-              _ <- sessionRepository.set(updatedAnswers)
-            } yield Redirect(HasFixedEstablishmentPage(countryIndex).navigate(waypoints, request.userAnswers, updatedAnswers).route)
-        )
-      }
+        value =>
+          for {
+            updatedAnswers <- Future.fromTry(request.userAnswers.set(HasFixedEstablishmentPage, value))
+            _ <- sessionRepository.set(updatedAnswers)
+          } yield Redirect(HasFixedEstablishmentPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+      )
   }
 }

@@ -17,6 +17,7 @@
 package pages.previousRegistrations
 
 import models.{Index, UserAnswers}
+import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.{JourneyRecoveryPage, NonEmptyWaypoints, Page, QuestionPage, RecoveryOps, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
@@ -34,7 +35,7 @@ case object PreviouslyRegisteredPage extends QuestionPage[Boolean] {
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
     answers.get(this).map {
       case true => PreviousEuCountryPage(Index(0))
-      case false => JourneyRecoveryPage // TODO: VEI-215, need to redirect to the VAT in EU countries section
+      case false => HasFixedEstablishmentPage
     }.orRecover
 
   override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page =

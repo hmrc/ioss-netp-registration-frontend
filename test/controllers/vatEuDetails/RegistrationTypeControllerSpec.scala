@@ -40,7 +40,7 @@ import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.JourneyRecoveryPage
-import pages.vatEuDetails.{EuCountryPage, HasFixedEstablishmentPage, RegistrationTypePage, TradingNameAndBusinessAddressPage, VatRegisteredInEuPage}
+import pages.vatEuDetails.{EuCountryPage, RegistrationTypePage, TradingNameAndBusinessAddressPage, VatRegisteredInEuPage}
 import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest

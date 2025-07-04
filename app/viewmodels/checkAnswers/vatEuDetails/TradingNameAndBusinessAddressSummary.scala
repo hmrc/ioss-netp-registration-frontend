@@ -16,8 +16,8 @@
 
 package viewmodels.checkAnswers.vatEuDetails
 
-import controllers.routes
-import models.{CheckMode, Index, UserAnswers}
+
+import models.{Index, UserAnswers}
 import pages.{CheckAnswersPage, Waypoints}
 import pages.vatEuDetails.TradingNameAndBusinessAddressPage
 import play.api.i18n.Messages

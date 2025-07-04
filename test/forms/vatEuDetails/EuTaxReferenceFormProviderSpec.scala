@@ -16,7 +16,7 @@
 
 package forms.vatEuDetails
 
-import forms.behaviours.{IntFieldBehaviours, StringFieldBehaviours}
+import forms.behaviours.StringFieldBehaviours
 import forms.validation.Validation.alphaNumericWithSpace
 import models.Country
 import play.api.data.FormError

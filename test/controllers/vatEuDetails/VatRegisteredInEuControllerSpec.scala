@@ -27,7 +27,6 @@ import pages.{EmptyWaypoints, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{GET, contentAsString, route, running, status}
 import views.html.vatEuDetails.VatRegisteredInEuView
 import play.api.test.Helpers.*
 import repositories.SessionRepository

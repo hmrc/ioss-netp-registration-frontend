@@ -18,25 +18,26 @@ package pages.vatEuDetails
 
 import controllers.vatEuDetails.routes
 import models.{Index, UserAnswers}
-import pages.{BusinessContactDetailsPage, Page, QuestionPage, Waypoints}
+import pages.{Page, QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 import pages.RecoveryOps
+import pages.website.WebsitePage
 
-case class HasFixedEstablishmentPage(countryIndex: Index) extends QuestionPage[Boolean] {
+case object HasFixedEstablishmentPage extends QuestionPage[Boolean] {
 
-  override def path: JsPath = JsPath \ "euDetails" \ countryIndex.position \ toString
+  override def path: JsPath = JsPath \ toString
 
   override def toString: String = "hasFixedEstablishment"
 
   override def route(waypoints: Waypoints): Call = {
-    routes.HasFixedEstablishmentController.onPageLoad(waypoints, countryIndex)
+    routes.HasFixedEstablishmentController.onPageLoad(waypoints)
   }
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
     answers.get(this).map {
-      case true => RegistrationTypePage(countryIndex)
-      case false => BusinessContactDetailsPage //TODO:  placeholder pending clarified requirements
+      case true => EuCountryPage(Index(0))
+      case false => WebsitePage(Index(0))
     }.orRecover
   }
 }

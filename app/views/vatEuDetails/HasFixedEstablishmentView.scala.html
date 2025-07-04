@@ -25,14 +25,14 @@
         formHelper: FormWithCSRF,
         govukErrorSummary: GovukErrorSummary,
         govukRadios: GovukRadios,
-        button: ButtonGroup
+        govukButton: GovukButton
 )
 
-@(form: Form[_], waypoints: Waypoints, countryIndex: Index, country: Country)(implicit request: Request[_], messages: Messages)
+@(form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = title(form, messages("hasFixedEstablishment.title", country.name))) {
+@layout(pageTitle = title(form, messages("hasFixedEstablishment.title"))) {
 
-  @formHelper(action = routes.HasFixedEstablishmentController.onSubmit(waypoints, countryIndex), Symbol("autoComplete") -> "off") {
+  @formHelper(action = routes.HasFixedEstablishmentController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
 
     @if(form.errors.nonEmpty) {
       @govukErrorSummary(ErrorSummaryViewModel(form))
@@ -41,10 +41,12 @@
     @govukRadios(
       RadiosViewModel.yesNo(
         field = form("value"),
-        legend = LegendViewModel(messages("hasFixedEstablishment.heading", country.name)).asPageHeading()
+        legend = LegendViewModel(messages("hasFixedEstablishment.heading")).asPageHeading()
       )
     )
 
-    @button("site.continue", HasFixedEstablishmentPage(countryIndex).route(waypoints).url, waypoints)
+    @govukButton(
+        ButtonViewModel(messages("site.continue")).withAttribute("id", "continue")
+    )
   }
 }

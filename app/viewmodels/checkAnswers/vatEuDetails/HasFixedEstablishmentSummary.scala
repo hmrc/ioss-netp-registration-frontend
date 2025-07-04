@@ -33,7 +33,7 @@ object HasFixedEstablishmentSummary {
            country: Country,
            sourcePage: CheckAnswersPage
          )(implicit messages: Messages): Option[SummaryListRow] = {
-    answers.get(HasFixedEstablishmentPage(countryIndex)).map { answer =>
+    answers.get(HasFixedEstablishmentPage).map { answer =>
 
       val value = if (answer) "site.yes" else "site.no"
 
@@ -41,7 +41,7 @@ object HasFixedEstablishmentSummary {
         key = "hasFixedEstablishment.checkYourAnswersLabel",
         value = ValueViewModel(value),
         actions = Seq(
-          ActionItemViewModel("site.change", HasFixedEstablishmentPage(countryIndex).changeLink(waypoints, sourcePage).url)
+          ActionItemViewModel("site.change", HasFixedEstablishmentPage.changeLink(waypoints, sourcePage).url)
             .withVisuallyHiddenText(messages("hasFixedEstablishment.change.hidden", country))
         )
       )

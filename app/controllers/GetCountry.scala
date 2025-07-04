@@ -20,6 +20,7 @@ import models.requests.*
 import models.{Country, Index}
 import pages.previousRegistrations.PreviousEuCountryPage
 import pages.{ClientCountryBasedPage, JourneyRecoveryPage, Waypoints}
+import pages.vatEuDetails.EuCountryPage
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{AnyContent, Result}
 import utils.FutureSyntax.FutureOps
