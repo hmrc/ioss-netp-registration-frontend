@@ -20,6 +20,7 @@ import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
 import models.*
 import models.etmp.SchemeType
+import models.vatEuDetails.TradingNameAndBusinessAddress
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.{choose, listOfN}
 import org.scalacheck.{Arbitrary, Gen}
@@ -243,4 +244,12 @@ trait ModelGenerators extends EitherValues {
   implicit lazy val genEuTaxReference: Gen[String] = {
     Gen.listOfN(maxEuTaxReferenceLength, Gen.alphaNumChar).map(_.mkString)
   }
+
+  implicit lazy val arbitraryTradingNameAndBusinessAddress: Arbitrary[TradingNameAndBusinessAddress] =
+    Arbitrary {
+      for {
+        name <- arbitrary[TradingName]
+        addr <- arbitrary[InternationalAddress]
+      } yield TradingNameAndBusinessAddress(name, addr)
+    }
 }
