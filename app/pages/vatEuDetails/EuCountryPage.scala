@@ -24,7 +24,7 @@ import play.api.mvc.Call
 
 case class EuCountryPage(countryIndex: Index) extends QuestionPage[Country] {
 
-  override def path: JsPath = JsPath \ "EuDetails" \ countryIndex.position \ toString
+  override def path: JsPath = JsPath \ "euDetails" \ countryIndex.position \ toString
 
   override def toString: String = "euCountry"
 

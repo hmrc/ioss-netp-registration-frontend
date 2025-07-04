@@ -34,10 +34,10 @@ final case class CheckEuDetailsAnswersPage(countryIndex: Index) extends CheckAns
     routes.CheckEuDetailsAnswersController.onPageLoad(waypoints, countryIndex)
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
-    CheckYourAnswersPage
+    AddEuDetailsPage()
 
   override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page =
-    CheckYourAnswersPage
+    AddEuDetailsPage()
 }
 
 object CheckEuDetailsAnswersPage {
