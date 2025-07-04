@@ -25,7 +25,7 @@ import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.JourneyRecoveryPage
-import pages.vatEuDetails.{EuCountryPage, EuVatNumberPage, RegistrationTypePage, TradingNameAndBusinessAddressPage, VatRegisteredInEuPage}
+import pages.vatEuDetails.{EuCountryPage, EuVatNumberPage, HasFixedEstablishmentPage, RegistrationTypePage, TradingNameAndBusinessAddressPage}
 import play.api.Application
 import play.api.data.Form
 import play.api.inject.bind
@@ -50,7 +50,7 @@ class EuVatNumberControllerSpec extends SpecBase with MockitoSugar {
   private lazy val euVatNumberRoute: String = routes.EuVatNumberController.onPageLoad(waypoints, countryIndex(0)).url
 
   private val updatedAnswers: UserAnswers = emptyUserAnswersWithVatInfo
-    .set(VatRegisteredInEuPage, true).success.value
+    .set(HasFixedEstablishmentPage, true).success.value
     .set(EuCountryPage(countryIndex(0)), country).success.value
     .set(TradingNameAndBusinessAddressPage(Index(0)),
       TradingNameAndBusinessAddress(tradingName, businessAddress)

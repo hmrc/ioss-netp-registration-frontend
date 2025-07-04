@@ -140,9 +140,6 @@ GET        /remove-all-previous-registrations                           controll
 POST       /remove-all-previous-registrations                           controllers.previousRegistrations.DeleteAllPreviousRegistrationsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
 # EU Details section
-GET        /vat-in-eu                                                   controllers.vatEuDetails.VatRegisteredInEuController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-POST       /vat-in-eu                                                   controllers.vatEuDetails.VatRegisteredInEuController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
-
 GET        /eu-fixed-establishment                                      controllers.vatEuDetails.HasFixedEstablishmentController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST       /eu-fixed-establishment                                      controllers.vatEuDetails.HasFixedEstablishmentController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 

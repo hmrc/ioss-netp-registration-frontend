@@ -24,7 +24,7 @@ import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.JourneyRecoveryPage
-import pages.vatEuDetails.{EuCountryPage, TradingNameAndBusinessAddressPage, VatRegisteredInEuPage}
+import pages.vatEuDetails.{EuCountryPage, HasFixedEstablishmentPage, TradingNameAndBusinessAddressPage}
 import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
@@ -56,7 +56,7 @@ class TradingNameAndBusinessAddressControllerSpec extends SpecBase with MockitoS
     routes.TradingNameAndBusinessAddressController.onPageLoad(waypoints, countryIndex(0)).url
 
   private val updatedAnswers: UserAnswers = emptyUserAnswersWithVatInfo
-    .set(VatRegisteredInEuPage, true).success.value
+    .set(HasFixedEstablishmentPage, true).success.value
     .set(EuCountryPage(countryIndex(0)), country).success.value
 
   "TradingNameAndBusinessAddress Controller" - {

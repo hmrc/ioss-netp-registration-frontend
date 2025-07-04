@@ -43,7 +43,7 @@ class EuTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
   private val form: Form[String] = formProvider(country)
 
   private val updatedAnswers: UserAnswers = emptyUserAnswersWithVatInfo
-    .set(VatRegisteredInEuPage, true).success.value
+    .set(HasFixedEstablishmentPage, true).success.value
     .set(EuCountryPage(countryIndex(0)), country).success.value
     .set(RegistrationTypePage(countryIndex(0)), RegistrationType.TaxId).success.value
 
