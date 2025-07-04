@@ -17,8 +17,8 @@
 package pages.vatEuDetails
 
 import controllers.vatEuDetails.routes
-import models.Index
-import pages.{QuestionPage, Waypoints}
+import models.{Index, UserAnswers}
+import pages.{Page, QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
@@ -32,4 +32,7 @@ case class EuVatNumberPage(countryIndex: Index) extends QuestionPage[String] {
     routes.EuVatNumberController.onPageLoad(waypoints, countryIndex)
   }
 
+  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
+    CheckEuDetailsAnswersPage(countryIndex)
+  }
 }

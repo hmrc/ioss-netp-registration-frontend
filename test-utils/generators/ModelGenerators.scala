@@ -32,6 +32,11 @@ import java.util.UUID
 
 trait ModelGenerators extends EitherValues {
 
+  implicit lazy val arbitraryRegistrationType: Arbitrary[RegistrationType] =
+    Arbitrary {
+      Gen.oneOf(RegistrationType.values.toSeq)
+    }
+
   private val maxFieldLength: Int = 35
 
   private val maxEuTaxReferenceLength: Int = 20

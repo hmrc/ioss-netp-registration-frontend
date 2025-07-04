@@ -160,3 +160,6 @@ POST        /eu-vat-number/:countryIndex                                controll
 
 GET         /eu-tax-identification-number/:countryIndex                 controllers.vatEuDetails.EuTaxReferenceController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
 POST        /eu-tax-identification-number/:countryIndex                 controllers.vatEuDetails.EuTaxReferenceController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
+
+GET         /check-tax-details/:index                                   controllers.vatEuDetails.CheckEuDetailsAnswersController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
+POST        /check-tax-details/:index                                   controllers.vatEuDetails.CheckEuDetailsAnswersController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, index: Index)

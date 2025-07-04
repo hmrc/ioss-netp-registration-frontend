@@ -16,10 +16,9 @@
 
 package viewmodels.checkAnswers.vatEuDetails
 
-
 import models.{Index, UserAnswers}
+import pages.vatEuDetails.EuCountryPage
 import pages.{CheckAnswersPage, Waypoints}
-import pages.vatEuDetails.TradingNameAndBusinessAddressPage
 import play.api.i18n.Messages
 import play.twirl.api.HtmlFormat
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content.HtmlContent
@@ -27,8 +26,7 @@ import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.govuk.summarylist.*
 import viewmodels.implicits.*
 
-object TradingNameAndBusinessAddressSummary {
-
+object EuCountrySummary {
 
   def row(
            waypoints: Waypoints,
@@ -36,23 +34,20 @@ object TradingNameAndBusinessAddressSummary {
            countryIndex: Index,
            sourcePage: CheckAnswersPage
          )(implicit messages: Messages): Option[SummaryListRow] = {
-    answers.get(TradingNameAndBusinessAddressPage(countryIndex)).map { answer =>
+    answers.get(EuCountryPage(countryIndex)).map { answer =>
 
-      val value = Seq(
-        Some(HtmlFormat.escape(answer.tradingName.name)),
-        Some(HtmlFormat.escape(answer.address.line1).toString),
-        answer.address.line2.map(HtmlFormat.escape),
-        Some(HtmlFormat.escape(answer.address.townOrCity).toString),
-        answer.address.stateOrRegion.map(HtmlFormat.escape),
-        answer.address.postCode.map(HtmlFormat.escape)
-      ).flatten.mkString("<br/>")
+      val value = ValueViewModel(
+        HtmlContent(
+          HtmlFormat.escape(messages(s"${answer.name}"))
+        )
+      )
 
       SummaryListRowViewModel(
-        key = "tradingNameAndBusinessAddress.checkYourAnswersLabel",
-        value = ValueViewModel(HtmlContent(value)),
+        key = "euCountry.checkYourAnswersLabel",
+        value = value,
         actions = Seq(
-          ActionItemViewModel("site.change", TradingNameAndBusinessAddressPage(countryIndex).changeLink(waypoints, sourcePage).url)
-            .withVisuallyHiddenText(messages("TradingNameAndBusinessAddress.change.hidden"))
+          ActionItemViewModel("site.change", EuCountryPage(countryIndex).changeLink(waypoints, sourcePage).url)
+            .withVisuallyHiddenText(messages("euCountry.change.hidden"))
         )
       )
     }

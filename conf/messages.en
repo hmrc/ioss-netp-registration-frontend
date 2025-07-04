@@ -365,6 +365,8 @@ euCountry.title = Which country is their fixed establishment in?
 euCountry.heading = Which country is their fixed establishment in?
 euCountry.error.required = Please select which country their fixed establishment is in
 euCountry.error.duplicate = You selected this country already. Select a different one
+euCountry.checkYourAnswersLabel = Country
+euCountry.change.hidden = Country
 
 hasFixedEstablishment.title = Does your business have a fixed establishment in an EU country?
 hasFixedEstablishment.heading = Does your business have a fixed establishment in an EU country?
@@ -399,7 +401,7 @@ tradingNameAndBusinessAddress.line2 = Address line 2 (optional)
 tradingNameAndBusinessAddress.townOrCity = Town or city
 tradingNameAndBusinessAddress.stateOrRegion = Region or state (optional)
 tradingNameAndBusinessAddress.postCode = Postcode (optional)
-tradingNameAndBusinessAddress.checkYourAnswersLabel = Address
+tradingNameAndBusinessAddress.checkYourAnswersLabel = Trading name and address
 tradingNameAndBusinessAddress.error.tradingName.required = Enter your trading name
 tradingNameAndBusinessAddress.error.tradingName.length = Trading name must be 100 characters or less
 tradingNameAndBusinessAddress.error.tradingName.invalid = Trading name must only include letters, numbers, hyphens, spaces and apostrophes
@@ -416,4 +418,7 @@ tradingNameAndBusinessAddress.error.stateOrRegion.length = State or region must 
 tradingNameAndBusinessAddress.error.stateOrRegion.format = State or region must only include letters, numbers, hyphens, spaces and apostrophes
 tradingNameAndBusinessAddress.error.postCode.length = Postcode must be 40 characters or less
 tradingNameAndBusinessAddress.error.postCode.invalid = Postcode must only include letters, numbers and spaces
+
+checkEuDetailsAnswers.title = Check your answers for {0}
+checkEuDetailsAnswers.heading = Check your answers for {0}
 

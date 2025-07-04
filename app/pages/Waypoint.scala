@@ -19,6 +19,7 @@ package pages
 import models.{CheckMode, Mode, NormalMode}
 import pages.previousRegistrations.{AddPreviousRegistrationPage, CheckPreviousSchemeAnswersPage}
 import pages.tradingNames.AddTradingNamePage
+import pages.vatEuDetails.CheckEuDetailsAnswersPage
 import pages.website.AddWebsitePage
 
 import scala.language.postfixOps
@@ -46,4 +47,5 @@ object Waypoint {
   def fromString(s: String): Option[Waypoint] =
     fragments.get(s)
       .orElse(CheckPreviousSchemeAnswersPage.waypointFromString(s))
+      .orElse(CheckEuDetailsAnswersPage.waypointFromString(s))
 }
