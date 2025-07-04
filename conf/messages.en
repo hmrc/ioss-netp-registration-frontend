@@ -430,3 +430,7 @@ addEuDetails.error.required = Select yes if you want to add VAT details for anot
 addEuDetails.addAnother = Add tax details for another EU country?
 addEuDetails.addAnother.hint = You must tell us your client''s tax details for all EU countries.
 addEuDetails.maximumReached = You have added details for every EU country
+
+deleteEuDetails.title = Are you sure you want to remove the tax details for {0}?
+deleteEuDetails.heading = Are you sure you want to remove the tax details for {0}?
+deleteEuDetails.error.required = Select yes if you want to remove the tax details for {0}

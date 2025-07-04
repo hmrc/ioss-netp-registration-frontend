@@ -16,30 +16,16 @@
 
 package forms.vatEuDetails
 
-import forms.behaviours.BooleanFieldBehaviours
-import play.api.data.FormError
+import forms.mappings.Mappings
+import models.Country
+import play.api.data.Form
 
-class AddEuDetailsFormProviderSpec extends BooleanFieldBehaviours {
+import javax.inject.Inject
 
-  val requiredKey = "addEuDetails.error.required"
-  val invalidKey = "error.boolean"
+class DeleteEuDetailsFormProvider @Inject() extends Mappings {
 
-  val form = new AddEuDetailsFormProvider()()
-
-  ".value" - {
-
-    val fieldName = "value"
-
-    behave like booleanField(
-      form,
-      fieldName,
-      invalidError = FormError(fieldName, invalidKey)
+  def apply(country: Country): Form[Boolean] =
+    Form(
+      "value" -> boolean("deleteEuDetails.error.required", args = Seq(country.name))
     )
-
-    behave like mandatoryField(
-      form,
-      fieldName,
-      requiredError = FormError(fieldName, requiredKey)
-    )
-  }
 }

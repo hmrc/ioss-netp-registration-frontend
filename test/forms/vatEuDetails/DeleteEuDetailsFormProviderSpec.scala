@@ -17,14 +17,17 @@
 package forms.vatEuDetails
 
 import forms.behaviours.BooleanFieldBehaviours
+import models.Country
 import play.api.data.FormError
 
-class AddEuDetailsFormProviderSpec extends BooleanFieldBehaviours {
+class DeleteEuDetailsFormProviderSpec extends BooleanFieldBehaviours {
 
-  val requiredKey = "addEuDetails.error.required"
+  private val country: Country = arbitraryCountry.arbitrary.sample.value
+
+  val requiredKey = "deleteEuDetails.error.required"
   val invalidKey = "error.boolean"
 
-  val form = new AddEuDetailsFormProvider()()
+  val form = new DeleteEuDetailsFormProvider()(country)
 
   ".value" - {
 
@@ -33,13 +36,13 @@ class AddEuDetailsFormProviderSpec extends BooleanFieldBehaviours {
     behave like booleanField(
       form,
       fieldName,
-      invalidError = FormError(fieldName, invalidKey)
+      invalidError = FormError(fieldName, invalidKey, args = Seq(country.name))
     )
 
     behave like mandatoryField(
       form,
       fieldName,
-      requiredError = FormError(fieldName, requiredKey)
+      requiredError = FormError(fieldName, requiredKey, args = Seq(country.name))
     )
   }
 }

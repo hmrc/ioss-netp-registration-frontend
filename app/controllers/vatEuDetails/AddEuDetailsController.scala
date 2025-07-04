@@ -24,7 +24,7 @@ import pages.Waypoints
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import queries.euDetails.{AllEuDetailsQuery, DeriveNumberOfEuRegistrations}
+import queries.euDetails.DeriveNumberOfEuRegistrations
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.ItemsHelper.getDerivedItems
@@ -51,8 +51,6 @@ class AddEuDetailsController @Inject()(
     implicit request =>
 
       getDerivedItems(waypoints, DeriveNumberOfEuRegistrations) { numberOfEuRegistrations =>
-        
-        println("EU Details count: " + request.userAnswers.get(AllEuDetailsQuery).map(_.size))
 
         val canAddEuDetails: Boolean = numberOfEuRegistrations < euCountriesSize
         val euDetailsSummaryList: SummaryList = EuDetailsSummary.row(waypoints, request.userAnswers, AddEuDetailsPage())

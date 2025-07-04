@@ -14,32 +14,14 @@
  * limitations under the License.
  */
 
-package forms.vatEuDetails
+package queries.euDetails
 
-import forms.behaviours.BooleanFieldBehaviours
-import play.api.data.FormError
+import models.Index
+import models.euDetails.EuDetails
+import play.api.libs.json.JsPath
+import queries.{Gettable, Settable}
 
-class AddEuDetailsFormProviderSpec extends BooleanFieldBehaviours {
+case class EuDetailsQuery(countryIndex: Index) extends Gettable[EuDetails] with Settable[EuDetails] {
 
-  val requiredKey = "addEuDetails.error.required"
-  val invalidKey = "error.boolean"
-
-  val form = new AddEuDetailsFormProvider()()
-
-  ".value" - {
-
-    val fieldName = "value"
-
-    behave like booleanField(
-      form,
-      fieldName,
-      invalidError = FormError(fieldName, invalidKey)
-    )
-
-    behave like mandatoryField(
-      form,
-      fieldName,
-      requiredError = FormError(fieldName, requiredKey)
-    )
-  }
+  override def path: JsPath = JsPath \ "euDetails" \ countryIndex.position
 }
