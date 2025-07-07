@@ -19,16 +19,15 @@ package connectors
 import logging.Logging
 import models.SavedPendingRegistration
 import models.responses.{ErrorResponse, InvalidJson, UnexpectedResponseStatus}
-import play.api.http.Status.OK
+import play.api.http.Status.{CREATED, OK}
 import play.api.libs.json.{JsError, JsSuccess}
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
-object PendingRegistrationHttpParser extends Logging {
-
-  type PendingRegistrationResultResponse = Either[ErrorResponse, SavedPendingRegistration]
+object SavedPendingRegistrationHttpParser extends Logging {
+  
   type SavedPendingRegistrationResponse = Either[ErrorResponse, SavedPendingRegistration]
 
-  implicit object PendingRegistrationResultResponseReads extends HttpReads[PendingRegistrationResultResponse] {
+  implicit object SavedPendingRegistrationResultResponseReads extends HttpReads[SavedPendingRegistrationResponse] {
 
     def operation(action: String) = action.toUpperCase match {
       case "POST" => "create"
@@ -36,9 +35,9 @@ object PendingRegistrationHttpParser extends Logging {
       case other => other.toLowerCase
     }
 
-    override def read(method: String, url: String, response: HttpResponse): PendingRegistrationResultResponse = {
+    override def read(method: String, url: String, response: HttpResponse): SavedPendingRegistrationResponse = {
       response.status match {
-        case OK => response.json.validate[SavedPendingRegistration] match {
+        case OK | CREATED => response.json.validate[SavedPendingRegistration] match {
           case JsSuccess(savedPendingRegistration, _) => Right(savedPendingRegistration)
           case JsError(errors) =>
             logger.error(s"Failed trying to parse Pending Registration JSON with errors $errors.")
