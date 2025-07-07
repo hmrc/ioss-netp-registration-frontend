@@ -23,6 +23,8 @@ import pages.{Page, QuestionPage, RecoveryOps, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
+import scala.util.Try
+
 case class RegistrationTypePage(countryIndex: Index) extends QuestionPage[RegistrationType] {
 
   override def path: JsPath = JsPath \ "euDetails" \ countryIndex.position \ toString
@@ -38,5 +40,16 @@ case class RegistrationTypePage(countryIndex: Index) extends QuestionPage[Regist
       case VatNumber => EuVatNumberPage(countryIndex)
       case TaxId => EuTaxReferencePage(countryIndex)
     }.orRecover
+  }
+
+  override def cleanup(value: Option[RegistrationType], userAnswers: UserAnswers): Try[UserAnswers] = {
+    value match {
+      case Some(RegistrationType.VatNumber) =>
+        userAnswers.remove(EuTaxReferencePage(countryIndex))
+      case Some(RegistrationType.TaxId) =>
+        userAnswers.remove(EuVatNumberPage(countryIndex))
+      case None => super.cleanup(value, userAnswers)
+    }
+
   }
 }

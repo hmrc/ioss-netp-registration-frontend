@@ -362,8 +362,8 @@ euCountry.error.duplicate = You selected this country already. Select a differen
 euCountry.checkYourAnswersLabel = Country
 euCountry.change.hidden = Country
 
-hasFixedEstablishment.title = Does your business have a fixed establishment in an EU country?
-hasFixedEstablishment.heading = Does your business have a fixed establishment in an EU country?
+hasFixedEstablishment.title = Does your client''s business have a fixed establishment in an EU country?
+hasFixedEstablishment.heading = Does your client''s business have a fixed establishment in an EU country?
 hasFixedEstablishment.checkYourAnswersLabel = Has fixed establishment
 hasFixedEstablishment.error.required = Select yes if your business has a fixed establishment in an EU country
 hasFixedEstablishment.change.hidden = if your business has a fixed establishment in an EU country
@@ -386,6 +386,8 @@ euVatNumber.change.hidden = your client''s VAT registration number
 
 euVatNumber.title = What is your client''s business tax identification number for {0}?
 euTaxReference.heading = What is your client''s business tax identification number for {0}?
+euTaxReference.checkYourAnswersLabel = Tax ID Number
+euTaxReference.change.hidden = your client''s Tax ID Number
 
 tradingNameAndBusinessAddress.title = What is your client''s business trading name and address in {0}?
 tradingNameAndBusinessAddress.heading = What is your client''s business trading name and address in {0}?
