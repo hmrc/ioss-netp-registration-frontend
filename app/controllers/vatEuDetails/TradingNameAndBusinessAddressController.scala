@@ -26,7 +26,6 @@ import pages.Waypoints
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.vatEuDetails.TradingNameAndBusinessAddressView
@@ -36,17 +35,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class TradingNameAndBusinessAddressController @Inject()(
                                                          override val messagesApi: MessagesApi,
-                                                         sessionRepository: SessionRepository,
-                                                         identify: IdentifierAction,
-                                                         getData: DataRetrievalAction,
-                                                         requireData: DataRequiredAction,
+                                                         cc: AuthenticatedControllerComponents,
                                                          formProvider: TradingNameAndBusinessAddressFormProvider,
-                                                         val controllerComponents: MessagesControllerComponents,
                                                          view: TradingNameAndBusinessAddressView
                                                        )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with GetCountry {
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  protected val controllerComponents: MessagesControllerComponents = cc
+
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       getCountryWithIndex(waypoints, countryIndex) { country =>
@@ -62,7 +59,7 @@ class TradingNameAndBusinessAddressController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       getCountryWithIndex(waypoints: Waypoints, countryIndex: Index) { country =>
@@ -76,7 +73,7 @@ class TradingNameAndBusinessAddressController @Inject()(
           value =>
             for {
               updatedAnswers <- Future.fromTry(request.userAnswers.set(TradingNameAndBusinessAddressPage(countryIndex), value))
-              _ <- sessionRepository.set(updatedAnswers)
+              _ <- cc.sessionRepository.set(updatedAnswers)
             } yield Redirect(TradingNameAndBusinessAddressPage(countryIndex).navigate(waypoints, request.userAnswers, updatedAnswers).route)
         )
       }

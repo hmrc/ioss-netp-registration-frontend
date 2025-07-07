@@ -25,7 +25,6 @@ import pages.Waypoints
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.vatEuDetails.EuVatNumberView
 import utils.FutureSyntax.FutureOps
@@ -35,17 +34,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class EuVatNumberController @Inject()(
                                        override val messagesApi: MessagesApi,
-                                       sessionRepository: SessionRepository,
-                                       identify: IdentifierAction,
-                                       getData: DataRetrievalAction,
-                                       requireData: DataRequiredAction,
+                                       cc: AuthenticatedControllerComponents,
                                        formProvider: EuVatNumberFormProvider,
-                                       val controllerComponents: MessagesControllerComponents,
                                        view: EuVatNumberView
                                      )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
 
+  protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       getCountryWithIndex(waypoints, countryIndex) { country =>
@@ -65,7 +61,7 @@ class EuVatNumberController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       getCountryWithIndex(waypoints, countryIndex) { country =>
@@ -82,7 +78,7 @@ class EuVatNumberController @Inject()(
               euVrn =>
                 for {
                   updatedAnswers <- Future.fromTry(request.userAnswers.set(EuVatNumberPage(countryIndex), euVrn))
-                  _ <- sessionRepository.set(updatedAnswers)
+                  _ <- cc.sessionRepository.set(updatedAnswers)
                 } yield Redirect(EuVatNumberPage(countryIndex).navigate(waypoints, request.userAnswers, updatedAnswers).route)
 
 

@@ -24,7 +24,6 @@ import pages.Waypoints
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.vatEuDetails.HasFixedEstablishmentView
 import utils.FutureSyntax.FutureOps
@@ -34,17 +33,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class HasFixedEstablishmentController @Inject()(
                                          override val messagesApi: MessagesApi,
-                                         sessionRepository: SessionRepository,
-                                         identify: IdentifierAction,
-                                         getData: DataRetrievalAction,
-                                         requireData: DataRequiredAction,
+                                         cc: AuthenticatedControllerComponents,
                                          formProvider: HasFixedEstablishmentFormProvider,
-                                         val controllerComponents: MessagesControllerComponents,
                                          view: HasFixedEstablishmentView
                                  )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
-  
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  protected val controllerComponents: MessagesControllerComponents = cc
+  
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       val form: Form[Boolean] = formProvider()
@@ -57,7 +53,7 @@ class HasFixedEstablishmentController @Inject()(
       Ok(view(preparedForm, waypoints)).toFuture
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       val form: Form[Boolean] = formProvider()
@@ -69,7 +65,7 @@ class HasFixedEstablishmentController @Inject()(
         value =>
           for {
             updatedAnswers <- Future.fromTry(request.userAnswers.set(HasFixedEstablishmentPage, value))
-            _ <- sessionRepository.set(updatedAnswers)
+            _ <- cc.sessionRepository.set(updatedAnswers)
           } yield Redirect(HasFixedEstablishmentPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
       )
   }

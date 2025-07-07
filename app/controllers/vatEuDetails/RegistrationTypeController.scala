@@ -25,7 +25,6 @@ import pages.Waypoints
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.vatEuDetails.RegistrationTypeView
 import utils.FutureSyntax.FutureOps
@@ -35,18 +34,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class RegistrationTypeController @Inject()(
                                             override val messagesApi: MessagesApi,
-                                            sessionRepository: SessionRepository,
-                                            identify: IdentifierAction,
-                                            getData: DataRetrievalAction,
-                                            requireData: DataRequiredAction,
+                                            cc: AuthenticatedControllerComponents,
                                             formProvider: RegistrationTypeFormProvider,
-                                            val controllerComponents: MessagesControllerComponents,
                                             view: RegistrationTypeView
                                           )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with GetCountry{
 
+  protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       getCountryWithIndex(waypoints, countryIndex) { country =>
@@ -61,7 +57,7 @@ class RegistrationTypeController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       getCountryWithIndex(waypoints, countryIndex) { country =>
@@ -74,7 +70,7 @@ class RegistrationTypeController @Inject()(
           value =>
             for {
               updatedAnswers <- Future.fromTry(request.userAnswers.set(RegistrationTypePage(countryIndex), value))
-              _ <- sessionRepository.set(updatedAnswers)
+              _ <- cc.sessionRepository.set(updatedAnswers)
             } yield Redirect(RegistrationTypePage(countryIndex).navigate(waypoints, request.userAnswers, updatedAnswers).route)
         )
       }
