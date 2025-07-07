@@ -40,14 +40,14 @@ canAddEuDetails: Boolean
 
 @titleText = @{
     euDetailsSummaryList.rows.size match {
-        case 1 => messages("addEuDetails.title.singular", 1)
+        case 1 => messages("addEuDetails.title.singular")
         case i => messages("addEuDetails.title.plural", i)
     }
 }
 
 @headingText = @{
     euDetailsSummaryList.rows.size match {
-        case 1 => messages("addEuDetails.heading.singular", 1)
+        case 1 => messages("addEuDetails.heading.singular")
         case i => messages("addEuDetails.heading.plural", i)
     }   
 }

@@ -418,9 +418,9 @@ tradingNameAndBusinessAddress.error.postCode.invalid = Postcode must only includ
 checkEuDetailsAnswers.title = Check your answers for {0}
 checkEuDetailsAnswers.heading = Check your answers for {0}
 
-addEuDetails.title.singular = You added details for {0} EU country
+addEuDetails.title.singular = You added details for one EU country
 addEuDetails.title.plural = You added details for {0} EU countries
-addEuDetails.heading.singular = You added details for {0} EU country
+addEuDetails.heading.singular = You added details for one EU country
 addEuDetails.heading.plural = You added details for {0} EU countries
 addEuDetails.error.required = Select yes if you want to add VAT details for another EU country
 addEuDetails.addAnother = Add tax details for another EU country?
