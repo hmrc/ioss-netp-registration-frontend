@@ -384,8 +384,11 @@ euVatNumber.error.required = Enter your client''s VAT registration number for {0
 euVatNumber.error.invalid = Enter a registration number in the correct format
 euVatNumber.change.hidden = your client''s VAT registration number
 
-euVatNumber.title = What is your client''s business tax identification number for {0}?
+euTaxReference.title = What is your client''s business tax identification number for {0}?
 euTaxReference.heading = What is your client''s business tax identification number for {0}?
+euTaxReference.error.required = Enter your client''s business tax identification number for {0}
+euTaxReference.error.length = Tax identification number must be 20 characters or less
+euTaxReference.error.format = Tax identification number must only include letters, numbers and spaces
 euTaxReference.checkYourAnswersLabel = Tax ID Number
 euTaxReference.change.hidden = your client''s Tax ID Number
 
