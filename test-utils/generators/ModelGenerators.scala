@@ -16,10 +16,9 @@
 
 package generators
 
-import config.Constants.pendingRegistrationTTL
+import models.*
 import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
-import models.*
 import models.etmp.SchemeType
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.{choose, listOfN}
@@ -193,15 +192,13 @@ trait ModelGenerators extends EitherValues {
         userAnswers <- arbitraryUserAnswers.arbitrary
         uniqueUrlCode = UUID.randomUUID().toString
         uniqueActivationCode = UUID.randomUUID().toString
-        expirationDate = LocalDate.now().plus(pendingRegistrationTTL + 1, ChronoUnit.DAYS)
       } yield {
         SavedPendingRegistration(
           journeyId = userAnswers.journeyId,
           uniqueUrlCode = uniqueUrlCode,
           userAnswers = userAnswers,
           lastUpdated = userAnswers.lastUpdated,
-          uniqueActivationCode = uniqueActivationCode,
-          expirationDate = expirationDate)
+          uniqueActivationCode = uniqueActivationCode)
       }
     }
   }

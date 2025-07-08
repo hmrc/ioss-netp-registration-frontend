@@ -20,7 +20,7 @@ import config.Constants.pendingRegistrationTTL
 import formats.Format.dateFormatter
 import play.api.libs.json.*
 
-import java.time.{Instant, LocalDate, LocalDateTime, ZoneId}
+import java.time.{Instant, LocalDateTime, ZoneId}
 
 case class SavedPendingRegistration(
                                      journeyId: String,

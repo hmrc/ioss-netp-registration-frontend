@@ -22,8 +22,6 @@ import models.emails.{ClientDeclarationEmailParameters, EmailSendingResult, Emai
 import play.api.i18n.Messages
 import uk.gov.hmrc.http.HeaderCarrier
 
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -58,6 +56,6 @@ class EmailService @Inject()(
       )
     )
   }
-  
+
 }
 

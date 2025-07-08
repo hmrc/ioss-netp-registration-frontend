@@ -17,30 +17,19 @@
 package controllers
 
 import base.SpecBase
-import connectors.RegistrationConnector
-import models.responses.InternalServerError
-import models.{BusinessContactDetails, CheckMode, ClientBusinessName, SavedPendingRegistration, UserAnswers}
-import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito
-import org.mockito.Mockito.{times, verify, when}
+import models.{CheckMode, UserAnswers}
 import org.scalatest.BeforeAndAfterEach
-import org.scalatestplus.mockito.MockitoSugar.mock
-import pages.{BusinessContactDetailsPage, CheckYourAnswersPage, ClientBusinessNamePage, EmptyWaypoints, ErrorSubmittingPendingRegistrationPage, NonEmptyWaypoints, Waypoint}
+import pages.{CheckYourAnswersPage, EmptyWaypoints, NonEmptyWaypoints, Waypoint}
 import play.api.i18n.Messages
-import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import testutils.CheckYourAnswersSummaries.getCYASummaryList
-import utils.FutureSyntax.FutureOps
 import viewmodels.govuk.SummaryListFluency
 import views.html.CheckYourAnswersView
 
 class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency with BeforeAndAfterEach {
 
   private val completeUserAnswers: UserAnswers = emptyUserAnswers
-
-
-
 
   "Check Your Answers Controller" - {
 

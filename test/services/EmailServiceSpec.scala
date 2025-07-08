@@ -77,7 +77,7 @@ class EmailServiceSpec extends SpecBase with BeforeAndAfterEach {
             intermediary_name = intermediaryName,
             recipientName_line1 = clientName,
             activation_code = "12345",
-            activation_code_expiry_date = activationCodeExpiryDate,
+            activation_code_expiry_date = expectedActivationCodeExpiryDate,
             emailAddress = email
           ).futureValue mustBe EMAIL_ACCEPTED
 

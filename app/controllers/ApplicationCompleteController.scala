@@ -16,10 +16,8 @@
 
 package controllers
 
-import config.Constants.pendingRegistrationTTL
 import connectors.RegistrationConnector
 import controllers.actions.*
-import formats.Format.dateFormatter
 import logging.Logging
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -28,7 +26,6 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.ApplicationCompleteView
 
-import java.time.{LocalDateTime, ZoneId}
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
