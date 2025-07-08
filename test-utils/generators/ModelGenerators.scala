@@ -183,16 +183,6 @@ trait ModelGenerators extends EitherValues {
     }
   }
 
-  implicit lazy val arbitraryTradingName: Arbitrary[TradingName] = {
-    Arbitrary {
-      for {
-        name <- commonFieldString(maxFieldLength)
-      } yield {
-        TradingName(name)
-      }
-    }
-  }
-
   implicit lazy val arbitraryUserAnswers: Arbitrary[UserAnswers] = {
     Arbitrary {
       for {

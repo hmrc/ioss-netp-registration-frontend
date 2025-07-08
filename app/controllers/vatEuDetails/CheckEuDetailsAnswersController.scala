@@ -19,24 +19,26 @@ package controllers.vatEuDetails
 import controllers.GetCountry
 import controllers.actions.*
 import models.Index
-import pages.vatEuDetails.CheckEuDetailsAnswersPage
-import pages.Waypoints
+import models.euDetails.EuDetails
+import pages.vatEuDetails.{CheckEuDetailsAnswersPage, EuCountryPage}
+import pages.{Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.CompletionChecks
+import utils.EuDetailsCompletionChecks.*
 import views.html.vatEuDetails.CheckEuDetailsAnswersView
 import utils.FutureSyntax.FutureOps
 import viewmodels.checkAnswers.vatEuDetails.*
 import viewmodels.govuk.all.SummaryListViewModel
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
 
 class CheckEuDetailsAnswersController @Inject()(
                                          override val messagesApi: MessagesApi,
                                          cc: AuthenticatedControllerComponents,
                                          view: CheckEuDetailsAnswersView
-                                 )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
+                                 ) extends FrontendBaseController with I18nSupport with GetCountry with CompletionChecks {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -55,15 +57,38 @@ class CheckEuDetailsAnswersController @Inject()(
               EuTaxReferenceSummary.row(waypoints, request.userAnswers, countryIndex, thisPage),
             ).flatten
           )
-
-          Ok(view(waypoints, countryIndex, country, list)).toFuture
+          
+          withCompleteDataModel[EuDetails](
+            index = countryIndex,
+            data = getIncompleteEuDetails _,
+            onFailure = (incomplete: Option[EuDetails]) => {
+              Ok(view(waypoints, countryIndex, country, list, incomplete.isDefined))
+            }) {
+            Ok(view(waypoints, countryIndex, country, list))
+          }.toFuture
       }
 
   }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index, incompletePromptShown: Boolean): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
-      Redirect(CheckEuDetailsAnswersPage(countryIndex).navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
+      withCompleteDataModel[EuDetails](
+        index = countryIndex,
+        data = getIncompleteEuDetails _,
+        onFailure = (_: Option[EuDetails]) => {
+          if (!incompletePromptShown) {
+            Redirect(CheckEuDetailsAnswersPage(countryIndex).route(waypoints).url)
+          } else {
+            val updatedWaypoints: Waypoints = waypoints
+              .setNextWaypoint(Waypoint(CheckEuDetailsAnswersPage(countryIndex), waypoints.currentMode, CheckEuDetailsAnswersPage(countryIndex).urlFragment))
+            incompleteEuDetailsRedirect(updatedWaypoints) match {
+              case Some(redirectResult) => redirectResult
+              case _ => Redirect(EuCountryPage(countryIndex).route(updatedWaypoints).url)
+            }
+          }
+        }) {
+        Redirect(CheckEuDetailsAnswersPage(countryIndex).navigate(waypoints, request.userAnswers, request.userAnswers).route)
+      }.toFuture
   }
 }

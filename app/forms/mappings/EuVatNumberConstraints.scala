@@ -24,6 +24,17 @@ trait EuVatNumberConstraints {
   def validateEuVatNumber(countryCode: String, errorKey: String): Constraint[String] = {
     Constraint {
       input =>
+       if (matchesCountryRegex(input, countryCode)) {
+          Valid
+        } else {
+          Invalid(errorKey)
+        }
+    }
+  }
+
+  def validateEuVatNumberOrEu(countryCode: String, errorKey: String): Constraint[String] = {
+    Constraint {
+      input =>
         if (checkEuRegistrationNumber(input)) {
           Valid
         } else if (matchesCountryRegex(input, countryCode)) {

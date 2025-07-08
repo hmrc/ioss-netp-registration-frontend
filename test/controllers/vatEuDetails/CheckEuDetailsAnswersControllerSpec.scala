@@ -18,7 +18,7 @@ package controllers.vatEuDetails
 
 import base.SpecBase
 import models.vatEuDetails.TradingNameAndBusinessAddress
-import models.{Country, InternationalAddress, RegistrationType, TradingName, UserAnswers}
+import models.{Country, Index, InternationalAddress, RegistrationType, TradingName, UserAnswers}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.mockito.MockitoSugar
@@ -33,6 +33,7 @@ import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
 import viewmodels.checkAnswers.vatEuDetails.*
 import viewmodels.govuk.SummaryListFluency
 import views.html.vatEuDetails.CheckEuDetailsAnswersView
+import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.Future
 
@@ -41,6 +42,7 @@ class CheckEuDetailsAnswersControllerSpec extends SpecBase with MockitoSugar wit
   private val euVatNumber: String = arbitraryEuVatNumber.sample.value
   private val countryCode: String = euVatNumber.substring(0, 2)
   private val country: Country = Country.euCountries.find(_.code == countryCode).head
+  private val countryIndex: Index = Index(0)
   private val tradingNameAndBusinessAddress: TradingNameAndBusinessAddress = TradingNameAndBusinessAddress(
     tradingName = TradingName("Company name"),
     address = InternationalAddress(
@@ -55,7 +57,7 @@ class CheckEuDetailsAnswersControllerSpec extends SpecBase with MockitoSugar wit
   lazy val checkEuDetailsAnswersRoute: String = routes.CheckEuDetailsAnswersController.onPageLoad(waypoints, countryIndex(0)).url
 
   private def checkEuDetailsAnswersSubmitRoute() =
-    routes.CheckEuDetailsAnswersController.onSubmit(waypoints, countryIndex(0)).url
+    routes.CheckEuDetailsAnswersController.onSubmit(waypoints, countryIndex(0), incompletePromptShown = false).url
 
   private val checkEuDetailsAnswersPage: CheckEuDetailsAnswersPage = CheckEuDetailsAnswersPage(countryIndex(0))
 
@@ -133,19 +135,23 @@ class CheckEuDetailsAnswersControllerSpec extends SpecBase with MockitoSugar wit
       }
     }
 
-    "must redirect to Journey Recovery for a POST if no existing data is found" in {
+    "must redirect to the next page when answers are complete on a POST" in {
 
-      val application = applicationBuilder(userAnswers = None).build()
+      val mockSessionRepository = mock[SessionRepository]
+
+      val application =
+        applicationBuilder(userAnswers = Some(answers))
+          .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
+          .build()
+
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
       running(application) {
-        val request =
-          FakeRequest(POST, checkEuDetailsAnswersRoute)
-            .withFormUrlEncodedBody(("value", "true"))
-
+        val request = FakeRequest(POST, routes.CheckEuDetailsAnswersController.onSubmit(waypoints, countryIndex, incompletePromptShown = false).url)
         val result = route(application, request).value
 
         status(result) `mustBe` SEE_OTHER
-        redirectLocation(result).value mustBe JourneyRecoveryPage.route(waypoints).url
+        redirectLocation(result).value mustBe CheckEuDetailsAnswersPage(countryIndex).navigate(waypoints, answers, answers).url
       }
     }
   }

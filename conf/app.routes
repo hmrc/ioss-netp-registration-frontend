@@ -159,10 +159,10 @@ GET        /eu-tax-identification-number/:countryIndex                  controll
 POST       /eu-tax-identification-number/:countryIndex                  controllers.vatEuDetails.EuTaxReferenceController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
 
 GET        /check-tax-details/:index                                    controllers.vatEuDetails.CheckEuDetailsAnswersController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
-POST       /check-tax-details/:index                                    controllers.vatEuDetails.CheckEuDetailsAnswersController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
+POST       /check-tax-details/:index                                    controllers.vatEuDetails.CheckEuDetailsAnswersController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, index: Index, incompletePromptShown: Boolean)
 
 GET        /add-tax-details                                             controllers.vatEuDetails.AddEuDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-POST       /add-tax-details                                             controllers.vatEuDetails.AddEuDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+POST       /add-tax-details                                             controllers.vatEuDetails.AddEuDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, incompletePromptShown: Boolean)
 
 GET        /remove-tax-details/:countryIndex                            controllers.vatEuDetails.DeleteEuDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
 POST       /remove-tax-details/:countryIndex                            controllers.vatEuDetails.DeleteEuDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)

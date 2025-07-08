@@ -18,7 +18,7 @@ package pages.previousRegistrations
 
 import models.{Index, UserAnswers}
 import pages.vatEuDetails.HasFixedEstablishmentPage
-import pages.{CheckYourAnswersPage, JourneyRecoveryPage, NonEmptyWaypoints, Page, QuestionPage, RecoveryOps, Waypoints}
+import pages.{JourneyRecoveryPage, NonEmptyWaypoints, Page, QuestionPage, RecoveryOps, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 import queries.previousRegistrations.DeriveNumberOfPreviousRegistrations

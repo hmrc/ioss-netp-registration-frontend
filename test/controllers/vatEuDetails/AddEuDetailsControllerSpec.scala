@@ -60,7 +60,7 @@ class AddEuDetailsControllerSpec extends SpecBase with MockitoSugar {
   lazy val addEuDetailsRoute: String = routes.AddEuDetailsController.onPageLoad(waypoints).url
 
   private def addEuDetailsRoutePost(waypoints: Waypoints = waypoints): String =
-    routes.AddEuDetailsController.onSubmit(waypoints).url
+    routes.AddEuDetailsController.onSubmit(waypoints, incompletePromptShown = false).url
 
   private val updatedAnswers: UserAnswers = emptyUserAnswersWithVatInfo
     .set(HasFixedEstablishmentPage, true).success.value
@@ -159,7 +159,7 @@ class AddEuDetailsControllerSpec extends SpecBase with MockitoSugar {
         implicit val msgs: Messages = messages(application)
 
         val request =
-          FakeRequest(POST, addEuDetailsRoute)
+          FakeRequest(POST, s"$addEuDetailsRoute?incompletePromptShown=true")
             .withFormUrlEncodedBody(("value", ""))
 
         val boundForm = form.bind(Map("value" -> ""))
@@ -195,7 +195,7 @@ class AddEuDetailsControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val request =
-          FakeRequest(POST, addEuDetailsRoute)
+          FakeRequest(POST, s"$addEuDetailsRoute?incompletePromptShown=false")
             .withFormUrlEncodedBody(("value", "true"))
 
         val result = route(application, request).value

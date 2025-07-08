@@ -23,7 +23,7 @@ import org.mockito.Mockito.when
 import org.scalacheck.Gen
 import org.scalatestplus.mockito.MockitoSugar
 import pages.*
-import pages.previousRegistrations.{PreviousEuCountryPage, PreviouslyRegisteredPage}
+import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.{HasTradingNamePage, TradingNamePage}
 import pages.website.WebsitePage
 import play.api.mvc.AnyContent
@@ -38,7 +38,6 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
   private val countries: Seq[Country] = Gen.listOf(arbitraryCountry.arbitrary).sample.value
   private val country: Country = Gen.oneOf(countries).sample.value
   private val tradingNameIndex: Index = Index(0)
-  private val index: Index = Index(0)
   private val tradingName: TradingName = arbitraryTradingName.arbitrary.sample.value
   private val businessAddress: InternationalAddress = InternationalAddress(
     line1 = "line-1",

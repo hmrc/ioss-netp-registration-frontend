@@ -27,17 +27,33 @@
     govukWarningText: GovukWarningText
 )
 
-@(waypoints: Waypoints, countryIndex: Index, country: Country, list: SummaryList)(implicit request: Request[_], messages: Messages)
+@(waypoints: Waypoints, countryIndex: Index, country: Country, list: SummaryList, incomplete: Boolean = false)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("checkEuDetailsAnswers.title", country.name))) {
 
+    @if(incomplete) {
+        @govukWarningText(WarningText(
+            iconFallbackText = Option(messages("site.warning")),
+            content = Text(messages("error.missing_answers"))
+        ))
+    }
 
     <h1 class="govuk-heading-l">@messages("checkEuDetailsAnswers.heading", country.name)</h1>
 
-    @formHelper(action = routes.CheckEuDetailsAnswersController.onSubmit(waypoints, countryIndex)) {
-
-        @govukSummaryList(list)
-
-        @button("site.continue", CheckEuDetailsAnswersPage(countryIndex).route(waypoints).url, waypoints)
+    @if(!incomplete) {
+        @formHelper(action = routes.CheckEuDetailsAnswersController.onSubmit(waypoints, countryIndex, incompletePromptShown = false)) {
+    
+            @govukSummaryList(list)
+    
+            @button("site.continue", CheckEuDetailsAnswersPage(countryIndex).route(waypoints).url, waypoints)
+        }
+    } else {
+        <h2 class="govuk-heading-m push--top">@messages("error.missing_answers_header")</h2>
+        <p class="govuk-body">@messages("error.missing_answers_prompt", country.name)</p>
+        
+        @formHelper(action = routes.CheckEuDetailsAnswersController.onSubmit(waypoints, countryIndex, incompletePromptShown = true)) {
+        
+            @button("error.resolve_missing_answers", CheckEuDetailsAnswersPage(countryIndex).route(waypoints).url, waypoints)
+        }
     }
 }
