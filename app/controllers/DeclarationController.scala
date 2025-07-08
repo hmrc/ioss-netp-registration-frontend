@@ -90,7 +90,7 @@ class DeclarationController @Inject()(
           }
         case Left(error)
         =>
-          logger.error(s"Received an unexpected error on pending registration submission: ${error.body}")
+          logger.error(s"Received an unexpected error when submitting the pending registration: ${error.body}")
           Redirect(ErrorSubmittingPendingRegistrationPage.route(waypoints).url).toFuture
       }
 
@@ -101,8 +101,8 @@ class DeclarationController @Inject()(
       case Right(vatInfo) =>
         vatInfo.organisationName.orElse(vatInfo.individualName)
       case _ =>
-        logger.error("Unable to get intermediary name as no organisation name or individual name registered")
-        throw new IllegalStateException("Unable to get intermediary name as no organisation name or individual name registered")
+        logger.error("Unable to retrieve an intermediary name as no Organisation name or Individual name is registered")
+        throw new IllegalStateException("Unable to retrieve an intermediary name as no Organisation name or Individual name is registered")
     }
   }
 

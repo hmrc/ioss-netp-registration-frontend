@@ -16,21 +16,24 @@
 
 package connectors
 
+import logging.Logging
 import models.emails.EmailSendingResult
 import models.emails.EmailSendingResult.{EMAIL_ACCEPTED, EMAIL_NOT_SENT, EMAIL_UNSENDABLE}
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 object EmailHttpParser {
 
-  implicit object EmailResponseReads extends HttpReads[EmailSendingResult] {
+  implicit object EmailResponseReads extends HttpReads[EmailSendingResult] with Logging {
 
     override def read(method: String, url: String, response: HttpResponse): EmailSendingResult = {
       response match {
         case r if r.status >= 200 && r.status < 300 =>
           EMAIL_ACCEPTED
         case r if r.status >= 400 && r.status < 500 =>
+          logger.error(s"There was an error sending the email: " + r.status + " " + r.body)
           EMAIL_UNSENDABLE
         case r if r.status >= 500 && r.status < 600 =>
+          logger.error(s"There was an error sending the email: " + r.status + " " + r.body)
           EMAIL_NOT_SENT
         case r =>
           EMAIL_ACCEPTED
