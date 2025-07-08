@@ -17,32 +17,24 @@
 package controllers
 
 import com.google.inject.Inject
-import connectors.RegistrationConnector
 import controllers.actions.*
 import logging.Logging
-import models.{CheckMode, SavedPendingRegistration}
-import pages.{CheckYourAnswersPage, EmptyWaypoints, ErrorSubmittingPendingRegistrationPage, NonEmptyWaypoints, Waypoint, Waypoints}
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import models.CheckMode
+import pages.{CheckYourAnswersPage, EmptyWaypoints, NonEmptyWaypoints, Waypoint, Waypoints}
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import services.EmailService
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
-import utils.GetClientEmail
 import viewmodels.checkAnswers.BusinessContactDetailsSummary
 import viewmodels.govuk.summarylist.*
 import views.html.CheckYourAnswersView
 
-import scala.concurrent.{ExecutionContext, Future}
-
 class CheckYourAnswersController @Inject()(
                                             override val messagesApi: MessagesApi,
                                             cc: AuthenticatedControllerComponents,
-                                            registrationConnector: RegistrationConnector,
-                                            emailService: EmailService,
                                             view: CheckYourAnswersView
-                                          )(implicit executionContext: ExecutionContext)
-  extends FrontendBaseController with I18nSupport with Logging with GetClientEmail with GetClientCompanyName {
+                                          )
+  extends FrontendBaseController with I18nSupport with Logging {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -70,50 +62,7 @@ class CheckYourAnswersController @Inject()(
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
-      registrationConnector.submitPendingRegistration(request.userAnswers).flatMap {
-        case Right(submittedRegistration) =>
-          getClientEmail(waypoints, submittedRegistration.userAnswers) { clientEmail =>
-            getClientCompanyName(waypoints) { clientCompanyName =>
-              getIntermediaryName().flatMap { intermediaryOpt =>
-                val intermediaryName = intermediaryOpt.getOrElse("")
 
-                sendEmail(submittedRegistration, clientEmail, clientCompanyName, intermediaryName)
-                Redirect(CheckYourAnswersPage.navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
-              }
-            }
-          }
-
-        case Left(error)
-        =>
-          logger.error(s"Received an unexpected error on pending registration submission: ${error.body}")
-          Redirect(ErrorSubmittingPendingRegistrationPage.route(waypoints).url).toFuture
-      }
+      Redirect(CheckYourAnswersPage.navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
   }
-
-  private def sendEmail(
-                         submittedRegistration: SavedPendingRegistration,
-                         clientEmail: String,
-                         clientCompanyName: String,
-                         intermediaryName: String
-                       )(implicit hc: HeaderCarrier, messages: Messages) = {
-
-    emailService.sendClientActivationEmail(
-      intermediary_name = intermediaryName,
-      recipientName_line1 = clientCompanyName,
-      activation_code_expiry_date = submittedRegistration.expirationDate,
-      activation_code = submittedRegistration.uniqueActivationCode,
-      emailAddress = clientEmail
-    )
-  }
-
-  private def getIntermediaryName()(implicit hc: HeaderCarrier): Future[Option[String]] = {
-    registrationConnector.getIntermediaryVatCustomerInfo().map {
-      case Right(vatInfo) =>
-        vatInfo.organisationName.orElse(vatInfo.individualName)
-      case _ =>
-        None
-    }
-  }
-
 }
-

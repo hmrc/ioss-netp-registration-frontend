@@ -37,17 +37,10 @@ import views.html.CheckYourAnswersView
 
 class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency with BeforeAndAfterEach {
 
-  private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
-
-  private val businessContactDetails: BusinessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
-  private val clientBusinessName: ClientBusinessName = ClientBusinessName("Client Business Name")
   private val completeUserAnswers: UserAnswers = emptyUserAnswers
-    .set(BusinessContactDetailsPage, businessContactDetails).success.value
-    .set(ClientBusinessNamePage, clientBusinessName).success.value
 
-  override def beforeEach(): Unit = {
-    Mockito.reset(mockRegistrationConnector)
-  }
+
+
 
   "Check Your Answers Controller" - {
 
@@ -80,7 +73,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
         val application = applicationBuilder(userAnswers = None).build()
 
         running(application) {
-          val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onPageLoad().url)
 
           val result = route(application, request).value
 
@@ -92,20 +85,10 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
 
     ".onSubmit" - {
 
-      "must redirect to the next page for a POST when a valid response is received from the backend" in {
-
-        val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
-
-        val savedPendingRegWithUserAnswers: SavedPendingRegistration = savedPendingRegistration.copy(
-          userAnswers = completeUserAnswers
-        )
+      "must redirect to the next page when navigating to the declaration" in {
 
         val application = applicationBuilder(userAnswers = Some(completeUserAnswers))
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
           .build()
-
-        when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any())) thenReturn Right(vatCustomerInfo).toFuture
-        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
 
         running(application) {
           val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints).url)
@@ -114,26 +97,6 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
           
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value `mustBe` CheckYourAnswersPage.navigate(waypoints, completeUserAnswers, completeUserAnswers).url
-          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(completeUserAnswers))(any())
-        }
-      }
-
-      "must redirect to the correct page when an error is returned from the backend" in {
-
-        val application = applicationBuilder(userAnswers = Some(completeUserAnswers))
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
-          .build()
-
-        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Left(InternalServerError).toFuture
-
-        running(application) {
-          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints).url)
-
-          val result = route(application, request).value
-
-          status(result) `mustBe` SEE_OTHER
-          redirectLocation(result).value `mustBe` ErrorSubmittingPendingRegistrationPage.route(waypoints).url
-          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(completeUserAnswers))(any())
         }
       }
     }
