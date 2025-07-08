@@ -21,7 +21,7 @@ import play.api.data.validation.{Constraint, Invalid, Valid}
 
 trait EuVatNumberConstraints {
 
-  def validateEuVatNumberOrEu(countryCode: String, errorKey: String): Constraint[String] =
+  def validateEuVatNumber(countryCode: String, errorKey: String): Constraint[String] = {
     Constraint {
       input =>
         if (checkEuRegistrationNumber(input)) {
@@ -32,21 +32,23 @@ trait EuVatNumberConstraints {
           Invalid(errorKey)
         }
     }
+  }
 
-  private def checkEuRegistrationNumber(input: String): Boolean =
-    val regex = """^(?i)EU[0-9]{9}$"""
-    input.matches(regex)
-
-  private def matchesCountryRegex(input: String, countryCode: String): Boolean =
-    val regex = getCountryVatRegex(countryCode)
-    input.matches(regex)
-
-
-  private def getCountryVatRegex(countryCode: String): String =
+  private def getCountryVatRegex(countryCode: String): String = {
     CountryWithValidationDetails.euCountriesWithVRNValidationRules.find(_.country.code == countryCode)
     match {
       case Some(countryWithValidationDetails) =>
         countryWithValidationDetails.vrnRegex
       case _ => throw new Exception("invalid country code")
     }
+  }
+
+  private def checkEuRegistrationNumber(input: String): Boolean =
+    val regex = """^(?i)EU[0-9]{9}$"""
+    input.matches(regex)
+
+  private def matchesCountryRegex(input: String, countryCode: String): Boolean = {
+    val regex = getCountryVatRegex(countryCode)
+    input.matches(regex)
+  }
 }

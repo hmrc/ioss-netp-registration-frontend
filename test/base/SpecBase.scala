@@ -19,7 +19,7 @@ package base
 import controllers.actions.*
 import generators.Generators
 import models.domain.VatCustomerInfo
-import models.{BusinessContactDetails, CheckMode, UserAnswers}
+import models.{BusinessContactDetails, Index, CheckMode, UserAnswers}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -47,6 +47,7 @@ trait SpecBase
     with Generators {
 
   val userAnswersId: String = "12345-credId"
+  def countryIndex(index: Int): Index = Index(index)
 
   val journeyId: String = UUID.randomUUID().toString
 
@@ -63,7 +64,7 @@ trait SpecBase
   def emptyUserAnswers: UserAnswers = UserAnswers(id = userAnswersId, journeyId = journeyId, lastUpdated = arbitraryInstant)
 
   def emptyUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.copy(vatInfo = Some(vatCustomerInfo))
-  
+
   def basicUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.set(BusinessBasedInUKPage, true).success.value.copy(vatInfo = Some(vatCustomerInfo))
 
   val vatNumber = "GB123456789"

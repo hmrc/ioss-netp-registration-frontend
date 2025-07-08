@@ -22,6 +22,7 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.TryValues
 import pages.previousRegistrations.*
 import pages.{ClientBusinessAddressPage, *}
+import pages.vatEuDetails.*
 import play.api.libs.json.{JsValue, Json}
 
 trait UserAnswersGenerator extends TryValues {
@@ -37,6 +38,13 @@ trait UserAnswersGenerator extends TryValues {
       arbitrary[(PreviousOssNumberPage, JsValue)] ::
       arbitrary[(PreviousIossNumberPage, JsValue)] ::
       arbitrary[(DeleteAllPreviousRegistrationsPage.type, JsValue)] ::
+      arbitrary[(HasFixedEstablishmentPage.type, JsValue)] ::
+      arbitrary[(EuCountryPage, JsValue)] ::
+      arbitrary[(TradingNameAndBusinessAddressPage, JsValue)] ::
+      arbitrary[(RegistrationTypePage, JsValue)] ::
+      arbitrary[(EuVatNumberPage, JsValue)] ::
+      arbitrary[(EuTaxReferencePage, JsValue)] ::
+      arbitrary[(AddEuDetailsPage, JsValue)] ::
       Nil
   }
 

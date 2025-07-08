@@ -20,6 +20,7 @@ import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
 import models.*
 import models.etmp.SchemeType
+import models.vatEuDetails.TradingNameAndBusinessAddress
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.{choose, listOfN}
 import org.scalacheck.{Arbitrary, Gen}
@@ -32,7 +33,14 @@ import java.util.UUID
 
 trait ModelGenerators extends EitherValues {
 
+  implicit lazy val arbitraryRegistrationType: Arbitrary[RegistrationType] =
+    Arbitrary {
+      Gen.oneOf(RegistrationType.values.toSeq)
+    }
+
   private val maxFieldLength: Int = 35
+
+  private val maxEuTaxReferenceLength: Int = 20
 
   private def commonFieldString(maxLength: Int): Gen[String] = (for {
     length <- choose(1, maxLength)
@@ -94,11 +102,20 @@ trait ModelGenerators extends EitherValues {
       )
     }
 
+  implicit lazy val arbitraryTradingName: Arbitrary[TradingName] = {
+    Arbitrary {
+      for {
+        name <- commonFieldString(maxFieldLength)
+      } yield {
+        TradingName(name)
+      }
+    }
+  }
+
   implicit lazy val arbitraryCountry: Arbitrary[Country] =
     Arbitrary {
       Gen.oneOf(Country.allCountries)
     }
-
 
   implicit val arbitraryVatCustomerInfo: Arbitrary[VatCustomerInfo] = {
     Arbitrary {
@@ -215,5 +232,24 @@ trait ModelGenerators extends EitherValues {
   implicit lazy val arbitraryPreviousSchemeType: Arbitrary[PreviousSchemeType] =
     Arbitrary {
       Gen.oneOf(PreviousSchemeType.values)
+    }
+
+  implicit lazy val arbitraryEuVatNumber: Gen[String] = {
+    for {
+      countryCode <- Gen.oneOf(Country.euCountries.map(_.code))
+      matchedCountryRule = CountryWithValidationDetails.euCountriesWithVRNValidationRules.find(_.country.code == countryCode).head
+    } yield s"$countryCode${matchedCountryRule.exampleVrn}"
+  }
+
+  implicit lazy val genEuTaxReference: Gen[String] = {
+    Gen.listOfN(maxEuTaxReferenceLength, Gen.alphaNumChar).map(_.mkString)
+  }
+
+  implicit lazy val arbitraryTradingNameAndBusinessAddress: Arbitrary[TradingNameAndBusinessAddress] =
+    Arbitrary {
+      for {
+        name <- arbitrary[TradingName]
+        addr <- arbitrary[InternationalAddress]
+      } yield TradingNameAndBusinessAddress(name, addr)
     }
 }

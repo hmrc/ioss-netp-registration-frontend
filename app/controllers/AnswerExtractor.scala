@@ -17,15 +17,17 @@
 package controllers
 
 import logging.Logging
+import models.UserAnswers
 import models.requests.DataRequest
 import pages.{JourneyRecoveryPage, Waypoints}
-import play.api.libs.json.Reads
+import play.api.libs.json.{JsArray, JsObject, Reads}
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{AnyContent, Result}
-import queries.Gettable
+import queries.{Derivable, Gettable, Settable}
 import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.Future
+import scala.util.Try
 
 trait AnswerExtractor extends Logging {
 
@@ -51,6 +53,13 @@ trait AnswerExtractor extends Logging {
         logAnswerNotFoundMessage(query)
         Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture
       })
+  }
+
+  def cleanupEmptyAnswers(answers: UserAnswers, derivable: Derivable[Seq[JsObject], Int], query: Settable[JsArray]): Try[UserAnswers] = {
+    answers.get(derivable) match {
+      case Some(n) if n == 0 => answers.remove(query)
+      case _ => Try(answers)
+    }
   }
 
   private def logAnswerNotFoundMessage[T](query: Gettable[T]): Unit = logger.warn(s"$query question has not been answered")

@@ -355,3 +355,81 @@ deleteAllPreviousRegistrations.heading = Remove all your previous registrations 
 deleteAllPreviousRegistrations.warning = This will delete all your previous registrations you have added.
 deleteAllPreviousRegistrations.error.required = Select yes if you want to remove all your previous registrations from this scheme
 
+euCountry.title = Which country is their fixed establishment in?
+euCountry.heading = Which country is their fixed establishment in?
+euCountry.error.required = Please select which country their fixed establishment is in
+euCountry.error.duplicate = You selected this country already. Select a different one
+euCountry.checkYourAnswersLabel = Country
+euCountry.change.hidden = Country
+
+hasFixedEstablishment.title = Does your client''s business have a fixed establishment in an EU country?
+hasFixedEstablishment.heading = Does your client''s business have a fixed establishment in an EU country?
+hasFixedEstablishment.checkYourAnswersLabel = Has fixed establishment
+hasFixedEstablishment.error.required = Select yes if your business has a fixed establishment in an EU country
+hasFixedEstablishment.change.hidden = if your business has a fixed establishment in an EU country
+
+registrationType.title = What sort of registration does your client have in {0}?
+registrationType.heading = What sort of registration does your client have in {0}?
+registrationType.vatNumber = VAT number
+registrationType.taxId = Tax ID number
+registrationType.checkYourAnswersLabel = Tax registration type
+registrationType.error.required = Select a registration type for {0}
+registrationType.change.hidden = your client''s registration type
+
+euVatNumber.title = What is your client''s VAT registration number for {0}?
+euVatNumber.heading = What is your client''s VAT registration number for {0}?
+euVatNumber.hint = This will start with {0}, for example {0}{1}.
+euVatNumber.checkYourAnswersLabel = VAT number
+euVatNumber.error.required = Enter your client''s VAT registration number for {0}
+euVatNumber.error.invalid = Enter a registration number in the correct format
+euVatNumber.change.hidden = your client''s VAT registration number
+
+euTaxReference.title = What is your client''s business tax identification number for {0}?
+euTaxReference.heading = What is your client''s business tax identification number for {0}?
+euTaxReference.error.required = Enter your client''s business tax identification number for {0}
+euTaxReference.error.length = Tax identification number must be 20 characters or less
+euTaxReference.error.format = Tax identification number must only include letters, numbers and spaces
+euTaxReference.checkYourAnswersLabel = Tax ID Number
+euTaxReference.change.hidden = your client''s Tax ID Number
+
+tradingNameAndBusinessAddress.title = What is your client''s business trading name and address in {0}?
+tradingNameAndBusinessAddress.heading = What is your client''s business trading name and address in {0}?
+tradingNameAndBusinessAddress.tradingName = Trading name
+tradingNameAndBusinessAddress.line1 = Address line 1
+tradingNameAndBusinessAddress.line2 = Address line 2 (optional)
+tradingNameAndBusinessAddress.townOrCity = Town or city
+tradingNameAndBusinessAddress.stateOrRegion = Region or state (optional)
+tradingNameAndBusinessAddress.postCode = Postcode (optional)
+tradingNameAndBusinessAddress.checkYourAnswersLabel = Trading name and address
+tradingNameAndBusinessAddress.error.tradingName.required = Enter your trading name
+tradingNameAndBusinessAddress.error.tradingName.length = Trading name must be 100 characters or less
+tradingNameAndBusinessAddress.error.tradingName.invalid = Trading name must only include letters, numbers, hyphens, spaces and apostrophes
+tradingNameAndBusinessAddress.change.tradingName.hidden = your trading name
+tradingNameAndBusinessAddress.error.line1.required = Enter address line 1
+tradingNameAndBusinessAddress.error.townOrCity.required = Enter the town or city
+tradingNameAndBusinessAddress.error.line1.length = Address line 1 must be 35 characters or less
+tradingNameAndBusinessAddress.error.line1.format = Address line 1 must only include letters, numbers, hyphens, spaces and apostrophes
+tradingNameAndBusinessAddress.error.line2.length = Address line 2 must be 35 characters or less
+tradingNameAndBusinessAddress.error.line2.format = Address line 2 must only include letters, numbers, hyphens, spaces and apostrophes
+tradingNameAndBusinessAddress.error.townOrCity.length = Town or city must be 35 characters or less
+tradingNameAndBusinessAddress.error.townOrCity.format = Town or city must only include letters, numbers, hyphens, spaces and apostrophes
+tradingNameAndBusinessAddress.error.stateOrRegion.length = State or region must be 35 characters or less
+tradingNameAndBusinessAddress.error.stateOrRegion.format = State or region must only include letters, numbers, hyphens, spaces and apostrophes
+tradingNameAndBusinessAddress.error.postCode.length = Postcode must be 40 characters or less
+tradingNameAndBusinessAddress.error.postCode.invalid = Postcode must only include letters, numbers and spaces
+
+checkEuDetailsAnswers.title = Check your answers for {0}
+checkEuDetailsAnswers.heading = Check your answers for {0}
+
+addEuDetails.title.singular = You added details for one EU country
+addEuDetails.title.plural = You added details for {0} EU countries
+addEuDetails.heading.singular = You added details for one EU country
+addEuDetails.heading.plural = You added details for {0} EU countries
+addEuDetails.error.required = Select yes if you want to add VAT details for another EU country
+addEuDetails.addAnother = Add tax details for another EU country?
+addEuDetails.addAnother.hint = You must tell us your client''s tax details for all EU countries.
+addEuDetails.maximumReached = You have added details for every EU country
+
+deleteEuDetails.title = Are you sure you want to remove the tax details for {0}?
+deleteEuDetails.heading = Are you sure you want to remove the tax details for {0}?
+deleteEuDetails.error.required = Select yes if you want to remove the tax details for {0}

@@ -19,6 +19,7 @@ package pages
 import models.{CheckMode, Mode, NormalMode}
 import pages.previousRegistrations.{AddPreviousRegistrationPage, CheckPreviousSchemeAnswersPage}
 import pages.tradingNames.AddTradingNamePage
+import pages.vatEuDetails.{AddEuDetailsPage, CheckEuDetailsAnswersPage}
 import pages.website.AddWebsitePage
 
 import scala.language.postfixOps
@@ -39,6 +40,8 @@ object Waypoint {
       AddPreviousRegistrationPage().checkModeUrlFragment -> AddPreviousRegistrationPage().waypoint(CheckMode),
       AddWebsitePage().normalModeUrlFragment ->  AddWebsitePage().waypoint(NormalMode),
       AddWebsitePage().checkModeUrlFragment ->  AddWebsitePage().waypoint(CheckMode),
+      AddEuDetailsPage().normalModeUrlFragment -> AddEuDetailsPage().waypoint(NormalMode),
+      AddEuDetailsPage().checkModeUrlFragment -> AddEuDetailsPage().waypoint(CheckMode),
       CheckVatDetailsPage().urlFragment -> CheckVatDetailsPage().waypoint,
       CheckYourAnswersPage.urlFragment -> CheckYourAnswersPage.waypoint
     )
@@ -46,4 +49,5 @@ object Waypoint {
   def fromString(s: String): Option[Waypoint] =
     fragments.get(s)
       .orElse(CheckPreviousSchemeAnswersPage.waypointFromString(s))
+      .orElse(CheckEuDetailsAnswersPage.waypointFromString(s))
 }

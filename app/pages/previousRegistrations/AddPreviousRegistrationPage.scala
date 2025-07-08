@@ -18,7 +18,8 @@ package pages.previousRegistrations
 
 import controllers.previousRegistrations.routes
 import models.{Country, Index, UserAnswers}
-import pages.{AddItemPage, CheckYourAnswersPage, Page, QuestionPage, RecoveryOps, Waypoints}
+import pages.vatEuDetails.HasFixedEstablishmentPage
+import pages.{AddItemPage, Page, QuestionPage, RecoveryOps, Waypoints}
 import play.api.libs.json.{JsObject, JsPath}
 import play.api.mvc.Call
 import queries.Derivable
@@ -54,7 +55,7 @@ case class AddPreviousRegistrationPage(override val index: Option[Index] = None)
             if (i.position + 1 < Country.euCountries.size) {
               PreviousEuCountryPage(Index(i.position + 1))
             } else {
-              CheckYourAnswersPage //todo EU details page
+              HasFixedEstablishmentPage
             }
           }
           .getOrElse {
@@ -63,7 +64,7 @@ case class AddPreviousRegistrationPage(override val index: Option[Index] = None)
               .map(n => PreviousEuCountryPage(Index(n)))
               .orRecover
           }
-      case false => CheckYourAnswersPage //todo EU details page
+      case false => HasFixedEstablishmentPage
     }.orRecover
   }
 

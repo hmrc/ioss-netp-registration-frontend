@@ -21,6 +21,7 @@ import org.scalacheck.Arbitrary
 import pages.BusinessContactDetailsPage
 import pages.ClientBusinessAddressPage
 import pages.previousRegistrations.*
+import pages.vatEuDetails.*
 
 
 trait PageGenerators {
@@ -66,5 +67,37 @@ trait PageGenerators {
 
   implicit lazy val arbitraryDeleteAllPreviousRegistrationsPage: Arbitrary[DeleteAllPreviousRegistrationsPage.type] = {
     Arbitrary(DeleteAllPreviousRegistrationsPage)
+  }
+
+  implicit lazy val arbitraryHasFixedEstablishmentPage: Arbitrary[HasFixedEstablishmentPage.type] = {
+    Arbitrary(HasFixedEstablishmentPage)
+  }
+
+  implicit lazy val arbitraryEuCountryPage: Arbitrary[EuCountryPage] = {
+    Arbitrary(EuCountryPage(Index(0)))
+  }
+
+  implicit lazy val arbitraryTradingNameAndAddress: Arbitrary[TradingNameAndBusinessAddressPage] = {
+    Arbitrary(TradingNameAndBusinessAddressPage(Index(0)))
+  }
+
+  implicit lazy val arbitraryRegistrationTypePage: Arbitrary[RegistrationTypePage] = {
+    Arbitrary(RegistrationTypePage(Index(0)))
+  }
+
+  implicit lazy val arbitraryEuVatNumberPage: Arbitrary[EuVatNumberPage] = {
+    Arbitrary(EuVatNumberPage(Index(0)))
+  }
+
+  implicit lazy val arbitraryEuTaxReferencePage: Arbitrary[EuTaxReferencePage] = {
+    Arbitrary(EuTaxReferencePage(Index(0)))
+  }
+
+  implicit lazy val arbitraryAddEuDetailsPage: Arbitrary[AddEuDetailsPage] = {
+    Arbitrary(AddEuDetailsPage(Some(Index(1))))
+  }
+
+  implicit lazy val arbitraryDeleteEuDetailsPage: Arbitrary[DeleteEuDetailsPage] = {
+    Arbitrary(DeleteEuDetailsPage(Index(0)))
   }
 }
