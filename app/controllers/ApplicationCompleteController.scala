@@ -49,11 +49,7 @@ class ApplicationCompleteController @Inject()(
         registrationConnector.getPendingRegistration(request.userAnswers.journeyId).flatMap {
           case Right(savedPendingRegistration) =>
 
-            val activationExpiryDate: String = LocalDateTime
-              .ofInstant(savedPendingRegistration.lastUpdated, ZoneId.systemDefault())
-              .plusDays(pendingRegistrationTTL).format(dateFormatter)
-
-            Ok(view(clientCompanyName, savedPendingRegistration.uniqueUrlCode, activationExpiryDate)).toFuture
+            Ok(view(clientCompanyName, savedPendingRegistration.uniqueUrlCode, savedPendingRegistration.activationExpiryDate)).toFuture
 
           case Left(errors) =>
             val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given journey ID: $errors."

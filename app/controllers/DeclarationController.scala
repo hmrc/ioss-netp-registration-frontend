@@ -116,7 +116,7 @@ class DeclarationController @Inject()(
     emailService.sendClientActivationEmail(
       intermediary_name = intermediaryName,
       recipientName_line1 = clientCompanyName,
-      activation_code_expiry_date = submittedRegistration.expirationDate,
+      activation_code_expiry_date = submittedRegistration.activationExpiryDate,
       activation_code = submittedRegistration.uniqueActivationCode,
       emailAddress = clientEmail
     )

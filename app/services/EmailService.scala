@@ -38,7 +38,7 @@ class EmailService @Inject()(
                                  intermediary_name: String,
                                  recipientName_line1: String,
                                  activation_code: String,
-                                 activation_code_expiry_date: LocalDate,
+                                 activation_code_expiry_date: String,
                                  emailAddress: String,
                                )(implicit hc: HeaderCarrier, messages: Messages): Future[EmailSendingResult] = {
 
@@ -47,7 +47,7 @@ class EmailService @Inject()(
         intermediary_name,
         recipientName_line1,
         activation_code,
-        format(activation_code_expiry_date)
+        activation_code_expiry_date
       )
 
     emailConnector.send(
@@ -58,11 +58,6 @@ class EmailService @Inject()(
       )
     )
   }
-
-  private def format(date: LocalDate) = {
-    val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
-    date.format(formatter)
-  }
-
+  
 }
 
