@@ -22,13 +22,13 @@ import pages.{JourneyRecoveryPage, Page, QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
-case object ClientCodeEntryPage extends QuestionPage[String] {
+case class ClientCodeEntryPage(uniqueUrlCode:String) extends QuestionPage[String] {
 
   override def path: JsPath = JsPath \ toString
 
   override def toString: String = "clientCodeEntry"
 
-  override def route(waypoints: Waypoints, uniqueUrlCode:String): Call = {
+  override def route(waypoints: Waypoints): Call = {
     controllers.clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(waypoints, uniqueUrlCode)
   }
 

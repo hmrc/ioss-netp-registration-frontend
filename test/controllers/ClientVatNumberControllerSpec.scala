@@ -35,6 +35,7 @@ import repositories.SessionRepository
 import utils.FutureSyntax.FutureOps
 import views.html.ClientVatNumberView
 
+import java.time.LocalDate
 import scala.concurrent.Future
 
 class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
@@ -122,6 +123,37 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
         redirectLocation(result).value `mustBe` ClientVatNumberPage.navigate(waypoints, emptyUserAnswers, expectedAnswers).url
         verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
         verify(mockRegistrationConnector, times(1)).getVatCustomerInfo(eqTo(ukVatNumber))(any())
+      }
+    }
+
+    "must not save the answers and redirect to the ExpiredVrnController when deregistrationDate" in {
+
+      val vatCustomerInfo = arbitraryVatCustomerInfo.arbitrary.sample.value
+      val expiredVrnVatInfo = vatCustomerInfo.copy(deregistrationDecisionDate = Some(LocalDate.now(stubClockAtArbitraryDate)))
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
+      when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Future.successful(Right(expiredVrnVatInfo))
+
+      val application =
+        applicationBuilder(userAnswers = Some(emptyUserAnswers))
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[RegistrationConnector].toInstance(mockRegistrationConnector)
+          )
+          .build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, clientVatNumberRoute)
+            .withFormUrlEncodedBody(("value", ukVatNumber))
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` controllers.routes.ExpiredVrnDateController.onPageLoad(waypoints).url
+        verifyNoInteractions(mockSessionRepository)
       }
     }
 

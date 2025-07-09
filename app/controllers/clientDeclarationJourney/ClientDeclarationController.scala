@@ -73,7 +73,7 @@ class ClientDeclarationController @Inject()(
           for {
             updatedAnswers <- Future.fromTry(originalAnswers.set(ClientDeclarationPage, value))
             _              <- sessionRepository.set(updatedAnswers)
-            } yield Redirect(ClientCodeEntryPage.navigate(waypoints, originalAnswers, updatedAnswers).route)
+            } yield Redirect(ClientDeclarationPage.navigate(waypoints, originalAnswers, updatedAnswers).route)
       )
   }
 }

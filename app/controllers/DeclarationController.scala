@@ -19,26 +19,32 @@ package controllers
 import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.DeclarationFormProvider
-
-import javax.inject.Inject
-import pages.DeclarationPage
-import pages.Waypoints
+import logging.Logging
+import models.SavedPendingRegistration
+import models.emails.EmailSendingResult
+import pages.{DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints}
 import play.api.data.Form
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import services.EmailService
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.FutureSyntax.FutureOps
+import utils.GetClientEmail
 import views.html.DeclarationView
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class DeclarationController @Inject()(
-                                         override val messagesApi: MessagesApi,
-                                         cc: AuthenticatedControllerComponents,
-                                         formProvider: DeclarationFormProvider,
-                                         registrationConnector: RegistrationConnector,
-                                         view: DeclarationView
-                                 )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetClientCompanyName {
+                                       override val messagesApi: MessagesApi,
+                                       cc: AuthenticatedControllerComponents,
+                                       formProvider: DeclarationFormProvider,
+                                       registrationConnector: RegistrationConnector,
+                                       emailService: EmailService,
+                                       view: DeclarationView
+                                     )(implicit ec: ExecutionContext)
+  extends FrontendBaseController with I18nSupport with GetClientCompanyName with Logging with GetClientEmail {
 
   val form: Form[Boolean] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -62,23 +68,32 @@ class DeclarationController @Inject()(
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
+      registrationConnector.submitPendingRegistration(request.userAnswers).flatMap {
+        case Right(submittedRegistration) =>
+          getClientEmail(waypoints, submittedRegistration.userAnswers) { clientEmail =>
+            getClientCompanyName(waypoints) { clientCompanyName =>
+              getIntermediaryName().flatMap { intermediaryOpt =>
+                val intermediaryName = intermediaryOpt.getOrElse("")
+                sendEmail(submittedRegistration, clientEmail, clientCompanyName, intermediaryName)
+                form.bindFromRequest().fold(
+                  formWithErrors =>
+                    Future.successful(BadRequest(view(formWithErrors, waypoints, intermediaryName, clientCompanyName))),
 
-      getClientCompanyName(waypoints) { clientCompanyName =>
-        getIntermediaryName().flatMap { intermediaryOpt =>
-          val intermediaryName = intermediaryOpt.getOrElse("")
-
-          form.bindFromRequest().fold(
-            formWithErrors =>
-              Future.successful(BadRequest(view(formWithErrors, waypoints, intermediaryName, clientCompanyName))),
-
-            value =>
-              for {
-                updatedAnswers <- Future.fromTry(request.userAnswers.set(DeclarationPage, value))
-                _ <- cc.sessionRepository.set(updatedAnswers)
-              } yield Redirect(DeclarationPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
-          )
-        }
+                  value =>
+                    for {
+                      updatedAnswers <- Future.fromTry(request.userAnswers.set(DeclarationPage, value))
+                      _ <- cc.sessionRepository.set(updatedAnswers)
+                    } yield Redirect(DeclarationPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+                )
+              }
+            }
+          }
+        case Left(error)
+        =>
+          logger.error(s"Received an unexpected error when submitting the pending registration: ${error.body}")
+          Redirect(ErrorSubmittingPendingRegistrationPage.route(waypoints).url).toFuture
       }
+
   }
 
   private def getIntermediaryName()(implicit hc: HeaderCarrier): Future[Option[String]] = {
@@ -86,7 +101,24 @@ class DeclarationController @Inject()(
       case Right(vatInfo) =>
         vatInfo.organisationName.orElse(vatInfo.individualName)
       case _ =>
-        None
+        logger.error("Unable to retrieve an intermediary name as no Organisation name or Individual name is registered")
+        throw new IllegalStateException("Unable to retrieve an intermediary name as no Organisation name or Individual name is registered")
     }
+  }
+
+  private def sendEmail(
+                         submittedRegistration: SavedPendingRegistration,
+                         clientEmail: String,
+                         clientCompanyName: String,
+                         intermediaryName: String
+                       )(implicit hc: HeaderCarrier, messages: Messages): Future[EmailSendingResult] = {
+
+    emailService.sendClientActivationEmail(
+      intermediary_name = intermediaryName,
+      recipientName_line1 = clientCompanyName,
+      activation_code_expiry_date = submittedRegistration.activationExpiryDate,
+      activation_code = submittedRegistration.uniqueActivationCode,
+      emailAddress = clientEmail
+    )
   }
 }

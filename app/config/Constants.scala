@@ -21,4 +21,11 @@ object Constants {
   val maxWebsites: Int = 10
   val intermediaryEnrolmentKey: String = "IntNumber"
   val pendingRegistrationTTL: Int = 28
+
+  val clientDeclarationEmailTemplateId: String = "ioss_netp_email_declaration_code"
+
+  val maxSchemes: Int = 3
+  val maxOssSchemes: Int = 2
+  val maxIossSchemes: Int = 1
+  val lastSchemeForCountry: Int = 1
 }

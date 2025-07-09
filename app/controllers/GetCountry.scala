@@ -16,11 +16,12 @@
 
 package controllers
 
-import models.requests._
-import models.Country
+import models.requests.*
+import models.{Country, Index}
+import pages.previousRegistrations.PreviousEuCountryPage
 import pages.{ClientCountryBasedPage, JourneyRecoveryPage, Waypoints}
 import play.api.mvc.Results.Redirect
-import play.api.mvc.Result
+import play.api.mvc.{AnyContent, Result}
 import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.Future
@@ -34,4 +35,13 @@ trait GetCountry {
       block(country)
     }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
   }
+
+  def getPreviousCountry(waypoints: Waypoints, index: Index)
+                        (block: Country => Future[Result])
+                        (implicit request: DataRequest[AnyContent]): Future[Result] =
+    request.userAnswers.get(PreviousEuCountryPage(index)).map {
+      country =>
+        block(country)
+    }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
+    
 }

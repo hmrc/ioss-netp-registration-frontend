@@ -20,7 +20,6 @@ import base.SpecBase
 import connectors.RegistrationConnector
 import forms.CheckVatDetailsFormProvider
 import models.checkVatDetails.CheckVatDetails
-import models.requests.DataRequest
 import models.{ClientBusinessName, Country, InternationalAddress, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.when
@@ -30,7 +29,6 @@ import pages.*
 import play.api.data.Form
 import play.api.i18n.Messages
 import play.api.inject.bind
-import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
@@ -38,7 +36,7 @@ import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
 import viewmodels.CheckVatDetailsViewModel
 import viewmodels.checkAnswers.*
 import viewmodels.govuk.all.SummaryListViewModel
-import views.html.{CheckVatDetailsView, ConfirmClientVatDetailsView}
+import views.html.CheckVatDetailsView
 
 import scala.concurrent.Future
 
@@ -93,6 +91,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
     .set(ClientVatNumberPage, vatNumber).success.value
 
   lazy val checkVatDetailsRoute: String = routes.CheckVatDetailsController.onPageLoad(waypoints).url
+  lazy val checkVatDetailsPostRoute: String = routes.CheckVatDetailsController.onSubmit(waypoints).url
 
   "CheckVatDetails Controller" - {
 
@@ -109,20 +108,20 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
           val result = route(application, request).value
 
-          val view = application.injector.instanceOf[ConfirmClientVatDetailsView]
+          val view = application.injector.instanceOf[CheckVatDetailsView]
 
           val summaryList: SummaryList = SummaryListViewModel(
             rows = Seq(
               BusinessBasedInUKSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage),
-              ClientBusinessNameSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage),
               ClientCountryBasedSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage),
               ClientTaxReferenceSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage),
+              ClientBusinessNameSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage),
               ClientBusinessAddressSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage)
             ).flatten
           )
 
           status(result) `mustBe` OK
-          contentAsString(result) mustBe view(waypoints, summaryList, companyName)(request, messages(application)).toString
+          contentAsString(result) mustBe view(waypoints, None, summaryList, companyName, isBasedInUk = false, hasVatNumber = false)(request, messages(application)).toString
 
         }
       }
@@ -142,7 +141,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
         running(application) {
           val request =
-            FakeRequest(POST, checkVatDetailsRoute)
+            FakeRequest(POST, checkVatDetailsPostRoute)
 
           val result = route(application, request).value
 
@@ -202,7 +201,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
               val result = route(application, request).value
 
-              val view = application.injector.instanceOf[ConfirmClientVatDetailsView]
+              val view = application.injector.instanceOf[CheckVatDetailsView]
 
               val summaryList: SummaryList = SummaryListViewModel(
                 rows = Seq(
@@ -216,7 +215,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
               )
 
               status(result) `mustBe` OK
-              contentAsString(result) `mustBe` view(waypoints, summaryList, companyName)(request, messages(application)).toString
+              contentAsString(result) `mustBe` view(waypoints, None, summaryList, companyName, isBasedInUk = true, hasVatNumber = false)(request, messages(application)).toString
             }
           }
 
@@ -235,7 +234,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
             running(application) {
               val request =
-                FakeRequest(POST, checkVatDetailsRoute)
+                FakeRequest(POST, checkVatDetailsPostRoute)
 
               val result = route(application, request).value
 
@@ -289,7 +288,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
               val result = route(application, request).value
 
-              val view = application.injector.instanceOf[ConfirmClientVatDetailsView]
+              val view = application.injector.instanceOf[CheckVatDetailsView]
 
               val summaryList: SummaryList = SummaryListViewModel(
                 rows = Seq(
@@ -303,7 +302,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
               )
 
               status(result) `mustBe` OK
-              contentAsString(result) `mustBe` view(waypoints, summaryList, companyName)(request, messages(application)).toString
+              contentAsString(result) `mustBe` view(waypoints, None, summaryList, companyName, isBasedInUk = true, hasVatNumber = false)(request, messages(application)).toString
             }
           }
 
@@ -322,7 +321,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
             running(application) {
               val request =
-                FakeRequest(POST, checkVatDetailsRoute)
+                FakeRequest(POST, checkVatDetailsPostRoute)
 
               val result = route(application, request).value
 
@@ -396,24 +395,23 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
             val companyName = vatCustomerInfo.organisationName.get
 
             status(result) `mustBe` OK
-            contentAsString(result) `mustBe` view(form, waypoints, viewModel, summaryList, companyName)(request, messages(application)).toString
+            contentAsString(result) `mustBe` view(waypoints, Some(viewModel), summaryList, companyName, isBasedInUk = true, hasVatNumber = true)(request, messages(application)).toString
           }
         }
 
         "must return Not Found error when not Found VAT information" in {
 
           val answersWithoutVatInfo: UserAnswers = emptyUserAnswers
+            .set(BusinessBasedInUKPage, true).success.value
+            .set(ClientHasVatNumberPage, true).success.value
             .set(ClientVatNumberPage, vatNumber).success.value
             .set(ClientBusinessNamePage, ClientBusinessName(companyName)).success.value
-
-          val dataRequest: DataRequest[AnyContentAsEmpty.type] = DataRequest(FakeRequest(GET, checkVatDetailsRoute), userAnswersId, answersWithoutVatInfo)
-          val requestWithoutVatInfo: DataRequest[AnyContentAsEmpty.type] = DataRequest(dataRequest, userAnswersId, answersWithoutVatInfo)
 
           val application = applicationBuilder(userAnswers = Some(answersWithoutVatInfo))
             .build()
 
           running(application) {
-            val request = requestWithoutVatInfo
+            val request = FakeRequest(GET, checkVatDetailsRoute)
             val result = route(application, request).value
 
             status(result) `mustBe` SEE_OTHER

@@ -28,8 +28,8 @@ import scala.concurrent.Future
 trait GetClientCompanyName {
 
   def getClientCompanyName(waypoints: Waypoints)
-                (block: String => Future[Result])
-                (implicit request: DataRequest[_]): Future[Result] = {
+                          (block: String => Future[Result])
+                          (implicit request: DataRequest[_]): Future[Result] = {
     request.userAnswers.vatInfo match {
       case Some(vatCustomerInfo) =>
         vatCustomerInfo.organisationName match {
@@ -39,7 +39,7 @@ trait GetClientCompanyName {
               .map(block)
               .getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
         }
-        
+
       case _ =>
         request.userAnswers.get(ClientBusinessNamePage).map { companyName =>
           block(companyName.name)

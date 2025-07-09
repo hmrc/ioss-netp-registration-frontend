@@ -14,35 +14,32 @@
  * limitations under the License.
  */
 
-package viewmodels.checkAnswers
+package viewmodels.previousRegistrations
 
-import controllers.routes
-import models.{CheckMode, UserAnswers}
-import pages.Waypoints
-import pages.clientDeclarationJourney.ClientCodeEntryPage
+import models.{Index, PreviousScheme, UserAnswers}
+import pages.previousRegistrations.PreviousSchemePage
 import play.api.i18n.Messages
 import play.twirl.api.HtmlFormat
+import uk.gov.hmrc.govukfrontend.views.viewmodels.content.HtmlContent
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.govuk.summarylist.*
 import viewmodels.implicits.*
 
-object ClientCodeEntrySummary  {
+object DeletePreviousSchemeSummary  {
 
-  def row(
-           waypoints: Waypoints,
-           answers: UserAnswers,
-           uniqueUrlCode: String
-         )(implicit messages: Messages): Option[SummaryListRow] = {
-    answers.get(ClientCodeEntryPage).map { answer =>
-
-        SummaryListRowViewModel(
-          key     = "clientCodeEntry.checkYourAnswersLabel",
-          value   = ValueViewModel(HtmlFormat.escape(answer).toString),
-          actions = Seq(
-            ActionItemViewModel("site.change", controllers.clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(waypoints, uniqueUrlCode).url)
-              .withVisuallyHiddenText(messages("clientCodeEntry.change.hidden"))
+  def row(answers: UserAnswers, countryIndex: Index, schemeIndex: Index)(implicit messages: Messages): Option[SummaryListRow] =
+    answers.get(PreviousSchemePage(countryIndex, schemeIndex)).map {
+      (previousScheme: PreviousScheme) =>
+        val value = ValueViewModel(
+          HtmlContent(
+            HtmlFormat.escape(messages(s"previousScheme.$previousScheme"))
           )
         )
+
+        SummaryListRowViewModel(
+          key = "previousScheme.checkYourAnswersLabel",
+          value = value,
+          actions = Seq.empty
+        )
     }
-  }
 }

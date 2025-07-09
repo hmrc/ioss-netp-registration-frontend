@@ -17,29 +17,24 @@
 package controllers
 
 import com.google.inject.Inject
-import connectors.RegistrationConnector
 import controllers.actions.*
 import logging.Logging
-import models.{CheckMode, PendingRegistration}
-import pages.{CheckYourAnswersPage, EmptyWaypoints, ErrorSubmittingPendingRegistrationPage, NonEmptyWaypoints, Waypoint, Waypoints}
+import models.CheckMode
+import pages.{CheckYourAnswersPage, EmptyWaypoints, NonEmptyWaypoints, Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
-import utils.GetClientEmail
 import viewmodels.checkAnswers.BusinessContactDetailsSummary
 import viewmodels.govuk.summarylist.*
 import views.html.CheckYourAnswersView
 
-import scala.concurrent.ExecutionContext
-
 class CheckYourAnswersController @Inject()(
                                             override val messagesApi: MessagesApi,
                                             cc: AuthenticatedControllerComponents,
-                                            registrationConnector: RegistrationConnector,
                                             view: CheckYourAnswersView
-                                          )(implicit executionContext: ExecutionContext)
-  extends FrontendBaseController with I18nSupport with Logging with GetClientEmail{
+                                          )
+  extends FrontendBaseController with I18nSupport with Logging {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -68,19 +63,6 @@ class CheckYourAnswersController @Inject()(
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
-      getClientEmail(waypoints) { clientEmail =>
-
-        val pendingRegistration = PendingRegistration(request.userAnswers, clientEmail)
-        
-        registrationConnector.submitPendingRegistration(pendingRegistration).flatMap {
-          case Right(_) =>
-            Redirect(CheckYourAnswersPage.navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
-          //TODO SCG -> Send the email with activation code optimistically
-
-          case Left(error) =>
-            logger.error(s"Received an unexpected error on pending registration submission: ${error.body}")
-            Redirect(ErrorSubmittingPendingRegistrationPage.route(waypoints).url).toFuture
-        }
-      }
+      Redirect(CheckYourAnswersPage.navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
   }
 }

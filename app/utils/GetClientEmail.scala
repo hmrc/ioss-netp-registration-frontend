@@ -16,11 +16,7 @@
 
 package utils
 
-import models.requests.DataRequest
-import pages.Waypoints
-import play.api.mvc.Result
-import models.ClientBusinessName
-import models.requests.*
+import models.UserAnswers
 import pages.{BusinessContactDetailsPage, JourneyRecoveryPage, Waypoints}
 import play.api.mvc.Result
 import play.api.mvc.Results.Redirect
@@ -30,11 +26,12 @@ import scala.concurrent.Future
 
 trait GetClientEmail {
 
-  def getClientEmail(waypoints: Waypoints)
-                    (block: String => Future[Result])
-                    (implicit request: DataRequest[_]): Future[Result] = {
-    request.userAnswers.get(BusinessContactDetailsPage).map { businessContactDetails =>
+  def getClientEmail(waypoints: Waypoints, userAnswers: UserAnswers)
+                    (block: String => Future[Result]): Future[Result] = {
+    userAnswers.get(BusinessContactDetailsPage).map { businessContactDetails =>
       block(businessContactDetails.emailAddress)
-    }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
+    }.getOrElse {
+      Redirect(JourneyRecoveryPage.route(waypoints)).toFuture
+    }
   }
 }

@@ -27,12 +27,13 @@
 @(
 form: Form[_], 
 waypoints: Waypoints,
-clientEmailAddress: String
+clientEmailAddress: String,
+uniqueUrlCode: String
 )(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = title(form, messages("clientCodeEntry.title")), showBackLink = false) {
 
-    @formHelper(action = controllers.clientDeclarationJourney.routes.ClientCodeEntryController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
+    @formHelper(action = controllers.clientDeclarationJourney.routes.ClientCodeEntryController.onSubmit(waypoints, uniqueUrlCode), Symbol("autoComplete") -> "off") {
 
         @if(form.errors.nonEmpty) {
             @govukErrorSummary(ErrorSummaryViewModel(form))

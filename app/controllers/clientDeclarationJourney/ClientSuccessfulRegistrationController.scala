@@ -17,7 +17,7 @@
 package controllers.clientDeclarationJourney
 
 import controllers.actions.*
-import pages.{Waypoint, Waypoints}
+import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
@@ -26,12 +26,12 @@ import views.html.clientDeclarationJourney.ClientSuccessfulRegistrationView
 import javax.inject.Inject
 
 class ClientSuccessfulRegistrationController @Inject()(
-                                       override val messagesApi: MessagesApi,
-                                       identify: IdentifierAction,
-                                       getData: DataRetrievalAction,
-                                       val controllerComponents: MessagesControllerComponents,
-                                       view: ClientSuccessfulRegistrationView
-                                     ) extends FrontendBaseController with I18nSupport {
+                                                        override val messagesApi: MessagesApi,
+                                                        identify: IdentifierAction,
+                                                        getData: DataRetrievalAction,
+                                                        val controllerComponents: MessagesControllerComponents,
+                                                        view: ClientSuccessfulRegistrationView
+                                                      ) extends FrontendBaseController with I18nSupport {
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData) {
     implicit request =>

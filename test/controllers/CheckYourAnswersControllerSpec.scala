@@ -17,35 +17,19 @@
 package controllers
 
 import base.SpecBase
-import connectors.RegistrationConnector
-import models.responses.InternalServerError
-import models.{BusinessContactDetails, CheckMode, UserAnswers}
-import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito
-import org.mockito.Mockito.{times, verify, when}
+import models.{CheckMode, UserAnswers}
 import org.scalatest.BeforeAndAfterEach
-import org.scalatestplus.mockito.MockitoSugar.mock
-import pages.{BusinessContactDetailsPage, CheckYourAnswersPage, EmptyWaypoints, ErrorSubmittingPendingRegistrationPage, NonEmptyWaypoints, Waypoint}
+import pages.{CheckYourAnswersPage, EmptyWaypoints, NonEmptyWaypoints, Waypoint}
 import play.api.i18n.Messages
-import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import testutils.CheckYourAnswersSummaries.getCYASummaryList
-import utils.FutureSyntax.FutureOps
 import viewmodels.govuk.SummaryListFluency
 import views.html.CheckYourAnswersView
 
 class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency with BeforeAndAfterEach {
 
-  private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
-
-  private val businessContactDetails: BusinessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
   private val completeUserAnswers: UserAnswers = emptyUserAnswers
-    .set(BusinessContactDetailsPage, businessContactDetails).success.value
-
-  override def beforeEach(): Unit = {
-    Mockito.reset(mockRegistrationConnector)
-  }
 
   "Check Your Answers Controller" - {
 
@@ -78,7 +62,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
         val application = applicationBuilder(userAnswers = None).build()
 
         running(application) {
-          val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onPageLoad().url)
 
           val result = route(application, request).value
 
@@ -90,41 +74,18 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
 
     ".onSubmit" - {
 
-      "must redirect to the next page for a POST when a valid response is received from the backend" in {
+      "must redirect to the next page when navigating to the declaration" in {
 
         val application = applicationBuilder(userAnswers = Some(completeUserAnswers))
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
           .build()
-
-        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(()).toFuture
 
         running(application) {
           val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints).url)
 
           val result = route(application, request).value
-
+          
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value `mustBe` CheckYourAnswersPage.navigate(waypoints, completeUserAnswers, completeUserAnswers).url
-          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(completeUserAnswers))(any())
-        }
-      }
-
-      "must redirect to the correct page when an error is returned from the backend" in {
-
-        val application = applicationBuilder(userAnswers = Some(completeUserAnswers))
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
-          .build()
-
-        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Left(InternalServerError).toFuture
-
-        running(application) {
-          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints).url)
-
-          val result = route(application, request).value
-
-          status(result) `mustBe` SEE_OTHER
-          redirectLocation(result).value `mustBe` ErrorSubmittingPendingRegistrationPage.route(waypoints).url
-          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(completeUserAnswers))(any())
         }
       }
     }

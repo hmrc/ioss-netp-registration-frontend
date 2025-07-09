@@ -18,13 +18,13 @@ package base
 
 import controllers.actions.*
 import generators.Generators
-import models.{BusinessContactDetails, UserAnswers}
 import models.domain.VatCustomerInfo
-import org.scalatest.{OptionValues, TryValues}
+import models.{BusinessContactDetails, CheckMode, UserAnswers}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import pages.{EmptyWaypoints, Waypoints}
+import org.scalatest.{OptionValues, TryValues}
+import pages.{BusinessBasedInUKPage, CheckAnswersPage, EmptyWaypoints, NonEmptyWaypoints, Waypoint, Waypoints}
 import play.api.Application
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.bind
@@ -63,6 +63,8 @@ trait SpecBase
   def emptyUserAnswers: UserAnswers = UserAnswers(id = userAnswersId, journeyId = journeyId, lastUpdated = arbitraryInstant)
 
   def emptyUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.copy(vatInfo = Some(vatCustomerInfo))
+  
+  def basicUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.set(BusinessBasedInUKPage, true).success.value.copy(vatInfo = Some(vatCustomerInfo))
 
   val vatNumber = "GB123456789"
   val intermediaryNumber = "IN9001234567"
@@ -106,4 +108,7 @@ trait SpecBase
         bind[Clock].toInstance(clockToBind),
       )
   }
+
+  protected def createCheckModeWayPoint(checkAnswersPage: CheckAnswersPage): NonEmptyWaypoints =
+    EmptyWaypoints.setNextWaypoint(Waypoint(checkAnswersPage, CheckMode, checkAnswersPage.urlFragment))
 }

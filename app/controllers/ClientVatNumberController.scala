@@ -29,6 +29,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.ClientVatNumberView
 
+import java.time.{Clock, LocalDate}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,7 +38,8 @@ class ClientVatNumberController @Inject()(
                                            cc: AuthenticatedControllerComponents,
                                            formProvider: ClientVatNumberFormProvider,
                                            registrationConnector: RegistrationConnector,
-                                           view: ClientVatNumberView
+                                           view: ClientVatNumberView,
+                                           clock: Clock
                                          )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
 
   val form: Form[String] = formProvider()
@@ -65,13 +67,21 @@ class ClientVatNumberController @Inject()(
 
           registrationConnector.getVatCustomerInfo(ukVatNumber).flatMap {
             case Right(value) =>
-              for {
-                updatedAnswers <- Future.fromTry(request
-                  .userAnswers
-                  .copy(vatInfo = Some(value))
-                  .set(ClientVatNumberPage, ukVatNumber))
-                _ <- cc.sessionRepository.set(updatedAnswers)
-              } yield Redirect(ClientVatNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+              val today = LocalDate.now(clock)
+              val isExpired = value.deregistrationDecisionDate.exists(!_.isAfter(today))
+
+              if (isExpired) {
+                logger.info(s"VAT number $ukVatNumber is expired (deregistration date: ${value.deregistrationDecisionDate})")
+                Redirect(controllers.routes.ExpiredVrnDateController.onPageLoad(waypoints).url).toFuture
+              } else {
+                for {
+                  updatedAnswers <- Future.fromTry(request
+                    .userAnswers
+                    .copy(vatInfo = Some(value))
+                    .set(ClientVatNumberPage, ukVatNumber))
+                  _ <- cc.sessionRepository.set(updatedAnswers)
+                } yield Redirect(ClientVatNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+              }
             case Left(VatCustomerNotFound) =>
               Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
             case Left(_) =>

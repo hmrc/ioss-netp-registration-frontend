@@ -16,9 +16,10 @@
 
 package generators
 
+import models.*
 import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
-import models.{BusinessContactDetails, ClientBusinessName, Country, DesAddress, InternationalAddress, SavedPendingRegistration, UserAnswers}
+import models.etmp.SchemeType
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.{choose, listOfN}
 import org.scalacheck.{Arbitrary, Gen}
@@ -194,15 +195,31 @@ trait ModelGenerators extends EitherValues {
     Arbitrary {
       for {
         userAnswers <- arbitraryUserAnswers.arbitrary
-        uniqueCode = UUID.randomUUID().toString
+        uniqueUrlCode = UUID.randomUUID().toString
+        uniqueActivationCode = UUID.randomUUID().toString
       } yield {
         SavedPendingRegistration(
           journeyId = userAnswers.journeyId,
-          uniqueCode = uniqueCode,
+          uniqueUrlCode = uniqueUrlCode,
           userAnswers = userAnswers,
-          lastUpdated = userAnswers.lastUpdated
-        )
+          lastUpdated = userAnswers.lastUpdated,
+          uniqueActivationCode = uniqueActivationCode)
       }
     }
   }
+
+  implicit lazy val arbitrarySchemeType: Arbitrary[SchemeType] =
+    Arbitrary {
+      Gen.oneOf(SchemeType.values)
+    }
+
+  implicit lazy val arbitraryPreviousScheme: Arbitrary[PreviousScheme] =
+    Arbitrary {
+      Gen.oneOf(PreviousScheme.values)
+    }
+
+  implicit lazy val arbitraryPreviousSchemeType: Arbitrary[PreviousSchemeType] =
+    Arbitrary {
+      Gen.oneOf(PreviousSchemeType.values)
+    }
 }

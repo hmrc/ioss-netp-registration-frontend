@@ -37,27 +37,30 @@ case object BusinessBasedInUKPage extends QuestionPage[Boolean] {
       case true =>
         ClientHasVatNumberPage
       case false =>
-        ClientCountryBasedPage
+        ClientHasVatNumberPage
     }.orRecover
 
   override def cleanup(value: Option[Boolean], userAnswers: UserAnswers): Try[UserAnswers] = {
-    if (value.contains(true)) {
-      for {
-        removeCountryBasedInAnswers <- userAnswers.remove(ClientCountryBasedPage)
+    value match {
+      case Some(false) => for {
+        removeClientVatNumberAnswers <- userAnswers.remove(ClientVatNumberPage)
+        removeHasClientVatNumberAnswers <- removeClientVatNumberAnswers.remove(ClientHasVatNumberPage)
+        removeCountryBasedInAnswers <- removeHasClientVatNumberAnswers.remove(ClientCountryBasedPage)
         removeBusinessName <- removeCountryBasedInAnswers.remove(ClientBusinessNamePage)
         removeTaxReferenceAnswers <- removeBusinessName.remove(ClientTaxReferencePage)
         updatedUserAnswers <- removeTaxReferenceAnswers.remove(ClientBusinessAddressPage)
       } yield updatedUserAnswers
-    } else {
-      for {
+      case Some(true) => for {
         removeClientVatNumberAnswers <- userAnswers.remove(ClientVatNumberPage)
         removeHasClientVatNumberAnswers <- removeClientVatNumberAnswers.remove(ClientHasVatNumberPage)
-        removeHasUtrNumberAnswers <- removeHasClientVatNumberAnswers.remove(ClientHasUtrNumberPage)
+        removeCountryBasedInAnswers <- removeHasClientVatNumberAnswers.remove(ClientCountryBasedPage)
+        removeHasUtrNumberAnswers <- removeCountryBasedInAnswers.remove(ClientHasUtrNumberPage)
         removeUtrNumberAnswers <- removeHasUtrNumberAnswers.remove(ClientUtrNumberPage)
         removeNinoNumberAnswers <- removeUtrNumberAnswers.remove(ClientsNinoNumberPage)
         removeBusinessAddressAnswers <- removeNinoNumberAnswers.remove(ClientBusinessAddressPage)
         updatedUserAnswers <- removeBusinessAddressAnswers.remove(ClientBusinessNamePage)
       } yield updatedUserAnswers
+      case _ => super.cleanup(value, userAnswers)
     }
   }
 }

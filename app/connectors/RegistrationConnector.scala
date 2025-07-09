@@ -17,10 +17,11 @@
 package connectors
 
 import config.Service
-import connectors.PendingRegistrationHttpParser.{PendingRegistrationResultResponse, PendingRegistrationResultResponseReads, SavedPendingRegistrationResponse, SavedPendingRegistrationResponseReads}
+import connectors.SavedPendingRegistrationHttpParser.SavedPendingRegistrationResponse
+import connectors.SavedPendingRegistrationHttpParser.SavedPendingRegistrationResultResponseReads
 import connectors.VatCustomerInfoHttpParser.{VatCustomerInfoResponse, VatCustomerInfoResponseReads}
 import logging.Logging
-import models.{PendingRegistration, UserAnswers}
+import models.UserAnswers
 import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue
@@ -44,10 +45,10 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
     httpClientV2.get(url"$intermediaryUrl/vat-information").execute[VatCustomerInfoResponse]
   }
 
-  def submitPendingRegistration(pendingRegistration: PendingRegistration)(implicit hc: HeaderCarrier): Future[PendingRegistrationResultResponse] = {
+  def submitPendingRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[SavedPendingRegistrationResponse] = {
     httpClientV2.post(url"$baseUrl/save-pending-registration")
-      .withBody(Json.toJson(pendingRegistration))
-      .execute[PendingRegistrationResultResponse]
+      .withBody(Json.toJson(userAnswers))
+      .execute[SavedPendingRegistrationResponse]
   }
 
   def getPendingRegistration(journeyId: String)(implicit hc: HeaderCarrier): Future[SavedPendingRegistrationResponse] = {
