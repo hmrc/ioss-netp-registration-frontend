@@ -32,6 +32,11 @@ import java.util.UUID
 
 trait ModelGenerators extends EitherValues {
 
+  implicit lazy val arbitraryClientDeclaration: Arbitrary[ClientDeclaration] =
+    Arbitrary {
+      Gen.oneOf(ClientDeclaration.values)
+    }
+
   private val maxFieldLength: Int = 35
 
   private def commonFieldString(maxLength: Int): Gen[String] = (for {

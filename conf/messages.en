@@ -274,6 +274,30 @@ errorSubmittingPendingRegistration.title = We have a problem with our service ri
 errorSubmittingPendingRegistration.heading = The registration is not submitted
 errorSubmittingPendingRegistration.contactUs = If the problem continues, you can email us at <a class="govuk-link" href="mailto:vatoss.contact@hmrc.gov.uk">vatoss.contact@hmrc.gov.uk</a>
 
+clientCodeEntry.title = Enter your activation code
+clientCodeEntry.heading = Enter your activation code
+clientCodeEntry.hint = This is the 6-digit code we emailed to {0}.
+clientCodeEntry.checkYourAnswersLabel = The code you entered is incorrect. Check the code and try again.
+clientCodeEntry.error.required = The code you entered is incorrect. Check the code and try again.
+clientCodeEntry.error.length = The code you entered is incorrect. Check the code and try again.
+clientCodeEntry.change.hidden = The code you entered is incorrect. Check the code and try again.
+
+clientDeclaration.title = Declaration
+clientDeclaration.heading = Declaration
+clientDeclaration.information.p1 = I, {0}, wish to appoint {1} as my intermediary on the VAT Import One Stop Shop scheme.
+clientDeclaration.information.p2 = I understand that we are joint and severally liable for any debts that we may incur on my registration.
+clientDeclaration.checkbox.text = I agree to register my business.
+clientDeclaration.checkYourAnswersLabel = clientDeclaration
+clientDeclaration.error.required = Select clientDeclaration
+clientDeclaration.change.hidden = ClientDeclaration
+
+clientSuccessfulRegistration.title = Registration successful
+clientSuccessfulRegistration.heading = Registration successful
+clientSuccessfulRegistration.text = Your IOSS number is
+clientSuccessfulRegistration.info.1 = We have let your intermediary know.
+clientSuccessfulRegistration.info.2 = They must now complete your monthly IOSS VAT returns and pay any VAT due.
+
+
 expiredVrnDate.title = The VAT number for this trader has expired
 expiredVrnDate.heading = The VAT number for this trader has expired
 
