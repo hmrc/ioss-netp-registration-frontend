@@ -17,7 +17,7 @@
 package utils
 
 import base.SpecBase
-import models.previousRegistrations.{PreviousRegistrationDetailsWithOptionalVatNumber, SchemeDetailsWithOptionalVatNumber, SchemeNumbersWithOptionalVatNumber}
+import models.previousRegistrations.{PreviousRegistrationDetailsWithOptionalVatNumber, PreviousSchemeNumber, SchemeDetailsWithOptionalVatNumber, SchemeNumbersWithOptionalVatNumber}
 import models.requests.DataRequest
 import models.{Country, Index, PreviousScheme, PreviousSchemeType, UserAnswers}
 import org.mockito.Mockito.when
@@ -43,7 +43,10 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
 
   private val schemeDetails = SchemeDetailsWithOptionalVatNumber(
     previousScheme = Some(PreviousScheme.IOSSWOI),
-    previousSchemeNumbers = Some(SchemeNumbersWithOptionalVatNumber(Some("IM0401234567")))
+    previousSchemeNumbers = Some(PreviousSchemeNumber(
+      previousIossNumber = None,
+      previousOssNumber = Some("IM0401234567")
+    ))
   )
 
   private val registrationDetails = PreviousRegistrationDetailsWithOptionalVatNumber(

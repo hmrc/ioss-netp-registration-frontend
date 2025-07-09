@@ -17,7 +17,8 @@
 package models.previousRegistrations
 
 import models.{Country, PreviousScheme}
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{JsError, JsPath, JsSuccess, Json, OFormat, OWrites, Reads}
+
 
 case class PreviousRegistrationDetailsWithOptionalVatNumber(
                                                              previousEuCountry: Country,
@@ -32,7 +33,7 @@ object PreviousRegistrationDetailsWithOptionalVatNumber {
 
 case class SchemeDetailsWithOptionalVatNumber(
                                                previousScheme: Option[PreviousScheme],
-                                               previousSchemeNumbers: Option[SchemeNumbersWithOptionalVatNumber]
+                                               previousSchemeNumbers: Option[PreviousSchemeNumber]
                                              )
 
 object SchemeDetailsWithOptionalVatNumber {
@@ -41,7 +42,7 @@ object SchemeDetailsWithOptionalVatNumber {
 }
 
 case class SchemeNumbersWithOptionalVatNumber(
-                                               previousSchemeNumber: Option[String]
+                                               previousSchemeNumber: Option[PreviousSchemeNumber]
                                              )
 
 object SchemeNumbersWithOptionalVatNumber {
