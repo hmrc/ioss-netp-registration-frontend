@@ -370,7 +370,7 @@ euCountry.change.hidden = Country
 
 hasFixedEstablishment.title = Does your client''s business have a fixed establishment in an EU country?
 hasFixedEstablishment.heading = Does your client''s business have a fixed establishment in an EU country?
-hasFixedEstablishment.checkYourAnswersLabel = Has fixed establishment
+hasFixedEstablishment.checkYourAnswersLabel = Fixed establishments in other countries
 hasFixedEstablishment.error.required = Select yes if your business has a fixed establishment in an EU country
 hasFixedEstablishment.change.hidden = if your business has a fixed establishment in an EU country
 
@@ -439,6 +439,13 @@ addEuDetails.maximumReached = You have added details for every EU country
 deleteEuDetails.title = Are you sure you want to remove the tax details for {0}?
 deleteEuDetails.heading = Are you sure you want to remove the tax details for {0}?
 deleteEuDetails.error.required = Select yes if you want to remove the tax details for {0}
+
+deleteAllEuDetails.title = Remove all your EU tax information from this scheme?
+deleteAllEuDetails.heading = Remove all your EU tax information from this scheme?
+deleteAllEuDetails.warning = This will delete all the countries you have added tax information for.
+deleteAllEuDetails.error.required = Select yes if you want to remove all the countries you have added tax information for from this scheme
+
+euDetails.checkYourAnswersLabel = Countries established in
 
 error.missing_answers = Some of your information is missing. You must complete this before you can submit your changes.
 error.missing_answers_header = Some information is missing.

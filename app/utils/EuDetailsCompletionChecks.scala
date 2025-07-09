@@ -18,7 +18,7 @@ package utils
 
 import models.{Country, CountryWithValidationDetails, Index}
 import models.euDetails.EuDetails
-import models.euDetails.RegistrationType.{TaxId, VatNumber}
+import models.RegistrationType.{TaxId, VatNumber}
 import models.requests.DataRequest
 import pages.Waypoints
 import pages.vatEuDetails.*

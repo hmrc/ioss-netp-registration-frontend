@@ -23,6 +23,7 @@ import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.WebsiteSummary
 import viewmodels.checkAnswers.*
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
+import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
 import viewmodels.govuk.SummaryListFluency
 import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
 
@@ -41,6 +42,7 @@ object CheckYourAnswersSummaries extends SummaryListFluency {
     val clientTaxReferenceSummaryRow = ClientTaxReferenceSummary.row(waypoints, answers, sourcePage)
     val clientBusinessNameSummaryRow = ClientBusinessNameSummary.row(waypoints, answers, sourcePage)
     val clientsBusinessAddressSummaryRow = ClientBusinessAddressSummary.row(waypoints, answers, sourcePage)
+    
     
     Seq(
       basedInUkSummaryRow,
@@ -63,6 +65,8 @@ object CheckYourAnswersSummaries extends SummaryListFluency {
     val tradingNameSummaryRow: Option[SummaryListRow] = TradingNameSummary.checkAnswersRow(waypoints, answers, sourcePage)
     val hasPreviouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.row(answers, waypoints, sourcePage)
     val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(answers, Seq.empty, waypoints, sourcePage)
+    val hasFixedEstablishmentSummaryRow = HasFixedEstablishmentSummary.row(waypoints, answers, sourcePage)
+    val euDetailsSummaryRow = EuDetailsSummary.checkAnswersRow(waypoints, answers, sourcePage)
     val websiteSummaryRow = WebsiteSummary.checkAnswersRow(waypoints, answers, sourcePage)
     val contactDetailsContactNameSummaryRow = BusinessContactDetailsSummary.rowFullName(waypoints, answers, sourcePage)
     val contactDetailsTelephoneSummaryRow = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, answers, sourcePage)
@@ -85,6 +89,14 @@ object CheckYourAnswersSummaries extends SummaryListFluency {
         }
       },
       previousRegistrationSummaryRow,
+      hasFixedEstablishmentSummaryRow.map { sr =>
+        if (euDetailsSummaryRow.nonEmpty) {
+          sr.withCssClass("govuk-summary-list__row--no-border")
+        } else {
+          sr.withCssClass("govuk-summary-list")
+        }
+      },
+      euDetailsSummaryRow,
       websiteSummaryRow,
       contactDetailsContactNameSummaryRow.map(_.withCssClass("govuk-summary-list__row--no-border")),
       contactDetailsTelephoneSummaryRow.map(_.withCssClass("govuk-summary-list__row--no-border")),

@@ -18,11 +18,11 @@ package pages.vatEuDetails
 
 import controllers.vatEuDetails.routes
 import models.{Index, UserAnswers}
-import pages.{Page, QuestionPage, Waypoints}
+import pages.{JourneyRecoveryPage, NonEmptyWaypoints, Page, QuestionPage, RecoveryOps, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
-import pages.RecoveryOps
 import pages.website.WebsitePage
+import queries.euDetails.AllEuDetailsQuery
 
 case object HasFixedEstablishmentPage extends QuestionPage[Boolean] {
 
@@ -40,4 +40,13 @@ case object HasFixedEstablishmentPage extends QuestionPage[Boolean] {
       case false => WebsitePage(Index(0))
     }.orRecover
   }
+
+  override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page =
+    (answers.get(this), answers.get(AllEuDetailsQuery)) match {
+      case (Some(true), Some(euDetails)) if euDetails.nonEmpty => AddEuDetailsPage()
+      case (Some(true), _) => EuCountryPage(Index(0))
+      case (Some(false), Some(euDetails)) if euDetails.nonEmpty => DeleteAllEuDetailsPage
+      case (Some(false), _) => JourneyRecoveryPage
+      case _ => JourneyRecoveryPage
+    }
 }

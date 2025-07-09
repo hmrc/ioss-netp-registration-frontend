@@ -167,3 +167,6 @@ POST       /add-tax-details                                             controll
 GET        /remove-tax-details/:countryIndex                            controllers.vatEuDetails.DeleteEuDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
 POST       /remove-tax-details/:countryIndex                            controllers.vatEuDetails.DeleteEuDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index)
 
+GET        /remove-all-tax-details                                      controllers.vatEuDetails.DeleteAllEuDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST       /remove-all-tax-details                                      controllers.vatEuDetails.DeleteAllEuDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+

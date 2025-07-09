@@ -26,6 +26,7 @@ import queries.AllWebsites
 import queries.tradingNames.AllTradingNamesQuery
 import utils.VatInfoCompletionChecks.*
 import utils.PreviousRegistrationsCompletionChecks.*
+import utils.EuDetailsCompletionChecks.*
 
 import scala.concurrent.Future
 
@@ -66,6 +67,8 @@ trait CompletionChecks {
       !hasUnfilledTradingNamePageAttempt() &&
       getAllIncompleteRegistrationDetails().isEmpty &&
       isPreviouslyRegisteredDefined() &&
+      isEuDetailsDefined() &&
+      getAllIncompleteEuDetails().isEmpty &&
       hasWebsiteValid()
   }
 
@@ -85,6 +88,8 @@ trait CompletionChecks {
       incompleteAdditionalTradingNameRedirect(waypoints) ++
       emptyPreviousRegistrationRedirect(waypoints) ++
       incompletePreviousRegistrationRedirect(waypoints) ++
+      emptyEuDetailsRedirect(waypoints) ++
+      incompleteEuDetailsRedirect(waypoints) ++
       incompleteWebsiteUrlsRedirect(waypoints)
       ).headOption
   }
@@ -153,9 +158,5 @@ trait CompletionChecks {
       None
     }
   }
-
-  // todo previously registered completion checks
-  // todo Eu details Completion Checks
-
 
 }

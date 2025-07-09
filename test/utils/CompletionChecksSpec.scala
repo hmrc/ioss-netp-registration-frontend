@@ -19,12 +19,16 @@ package utils
 import base.SpecBase
 import models.requests.DataRequest
 import models.*
+import models.euDetails.EuDetails
+import models.RegistrationType.VatNumber
+import models.vatEuDetails.TradingNameAndBusinessAddress
 import org.mockito.Mockito.when
 import org.scalacheck.Gen
 import org.scalatestplus.mockito.MockitoSugar
 import pages.*
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.{HasTradingNamePage, TradingNamePage}
+import pages.vatEuDetails.*
 import pages.website.WebsitePage
 import play.api.mvc.AnyContent
 import play.api.mvc.Results.Redirect
@@ -48,6 +52,9 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
     country = Some(country)
   )
 
+  private val euDetails: EuDetails = arbitraryEuDetails.arbitrary.sample.value
+    .copy(registrationType = Some(VatNumber))
+
   private val validAnswers: UserAnswers = emptyUserAnswersWithVatInfo
     .set(BusinessBasedInUKPage, true).success.value
     .set(ClientHasVatNumberPage, true).success.value
@@ -61,6 +68,11 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
     .set(HasTradingNamePage, true).success.value
     .set(TradingNamePage(tradingNameIndex), tradingName).success.value
     .set(PreviouslyRegisteredPage, false).success.value
+    .set(HasFixedEstablishmentPage, true).success.value
+    .set(EuCountryPage(countryIndex(0)), euDetails.euCountry).success.value
+    .set(TradingNameAndBusinessAddressPage(countryIndex(0)), euDetails.tradingNameAndBusinessAddress.value).success.value
+    .set(RegistrationTypePage(countryIndex(0)), VatNumber).success.value
+    .set(EuVatNumberPage(countryIndex(0)), euDetails.euVatNumber.value).success.value
     .set(WebsitePage(Index(0)), Website("www.test-website.com")).success.value
 
 

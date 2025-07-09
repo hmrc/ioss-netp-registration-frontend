@@ -28,6 +28,7 @@ import org.scalatestplus.mockito.MockitoSugar.mock
 import pages.*
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.{HasTradingNamePage, TradingNamePage}
+import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.website.WebsitePage
 import play.api.i18n.Messages
 import play.api.inject.bind
@@ -58,6 +59,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
     .set(PreviouslyRegisteredPage, false).success.value
     .set(WebsitePage(Index(0)), Website("www.test-website.com")).success.value
     .set(BusinessContactDetailsPage, businessContactDetails).success.value
+    .set(HasFixedEstablishmentPage, false).success.value
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockRegistrationConnector)
@@ -102,6 +104,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
             .remove(PreviouslyRegisteredPage).success.value
             .remove(WebsitePage(Index(0))).success.value
             .remove(BusinessContactDetailsPage).success.value
+            .remove(HasFixedEstablishmentPage).success.value
 
           val application = applicationBuilder(userAnswers = Some(missingAnswers)).build()
 

@@ -17,7 +17,7 @@
 package models.euDetails
 
 import models.vatEuDetails.TradingNameAndBusinessAddress
-import models.Country
+import models.{Country, RegistrationType}
 import play.api.libs.json.{Json, OFormat}
 
 case class EuDetails(

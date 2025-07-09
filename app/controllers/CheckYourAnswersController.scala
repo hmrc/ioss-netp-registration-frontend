@@ -32,6 +32,7 @@ import views.html.CheckYourAnswersView
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
+import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
 import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
 
 import scala.concurrent.ExecutionContext
@@ -74,6 +75,8 @@ class CheckYourAnswersController @Inject()(
       val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, userAnswers, thisPage)
       val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.row(userAnswers, waypoints, thisPage)
       val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(userAnswers, Seq.empty, waypoints, thisPage)
+      val maybeHasFixedEstablishmentSummaryRow = HasFixedEstablishmentSummary.row(waypoints, userAnswers, thisPage)
+      val euDetailsSummaryRow = EuDetailsSummary.checkAnswersRow(waypoints, userAnswers, thisPage)
       val websiteSummaryRow = WebsiteSummary.checkAnswersRow(waypoints, userAnswers, thisPage)
       val contactDetailsFullNameRow = BusinessContactDetailsSummary.rowFullName(waypoints, userAnswers, thisPage)
       val contactDetailsTelephoneNumberRow = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, userAnswers, thisPage)
@@ -97,6 +100,14 @@ class CheckYourAnswersController @Inject()(
             }
           },
           previousRegistrationSummaryRow,
+          maybeHasFixedEstablishmentSummaryRow.map { sr =>
+            if (euDetailsSummaryRow.nonEmpty) {
+              sr.withCssClass("govuk-summary-list__row--no-border")
+            } else {
+              sr.withCssClass("govuk-summary-list")
+            }
+          },
+          euDetailsSummaryRow,
           websiteSummaryRow,
           contactDetailsFullNameRow.map(_.withCssClass("govuk-summary-list__row--no-border")),
           contactDetailsTelephoneNumberRow.map(_.withCssClass("govuk-summary-list__row--no-border")),
