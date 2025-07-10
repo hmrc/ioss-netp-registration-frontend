@@ -1,0 +1,24 @@
+package controllers
+
+import controllers.actions._
+import javax.inject.Inject
+import play.api.i18n.{I18nSupport, MessagesApi}
+import pages.{Waypoint, Waypoints}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import views.html.OtherCountryExcludedAndQuarantinedView
+
+class OtherCountryExcludedAndQuarantinedController @Inject()(
+                                       override val messagesApi: MessagesApi,
+                                       identify: IdentifierAction,
+                                       getData: DataRetrievalAction,
+                                       requireData: DataRequiredAction,
+                                       val controllerComponents: MessagesControllerComponents,
+                                       view: OtherCountryExcludedAndQuarantinedView
+                                     ) extends FrontendBaseController with I18nSupport {
+
+  def onPageLoad: Action[AnyContent] = (identify andThen getData andThen requireData) {
+    implicit request =>
+      Ok(view())
+  }
+}

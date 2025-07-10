@@ -60,4 +60,6 @@ class FrontendAppConfig @Inject()(configuration: Configuration) {
   val cacheTtl: Long = configuration.get[Int]("mongodb.timeToLiveInSeconds")
 
   val intermediaryEnrolment: String = configuration.get[String]("intermediary-enrolment")
+
+  val coreValidationService: Service = configuration.get[Service]("microservice.services.core-validation")
 }
