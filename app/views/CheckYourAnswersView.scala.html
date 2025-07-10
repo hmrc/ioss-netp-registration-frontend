@@ -17,14 +17,14 @@
 @import pages.{CheckYourAnswersPage, Waypoints}
 @import uk.gov.hmrc.govukfrontend.views.html.components.GovukWarningText
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.warningtext.WarningText
-@import views.html.components.ButtonGroupProcessing
+@import views.html.components.ButtonGroup
 
 @this(
     formHelper: FormWithCSRF,
     layout: templates.Layout,
     govukSummaryList: GovukSummaryList,
     govukWarningText: GovukWarningText,
-    button: ButtonGroupProcessing
+    button: ButtonGroup
 )
 
 @(waypoints: Waypoints, vatDetailsList: SummaryList, list: SummaryList, isValid: Boolean)(implicit request: Request[_], messages: Messages)
@@ -60,15 +60,4 @@
             @button("error.resolve_missing_answers", CheckYourAnswersPage.route(waypoints).url, waypoints)
         }
     }
-
-    <div aria-live="polite">
-        <div id="processing-wheel" hidden aria-hidden="true">
-            <div id="processing" class="govuk-!-margin-bottom-9">
-                <h2 class="govuk-heading-m">
-                    @messages("site.processing")
-                </h2>
-                <div class="processing-wheel-loader"></div>
-            </div>
-        </div>
-    </div>
 }
