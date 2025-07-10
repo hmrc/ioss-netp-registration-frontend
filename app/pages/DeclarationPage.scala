@@ -28,7 +28,7 @@ case object DeclarationPage extends QuestionPage[Boolean] {
   override def toString: String = "declaration"
 
   override def route(waypoints: Waypoints): Call = {
-    routes.DeclarationController.onPageLoad(waypoints)
+    routes.DeclarationController.onPageLoad()
   }
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {

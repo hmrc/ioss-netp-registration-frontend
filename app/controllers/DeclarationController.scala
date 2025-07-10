@@ -19,16 +19,17 @@ package controllers
 import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.DeclarationFormProvider
+import models.UserAnswers
 
 import javax.inject.Inject
-import pages.DeclarationPage
-import pages.Waypoints
+import pages.{DeclarationPage, EmptyWaypoints, JourneyRecoveryPage}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.DeclarationView
+import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,41 +44,47 @@ class DeclarationController @Inject()(
   val form: Form[Boolean] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onPageLoad(): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
-      getClientCompanyName(waypoints) { clientCompanyName =>
-        getIntermediaryName().map { intermediaryOpt =>
-          val intermediaryName = intermediaryOpt.getOrElse("")
+     getOrganisationName(request.userAnswers) match {
+       case Some(clientCompanyName) =>
+         getIntermediaryName().map { intermediaryOpt =>
+           val intermediaryName = intermediaryOpt.getOrElse("")
 
-          val preparedForm = request.userAnswers.get(DeclarationPage) match {
-            case None => form
-            case Some(value) => form.fill(value)
-          }
+           val preparedForm = request.userAnswers.get(DeclarationPage) match {
+             case None => form
+             case Some(value) => form.fill(value)
+           }
 
-          Ok(view(preparedForm, waypoints, intermediaryName, clientCompanyName))
-        }
-      }
+           Ok(view(preparedForm, intermediaryName, clientCompanyName))
+         }
+       case None =>
+         Redirect(JourneyRecoveryPage.route(EmptyWaypoints)).toFuture
+     }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
-      getClientCompanyName(waypoints) { clientCompanyName =>
-        getIntermediaryName().flatMap { intermediaryOpt =>
-          val intermediaryName = intermediaryOpt.getOrElse("")
+      getOrganisationName(request.userAnswers) match {
+        case Some(clientCompanyName) =>
+          getIntermediaryName().flatMap { intermediaryOpt =>
+            val intermediaryName = intermediaryOpt.getOrElse("")
 
-          form.bindFromRequest().fold(
-            formWithErrors =>
-              Future.successful(BadRequest(view(formWithErrors, waypoints, intermediaryName, clientCompanyName))),
+            form.bindFromRequest().fold(
+              formWithErrors =>
+                Future.successful(BadRequest(view(formWithErrors, intermediaryName, clientCompanyName))),
 
-            value =>
-              for {
-                updatedAnswers <- Future.fromTry(request.userAnswers.set(DeclarationPage, value))
-                _ <- cc.sessionRepository.set(updatedAnswers)
-              } yield Redirect(DeclarationPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
-          )
-        }
+              value =>
+                for {
+                  updatedAnswers <- Future.fromTry(request.userAnswers.set(DeclarationPage, value))
+                  _ <- cc.sessionRepository.set(updatedAnswers)
+                } yield Redirect(routes.ApplicationCompleteController.onPageLoad())
+            )
+          }
+        case None =>
+          Redirect(JourneyRecoveryPage.route(EmptyWaypoints)).toFuture
       }
   }
 
@@ -87,6 +94,14 @@ class DeclarationController @Inject()(
         vatInfo.organisationName.orElse(vatInfo.individualName)
       case _ =>
         None
+    }
+  }
+
+  private def getOrganisationName(answers: UserAnswers): Option[String] = {
+    answers.vatInfo match {
+      case Some(vatInfo) if vatInfo.organisationName.isDefined => vatInfo.organisationName
+      case Some(vatInfo) if vatInfo.individualName.isDefined => vatInfo.individualName
+      case _ => None
     }
   }
 }

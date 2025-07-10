@@ -95,8 +95,8 @@ GET         /business-contact-details                                   controll
 POST        /business-contact-details                                   controllers.BusinessContactDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
 # Declaration
-GET         /declaration                                                controllers.DeclarationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-POST        /declaration                                                controllers.DeclarationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+GET         /declaration                                                controllers.DeclarationController.onPageLoad()
+POST        /declaration                                                controllers.DeclarationController.onSubmit()
 
 # Application complete
 GET         /client-application-complete                                controllers.ApplicationCompleteController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)

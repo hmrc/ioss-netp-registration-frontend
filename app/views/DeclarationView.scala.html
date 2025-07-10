@@ -14,8 +14,6 @@
  * limitations under the License.
  *@
 
-@import pages.Waypoints
-
 @this(
     layout: templates.Layout,
     formHelper: FormWithCSRF,
@@ -24,11 +22,11 @@
     govukButton: GovukButton
 )
 
-@(form: Form[_], waypoints: Waypoints, intermediaryName: String, companyName: String)(implicit request: Request[_], messages: Messages)
+@(form: Form[_], intermediaryName: String, companyName: String)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = title(form, messages("declaration.title"))) {
 
-    @formHelper(action = routes.DeclarationController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
+    @formHelper(action = routes.DeclarationController.onSubmit()) {
 
         @if(form.errors.nonEmpty) {
             @govukErrorSummary(ErrorSummary(
