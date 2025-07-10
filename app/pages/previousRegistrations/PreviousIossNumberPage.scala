@@ -24,7 +24,8 @@ import play.api.mvc.Call
 
 case class PreviousIossNumberPage(countryIndex: Index, schemeIndex: Index) extends PreviousSchemeNumbersPage {
 
-  override def path: JsPath = JsPath \ "previousRegistrations" \ countryIndex.position \ "previousSchemesDetails" \ schemeIndex.position \ toString
+  override def path: JsPath =
+    JsPath \ "previousRegistrations" \ countryIndex.position \ "previousSchemesDetails" \ schemeIndex.position \ "previousSchemeNumbers"
 
   override def toString: String = "previousIossNumber"
   

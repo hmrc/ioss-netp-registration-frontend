@@ -17,7 +17,8 @@
 package pages.tradingNames
 
 import controllers.tradingNames.routes
-import pages.{QuestionPage, Waypoints}
+import models.UserAnswers
+import pages.{CheckYourAnswersPage, JourneyRecoveryPage, NonEmptyWaypoints, Page, QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
@@ -30,5 +31,9 @@ case object DeleteAllTradingNamesPage extends QuestionPage[Boolean] {
   override def route(waypoints: Waypoints): Call =
     routes.DeleteAllTradingNamesController.onPageLoad(waypoints)
 
-  //TODO VEI-234 : nextPageCheckMode routes to check your answers page.
+  override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page =
+    answers.get(this) match {
+      case Some(_) => CheckYourAnswersPage
+      case _ => JourneyRecoveryPage
+    }
 }
