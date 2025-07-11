@@ -300,7 +300,14 @@ object VatInfoCompletionChecks extends CompletionChecks {
   def clientTaxReferenceDefined()(implicit request: DataRequest[AnyContent]): Boolean = {
     request.userAnswers.get(BusinessBasedInUKPage) match {
       case Some(false) =>
-        request.userAnswers.get(ClientTaxReferencePage).isDefined
+        request.userAnswers.get(ClientHasVatNumberPage) match {
+          case Some(true) =>
+            true
+          case Some(false) =>
+            request.userAnswers.get(ClientTaxReferencePage).isDefined
+          case None =>
+            false
+        }
       case Some(true) =>
         true
       case None =>
@@ -310,10 +317,19 @@ object VatInfoCompletionChecks extends CompletionChecks {
 
   def incompleteClientTaxReferenceRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
     request.userAnswers.get(BusinessBasedInUKPage) match {
-      case Some(false) if request.userAnswers.get(ClientTaxReferencePage).isEmpty =>
-        Some(Redirect(controllers.routes.ClientTaxReferenceController.onPageLoad(waypoints)))
-      case _ =>
+      case Some(false) =>
+        request.userAnswers.get(ClientHasVatNumberPage) match {
+          case Some(false) => request.userAnswers.get(ClientTaxReferencePage).isEmpty
+            Some(Redirect(controllers.routes.ClientTaxReferenceController.onPageLoad(waypoints)))
+          case Some(true) =>
+            None
+          case None =>
+            None
+        }
+      case Some(true) =>
         None
+      case None =>
+       None
     }
   }
 }
