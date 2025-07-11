@@ -16,18 +16,25 @@
 
 package models
 
+import config.Constants.pendingRegistrationTTL
+import formats.Format.dateFormatter
 import play.api.libs.json.*
 
-import java.time.Instant
+import java.time.{Instant, LocalDateTime, ZoneId}
 
 case class SavedPendingRegistration(
                                      journeyId: String,
-                                     uniqueCode: String,
+                                     uniqueUrlCode: String,
                                      userAnswers: UserAnswers,
-                                     lastUpdated: Instant
-                                   )
+                                     lastUpdated: Instant,
+                                     uniqueActivationCode: String) {
+
+  def activationExpiryDate: String = LocalDateTime
+    .ofInstant(lastUpdated, ZoneId.systemDefault())
+    .plusDays(pendingRegistrationTTL).format(dateFormatter)
+
+}
 
 object SavedPendingRegistration {
-
   implicit lazy val format: OFormat[SavedPendingRegistration] = Json.format[SavedPendingRegistration]
 }

@@ -17,30 +17,28 @@
 package controllers
 
 import com.google.inject.Inject
-import connectors.RegistrationConnector
 import controllers.actions.*
 import logging.Logging
 import models.CheckMode
-import pages.{CheckYourAnswersPage, EmptyWaypoints, ErrorSubmittingPendingRegistrationPage, NonEmptyWaypoints, Waypoint, Waypoints}
+import pages.{CheckYourAnswersPage, EmptyWaypoints, NonEmptyWaypoints, Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.CompletionChecks
-import viewmodels.checkAnswers.*
-import viewmodels.govuk.summarylist.*
-import views.html.CheckYourAnswersView
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
+import viewmodels.checkAnswers.*
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
 import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
+import viewmodels.govuk.summarylist.*
 import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
+import views.html.CheckYourAnswersView
 
 import scala.concurrent.ExecutionContext
 
 class CheckYourAnswersController @Inject()(
                                             override val messagesApi: MessagesApi,
                                             cc: AuthenticatedControllerComponents,
-                                            registrationConnector: RegistrationConnector,
                                             view: CheckYourAnswersView
                                           )(implicit executionContext: ExecutionContext)
   extends FrontendBaseController with I18nSupport with CompletionChecks with Logging {
@@ -123,24 +121,18 @@ class CheckYourAnswersController @Inject()(
   def onSubmit(waypoints: Waypoints, incompletePrompt: Boolean): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
-      registrationConnector.submitPendingRegistration(request.userAnswers).flatMap {
-        case Right(_) =>
-          getFirstValidationErrorRedirect(waypoints) match {
-            case Some(errorRedirect) => if (incompletePrompt) {
-              errorRedirect.toFuture
-            } else {
-              Redirect(CheckYourAnswersPage.route(waypoints).url).toFuture
-            }
+      getFirstValidationErrorRedirect(waypoints) match {
+        case Some(errorRedirect) => if (incompletePrompt) {
+          errorRedirect.toFuture
+        } else {
+          Redirect(CheckYourAnswersPage.route(waypoints).url).toFuture
+        }
+        case None =>
 
-            case None =>
+          for {
+            _ <- cc.sessionRepository.set(request.userAnswers)
+          } yield Redirect(CheckYourAnswersPage.navigate(waypoints, request.userAnswers, request.userAnswers).route)
 
-              for {
-                _ <- cc.sessionRepository.set(request.userAnswers)
-              } yield Redirect(CheckYourAnswersPage.navigate(waypoints, request.userAnswers, request.userAnswers).route)
-          }
-        case Left(error) =>
-          logger.error(s"Received an unexpected error on pending registration submission: ${error.body}")
-          Redirect(ErrorSubmittingPendingRegistrationPage.route(waypoints).url).toFuture
       }
   }
 }

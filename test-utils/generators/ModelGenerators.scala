@@ -16,9 +16,9 @@
 
 package generators
 
+import models.*
 import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
-import models.*
 import models.etmp.SchemeType
 import models.euDetails.EuDetails
 import models.vatEuDetails.TradingNameAndBusinessAddress
@@ -209,14 +209,15 @@ trait ModelGenerators extends EitherValues {
     Arbitrary {
       for {
         userAnswers <- arbitraryUserAnswers.arbitrary
-        uniqueCode = UUID.randomUUID().toString
+        uniqueUrlCode = UUID.randomUUID().toString
+        uniqueActivationCode = UUID.randomUUID().toString
       } yield {
         SavedPendingRegistration(
           journeyId = userAnswers.journeyId,
-          uniqueCode = uniqueCode,
+          uniqueUrlCode = uniqueUrlCode,
           userAnswers = userAnswers,
-          lastUpdated = userAnswers.lastUpdated
-        )
+          lastUpdated = userAnswers.lastUpdated,
+          uniqueActivationCode = uniqueActivationCode)
       }
     }
   }

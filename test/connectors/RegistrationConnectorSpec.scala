@@ -183,20 +183,20 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
       val url: String = "/ioss-netp-registration/save-pending-registration"
 
       "must return Right when a new Pending registration is created on the backend" in {
+         val responseBody = Json.toJson(savedPendingRegistration).toString
 
-        running(application) {
+          running(application) {
 
           val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
 
           server.stubFor(
             post(urlEqualTo(url))
-              .willReturn(noContent().
-                withStatus(NO_CONTENT))
+              .willReturn(ok().withBody(responseBody))
           )
 
           val result = connector.submitPendingRegistration(userAnswers).futureValue
 
-          result `mustBe` Right(())
+            result `mustBe` Right(savedPendingRegistration)
         }
       }
 
@@ -204,7 +204,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
         s"must return Left(UnexpectedResponseStatus) when the server returns status: $status" in {
 
-          val response = UnexpectedResponseStatus(status, s"Unexpected response when submitting the pending registration, status $status returned")
+          val response = UnexpectedResponseStatus(status, s"Unexpected response when trying to create the pending registration, status $status returned")
 
           running(application) {
 
@@ -253,7 +253,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
       otherErrorStatuses.foreach { status =>
         s"must return Left(UnexpectedResponseStatus) when the server returns status: $status" in {
 
-          val response = UnexpectedResponseStatus(status, s"Unexpected response when retrieving the saved pending registration, status $status returned")
+          val response = UnexpectedResponseStatus(status, s"Unexpected response when trying to retrieve the pending registration, status $status returned")
 
           running(application) {
 

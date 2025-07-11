@@ -16,10 +16,8 @@
 
 package controllers
 
-import config.Constants.pendingRegistrationTTL
 import connectors.RegistrationConnector
 import controllers.actions.*
-import formats.Format.dateFormatter
 import logging.Logging
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -28,7 +26,6 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.ApplicationCompleteView
 
-import java.time.{LocalDateTime, ZoneId}
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
@@ -49,11 +46,7 @@ class ApplicationCompleteController @Inject()(
         registrationConnector.getPendingRegistration(request.userAnswers.journeyId).flatMap {
           case Right(savedPendingRegistration) =>
 
-            val activationExpiryDate: String = LocalDateTime
-              .ofInstant(savedPendingRegistration.lastUpdated, ZoneId.systemDefault())
-              .plusDays(pendingRegistrationTTL).format(dateFormatter)
-
-            Ok(view(clientCompanyName, savedPendingRegistration.uniqueCode, activationExpiryDate)).toFuture
+            Ok(view(clientCompanyName, savedPendingRegistration.uniqueUrlCode, savedPendingRegistration.activationExpiryDate)).toFuture
 
           case Left(errors) =>
             val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given journey ID: $errors."

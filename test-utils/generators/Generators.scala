@@ -151,4 +151,35 @@ trait Generators extends ModelGenerators with UserAnswersGenerator with PageGene
     Gen.const('\'')
   )
 
+  def validEmails: Gen[String] = {
+    for {
+      length <- choose(5, 12)
+      user <- listOfN(length, Gen.alphaNumChar)
+      domain <- listOfN(length, Gen.alphaNumChar)
+      suffix <- Gen.oneOf(Seq(".com", ".co.uk", ".gov.uk"))
+    } yield s"${user.mkString}@${domain.mkString}${suffix.mkString}"
+  }
+
+  def safeInputsWithMaxLength(maxLength: Int): Gen[String] = (for {
+    length <- choose(1, maxLength)
+    chars <- listOfN(length, safeInputs)
+  } yield chars.mkString).suchThat(_.trim.nonEmpty)
+
+  def safeInputs: Gen[Char] = Gen.oneOf(
+    Gen.alphaNumChar,
+    Gen.const('"'),
+    Gen.const('\''),
+    Gen.const('.'),
+    Gen.const(','),
+    Gen.const('/'),
+    Gen.const('-'),
+    Gen.const('_'),
+    Gen.const(' '),
+    Gen.const('&'),
+    Gen.const('’'),
+    Gen.const('('),
+    Gen.const(')'),
+    Gen.const('!'),
+    Gen.oneOf('À' to 'ÿ')
+  )
 }
