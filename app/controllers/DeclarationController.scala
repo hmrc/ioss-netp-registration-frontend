@@ -89,7 +89,7 @@ class DeclarationController @Inject()(
                     for {
                       updatedAnswers <- Future.fromTry(request.userAnswers.set(DeclarationPage, value))
                       _ <- cc.sessionRepository.set(updatedAnswers)
-                    } yield Redirect(DeclarationPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+                    } yield Redirect(routes.ApplicationCompleteController.onPageLoad())
                 )
               }
             }
