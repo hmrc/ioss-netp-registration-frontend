@@ -319,16 +319,13 @@ object VatInfoCompletionChecks extends CompletionChecks {
     request.userAnswers.get(BusinessBasedInUKPage) match {
       case Some(false) =>
         request.userAnswers.get(ClientHasVatNumberPage) match {
-          case Some(false) => request.userAnswers.get(ClientTaxReferencePage).isEmpty
+          case Some(false)
+            if request.userAnswers.get(ClientTaxReferencePage).isEmpty =>
             Some(Redirect(controllers.routes.ClientTaxReferenceController.onPageLoad(waypoints)))
-          case Some(true) =>
-            None
-          case None =>
+          case _ =>
             None
         }
-      case Some(true) =>
-        None
-      case None =>
+      case _ =>
        None
     }
   }
