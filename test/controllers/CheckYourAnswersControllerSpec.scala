@@ -17,32 +17,21 @@
 package controllers
 
 import base.SpecBase
-import connectors.RegistrationConnector
-import models.responses.InternalServerError
 import models.{BusinessContactDetails, CheckMode, Index, TradingName, UserAnswers, Website}
-import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito
-import org.mockito.Mockito.{times, verify, when}
-import org.scalatest.BeforeAndAfterEach
-import org.scalatestplus.mockito.MockitoSugar.mock
 import pages.*
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.{HasTradingNamePage, TradingNamePage}
 import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.website.WebsitePage
 import play.api.i18n.Messages
-import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import testutils.CheckYourAnswersSummaries.{getCYASummaryList, getCYAVatDetailsSummaryList}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
-import utils.FutureSyntax.FutureOps
 import viewmodels.govuk.SummaryListFluency
 import views.html.CheckYourAnswersView
 
-class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency with BeforeAndAfterEach {
-
-  private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
+class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency {
 
   private val waypoints: Waypoints = EmptyWaypoints.setNextWaypoint(Waypoint(CheckYourAnswersPage, CheckMode, CheckYourAnswersPage.urlFragment))
 
@@ -61,9 +50,6 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
     .set(BusinessContactDetailsPage, businessContactDetails).success.value
     .set(HasFixedEstablishmentPage, false).success.value
 
-  override def beforeEach(): Unit = {
-    Mockito.reset(mockRegistrationConnector)
-  }
 
   "Check Your Answers Controller" - {
 
@@ -131,7 +117,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
         val application = applicationBuilder(userAnswers = None).build()
 
         running(application) {
-          val request = FakeRequest(POST, routes.CheckYourAnswersController.onPageLoad().url)
+          val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
 
           val result = route(application, request).value
 
@@ -155,36 +141,13 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
 
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value `mustBe` CheckYourAnswersPage.navigate(waypoints, completeUserAnswers, completeUserAnswers).url
-          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(completeUserAnswers))(any())
-        }
-      }
-
-      "must redirect to the correct page when an error is returned from the backend" in {
-
-        val application = applicationBuilder(userAnswers = Some(completeUserAnswers))
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
-          .build()
-
-        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Left(InternalServerError).toFuture
-
-        running(application) {
-          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = false).url)
-
-          val result = route(application, request).value
-
-          status(result) `mustBe` SEE_OTHER
-          redirectLocation(result).value `mustBe` ErrorSubmittingPendingRegistrationPage.route(waypoints).url
-          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(completeUserAnswers))(any())
         }
       }
 
       "must submit completed answers" in {
 
         val application = applicationBuilder(userAnswers = Some(completeUserAnswers))
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
           .build()
-
-        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(()).toFuture
 
         running(application) {
 
@@ -194,7 +157,6 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
 
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value `mustBe` CheckYourAnswersPage.navigate(waypoints, completeUserAnswers, completeUserAnswers).url
-          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(completeUserAnswers))(any())
         }
       }
 
@@ -204,10 +166,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
           .remove(WebsitePage(Index(0))).success.value
 
         val application = applicationBuilder(userAnswers = Some(incompleteAnswers))
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
           .build()
-
-        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(()).toFuture
 
         running(application) {
 
@@ -217,7 +176,6 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
 
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value `mustBe` WebsitePage(Index(0)).route(waypoints).url
-          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(incompleteAnswers))(any())
         }
       }
     }

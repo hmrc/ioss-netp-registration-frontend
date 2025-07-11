@@ -17,30 +17,28 @@
 package controllers
 
 import com.google.inject.Inject
-import connectors.RegistrationConnector
 import controllers.actions.*
 import logging.Logging
 import models.CheckMode
-import pages.{CheckYourAnswersPage, EmptyWaypoints, ErrorSubmittingPendingRegistrationPage, NonEmptyWaypoints, Waypoint, Waypoints}
+import pages.{CheckYourAnswersPage, EmptyWaypoints, NonEmptyWaypoints, Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.CompletionChecks
-import viewmodels.checkAnswers.*
-import viewmodels.govuk.summarylist.*
-import views.html.CheckYourAnswersView
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
+import viewmodels.checkAnswers.*
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
 import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
+import viewmodels.govuk.summarylist.*
 import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
+import views.html.CheckYourAnswersView
 
 import scala.concurrent.ExecutionContext
 
 class CheckYourAnswersController @Inject()(
                                             override val messagesApi: MessagesApi,
                                             cc: AuthenticatedControllerComponents,
-                                            registrationConnector: RegistrationConnector,
                                             view: CheckYourAnswersView
                                           )(implicit executionContext: ExecutionContext)
   extends FrontendBaseController with I18nSupport with CompletionChecks with Logging {
