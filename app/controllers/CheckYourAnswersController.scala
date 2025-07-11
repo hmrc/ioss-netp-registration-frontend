@@ -25,10 +25,15 @@ import pages.{CheckYourAnswersPage, EmptyWaypoints, ErrorSubmittingPendingRegist
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import utils.FutureSyntax.FutureOps
-import viewmodels.checkAnswers.BusinessContactDetailsSummary
+import utils.CompletionChecks
+import viewmodels.checkAnswers.*
 import viewmodels.govuk.summarylist.*
 import views.html.CheckYourAnswersView
+import utils.FutureSyntax.FutureOps
+import viewmodels.WebsiteSummary
+import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
+import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
+import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
 
 import scala.concurrent.ExecutionContext
 
@@ -38,7 +43,7 @@ class CheckYourAnswersController @Inject()(
                                             registrationConnector: RegistrationConnector,
                                             view: CheckYourAnswersView
                                           )(implicit executionContext: ExecutionContext)
-  extends FrontendBaseController with I18nSupport with Logging {
+  extends FrontendBaseController with I18nSupport with CompletionChecks with Logging {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -46,31 +51,93 @@ class CheckYourAnswersController @Inject()(
     implicit request =>
 
       val thisPage = CheckYourAnswersPage
+      val userAnswers = request.userAnswers
 
       val waypoints: NonEmptyWaypoints = EmptyWaypoints.setNextWaypoint(Waypoint(thisPage, CheckMode, CheckYourAnswersPage.urlFragment))
 
-      val contactDetailsFullNameRow = BusinessContactDetailsSummary.rowFullName(waypoints, request.userAnswers, thisPage)
-      val contactDetailsTelephoneNumberRow = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, request.userAnswers, thisPage)
-      val contactDetailsEmailAddressRow = BusinessContactDetailsSummary.rowEmailAddress(waypoints, request.userAnswers, thisPage)
+      val vatRegistrationDetailsList = SummaryListViewModel(
+        rows = Seq(
+          BusinessBasedInUKSummary.row(waypoints, userAnswers, thisPage),
+          ClientHasVatNumberSummary.row(waypoints, userAnswers, thisPage),
+          ClientVatNumberSummary.row(waypoints, userAnswers, thisPage),
+          ClientBusinessNameSummary.row(waypoints, userAnswers, thisPage),
+          ClientHasUtrNumberSummary.row(waypoints, userAnswers, thisPage),
+          ClientUtrNumberSummary.row(waypoints, userAnswers, thisPage),
+          ClientsNinoNumberSummary.row(waypoints, userAnswers, thisPage),
+          ClientCountryBasedSummary.row(waypoints, userAnswers, thisPage),
+          ClientTaxReferenceSummary.row(waypoints, userAnswers, thisPage),
+          ClientBusinessAddressSummary.row(waypoints, userAnswers, thisPage),
+          VatRegistrationDetailsSummary.rowBusinessAddress(waypoints, userAnswers, thisPage)
+        ).flatten
+      )
+
+      val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(userAnswers, waypoints, thisPage)
+      val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, userAnswers, thisPage)
+      val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.row(userAnswers, waypoints, thisPage)
+      val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(userAnswers, Seq.empty, waypoints, thisPage)
+      val maybeHasFixedEstablishmentSummaryRow = HasFixedEstablishmentSummary.row(waypoints, userAnswers, thisPage)
+      val euDetailsSummaryRow = EuDetailsSummary.checkAnswersRow(waypoints, userAnswers, thisPage)
+      val websiteSummaryRow = WebsiteSummary.checkAnswersRow(waypoints, userAnswers, thisPage)
+      val contactDetailsFullNameRow = BusinessContactDetailsSummary.rowFullName(waypoints, userAnswers, thisPage)
+      val contactDetailsTelephoneNumberRow = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, userAnswers, thisPage)
+      val contactDetailsEmailAddressRow = BusinessContactDetailsSummary.rowEmailAddress(waypoints, userAnswers, thisPage)
 
       val list = SummaryListViewModel(
         rows = Seq(
+          maybeHasTradingNameSummaryRow.map { hasTradingNameSummaryRow =>
+            if (tradingNameSummaryRow.nonEmpty) {
+              hasTradingNameSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+            } else {
+              hasTradingNameSummaryRow
+            }
+          },
+          tradingNameSummaryRow,
+          previouslyRegisteredSummaryRow.map { sr =>
+            if (previousRegistrationSummaryRow.isDefined) {
+              sr.withCssClass("govuk-summary-list__row--no-border")
+            } else {
+              sr
+            }
+          },
+          previousRegistrationSummaryRow,
+          maybeHasFixedEstablishmentSummaryRow.map { sr =>
+            if (euDetailsSummaryRow.nonEmpty) {
+              sr.withCssClass("govuk-summary-list__row--no-border")
+            } else {
+              sr.withCssClass("govuk-summary-list")
+            }
+          },
+          euDetailsSummaryRow,
+          websiteSummaryRow,
           contactDetailsFullNameRow.map(_.withCssClass("govuk-summary-list__row--no-border")),
           contactDetailsTelephoneNumberRow.map(_.withCssClass("govuk-summary-list__row--no-border")),
           contactDetailsEmailAddressRow,
         ).flatten
       )
 
-      Ok(view(waypoints, list))
+      val isValid: Boolean = validate()
+
+      Ok(view(waypoints, vatRegistrationDetailsList, list, isValid))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints, incompletePrompt: Boolean): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
       registrationConnector.submitPendingRegistration(request.userAnswers).flatMap {
         case Right(_) =>
-          Redirect(CheckYourAnswersPage.navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
+          getFirstValidationErrorRedirect(waypoints) match {
+            case Some(errorRedirect) => if (incompletePrompt) {
+              errorRedirect.toFuture
+            } else {
+              Redirect(CheckYourAnswersPage.route(waypoints).url).toFuture
+            }
 
+            case None =>
+
+              for {
+                _ <- cc.sessionRepository.set(request.userAnswers)
+              } yield Redirect(CheckYourAnswersPage.navigate(waypoints, request.userAnswers, request.userAnswers).route)
+          }
         case Left(error) =>
           logger.error(s"Received an unexpected error on pending registration submission: ${error.body}")
           Redirect(ErrorSubmittingPendingRegistrationPage.route(waypoints).url).toFuture

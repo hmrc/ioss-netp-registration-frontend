@@ -20,6 +20,7 @@ import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
 import models.*
 import models.etmp.SchemeType
+import models.euDetails.EuDetails
 import models.vatEuDetails.TradingNameAndBusinessAddress
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.{choose, listOfN}
@@ -33,10 +34,11 @@ import java.util.UUID
 
 trait ModelGenerators extends EitherValues {
 
-  implicit lazy val arbitraryRegistrationType: Arbitrary[RegistrationType] =
+  implicit lazy val arbitraryRegistrationType: Arbitrary[RegistrationType] = {
     Arbitrary {
-      Gen.oneOf(RegistrationType.values.toSeq)
+      Gen.oneOf(RegistrationType.values)
     }
+  }
 
   private val maxFieldLength: Int = 35
 
@@ -252,4 +254,25 @@ trait ModelGenerators extends EitherValues {
         addr <- arbitrary[InternationalAddress]
       } yield TradingNameAndBusinessAddress(name, addr)
     }
+
+  implicit lazy val arbitraryEuDetails: Arbitrary[EuDetails] = {
+    Arbitrary {
+      for {
+        hasFixedEstablishment <- arbitrary[Boolean]
+        registrationType <- arbitraryRegistrationType.arbitrary
+        euTaxReference <- genEuTaxReference
+        euVatNumber = arbitraryEuVatNumber.sample.get
+        countryCode = euVatNumber.substring(0, 2)
+        euCountry = Country.euCountries.find(_.code == countryCode).head
+        tradingNameAndBusinessAddress <- arbitrary[TradingNameAndBusinessAddress]
+      } yield EuDetails(
+        euCountry = euCountry,
+        hasFixedEstablishment = Some(hasFixedEstablishment),
+        registrationType = Some(registrationType),
+        euVatNumber = Some(euVatNumber),
+        euTaxReference = Some(euTaxReference),
+        tradingNameAndBusinessAddress = Some(tradingNameAndBusinessAddress),
+      )
+    }
+  }
 }

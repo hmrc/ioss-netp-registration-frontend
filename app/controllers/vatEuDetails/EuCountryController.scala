@@ -18,8 +18,8 @@ package controllers.vatEuDetails
 
 import controllers.actions.*
 import forms.vatEuDetails.EuCountryFormProvider
-import models.{Country, Index}
-import pages.vatEuDetails.EuCountryPage
+import models.{Country, Index, UserAnswers}
+import pages.vatEuDetails.*
 import pages.Waypoints
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -30,6 +30,7 @@ import views.html.vatEuDetails.EuCountryView
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Success, Try}
 
 class EuCountryController @Inject()(
                                        override val messagesApi: MessagesApi,
@@ -65,11 +66,30 @@ class EuCountryController @Inject()(
           Future.successful(BadRequest(view(formWithErrors, waypoints, countryIndex))),
 
         value =>
+          val existingCountry = request.userAnswers.get(EuCountryPage(countryIndex))
+
+          val cleanedAnswersTry: Try[UserAnswers] =
+            (existingCountry, Some(value)) match {
+              case (Some(oldCountry), Some(newCountry)) if oldCountry != newCountry =>
+                cleanUp(countryIndex, request.userAnswers)
+              case _ =>
+                Success(request.userAnswers)
+            }
 
           for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(EuCountryPage(countryIndex), value))
+            cleanedAnswers <- Future.fromTry(cleanedAnswersTry)
+            updatedAnswers <- Future.fromTry(cleanedAnswers.set(EuCountryPage(countryIndex), value))
             _              <- cc.sessionRepository.set(updatedAnswers)
           } yield Redirect(EuCountryPage(countryIndex).navigate(waypoints, request.userAnswers, updatedAnswers).route)
       )
+  }
+
+  private def cleanUp(countryIndex: Index, answers: UserAnswers): Try[UserAnswers] = {
+    for {
+      remove1 <- answers.remove(TradingNameAndBusinessAddressPage(countryIndex))
+      remove2 <- remove1.remove(RegistrationTypePage(countryIndex))
+      remove3 <- remove2.remove(EuVatNumberPage(countryIndex))
+      cleaned <- remove3.remove(EuTaxReferencePage(countryIndex))
+    } yield cleaned
   }
 }

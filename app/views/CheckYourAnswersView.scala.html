@@ -15,25 +15,49 @@
  *@
 
 @import pages.{CheckYourAnswersPage, Waypoints}
-@import uk.gov.hmrc.govukfrontend.views.html.components.FormWithCSRF
+@import uk.gov.hmrc.govukfrontend.views.html.components.GovukWarningText
+@import uk.gov.hmrc.govukfrontend.views.viewmodels.warningtext.WarningText
 @import views.html.components.ButtonGroup
 
 @this(
-        formHelper: FormWithCSRF,
-        layout: templates.Layout,
-        govukSummaryList: GovukSummaryList,
-        button: ButtonGroup
+    formHelper: FormWithCSRF,
+    layout: templates.Layout,
+    govukSummaryList: GovukSummaryList,
+    govukWarningText: GovukWarningText,
+    button: ButtonGroup
 )
 
-@(waypoints: Waypoints, list: SummaryList)(implicit request: Request[_], messages: Messages)
+@(waypoints: Waypoints, vatDetailsList: SummaryList, list: SummaryList, isValid: Boolean)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("checkYourAnswers.title"))) {
 
-  <h1 class="govuk-heading-xl">@messages("checkYourAnswers.heading")</h1>
+    @if(!isValid) {
+        @govukWarningText(WarningText(
+            iconFallbackText = Option(messages("site.warning")),
+            content = Text(messages("error.missing_answers"))
+        ))
+    }
 
-  @govukSummaryList(list)
+    <h1 class="govuk-heading-xl">@messages("checkYourAnswers.heading")</h1>
 
-  @formHelper(action = routes.CheckYourAnswersController.onSubmit(waypoints)) {
-    @button("site.continue", CheckYourAnswersPage.route(waypoints).url, waypoints)
-  }
+    <h2 class="govuk-heading-m">@messages("checkYourAnswers.vatRegistrationDetails.heading")</h2>
+
+    @govukSummaryList(vatDetailsList)
+
+    <h2 class="govuk-heading-m">@messages("checkYourAnswers.details.heading")</h2>
+
+    @govukSummaryList(list)
+
+    @if(isValid) {
+        @formHelper(action = routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = false)) {
+            @button("site.continue", CheckYourAnswersPage.route(waypoints).url, waypoints)
+        }
+    } else {
+        <h2 class="govuk-heading-m push--top">@messages("error.missing_answers_header")</h2>
+        <p class="govuk-body">@messages("error.missing_answers_prompt.general")</p>
+
+        @formHelper(action = routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = true)) {
+            @button("error.resolve_missing_answers", CheckYourAnswersPage.route(waypoints).url, waypoints)
+        }
+    }
 }

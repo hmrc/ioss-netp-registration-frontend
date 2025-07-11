@@ -70,6 +70,9 @@ trait SpecBase
   val vatNumber = "GB123456789"
   val intermediaryNumber = "IN9001234567"
   val vrn: Vrn = Vrn("123456789")
+  val utr: String = "1234567890"
+  val nino = "QQ 12 34 56 C"
+  val taxReference: String = "123456789"
   val vatCustomerInfo: VatCustomerInfo = {
     VatCustomerInfo(
       registrationDate = LocalDate.now(stubClockAtArbitraryDate),
@@ -91,6 +94,7 @@ trait SpecBase
       deregistrationDecisionDate = None
     )
   }
+  
 
   val businessContactDetails: BusinessContactDetails =
     BusinessContactDetails(fullName = "name", telephoneNumber = "0111 2223334", emailAddress = "email@example.com")

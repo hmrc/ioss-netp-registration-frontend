@@ -46,7 +46,10 @@ case object BusinessBasedInUKPage extends QuestionPage[Boolean] {
         removeClientVatNumberAnswers <- userAnswers.remove(ClientVatNumberPage)
         removeHasClientVatNumberAnswers <- removeClientVatNumberAnswers.remove(ClientHasVatNumberPage)
         removeCountryBasedInAnswers <- removeHasClientVatNumberAnswers.remove(ClientCountryBasedPage)
-        removeBusinessName <- removeCountryBasedInAnswers.remove(ClientBusinessNamePage)
+        removeHasUtrNumberAnswers <- removeCountryBasedInAnswers.remove(ClientHasUtrNumberPage)
+        removeUtrNumberAnswers <- removeHasUtrNumberAnswers.remove(ClientUtrNumberPage)
+        removeNinoNumberAnswers <- removeUtrNumberAnswers.remove(ClientsNinoNumberPage)
+        removeBusinessName <- removeNinoNumberAnswers.remove(ClientBusinessNamePage)
         removeTaxReferenceAnswers <- removeBusinessName.remove(ClientTaxReferencePage)
         updatedUserAnswers <- removeTaxReferenceAnswers.remove(ClientBusinessAddressPage)
       } yield updatedUserAnswers

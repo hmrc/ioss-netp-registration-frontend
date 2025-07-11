@@ -23,7 +23,7 @@ import models.ClientBusinessName
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
-import pages.{ClientBusinessNamePage, ClientVatNumberPage, DeclarationPage, EmptyWaypoints, Waypoints}
+import pages.{ClientBusinessNamePage, ClientVatNumberPage, DeclarationPage}
 import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
@@ -35,7 +35,6 @@ import scala.concurrent.Future
 
 class DeclarationControllerSpec extends SpecBase with MockitoSugar {
 
-  private val waypoints: Waypoints = EmptyWaypoints
   private val intermediaryCompanyName: String = intermediaryVatCustomerInfo.organisationName.get
   private val clientBusinessName: ClientBusinessName = ClientBusinessName(vatCustomerInfo.organisationName.value)
 
@@ -48,7 +47,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar {
   val formProvider = new DeclarationFormProvider()
   val form: Form[Boolean] = formProvider()
 
-  lazy val declarationRoute: String = routes.DeclarationController.onPageLoad(waypoints).url
+  lazy val declarationRoute: String = routes.DeclarationController.onPageLoad().url
 
   "Declaration Controller" - {
 
@@ -69,7 +68,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar {
         val view = application.injector.instanceOf[DeclarationView]
 
         status(result) mustEqual OK
-        contentAsString(result) mustEqual view(form, waypoints, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
+        contentAsString(result) mustEqual view(form, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
       }
     }
 
@@ -92,7 +91,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar {
         val result = route(application, request).value
 
         status(result) mustEqual OK
-        contentAsString(result) mustEqual view(form.fill(true), waypoints, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
+        contentAsString(result) mustEqual view(form.fill(true), intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
       }
     }
 
@@ -148,7 +147,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar {
         val result = route(application, request).value
 
         status(result) mustEqual BAD_REQUEST
-        contentAsString(result) mustEqual view(boundForm, waypoints, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
+        contentAsString(result) mustEqual view(boundForm, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
       }
     }
 

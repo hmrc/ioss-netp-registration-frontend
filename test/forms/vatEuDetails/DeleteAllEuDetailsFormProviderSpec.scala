@@ -14,24 +14,32 @@
  * limitations under the License.
  */
 
-package pages
+package forms.vatEuDetails
 
-import controllers.routes
-import models.UserAnswers
-import play.api.libs.json.JsPath
-import play.api.mvc.Call
+import forms.behaviours.BooleanFieldBehaviours
+import play.api.data.FormError
 
-case object DeclarationPage extends QuestionPage[Boolean] {
+class DeleteAllEuDetailsFormProviderSpec extends BooleanFieldBehaviours {
 
-  override def path: JsPath = JsPath \ toString
+  val requiredKey = "deleteAllEuDetails.error.required"
+  val invalidKey = "error.boolean"
 
-  override def toString: String = "declaration"
+  val form = new DeleteAllEuDetailsFormProvider()()
 
-  override def route(waypoints: Waypoints): Call = {
-    routes.DeclarationController.onPageLoad()
-  }
+  ".value" - {
 
-  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
-    ApplicationCompletePage
+    val fieldName = "value"
+
+    behave like booleanField(
+      form,
+      fieldName,
+      invalidError = FormError(fieldName, invalidKey)
+    )
+
+    behave like mandatoryField(
+      form,
+      fieldName,
+      requiredError = FormError(fieldName, requiredKey)
+    )
   }
 }

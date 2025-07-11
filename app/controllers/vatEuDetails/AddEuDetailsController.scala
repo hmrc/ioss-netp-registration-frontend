@@ -19,14 +19,17 @@ package controllers.vatEuDetails
 import controllers.actions.*
 import forms.vatEuDetails.AddEuDetailsFormProvider
 import models.Country
+import models.euDetails.EuDetails
 import pages.vatEuDetails.AddEuDetailsPage
-import pages.Waypoints
+import pages.{JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.euDetails.DeriveNumberOfEuRegistrations
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.CompletionChecks
+import utils.EuDetailsCompletionChecks.*
 import utils.ItemsHelper.getDerivedItems
 import viewmodels.checkAnswers.vatEuDetails.EuDetailsSummary
 import views.html.vatEuDetails.AddEuDetailsView
@@ -40,7 +43,7 @@ class AddEuDetailsController @Inject()(
                                          cc: AuthenticatedControllerComponents,
                                          formProvider: AddEuDetailsFormProvider,
                                          view: AddEuDetailsView
-                                 )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+                                 )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with CompletionChecks {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -54,29 +57,49 @@ class AddEuDetailsController @Inject()(
 
         val canAddEuDetails: Boolean = numberOfEuRegistrations < euCountriesSize
         val euDetailsSummaryList: SummaryList = EuDetailsSummary.row(waypoints, request.userAnswers, AddEuDetailsPage())
+        
+        withCompleteDataAsync[EuDetails](
+          data = getAllIncompleteEuDetails _,
+          onFailure = (incomplete: Seq[EuDetails]) => {
+            Ok(view(form, waypoints, euDetailsSummaryList, canAddEuDetails, incomplete)).toFuture
+          }) {
+          Ok(view(form, waypoints, euDetailsSummaryList, canAddEuDetails)).toFuture
+        }
 
-        Ok(view(form, waypoints, euDetailsSummaryList, canAddEuDetails)).toFuture
       }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints, incompletePromptShown: Boolean): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
-      getDerivedItems(waypoints, DeriveNumberOfEuRegistrations) { numberOfEuRegistrations =>
-
-        val canAddEuDetails: Boolean = numberOfEuRegistrations < euCountriesSize
-        val euDetailsSummaryList: SummaryList = EuDetailsSummary.row(waypoints, request.userAnswers, AddEuDetailsPage())
+      withCompleteDataAsync[EuDetails](
+        data = getAllIncompleteEuDetails _,
+        onFailure = (incomplete: Seq[EuDetails]) => {
+          if (incompletePromptShown) {
+            incompleteEuDetailsRedirect(waypoints).map { redirectIncompletePage =>
+              redirectIncompletePage.toFuture
+            }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture)
+          } else {
+            Redirect(AddEuDetailsPage().route(waypoints).url).toFuture
+          }
+        }) {
         
-        form.bindFromRequest().fold(
-          formWithErrors =>
-            BadRequest(view(formWithErrors, waypoints, euDetailsSummaryList, canAddEuDetails)).toFuture,
+        getDerivedItems(waypoints, DeriveNumberOfEuRegistrations) { numberOfEuRegistrations =>
 
-          value =>
-            for {
-              updatedAnswers <- Future.fromTry(request.userAnswers.set(AddEuDetailsPage(), value))
-              _ <- cc.sessionRepository.set(updatedAnswers)
-            } yield Redirect(AddEuDetailsPage().navigate(waypoints, request.userAnswers, updatedAnswers).route)
-        )
+          val canAddEuDetails: Boolean = numberOfEuRegistrations < euCountriesSize
+          val euDetailsSummaryList: SummaryList = EuDetailsSummary.row(waypoints, request.userAnswers, AddEuDetailsPage())
+
+          form.bindFromRequest().fold(
+            formWithErrors =>
+              BadRequest(view(formWithErrors, waypoints, euDetailsSummaryList, canAddEuDetails)).toFuture,
+
+            value =>
+              for {
+                updatedAnswers <- Future.fromTry(request.userAnswers.set(AddEuDetailsPage(), value))
+                _ <- cc.sessionRepository.set(updatedAnswers)
+              } yield Redirect(AddEuDetailsPage().navigate(waypoints, request.userAnswers, updatedAnswers).route)
+          )
+        }
       }
   }
 }

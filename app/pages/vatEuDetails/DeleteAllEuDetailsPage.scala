@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-package pages.tradingNames
+package pages.vatEuDetails
 
-import controllers.tradingNames.routes
+import controllers.vatEuDetails.routes
 import models.UserAnswers
-import pages.{CheckYourAnswersPage, JourneyRecoveryPage, NonEmptyWaypoints, Page, QuestionPage, Waypoints}
+import pages.{JourneyRecoveryPage, Page, QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
-case object DeleteAllTradingNamesPage extends QuestionPage[Boolean] {
+case object DeleteAllEuDetailsPage extends QuestionPage[Boolean] {
 
   override def path: JsPath = JsPath \ toString
 
-  override def toString: String = "deleteAllTradingNames"
+  override def toString: String = "deleteAllEuDetails"
 
   override def route(waypoints: Waypoints): Call =
-    routes.DeleteAllTradingNamesController.onPageLoad(waypoints)
+    routes.DeleteAllEuDetailsController.onPageLoad(waypoints)
 
-  override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page =
+  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
     answers.get(this) match {
-      case Some(_) => CheckYourAnswersPage
+      case Some(_) => HasFixedEstablishmentPage
       case _ => JourneyRecoveryPage
     }
 }

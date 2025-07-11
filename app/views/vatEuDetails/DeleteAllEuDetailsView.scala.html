@@ -1,5 +1,5 @@
 @*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,24 @@
  * limitations under the License.
  *@
 
-@import controllers.tradingNames.routes
-@import pages.Waypoints
+@import controllers.vatEuDetails.routes
+@import pages.vatEuDetails.DeleteAllEuDetailsPage
+@import views.html.components.ButtonGroup
 
 @this(
     layout: templates.Layout,
     formHelper: FormWithCSRF,
     govukErrorSummary: GovukErrorSummary,
     govukRadios: GovukRadios,
-    govukButton: GovukButton
+    button: ButtonGroup,
+    govukWarningText: GovukWarningText
 )
 
-@(form: Form[_], waypoints: Waypoints, companyName: String)(implicit request: Request[_], messages: Messages)
+@(form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = title(form, messages("hasTradingName.title", companyName))) {
+@layout(pageTitle = title(form, messages("deleteAllEuDetails.title"))) {
 
-    @formHelper(action = routes.HasTradingNameController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
+    @formHelper(action = routes.DeleteAllEuDetailsController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
 
         @if(form.errors.nonEmpty) {
             @govukErrorSummary(ErrorSummaryViewModel(form))
@@ -38,12 +40,15 @@
         @govukRadios(
             RadiosViewModel.yesNo(
                 field = form("value"),
-                legend = LegendViewModel(messages("hasTradingName.heading", companyName)).asPageHeading()
+                legend = LegendViewModel(messages("deleteAllEuDetails.heading")).asPageHeading()
             )
         )
 
-        @govukButton(
-            ButtonViewModel(messages("site.continue")).withAttribute("id", "continue")
-        )
+        @govukWarningText(WarningText(
+            iconFallbackText = Option(messages("site.warning")),
+            content = Text(messages("deleteAllEuDetails.warning"))
+        ))
+        
+        @button("site.continue", DeleteAllEuDetailsPage.route(waypoints).url, waypoints)
     }
 }

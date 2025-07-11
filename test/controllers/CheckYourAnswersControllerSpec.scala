@@ -19,18 +19,23 @@ package controllers
 import base.SpecBase
 import connectors.RegistrationConnector
 import models.responses.InternalServerError
-import models.{BusinessContactDetails, CheckMode, UserAnswers}
+import models.{BusinessContactDetails, CheckMode, Index, TradingName, UserAnswers, Website}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar.mock
-import pages.{BusinessContactDetailsPage, CheckYourAnswersPage, EmptyWaypoints, ErrorSubmittingPendingRegistrationPage, NonEmptyWaypoints, Waypoint}
+import pages.*
+import pages.previousRegistrations.PreviouslyRegisteredPage
+import pages.tradingNames.{HasTradingNamePage, TradingNamePage}
+import pages.vatEuDetails.HasFixedEstablishmentPage
+import pages.website.WebsitePage
 import play.api.i18n.Messages
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import testutils.CheckYourAnswersSummaries.getCYASummaryList
+import testutils.CheckYourAnswersSummaries.{getCYASummaryList, getCYAVatDetailsSummaryList}
+import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
 import utils.FutureSyntax.FutureOps
 import viewmodels.govuk.SummaryListFluency
 import views.html.CheckYourAnswersView
@@ -39,9 +44,22 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
 
+  private val waypoints: Waypoints = EmptyWaypoints.setNextWaypoint(Waypoint(CheckYourAnswersPage, CheckMode, CheckYourAnswersPage.urlFragment))
+
   private val businessContactDetails: BusinessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
-  private val completeUserAnswers: UserAnswers = emptyUserAnswers
+
+  private val updatedAnswersWithVatInfo = emptyUserAnswersWithVatInfo
+    .set(BusinessBasedInUKPage, true).success.value
+    .set(ClientHasVatNumberPage, true).success.value
+    .set(ClientVatNumberPage, vatNumber).success.value
+
+  private val completeUserAnswers: UserAnswers = updatedAnswersWithVatInfo
+    .set(HasTradingNamePage, true).success.value
+    .set(TradingNamePage(Index(0)), TradingName("Test trading name")).success.value
+    .set(PreviouslyRegisteredPage, false).success.value
+    .set(WebsitePage(Index(0)), Website("www.test-website.com")).success.value
     .set(BusinessContactDetailsPage, businessContactDetails).success.value
+    .set(HasFixedEstablishmentPage, false).success.value
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockRegistrationConnector)
@@ -54,22 +72,57 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
       val waypoints: NonEmptyWaypoints = EmptyWaypoints
         .setNextWaypoint(Waypoint(CheckYourAnswersPage, CheckMode, CheckYourAnswersPage.urlFragment))
 
-      "must return OK and the correct view for a GET" in {
+      "must return OK and the correct view for a GET" - {
 
-        val application = applicationBuilder(userAnswers = Some(completeUserAnswers)).build()
+        "with completed data present" in {
 
-        running(application) {
-          implicit val msgs: Messages = messages(application)
+          val application = applicationBuilder(userAnswers = Some(completeUserAnswers)).build()
 
-          val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
+          running(application) {
+            implicit val msgs: Messages = messages(application)
 
-          val result = route(application, request).value
+            val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
 
-          val view = application.injector.instanceOf[CheckYourAnswersView]
-          val list = SummaryListViewModel(getCYASummaryList(waypoints, completeUserAnswers, CheckYourAnswersPage))
+            val result = route(application, request).value
 
-          status(result) `mustBe` OK
-          contentAsString(result) `mustBe` view(waypoints, list)(request, messages(application)).toString
+            val view = application.injector.instanceOf[CheckYourAnswersView]
+
+            val vatDetailsList: SummaryList = SummaryListViewModel(getCYAVatDetailsSummaryList(waypoints, updatedAnswersWithVatInfo, CheckYourAnswersPage))
+            val list = SummaryListViewModel(getCYASummaryList(waypoints, completeUserAnswers, CheckYourAnswersPage))
+
+            status(result) `mustBe` OK
+            contentAsString(result) `mustBe` view(waypoints, vatDetailsList, list, isValid = true)(request, messages(application)).toString
+          }
+        }
+
+        "with incomplete data" in {
+
+          val missingAnswers: UserAnswers = completeUserAnswers
+            .remove(BusinessBasedInUKPage).success.value
+            .remove(ClientHasVatNumberPage).success.value
+            .remove(ClientVatNumberPage).success.value
+            .remove(PreviouslyRegisteredPage).success.value
+            .remove(WebsitePage(Index(0))).success.value
+            .remove(BusinessContactDetailsPage).success.value
+            .remove(HasFixedEstablishmentPage).success.value
+
+          val application = applicationBuilder(userAnswers = Some(missingAnswers)).build()
+
+          running(application) {
+            implicit val msgs: Messages = messages(application)
+
+            val request = FakeRequest(GET, routes.CheckYourAnswersController.onPageLoad().url)
+
+            val result = route(application, request).value
+
+            val view = application.injector.instanceOf[CheckYourAnswersView]
+
+            val vatDetailsList: SummaryList = SummaryListViewModel(getCYAVatDetailsSummaryList(waypoints, missingAnswers, CheckYourAnswersPage))
+            val list = SummaryListViewModel(getCYASummaryList(waypoints, missingAnswers, CheckYourAnswersPage))
+
+            status(result) `mustBe` OK
+            contentAsString(result) `mustBe` view(waypoints, vatDetailsList, list, isValid = false)(request, messages(application)).toString
+          }
         }
       }
 
@@ -99,7 +152,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(()).toFuture
 
         running(application) {
-          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints).url)
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = false).url)
 
           val result = route(application, request).value
 
@@ -118,13 +171,56 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency wi
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Left(InternalServerError).toFuture
 
         running(application) {
-          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints).url)
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = false).url)
 
           val result = route(application, request).value
 
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value `mustBe` ErrorSubmittingPendingRegistrationPage.route(waypoints).url
           verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(completeUserAnswers))(any())
+        }
+      }
+
+      "must submit completed answers" in {
+
+        val application = applicationBuilder(userAnswers = Some(completeUserAnswers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(()).toFuture
+
+        running(application) {
+
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = false).url)
+
+          val result = route(application, request).value
+
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` CheckYourAnswersPage.navigate(waypoints, completeUserAnswers, completeUserAnswers).url
+          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(completeUserAnswers))(any())
+        }
+      }
+
+      "must redirect to the correct page when there is incomplete data" in {
+
+        val incompleteAnswers: UserAnswers = completeUserAnswers
+          .remove(WebsitePage(Index(0))).success.value
+
+        val application = applicationBuilder(userAnswers = Some(incompleteAnswers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(()).toFuture
+
+        running(application) {
+
+          val request = FakeRequest(POST, routes.CheckYourAnswersController.onSubmit(waypoints, incompletePrompt = true).url)
+
+          val result = route(application, request).value
+
+          status(result) `mustBe` SEE_OTHER
+          redirectLocation(result).value `mustBe` WebsitePage(Index(0)).route(waypoints).url
+          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(incompleteAnswers))(any())
         }
       }
     }

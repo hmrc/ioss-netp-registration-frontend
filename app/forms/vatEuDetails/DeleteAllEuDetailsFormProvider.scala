@@ -14,24 +14,17 @@
  * limitations under the License.
  */
 
-package pages
+package forms.vatEuDetails
 
-import controllers.routes
-import models.UserAnswers
-import play.api.libs.json.JsPath
-import play.api.mvc.Call
+import forms.mappings.Mappings
+import play.api.data.Form
 
-case object DeclarationPage extends QuestionPage[Boolean] {
+import javax.inject.Inject
 
-  override def path: JsPath = JsPath \ toString
+class DeleteAllEuDetailsFormProvider @Inject() extends Mappings {
 
-  override def toString: String = "declaration"
-
-  override def route(waypoints: Waypoints): Call = {
-    routes.DeclarationController.onPageLoad()
-  }
-
-  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
-    ApplicationCompletePage
-  }
+  def apply(): Form[Boolean] =
+    Form(
+      "value" -> boolean("deleteAllEuDetails.error.required")
+    )
 }

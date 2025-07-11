@@ -17,28 +17,26 @@
 package controllers.vatEuDetails
 
 import base.SpecBase
-import forms.vatEuDetails.AddEuDetailsFormProvider
+import forms.vatEuDetails.DeleteAllEuDetailsFormProvider
 import models.vatEuDetails.TradingNameAndBusinessAddress
 import models.{Country, InternationalAddress, RegistrationType, TradingName, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
-import pages.{JourneyRecoveryPage, Waypoints}
+import pages.JourneyRecoveryPage
 import pages.vatEuDetails.*
 import play.api.data.Form
-import play.api.i18n.Messages
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import queries.euDetails.AllEuDetailsQuery
 import repositories.SessionRepository
-import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
-import viewmodels.checkAnswers.vatEuDetails.EuDetailsSummary
-import views.html.vatEuDetails.AddEuDetailsView
+import views.html.vatEuDetails.DeleteAllEuDetailsView
+import utils.FutureSyntax.FutureOps
 
-import scala.concurrent.Future
 
-class AddEuDetailsControllerSpec extends SpecBase with MockitoSugar {
-
+class DeleteAllEuDetailsControllerSpec extends SpecBase with MockitoSugar {
+  
   private val euVatNumber: String = arbitraryEuVatNumber.sample.value
   private val countryCode: String = euVatNumber.substring(0, 2)
   private val country: Country = Country.euCountries.find(_.code == countryCode).head
@@ -53,14 +51,11 @@ class AddEuDetailsControllerSpec extends SpecBase with MockitoSugar {
       country = Some(country)
     )
   )
-
-  val formProvider = new AddEuDetailsFormProvider()
+  
+  val formProvider = new DeleteAllEuDetailsFormProvider()
   val form: Form[Boolean] = formProvider()
 
-  lazy val addEuDetailsRoute: String = routes.AddEuDetailsController.onPageLoad(waypoints).url
-
-  private def addEuDetailsRoutePost(waypoints: Waypoints = waypoints): String =
-    routes.AddEuDetailsController.onSubmit(waypoints, incompletePromptShown = false).url
+  lazy val deleteAllEuDetailsRoute: String = routes.DeleteAllEuDetailsController.onPageLoad(waypoints).url
 
   private val updatedAnswers: UserAnswers = emptyUserAnswersWithVatInfo
     .set(HasFixedEstablishmentPage, true).success.value
@@ -68,64 +63,59 @@ class AddEuDetailsControllerSpec extends SpecBase with MockitoSugar {
     .set(TradingNameAndBusinessAddressPage(countryIndex(0)), tradingNameAndBusinessAddress).success.value
     .set(RegistrationTypePage(countryIndex(0)), RegistrationType.VatNumber).success.value
     .set(EuVatNumberPage(countryIndex(0)), euVatNumber).success.value
+  
 
-  "AddEuDetails Controller" - {
+  "DeleteAllEuDetails Controller" - {
 
     "must return OK and the correct view for a GET" in {
 
       val application = applicationBuilder(userAnswers = Some(updatedAnswers)).build()
 
       running(application) {
-
-        implicit val msgs: Messages = messages(application)
-
-        val request = FakeRequest(GET, addEuDetailsRoute)
+        val request = FakeRequest(GET, deleteAllEuDetailsRoute)
 
         val result = route(application, request).value
 
-        val view = application.injector.instanceOf[AddEuDetailsView]
-
-        val euDetailsSummaryList: SummaryList = EuDetailsSummary.row(waypoints, updatedAnswers, AddEuDetailsPage())
+        val view = application.injector.instanceOf[DeleteAllEuDetailsView]
 
         status(result) `mustBe` OK
-        contentAsString(result) mustBe view(form, waypoints, euDetailsSummaryList, canAddEuDetails = true)(request, messages(application)).toString
+        contentAsString(result) mustBe view(form, waypoints)(request, messages(application)).toString
       }
     }
 
-    "must return OK and the correct view for a GET when the maximum number of EU countries has been reached" in {
-
-      val userAnswers = (0 to Country.euCountries.size).foldLeft(updatedAnswers) { (userAnswers: UserAnswers, index: Int) =>
-        userAnswers
-          .set(EuCountryPage(countryIndex(index)), country).success.value
-          .set(TradingNameAndBusinessAddressPage(countryIndex(0)), tradingNameAndBusinessAddress).success.value
-          .set(RegistrationTypePage(countryIndex(index)), RegistrationType.VatNumber).success.value
-          .set(EuVatNumberPage(countryIndex(index)), euVatNumber).success.value
-      }
-
-      val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
-
-      running(application) {
-
-        implicit val msgs: Messages = messages(application)
-
-        val request = FakeRequest(GET, addEuDetailsRoute)
-
-        val result = route(application, request).value
-
-        val view = application.injector.instanceOf[AddEuDetailsView]
-
-        val euDetailsSummaryList: SummaryList = EuDetailsSummary.row(waypoints, userAnswers, AddEuDetailsPage())
-
-        status(result) `mustBe` OK
-        contentAsString(result) `mustBe` view(form, waypoints, euDetailsSummaryList, canAddEuDetails = false)(request, messages(application)).toString
-      }
-    }
-
-    "must save the answer and redirect to the next page when valid data is submitted" in {
+    "must remove all EU Details and then redirect to the next page when the user answers Yes" in {
 
       val mockSessionRepository = mock[SessionRepository]
 
-      when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+
+      val application = applicationBuilder(userAnswers = Some(updatedAnswers))
+        .overrides(
+          bind[SessionRepository].toInstance(mockSessionRepository)
+        )
+        .build()
+
+      running(application) {
+        val request = FakeRequest(POST, deleteAllEuDetailsRoute)
+          .withFormUrlEncodedBody(("value", "true"))
+
+        val result = route(application, request).value
+
+        val expectedAnswers: UserAnswers = updatedAnswers
+          .set(DeleteAllEuDetailsPage, true).success.value
+          .remove(AllEuDetailsQuery).success.value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` DeleteAllEuDetailsPage.navigate(waypoints, emptyUserAnswers, expectedAnswers).url
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
+      }
+    }
+
+    "must not remove all EU Details and then redirect to the next page when the user answers No" in {
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
       val application =
         applicationBuilder(userAnswers = Some(updatedAnswers))
@@ -136,42 +126,37 @@ class AddEuDetailsControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val request =
-          FakeRequest(POST, addEuDetailsRoutePost())
-            .withFormUrlEncodedBody(("value", "true"))
+          FakeRequest(POST, deleteAllEuDetailsRoute)
+            .withFormUrlEncodedBody(("value", "false"))
 
         val result = route(application, request).value
 
         val expectedAnswers: UserAnswers = updatedAnswers
-          .set(AddEuDetailsPage(), true).success.value
+          .set(DeleteAllEuDetailsPage, false).success.value
 
         status(result) `mustBe` SEE_OTHER
-        redirectLocation(result).value mustBe AddEuDetailsPage().navigate(waypoints, updatedAnswers, expectedAnswers).url
+        redirectLocation(result).value `mustBe` DeleteAllEuDetailsPage.navigate(waypoints, updatedAnswers, expectedAnswers).url
         verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }
 
     "must return a Bad Request and errors when invalid data is submitted" in {
 
-      val application = applicationBuilder(userAnswers = Some(updatedAnswers)).build()
+      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
 
       running(application) {
-
-        implicit val msgs: Messages = messages(application)
-
         val request =
-          FakeRequest(POST, s"$addEuDetailsRoute?incompletePromptShown=true")
+          FakeRequest(POST, deleteAllEuDetailsRoute)
             .withFormUrlEncodedBody(("value", ""))
 
         val boundForm = form.bind(Map("value" -> ""))
 
-        val view = application.injector.instanceOf[AddEuDetailsView]
-
-        val euDetailsSummaryList: SummaryList = EuDetailsSummary.row(waypoints, updatedAnswers, AddEuDetailsPage())
+        val view = application.injector.instanceOf[DeleteAllEuDetailsView]
 
         val result = route(application, request).value
 
-        status(result) `mustBe` BAD_REQUEST
-        contentAsString(result) mustBe view(boundForm, waypoints, euDetailsSummaryList, canAddEuDetails = true)(request, messages(application)).toString
+        status(result) `mustEqual` BAD_REQUEST
+        contentAsString(result) mustEqual view(boundForm, waypoints)(request, messages(application)).toString
       }
     }
 
@@ -180,12 +165,12 @@ class AddEuDetailsControllerSpec extends SpecBase with MockitoSugar {
       val application = applicationBuilder(userAnswers = None).build()
 
       running(application) {
-        val request = FakeRequest(GET, addEuDetailsRoute)
+        val request = FakeRequest(GET, deleteAllEuDetailsRoute)
 
         val result = route(application, request).value
 
-        status(result) `mustBe` SEE_OTHER
-        redirectLocation(result).value mustBe JourneyRecoveryPage.route(waypoints).url
+        status(result) `mustEqual` SEE_OTHER
+        redirectLocation(result).value mustEqual JourneyRecoveryPage.route(waypoints).url
       }
     }
 
@@ -195,13 +180,13 @@ class AddEuDetailsControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val request =
-          FakeRequest(POST, s"$addEuDetailsRoute?incompletePromptShown=false")
+          FakeRequest(POST, deleteAllEuDetailsRoute)
             .withFormUrlEncodedBody(("value", "true"))
 
         val result = route(application, request).value
 
-        status(result) `mustBe` SEE_OTHER
-        redirectLocation(result).value mustBe JourneyRecoveryPage.route(waypoints).url
+        status(result) `mustEqual` SEE_OTHER
+        redirectLocation(result).value mustEqual JourneyRecoveryPage.route(waypoints).url
       }
     }
   }
