@@ -26,6 +26,7 @@ import logging.Logging
 import models.UserAnswers
 import pages.Waypoints
 import pages.clientDeclarationJourney.ClientCodeEntryPage
+import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -44,18 +45,16 @@ class ClientCodeEntryController @Inject()(
                                            sessionRepository: SessionRepository,
                                            identify: IdentifierAction,
                                            getData: DataRetrievalAction,
-                                           requireData: DataRequiredAction,
                                            formProvider: ClientCodeEntryFormProvider,
                                            registrationConnector: RegistrationConnector,
                                            val controllerComponents: MessagesControllerComponents,
                                            view: ClientCodeEntryView
                                          )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientEmail {
 
-  val form = formProvider()
+  val form: Form[String] = formProvider()
 
   def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (identify andThen getData).async {
     implicit request =>
-
       registrationConnector.getPendingRegistration(uniqueUrlCode).flatMap {
         case Right(savedPendingRegistration) =>
           val preparedForm = request.userAnswers.flatMap(_.get(ClientCodeEntryPage(uniqueUrlCode))) match {
