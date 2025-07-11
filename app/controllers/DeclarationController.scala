@@ -20,9 +20,10 @@ import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.DeclarationFormProvider
 import models.UserAnswers
+import models.requests.DataRequest
 
 import javax.inject.Inject
-import pages.{DeclarationPage, EmptyWaypoints, JourneyRecoveryPage}
+import pages.{ClientBusinessNamePage, DeclarationPage, EmptyWaypoints, JourneyRecoveryPage}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -97,11 +98,13 @@ class DeclarationController @Inject()(
     }
   }
 
-  private def getOrganisationName(answers: UserAnswers): Option[String] = {
+  private def getOrganisationName(answers: UserAnswers)(implicit request: DataRequest[_]): Option[String] = {
     answers.vatInfo match {
       case Some(vatInfo) if vatInfo.organisationName.isDefined => vatInfo.organisationName
       case Some(vatInfo) if vatInfo.individualName.isDefined => vatInfo.individualName
-      case _ => None
+      case _ => request.userAnswers.get(ClientBusinessNamePage).map { companyName =>
+        companyName.name
+      }
     }
   }
 }

@@ -111,10 +111,17 @@ object VatInfoCompletionChecks extends CompletionChecks {
   }
 
   def incompleteHasUtrNumberRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
-    request.userAnswers.get(ClientHasVatNumberPage) match {
-      case Some(false) if request.userAnswers.get(ClientHasUtrNumberPage).isEmpty =>
-        Some(Redirect(controllers.routes.ClientHasUtrNumberController.onPageLoad(waypoints)))
-      case _ =>
+    request.userAnswers.get(BusinessBasedInUKPage) match {
+      case Some(false) =>
+        None
+      case Some(true) =>
+        request.userAnswers.get(ClientHasVatNumberPage) match {
+          case Some(false) if request.userAnswers.get(ClientHasUtrNumberPage).isEmpty =>
+            Some(Redirect(controllers.routes.ClientHasUtrNumberController.onPageLoad(waypoints)))
+          case _ =>
+            None
+        }
+      case None =>
         None
     }
   }
