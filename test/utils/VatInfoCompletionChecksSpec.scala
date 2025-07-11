@@ -941,6 +941,7 @@ class VatInfoCompletionChecksSpec extends SpecBase with MockitoSugar {
 
         val userAnswers = emptyUserAnswersWithVatInfo
           .set(BusinessBasedInUKPage, false).success.value
+          .set(ClientHasVatNumberPage, false).success.value
           .set(ClientCountryBasedPage, country).success.value
           .set(ClientBusinessNamePage, clientBusinessName).success.value
           .set(ClientTaxReferencePage, taxReference).success.value
@@ -980,6 +981,7 @@ class VatInfoCompletionChecksSpec extends SpecBase with MockitoSugar {
       "must Redirect to ClientTaxReferencePage when ClientTaxReference is not defined" in {
         val userAnswers = emptyUserAnswersWithVatInfo
           .set(BusinessBasedInUKPage, false).success.value
+          .set(ClientHasVatNumberPage, false).success.value
           .set(ClientCountryBasedPage, country).success.value
           .set(ClientBusinessNamePage, clientBusinessName).success.value
 
