@@ -125,19 +125,10 @@ class CheckYourAnswersController @Inject()(
 
       registrationConnector.submitPendingRegistration(request.userAnswers).flatMap {
         case Right(_) =>
-          val test = getFirstValidationErrorRedirect(waypoints)
-
-          println()
-          println()
-          println(test)
-          println()
-          println()
-
-          test match {
+          getFirstValidationErrorRedirect(waypoints) match {
             case Some(errorRedirect) => if (incompletePrompt) {
               errorRedirect.toFuture
             } else {
-              println("Im here")
               Redirect(CheckYourAnswersPage.route(waypoints).url).toFuture
             }
 
