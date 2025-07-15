@@ -88,7 +88,10 @@ class ClientCodeEntryController @Inject()(
 
               value =>
                 val originalAnswers: UserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
-
+                
+//                val codeIsValid: Boolean = validateClientCode(value.)
+                println(value)
+                // TODO SCG call the validate method here so i can produce an error page
                 for {
                   updatedAnswers <- Future.fromTry(originalAnswers.set(ClientCodeEntryPage(uniqueUrlCode), value))
                   _ <- sessionRepository.set(updatedAnswers)
