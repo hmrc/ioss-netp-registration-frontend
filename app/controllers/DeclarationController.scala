@@ -21,12 +21,13 @@ import controllers.actions.*
 import forms.DeclarationFormProvider
 import logging.Logging
 import models.SavedPendingRegistration
+import models.audit.{IntermediaryDeclarationSigningAuditModel, IntermediaryDeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult
 import pages.{DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import services.EmailService
+import services.{AuditService, EmailService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
@@ -41,6 +42,7 @@ class DeclarationController @Inject()(
                                        cc: AuthenticatedControllerComponents,
                                        formProvider: DeclarationFormProvider,
                                        registrationConnector: RegistrationConnector,
+                                       auditService: AuditService,
                                        emailService: EmailService,
                                        view: DeclarationView
                                      )(implicit ec: ExecutionContext)
@@ -71,6 +73,13 @@ class DeclarationController @Inject()(
 
       registrationConnector.submitPendingRegistration(request.userAnswers).flatMap {
         case Right(submittedRegistration) =>
+          
+          auditService.audit(
+            IntermediaryDeclarationSigningAuditModel.build(IntermediaryDeclarationSigningAuditType.CreateDeclaration,
+            request.userAnswers,
+            SubmissionResult.Success
+            )
+          )
 
           getClientEmail(waypoints, submittedRegistration.userAnswers) { clientEmail =>
 
