@@ -83,14 +83,8 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency {
 
         "with incomplete data" in {
 
-          val missingAnswers: UserAnswers = completeUserAnswers
-            .remove(BusinessBasedInUKPage).success.value
-            .remove(ClientHasVatNumberPage).success.value
-            .remove(ClientVatNumberPage).success.value
-            .remove(PreviouslyRegisteredPage).success.value
-            .remove(WebsitePage(Index(0))).success.value
-            .remove(BusinessContactDetailsPage).success.value
-            .remove(HasFixedEstablishmentPage).success.value
+          val missingAnswers = emptyUserAnswers
+            .set(HasTradingNamePage, true).success.value
 
           val application = applicationBuilder(userAnswers = Some(missingAnswers)).build()
 
