@@ -19,12 +19,14 @@ package controllers
 import base.SpecBase
 import connectors.RegistrationConnector
 import forms.DeclarationFormProvider
+import models.audit.{IntermediaryDeclarationSigningAuditModel, IntermediaryDeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult.EMAIL_NOT_SENT
+import models.requests.DataRequest
 import models.responses.UnexpectedResponseStatus
 import models.{BusinessContactDetails, ClientBusinessName, SavedPendingRegistration}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito.{doNothing, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{BusinessContactDetailsPage, ClientBusinessNamePage, ClientVatNumberPage, DeclarationPage, EmptyWaypoints, ErrorSubmittingPendingRegistrationPage, Waypoints}
@@ -33,7 +35,7 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
-import services.EmailService
+import services.{AuditService, EmailService}
 import utils.FutureSyntax.FutureOps
 import views.html.DeclarationView
 
@@ -52,6 +54,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
     .set(BusinessContactDetailsPage, businessContactDetails).success.value
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
+  private val mockAuditService: AuditService = mock[AuditService]
 
   val formProvider = new DeclarationFormProvider()
   val form: Form[Boolean] = formProvider()
@@ -59,6 +62,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockRegistrationConnector)
+    Mockito.reset(mockAuditService)
   }
 
   "Declaration Controller" - {
@@ -126,7 +130,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
     ".onSubmit" - {
 
-      "must submit client registration, send client email, and redirect to next page when valid data and true declaration is submitted" in {
+      "must submit client registration, send client email, audit event and redirect to next page when valid data and true declaration is submitted" in {
 
         val mockSessionRepository = mock[SessionRepository]
         val mockEmailService = mock[EmailService]
@@ -142,7 +146,8 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             .overrides(
               bind[SessionRepository].toInstance(mockSessionRepository),
               bind[RegistrationConnector].toInstance(mockRegistrationConnector),
-              bind[EmailService].toInstance(mockEmailService)
+              bind[EmailService].toInstance(mockEmailService),
+              bind[AuditService].toInstance(mockAuditService)
             )
             .build()
 
@@ -154,17 +159,28 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
         when(mockEmailService.sendClientActivationEmail(any, any, any, any, any)(any, any)) thenReturn Future.successful(())
 
+        doNothing().when(mockAuditService).audit(any())(any(), any())
+
 
         running(application) {
           val request =
             FakeRequest(POST, routes.DeclarationController.onSubmit(waypoints).url)
               .withFormUrlEncodedBody(("declaration", "true"))
 
+
+          implicit val dataRequest: DataRequest[_] =
+            DataRequest(fakeRequest, userAnswersId, userAnswers)
+
           val result = route(application, request).value
+
+          val expectedAuditEvent = IntermediaryDeclarationSigningAuditModel.build(
+            IntermediaryDeclarationSigningAuditType.CreateDeclaration, userAnswers, SubmissionResult.Success
+          )
 
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value mustBe DeclarationPage.navigate(waypoints, userAnswers, userAnswers).route.url
           verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(userAnswers))(any())
+          verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
           verify(mockEmailService, times(1)).sendClientActivationEmail(
             any,
             any,
