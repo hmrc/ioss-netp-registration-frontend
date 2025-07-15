@@ -20,7 +20,7 @@ import com.google.inject.Inject
 import controllers.actions.*
 import logging.Logging
 import models.CheckMode
-import pages.{CheckYourAnswersPage, EmptyWaypoints, NonEmptyWaypoints, Waypoint, Waypoints}
+import pages.*
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
@@ -50,6 +50,8 @@ class CheckYourAnswersController @Inject()(
 
       val thisPage = CheckYourAnswersPage
       val userAnswers = request.userAnswers
+      val hasUkVatNumber = userAnswers.get(ClientHasVatNumberPage).contains(true)
+      val isUKBased = userAnswers.get(BusinessBasedInUKPage).contains(true)
 
       val waypoints: NonEmptyWaypoints = EmptyWaypoints.setNextWaypoint(Waypoint(thisPage, CheckMode, CheckYourAnswersPage.urlFragment))
 
@@ -65,7 +67,7 @@ class CheckYourAnswersController @Inject()(
           ClientCountryBasedSummary.row(waypoints, userAnswers, thisPage),
           ClientTaxReferenceSummary.row(waypoints, userAnswers, thisPage),
           ClientBusinessAddressSummary.row(waypoints, userAnswers, thisPage),
-          VatRegistrationDetailsSummary.rowBusinessAddress(waypoints, userAnswers, thisPage)
+          if (isUKBased && hasUkVatNumber) VatRegistrationDetailsSummary.rowBusinessAddress(waypoints, userAnswers, thisPage) else None
         ).flatten
       )
 
