@@ -22,14 +22,15 @@ import forms.previousRegistrations.PreviousIossNumberFormProvider
 import logging.Logging
 import models.domain.PreviousSchemeNumbers
 import models.previousRegistrations.IossRegistrationNumberValidation
+import models.requests.DataRequest
 import models.{Country, Index, PreviousScheme}
 import pages.Waypoints
-import pages.previousRegistrations.{PreviousIossNumberPage, PreviousSchemePage}
+import pages.previousRegistrations.{ClientHasIntermediaryPage, PreviousIossNumberPage, PreviousSchemePage}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.previousRegistrations.PreviousIossNumberView
 import utils.FutureSyntax.FutureOps
+import views.html.previousRegistrations.PreviousIossNumberView
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,7 +40,7 @@ class PreviousIossNumberController @Inject()(
                                               cc: AuthenticatedControllerComponents,
                                               formProvider: PreviousIossNumberFormProvider,
                                               view: PreviousIossNumberView
-                                            )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetCountry{
+                                            )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetCountry {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -65,14 +66,15 @@ class PreviousIossNumberController @Inject()(
         val form = formProvider(country)
         form.bindFromRequest().fold(
           formWithErrors =>
-            Future.successful(BadRequest(view(
-              formWithErrors, waypoints, countryIndex, schemeIndex, country, getIossHintText(country)))),
+            BadRequest(view(
+              formWithErrors, waypoints, countryIndex, schemeIndex, country, getIossHintText(country)
+            )).toFuture,
 
           value =>
             for {
               updatedAnswers <- Future.fromTry(request.userAnswers.set(PreviousIossNumberPage(countryIndex, schemeIndex), PreviousSchemeNumbers(value)))
               updatedAnswersWithPreviousScheme <- Future.fromTry(updatedAnswers.set(
-                PreviousSchemePage(countryIndex, schemeIndex), PreviousScheme.IOSSWOI
+                PreviousSchemePage(countryIndex, schemeIndex), determinePreviousScheme(countryIndex, schemeIndex)
               ))
               _ <- cc.sessionRepository.set(updatedAnswersWithPreviousScheme)
             } yield Redirect(PreviousIossNumberPage(countryIndex, schemeIndex).navigate(waypoints, request.userAnswers, updatedAnswersWithPreviousScheme).route)
@@ -87,4 +89,14 @@ class PreviousIossNumberController @Inject()(
     }
   }
 
+  private def determinePreviousScheme(
+                                       countryIndex: Index,
+                                       schemeIndex: Index
+                                     )(implicit request: DataRequest[AnyContent]): PreviousScheme = {
+    request.userAnswers.get(ClientHasIntermediaryPage(countryIndex, schemeIndex)) match {
+      case Some(true) => PreviousScheme.IOSSWI
+      case _ => PreviousScheme.IOSSWOI
+    }
+  }
 }
+

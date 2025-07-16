@@ -310,6 +310,12 @@ previousScheme.iosswoi = Import One Stop Shop
 previousScheme.iosswi = Import One Stop Shop with intermediary
 previousScheme.oss.schemes.exceed.error = Cannot select another {0} OSS registration for {1}
 
+clientHasIntermediary.title = Did your client use an intermediary?
+clientHasIntermediary.heading = Did your client use an intermediary?
+clientHasIntermediary.hint = An intermediary is a business that manages your IOSS VAT returns for you.
+clientHasIntermediary.error.required = Select yes if your client used an intermediary
+clientHasIntermediary.change.hidden = your client used an intermediary
+
 previousSchemeNumber.checkYourAnswersLabel = Registration number
 
 checkPreviousSchemeAnswers.title = Check your answers for {0}

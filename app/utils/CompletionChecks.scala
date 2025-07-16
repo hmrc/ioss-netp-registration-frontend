@@ -24,9 +24,9 @@ import play.api.mvc.Results.Redirect
 import play.api.mvc.{AnyContent, Result}
 import queries.AllWebsites
 import queries.tradingNames.AllTradingNamesQuery
-import utils.VatInfoCompletionChecks.*
-import utils.PreviousRegistrationsCompletionChecks.*
 import utils.EuDetailsCompletionChecks.*
+import utils.PreviousRegistrationsCompletionChecks.*
+import utils.VatInfoCompletionChecks.*
 
 import scala.concurrent.Future
 

@@ -18,21 +18,19 @@ package generators
 
 import models.Index
 import org.scalacheck.Arbitrary
-import pages.BusinessContactDetailsPage
-import pages.ClientBusinessAddressPage
 import pages.previousRegistrations.*
 import pages.vatEuDetails.*
-
+import pages.{BusinessContactDetailsPage, ClientBusinessAddressPage}
 
 trait PageGenerators {
 
-  implicit lazy val arbitraryClientBusinessAddressPage: Arbitrary[ClientBusinessAddressPage.type ] =
+  implicit lazy val arbitraryClientBusinessAddressPage: Arbitrary[ClientBusinessAddressPage.type] =
     Arbitrary(ClientBusinessAddressPage)
 
   implicit lazy val arbitraryBusinessContactDetailsPage: Arbitrary[BusinessContactDetailsPage.type] = {
     Arbitrary(BusinessContactDetailsPage)
   }
-  
+
   implicit lazy val arbitraryPreviouslyRegisteredPage: Arbitrary[PreviouslyRegisteredPage.type] = {
     Arbitrary(PreviouslyRegisteredPage)
   }
@@ -99,5 +97,9 @@ trait PageGenerators {
 
   implicit lazy val arbitraryDeleteEuDetailsPage: Arbitrary[DeleteEuDetailsPage] = {
     Arbitrary(DeleteEuDetailsPage(Index(0)))
+  }
+
+  implicit lazy val arbitraryClientHasIntermediaryPage: Arbitrary[ClientHasIntermediaryPage] = {
+    Arbitrary(ClientHasIntermediaryPage(Index(0), Index(0)))
   }
 }
