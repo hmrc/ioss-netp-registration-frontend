@@ -43,6 +43,7 @@ object IossRegistrationNumberValidation {
     IossRegistrationNumberValidation(Country("LT", "Lithuania"), lithuaniaIossNumberRegex, "This will start with IM440 followed by 7 numbers"),
     IossRegistrationNumberValidation(Country("LU", "Luxembourg"), luxembourgIossNumberRegex, "This will start with IM442 followed by 7 numbers"),
     IossRegistrationNumberValidation(Country("MT", "Malta"), maltaIossNumberRegex, "This will start with IM470 followed by 7 numbers"),
+    IossRegistrationNumberValidation(Country("XI", "Northern Ireland"), northernIrelandIossNumberRegex, "This will start with IM900 followed by 7 numbers"),
     IossRegistrationNumberValidation(Country("NL", "Netherlands"), netherlandsIossNumberRegex, "This will start with IM528 followed by 7 numbers"),
     IossRegistrationNumberValidation(Country("PL", "Poland"), polandIossNumberRegex, "This will start with IM616 followed by 7 numbers"),
     IossRegistrationNumberValidation(Country("PT", "Portugal"), portugalIossNumberRegex, "This will start with IM620 followed by 7 numbers"),
@@ -53,31 +54,32 @@ object IossRegistrationNumberValidation {
     IossRegistrationNumberValidation(Country("SE", "Sweden"), swedenIossNumberRegex, "This will start with IM752 followed by 7 numbers")
   )
 
-  private val austriaIossNumberRegex       = """^IM040[0-9]{7}$"""
-  private val belgiumIossNumberRegex       = """^IM056[0-9]{7}$"""
-  private val bulgariaIossNumberRegex      = """^IM100[0-9]{7}$"""
-  private val cyprusIossNumberRegex        = """^IM196[0-9]{7}$"""
-  private val czechRepublicIossNumberRegex = """^IM203[0-9]{7}$"""
-  private val germanyIossNumberRegex       = """^IM276[0-9]{7}$"""
-  private val denmarkIossNumberRegex       = """^IM208[0-9]{7}$"""
-  private val estoniaIossNumberRegex       = """^IM233[0-9]{7}$"""
-  private val greeceIossNumberRegex        = """^IM300[0-9]{7}$"""
-  private val spainIossNumberRegex         = """^IM724[0-9]{7}$"""
-  private val finlandIossNumberRegex       = """^IM246[0-9]{7}$"""
-  private val franceIossNumberRegex        = """^IM250[0-9]{7}$"""
-  private val croatiaIossNumberRegex       = """^IM191[0-9]{7}$"""
-  private val hungaryIossNumberRegex       = """^IM348[0-9]{7}$"""
-  private val irelandIossNumberRegex       = """^IM372[0-9]{7}$"""
-  private val italyIossNumberRegex         = """^IM380[0-9]{7}$"""
-  private val lithuaniaIossNumberRegex     = """^IM440[0-9]{7}$"""
-  private val luxembourgIossNumberRegex    = """^IM442[0-9]{7}$"""
-  private val latviaIossNumberRegex        = """^IM428[0-9]{7}$"""
-  private val maltaIossNumberRegex         = """^IM470[0-9]{7}$"""
-  private val netherlandsIossNumberRegex   = """^IM528[0-9]{7}$"""
-  private val polandIossNumberRegex        = """^IM616[0-9]{7}$"""
-  private val portugalIossNumberRegex      = """^IM620[0-9]{7}$"""
-  private val romaniaIossNumberRegex       = """^IM642[0-9]{7}$"""
-  private val swedenIossNumberRegex        = """^IM752[0-9]{7}$"""
-  private val sloveniaIossNumberRegex      = """^IM705[0-9]{7}$"""
-  private val slovakiaIossNumberRegex      = """^IM703[0-9]{7}$"""
+  private val austriaIossNumberRegex           = """^IM040[0-9]{7}$"""
+  private val belgiumIossNumberRegex           = """^IM056[0-9]{7}$"""
+  private val bulgariaIossNumberRegex          = """^IM100[0-9]{7}$"""
+  private val cyprusIossNumberRegex            = """^IM196[0-9]{7}$"""
+  private val czechRepublicIossNumberRegex     = """^IM203[0-9]{7}$"""
+  private val germanyIossNumberRegex           = """^IM276[0-9]{7}$"""
+  private val denmarkIossNumberRegex           = """^IM208[0-9]{7}$"""
+  private val estoniaIossNumberRegex           = """^IM233[0-9]{7}$"""
+  private val greeceIossNumberRegex            = """^IM300[0-9]{7}$"""
+  private val spainIossNumberRegex             = """^IM724[0-9]{7}$"""
+  private val finlandIossNumberRegex           = """^IM246[0-9]{7}$"""
+  private val franceIossNumberRegex            = """^IM250[0-9]{7}$"""
+  private val croatiaIossNumberRegex           = """^IM191[0-9]{7}$"""
+  private val hungaryIossNumberRegex           = """^IM348[0-9]{7}$"""
+  private val irelandIossNumberRegex           = """^IM372[0-9]{7}$"""
+  private val italyIossNumberRegex             = """^IM380[0-9]{7}$"""
+  private val lithuaniaIossNumberRegex         = """^IM440[0-9]{7}$"""
+  private val luxembourgIossNumberRegex        = """^IM442[0-9]{7}$"""
+  private val latviaIossNumberRegex            = """^IM428[0-9]{7}$"""
+  private val maltaIossNumberRegex             = """^IM470[0-9]{7}$"""
+  private val northernIrelandIossNumberRegex   = """^IM900[0-9]{7}$"""
+  private val netherlandsIossNumberRegex       = """^IM528[0-9]{7}$"""
+  private val polandIossNumberRegex            = """^IM616[0-9]{7}$"""
+  private val portugalIossNumberRegex          = """^IM620[0-9]{7}$"""
+  private val romaniaIossNumberRegex           = """^IM642[0-9]{7}$"""
+  private val swedenIossNumberRegex            = """^IM752[0-9]{7}$"""
+  private val sloveniaIossNumberRegex          = """^IM705[0-9]{7}$"""
+  private val slovakiaIossNumberRegex          = """^IM703[0-9]{7}$"""
 }

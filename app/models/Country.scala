@@ -78,6 +78,26 @@ object Country {
           )
       }
 
+  val northernIreland: Country = {
+    Country("XI", "Northern Ireland")
+  }
+
+  val euCountriesWithNI: Seq[Country] = {
+    val positionOfNI = 20
+    euCountries.take(positionOfNI) ++ Seq(northernIreland) ++ euCountries.drop(positionOfNI)
+  }
+
+  val euCountryWithNISelectItems: Seq[SelectItem] = {
+    SelectItem(value = Some("")) +:
+      euCountriesWithNI.map {
+        country =>
+          SelectItemViewModel(
+            value = country.code,
+            text = country.name
+          )
+      }
+  }
+
   val allCountries: Seq[Country] = Seq(
     Country("AF", "Afghanistan"),
     Country("AL", "Albania"),
@@ -315,6 +335,7 @@ object CountryWithValidationDetails extends Logging {
     CountryWithValidationDetails(Country("LT", "Lithuania"), lithuaniaVatNumberRegex, "9 or 12 numbers", "123456789"),
     CountryWithValidationDetails(Country("LU", "Luxembourg"), luxembourgVatNumberRegex, "the 8 numbers", "12345678"),
     CountryWithValidationDetails(Country("MT", "Malta"), maltaVatNumberRegex, "the 8 numbers", "12345678"),
+    CountryWithValidationDetails(Country("XI", "Northern Ireland"), northernIslandVatNumberRegex, "the 9 characters", "123456789"),
     CountryWithValidationDetails(Country("NL", "Netherlands"), netherlandsVatNumberRegex, "the 12 characters", "0123456789AB"),
     CountryWithValidationDetails(Country("PL", "Poland"), polandVatNumberRegex, "the 10 numbers", "1234567890"),
     CountryWithValidationDetails(Country("PT", "Portugal"), portugalVatNumberRegex, "the 9 numbers", "123456789"),
@@ -345,6 +366,7 @@ object CountryWithValidationDetails extends Logging {
   private val luxembourgVatNumberRegex = """^LU[0-9]{8}$"""
   private val latviaVatNumberRegex = """^LV[0-9]{11}$"""
   private val maltaVatNumberRegex = """^MT[0-9]{8}$"""
+  private val northernIslandVatNumberRegex = """^XI[A-Z0-9\+\*]{12}$"""
   private val netherlandsVatNumberRegex = """^NL[A-Z0-9\+\*]{12}$"""
   private val polandVatNumberRegex = """^PL[0-9]{10}$"""
   private val portugalVatNumberRegex = """^PT[0-9]{9}$"""
