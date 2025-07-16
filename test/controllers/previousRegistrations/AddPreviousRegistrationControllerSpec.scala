@@ -53,6 +53,7 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
       .set(PreviousEuCountryPage(Index(0)), Country.euCountries.head).success.value
       .set(PreviousSchemePage(Index(0), Index(0)), PreviousScheme.OSSU).success.value
       .set(PreviousOssNumberPage(Index(0), Index(0)), PreviousSchemeNumbers("foo")).success.value
+      .set(ClientHasIntermediaryPage(Index(0), Index(0)), false).success.value
 
   private val incompleteAnswers =
     basicUserAnswersWithVatInfo
@@ -79,8 +80,8 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
           sourcePage = AddPreviousRegistrationPage()
         )
 
-        status(result) `mustEqual` OK
-        contentAsString(result) mustEqual view(form, EmptyWaypoints, list, canAddCountries = true)(request, implicitly).toString
+        status(result) `mustBe` OK
+        contentAsString(result) `mustBe` view(form, EmptyWaypoints, list, canAddCountries = true)(request, implicitly).toString
       }
     }
 
@@ -102,8 +103,8 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
           sourcePage = AddPreviousRegistrationPage()
         )
 
-        status(result) `mustEqual` OK
-        contentAsString(result) mustEqual
+        status(result) `mustBe` OK
+        contentAsString(result) `mustBe`
           view(
             form,
             EmptyWaypoints,
@@ -112,7 +113,7 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
             Seq(
               PreviousRegistrationDetailsWithOptionalVatNumber(
                 Country.euCountries.head,
-                Some(List(SchemeDetailsWithOptionalVatNumber(Some(PreviousScheme.OSSU), None)))
+                Some(List(SchemeDetailsWithOptionalVatNumber(Some(PreviousScheme.OSSU), clientHasIntermediary = Some(false), None)))
               )
             )
           )(request, implicitly).toString
@@ -138,8 +139,8 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
         val result = route(application, request).value
         val expectedAnswers = baseAnswers.set(AddPreviousRegistrationPage(), true).success.value
 
-        status(result) `mustEqual` SEE_OTHER
-        redirectLocation(result).value mustEqual AddPreviousRegistrationPage().navigate(EmptyWaypoints, baseAnswers, expectedAnswers).url
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` AddPreviousRegistrationPage().navigate(EmptyWaypoints, baseAnswers, expectedAnswers).url
         verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }
@@ -160,8 +161,8 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
         val list = PreviousRegistrationSummary.row(baseAnswers, Seq.empty, waypoints, AddPreviousRegistrationPage())
         val result = route(application, request).value
 
-        status(result) `mustEqual` BAD_REQUEST
-        contentAsString(result) mustEqual view(boundForm, waypoints, list, canAddCountries = true)(request, implicitly).toString
+        status(result) `mustBe` BAD_REQUEST
+        contentAsString(result) `mustBe` view(boundForm, waypoints, list, canAddCountries = true)(request, implicitly).toString
       }
     }
 
@@ -174,8 +175,8 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) `mustEqual` SEE_OTHER
-        redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
       }
     }
 
@@ -188,8 +189,8 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) `mustEqual` SEE_OTHER
-        redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
       }
     }
 
@@ -204,9 +205,9 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) `mustEqual` SEE_OTHER
+        status(result) `mustBe` SEE_OTHER
 
-        redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+        redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
       }
     }
 
@@ -221,8 +222,8 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) `mustEqual` SEE_OTHER
-        redirectLocation(result).value mustEqual prevRoutes.AddPreviousRegistrationController.onPageLoad(EmptyWaypoints).url
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` prevRoutes.AddPreviousRegistrationController.onPageLoad(EmptyWaypoints).url
       }
     }
 
@@ -239,8 +240,8 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual prevRoutes.PreviousOssNumberController.onPageLoad(EmptyWaypoints, Index(0), Index(0)).url
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` prevRoutes.PreviousOssNumberController.onPageLoad(EmptyWaypoints, Index(0), Index(0)).url
       }
     }
 
@@ -250,6 +251,7 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
         .set(PreviousEuCountryPage(Index(0)), Country.euCountries.head).success.value
         .set(PreviousSchemeTypePage(Index(0), Index(0)), PreviousSchemeType.IOSS).success.value
         .set(PreviousSchemePage(Index(0), Index(0)), PreviousScheme.IOSSWI).success.value
+        .set(ClientHasIntermediaryPage(Index(0), Index(0)), true).success.value
       val application = applicationBuilder(userAnswers = Some(incompleteAnswersWithPreviousSchemeType)).build()
 
       running(application) {
@@ -259,8 +261,8 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) `mustEqual` SEE_OTHER
-        redirectLocation(result).value mustEqual prevRoutes.PreviousIossNumberController.onPageLoad(EmptyWaypoints, Index(0), Index(0)).url
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` prevRoutes.PreviousIossNumberController.onPageLoad(EmptyWaypoints, Index(0), Index(0)).url
       }
     }
 
@@ -269,6 +271,7 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
       val incompleteAnswersWithPreviousSchemeType = basicUserAnswersWithVatInfo
         .set(PreviousEuCountryPage(Index(0)), Country.euCountries.head).success.value
         .set(PreviousSchemeTypePage(Index(0), Index(0)), PreviousSchemeType.IOSS).success.value
+        .set(ClientHasIntermediaryPage(Index(0), Index(0)), true).success.value
       val application = applicationBuilder(userAnswers = Some(incompleteAnswersWithPreviousSchemeType)).build()
 
       running(application) {
@@ -278,8 +281,8 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) `mustEqual` SEE_OTHER
-        redirectLocation(result).value mustEqual prevRoutes.PreviousIossNumberController.onPageLoad(EmptyWaypoints, Index(0), Index(0)).url
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` prevRoutes.PreviousIossNumberController.onPageLoad(EmptyWaypoints, Index(0), Index(0)).url
       }
     }
 
@@ -296,8 +299,29 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) `mustEqual` SEE_OTHER
-        redirectLocation(result).value mustEqual prevRoutes.PreviousSchemeController.onPageLoad(EmptyWaypoints, Index(0), Index(0)).url
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` prevRoutes.PreviousSchemeController.onPageLoad(EmptyWaypoints, Index(0), Index(0)).url
+      }
+    }
+
+    "must redirect to the ClientHasIntermediary page for a POST if the answer is incomplete and prompt has been shown" in {
+
+      val incompleteAnswersWithPreviousSchemeType = basicUserAnswersWithVatInfo
+        .set(PreviousEuCountryPage(Index(0)), Country.euCountries.head).success.value
+        .set(PreviousSchemeTypePage(Index(0), Index(0)), PreviousSchemeType.IOSS).success.value
+        .set(PreviousIossNumberPage(Index(0), Index(0)), PreviousSchemeNumbers("123456789")).success.value
+        .set(PreviousSchemePage(Index(0), Index(0)), PreviousScheme.IOSSWI).success.value
+      val application = applicationBuilder(userAnswers = Some(incompleteAnswersWithPreviousSchemeType)).build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, addPreviousRegistrationRoutePost(true))
+            .withFormUrlEncodedBody(("value", "true"))
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` ClientHasIntermediaryPage(Index(0), Index(0)).route(waypoints).url
       }
     }
   }

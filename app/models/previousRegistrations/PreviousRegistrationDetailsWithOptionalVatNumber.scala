@@ -32,6 +32,7 @@ object PreviousRegistrationDetailsWithOptionalVatNumber {
 
 case class SchemeDetailsWithOptionalVatNumber(
                                                previousScheme: Option[PreviousScheme],
+                                               clientHasIntermediary: Option[Boolean],
                                                previousSchemeNumbers: Option[SchemeNumbersWithOptionalVatNumber]
                                              )
 

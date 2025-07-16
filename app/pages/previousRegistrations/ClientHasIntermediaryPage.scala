@@ -17,24 +17,22 @@
 package pages.previousRegistrations
 
 import controllers.previousRegistrations.routes
-import models.{Index, PreviousSchemeType, UserAnswers}
+import models.{Index, UserAnswers}
 import pages.{Page, QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
-case class PreviousSchemeTypePage(countryIndex: Index, schemeIndex: Index) extends QuestionPage[PreviousSchemeType] {
-  
+case class ClientHasIntermediaryPage(countryIndex: Index, schemeIndex: Index) extends QuestionPage[Boolean] {
+
   override def path: JsPath = JsPath \ "previousRegistrations" \ countryIndex.position \ "previousSchemesDetails" \ schemeIndex.position \ toString
 
-  override def toString: String = "previousSchemeType"
+  override def toString: String = "clientHasIntermediary"
 
-  override def route(waypoints: Waypoints): Call =
-    routes.PreviousSchemeController.onPageLoad(waypoints, countryIndex, schemeIndex)
+  override def route(waypoints: Waypoints): Call = {
+    routes.ClientHasIntermediaryController.onPageLoad(waypoints, countryIndex, schemeIndex)
+  }
 
-  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
-    if(answers.get(this).contains(PreviousSchemeType.OSS)) {
-      PreviousOssNumberPage(countryIndex, schemeIndex)
-    } else {
-      ClientHasIntermediaryPage(countryIndex, schemeIndex)
-    }
+  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
+    PreviousIossNumberPage(countryIndex, schemeIndex)
+  }
 }

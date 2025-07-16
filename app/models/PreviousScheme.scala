@@ -33,7 +33,7 @@ object PreviousScheme extends Enumerable.Implicits {
       case SchemeType.IOSSWithIntermediary => IOSSWI
     }
   }
-
+  
   def toEmtpSchemeType(previousScheme: PreviousScheme): SchemeType = {
     previousScheme match {
       case OSSU => SchemeType.OSSUnion
