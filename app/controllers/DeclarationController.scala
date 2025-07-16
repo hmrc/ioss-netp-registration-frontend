@@ -73,13 +73,6 @@ class DeclarationController @Inject()(
 
       registrationConnector.submitPendingRegistration(request.userAnswers).flatMap {
         case Right(submittedRegistration) =>
-          
-          auditService.audit(
-            IntermediaryDeclarationSigningAuditModel.build(IntermediaryDeclarationSigningAuditType.CreateDeclaration,
-            request.userAnswers,
-            SubmissionResult.Success
-            )
-          )
 
           getClientEmail(waypoints, submittedRegistration.userAnswers) { clientEmail =>
 
@@ -95,6 +88,17 @@ class DeclarationController @Inject()(
                     Future.successful(BadRequest(view(formWithErrors, waypoints, intermediaryName, clientCompanyName))),
 
                   value =>
+
+                    val submittedDeclarationPage: String = view(form, waypoints, intermediaryName, clientCompanyName).body
+
+                    auditService.audit(
+                      IntermediaryDeclarationSigningAuditModel.build(
+                        IntermediaryDeclarationSigningAuditType.CreateDeclaration,
+                        request.userAnswers,
+                        SubmissionResult.Success,
+                        submittedDeclarationPage
+                      )
+                    )
                     for {
                       updatedAnswers <- Future.fromTry(request.userAnswers.set(DeclarationPage, value))
                       _ <- cc.sessionRepository.set(updatedAnswers)
