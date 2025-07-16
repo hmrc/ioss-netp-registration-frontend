@@ -29,7 +29,9 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
+import services.core.CoreRegistrationValidationService
 import views.html.ClientTaxReferenceView
+import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.Future
 
@@ -49,6 +51,8 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
   val form: Form[String] = formProvider(country)
 
   lazy val clientTaxRefrenceRoute: String = routes.ClientTaxReferenceController.onPageLoad(waypoints).url
+
+  private val mockCoreRegistrationValidationService = mock[CoreRegistrationValidationService]
 
   "ClientTaxRefrence Controller" - {
 
@@ -95,11 +99,16 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
       val application =
         applicationBuilder(userAnswers = Some(updatedAnswers))
           .overrides(
-            bind[SessionRepository].toInstance(mockSessionRepository)
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
           )
           .build()
 
       running(application) {
+
+        when(mockCoreRegistrationValidationService.searchTraderId(any[String])(any(), any())) thenReturn
+          None.toFuture
+        
         val request =
           FakeRequest(POST, clientTaxRefrenceRoute)
             .withFormUrlEncodedBody(("value", taxReference))

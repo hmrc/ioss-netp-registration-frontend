@@ -28,7 +28,9 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
+import services.core.CoreRegistrationValidationService
 import views.html.ClientsNinoNumberView
+import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.Future
 
@@ -41,7 +43,9 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar {
   val form: Form[String] = formProvider()
 
   lazy val clientsNinoNumberRoute: String = routes.ClientsNinoNumberController.onPageLoad(waypoints).url
-
+  private val mockCoreRegistrationValidationService = mock[CoreRegistrationValidationService]
+  
+ 
   "ClientsNinoNumber Controller" - {
 
     "must return OK and the correct view for a GET" in {
@@ -87,11 +91,16 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar {
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
-            bind[SessionRepository].toInstance(mockSessionRepository)
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
           )
           .build()
 
       running(application) {
+
+        when(mockCoreRegistrationValidationService.searchTraderId(any[String])(any(), any())) thenReturn
+          None.toFuture
+        
         val request =
           FakeRequest(POST, clientsNinoNumberRoute)
             .withFormUrlEncodedBody(("value", nino))

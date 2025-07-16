@@ -44,7 +44,7 @@ class ClientAlreadyRegisteredControllerSpec extends SpecBase {
         val view = application.injector.instanceOf[ClientAlreadyRegisteredView]
 
         status(result) `mustBe` OK
-        contentAsString(result) mustBe view(clientBusinessName.name)(request, messages(application)).toString
+        contentAsString(result) mustBe view(Some(clientBusinessName.name))(request, messages(application)).toString
       }
     }
   }

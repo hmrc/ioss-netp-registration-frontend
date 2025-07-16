@@ -32,7 +32,14 @@ class CoreRegistrationValidationService @Inject()(connector: ValidateCoreRegistr
   
   def searchUkVrn(vrn: Vrn)(implicit hc:HeaderCarrier, request: DataRequest[_]): Future[Option[Match]] = {
     
-    val coreRegistrationRequest = CoreRegistrationRequest(SourceType.VatNumber.toString, None, vrn.vrn, None, "GB")
+    val coreRegistrationRequest = CoreRegistrationRequest(SourceType.VATNumber.toString, None, vrn.vrn, None, "GB")
+
+    getValidateCoreRegistrationResponse(coreRegistrationRequest)
+  }
+
+  def searchTraderId(ukVatNumber: String)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Match]] = {
+
+    val coreRegistrationRequest = CoreRegistrationRequest(SourceType.TraderId.toString, None, ukVatNumber, None, "GB")
 
     getValidateCoreRegistrationResponse(coreRegistrationRequest)
   }
@@ -95,7 +102,7 @@ class CoreRegistrationValidationService @Inject()(connector: ValidateCoreRegistr
   }
 
   private def getValidateCoreRegistrationResponse(coreRegistrationRequest: CoreRegistrationRequest)
-                                                 (implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Match]] = {
+                                                 (implicit hc: HeaderCarrier): Future[Option[Match]] = {
     connector.validateCoreRegistration(coreRegistrationRequest).map {
       case Right(coreRegistrationResponse) =>
         coreRegistrationResponse.matches.headOption
