@@ -21,12 +21,13 @@ import models.requests.DataRequest
 import play.api.libs.json.{JsValue, Json}
 
 case class IntermediaryDeclarationSigningAuditModel(
-                                   intermediaryDeclarationSigningAuditType: IntermediaryDeclarationSigningAuditType,
-                                   credId: String,
-                                   userAgent: String,
-                                   userAnswers: UserAnswers,
-                                   submissionResult: SubmissionResult
-                                 ) extends JsonAuditModel {
+                                                     intermediaryDeclarationSigningAuditType: IntermediaryDeclarationSigningAuditType,
+                                                     credId: String,
+                                                     userAgent: String,
+                                                     userAnswers: UserAnswers,
+                                                     submissionResult: SubmissionResult,
+                                                     submittedDeclarationPage: String
+                                                   ) extends JsonAuditModel {
 
   override val auditType: String = intermediaryDeclarationSigningAuditType.auditType
   override val transactionName: String = intermediaryDeclarationSigningAuditType.transactionName
@@ -35,7 +36,8 @@ case class IntermediaryDeclarationSigningAuditModel(
     "credId" -> credId,
     "browserUserAgent" -> userAgent,
     "userAnswersDetails" -> Json.toJson(userAnswers),
-    "submissionResult" -> submissionResult
+    "submissionResult" -> submissionResult,
+    "submittedDeclarationPage" -> submittedDeclarationPage
   )
 }
 
@@ -44,13 +46,15 @@ object IntermediaryDeclarationSigningAuditModel {
   def build(
              intermediaryDeclarationSigningAuditType: IntermediaryDeclarationSigningAuditType,
              userAnswers: UserAnswers,
-             submissionResult: SubmissionResult
+             submissionResult: SubmissionResult,
+             submittedDeclarationPage: String
            )(implicit request: DataRequest[_]): IntermediaryDeclarationSigningAuditModel =
     IntermediaryDeclarationSigningAuditModel(
       intermediaryDeclarationSigningAuditType = intermediaryDeclarationSigningAuditType,
       credId = request.userId,
       userAgent = request.headers.get("user-agent").getOrElse(""),
       userAnswers = userAnswers,
-      submissionResult = submissionResult
+      submissionResult = submissionResult,
+      submittedDeclarationPage = ""
     )
 }
