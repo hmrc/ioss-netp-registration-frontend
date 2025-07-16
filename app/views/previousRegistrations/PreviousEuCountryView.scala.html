@@ -42,7 +42,7 @@
         @govukSelect(
             SelectViewModel(
                 field = form("value"),
-                items = Country.euCountrySelectItems,
+                items = Country.euCountryWithNISelectItems,
                 label = LabelViewModel(messages("previousEuCountry.heading")).asPageHeading()
             ).asAccessibleAutocomplete(Some(
                 AccessibleAutocomplete(

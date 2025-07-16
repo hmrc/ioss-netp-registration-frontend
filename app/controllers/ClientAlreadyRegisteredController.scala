@@ -17,12 +17,13 @@
 package controllers
 
 import controllers.actions.*
+import logging.Logging
 import models.UserAnswers
 import models.requests.DataRequest
 
 import javax.inject.Inject
 import play.api.i18n.{I18nSupport, MessagesApi}
-import pages.{ClientBusinessNamePage, EmptyWaypoints, JourneyRecoveryPage}
+import pages.ClientBusinessNamePage
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.ClientAlreadyRegisteredView
@@ -31,22 +32,24 @@ class ClientAlreadyRegisteredController @Inject()(
                                        override val messagesApi: MessagesApi,
                                        cc: AuthenticatedControllerComponents,
                                        view: ClientAlreadyRegisteredView
-                                     ) extends FrontendBaseController with I18nSupport {
+                                     ) extends FrontendBaseController with I18nSupport with Logging {
 
   protected val controllerComponents: MessagesControllerComponents = cc
   
   def onPageLoad: Action[AnyContent] = cc.identifyAndGetData {
-    implicit request =>
+    implicit request: DataRequest[_] =>
 
       getOrganisationName(request.userAnswers) match {
         case Some(clientCompanyName) =>
-          Ok(view(clientCompanyName))
+          Ok(view(Some(clientCompanyName)))
         case _ =>
-          Redirect(JourneyRecoveryPage.route(EmptyWaypoints))
+          Ok(view(None))
       }
   }
 
   private def getOrganisationName(answers: UserAnswers)(implicit request: DataRequest[_]): Option[String] = {
+    logger.info(s"vatInfo: ${answers.vatInfo}")
+    logger.info(s"ClientBusinessNamePage: ${request.userAnswers.get(ClientBusinessNamePage)}")
     answers.vatInfo match {
       case Some(vatInfo) if vatInfo.organisationName.isDefined => vatInfo.organisationName
       case Some(vatInfo) if vatInfo.individualName.isDefined => vatInfo.individualName

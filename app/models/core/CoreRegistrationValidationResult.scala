@@ -16,7 +16,8 @@
 
 package models.core
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.i18n.Lang.logger.logger
+import play.api.libs.json.{Format, JsError, JsString, JsSuccess, Json, OFormat, Reads, Writes}
 
 import java.time.format.DateTimeFormatter
 
@@ -35,7 +36,7 @@ object CoreRegistrationValidationResult {
 
 case class Match(
                   matchType: MatchType,
-                  traderId: String,
+                  traderId: TraderId,
                   intermediary: Option[String],
                   memberState: String,
                   exclusionStatusCode: Option[Int],
@@ -43,11 +44,38 @@ case class Match(
                   exclusionEffectiveDate: Option[String],
                   nonCompliantReturns: Option[Int],
                   nonCompliantPayments: Option[Int]
-                )
+                ) {
+  def getEffectiveDate: String = {
+    exclusionEffectiveDate match {
+      case Some(date) => date
+      case _ =>
+        val e = new IllegalStateException(s"MatchType $matchType didn't include an expected exclusion effective date")
+        logger.error(s"Must have an Exclusion Effective Date ${e.getMessage}", e)
+        throw e
+    }
+  }
+}
 
 object Match {
   
   val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy MM dd")
   
   implicit val format: OFormat[Match] = Json.format[Match]
+}
+
+case class TraderId(traderId: String) {
+  def isAnIntermediary: Boolean = traderId.toUpperCase.startsWith("IN")
+}
+
+object TraderId {
+  implicit val traderIdReads: Reads[TraderId] = Reads {
+    case JsString(value) => JsSuccess(TraderId(value))
+    case _ => JsError("Expected string for TraderId")
+  }
+
+  implicit val traderIdWrites: Writes[TraderId] = Writes { traderId =>
+    JsString(traderId.traderId)
+  }
+
+  implicit val traderIdFormat: Format[TraderId] = Format(traderIdReads, traderIdWrites)
 }

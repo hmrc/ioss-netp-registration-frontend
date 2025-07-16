@@ -25,6 +25,7 @@ import pages.Waypoints
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.vatEuDetails.EuVatNumberView
 import utils.FutureSyntax.FutureOps
@@ -36,7 +37,8 @@ class EuVatNumberController @Inject()(
                                        override val messagesApi: MessagesApi,
                                        cc: AuthenticatedControllerComponents,
                                        formProvider: EuVatNumberFormProvider,
-                                       view: EuVatNumberView
+                                       view: EuVatNumberView,
+                                       coreRegistrationValidationService: CoreRegistrationValidationService
                                      )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
 
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -76,12 +78,23 @@ class EuVatNumberController @Inject()(
                 BadRequest(view(formWithErrors, waypoints, countryIndex, countryWithValidationDetails)).toFuture,
 
               euVrn =>
-                for {
-                  updatedAnswers <- Future.fromTry(request.userAnswers.set(EuVatNumberPage(countryIndex), euVrn))
-                  _ <- cc.sessionRepository.set(updatedAnswers)
-                } yield Redirect(EuVatNumberPage(countryIndex).navigate(waypoints, request.userAnswers, updatedAnswers).route)
+                coreRegistrationValidationService.searchEuVrn(euVrn, country.code).flatMap {
+                  case Some(activeMatch) if activeMatch.matchType.isActiveTrader && !activeMatch.traderId.isAnIntermediary =>
+                    Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
 
+                  case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader && !activeMatch.traderId.isAnIntermediary =>
+                    Redirect(
+                      controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+                        activeMatch.memberState,
+                        activeMatch.getEffectiveDate)
+                    ).toFuture
 
+                  case _ =>
+                    for {
+                      updatedAnswers <- Future.fromTry(request.userAnswers.set(EuVatNumberPage(countryIndex), euVrn))
+                      _ <- cc.sessionRepository.set(updatedAnswers)
+                    } yield Redirect(EuVatNumberPage(countryIndex).navigate(waypoints, request.userAnswers, updatedAnswers).route)
+                }
             )
         }
       }

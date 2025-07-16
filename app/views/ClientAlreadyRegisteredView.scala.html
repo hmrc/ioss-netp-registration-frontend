@@ -19,13 +19,20 @@
         govukButton: GovukButton
 )
 
-@(companyName: String)(implicit request: Request[_], messages: Messages)
+@(companyName: Option[String])(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("clientAlreadyRegistered.title"))) {
 
-    <h1 class="govuk-heading-xl">@messages("clientAlreadyRegistered.heading")</h1>
+    <h1 class="govuk-heading-l">@messages("clientAlreadyRegistered.heading")</h1>
 
-    <p class="govuk-body">@Html(messages("clientAlreadyRegistered.p1", companyName))</p>
+    @companyName match {
+        case Some(name) if name.nonEmpty => {
+            <p class="govuk-body">@Html(messages("clientAlreadyRegistered.p1.companyName", name))</p>
+        }
+        case _ => {
+            <p class="govuk-body">@Html(messages("clientAlreadyRegistered.p1"))</p>
+        }
+    }
 
     <p class="govuk-body">@Html(messages("clientAlreadyRegistered.p2"))</p>
 }

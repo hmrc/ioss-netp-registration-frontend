@@ -23,5 +23,5 @@ object Format {
   val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
   val dateMonthYearFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM yyyy")
   val dateHintFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d M yyyy")
-
+  val eisDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 }

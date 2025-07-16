@@ -466,5 +466,6 @@ otherCountryExcludedAndQuarantined.contact = If you believe this is an error, co
 
 clientAlreadyRegistered.title = You cannot add this trader
 clientAlreadyRegistered.heading = You cannot add this trader
-clientAlreadyRegistered.p1 = {0} is already registered on the IOSS service.
+clientAlreadyRegistered.p1 = Your client is already registered on the IOSS service.
+clientAlreadyRegistered.p1.companyName = {0} is already registered on the IOSS service.
 clientAlreadyRegistered.p2 = They will need to leave the service before you can add them as a client.

@@ -18,12 +18,15 @@ package controllers
 
 import controllers.actions.*
 import forms.ClientTaxReferenceFormProvider
+import logging.Logging
+import models.core.Match
 
 import javax.inject.Inject
 import pages.ClientTaxReferencePage
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.ClientTaxReferenceView
@@ -34,8 +37,9 @@ class ClientTaxReferenceController @Inject()(
                                               override val messagesApi: MessagesApi,
                                               cc: AuthenticatedControllerComponents,
                                               formProvider: ClientTaxReferenceFormProvider,
-                                              view: ClientTaxReferenceView
-                                    )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
+                                              view: ClientTaxReferenceView,
+                                              coreRegistrationValidationService: CoreRegistrationValidationService
+                                    )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry with Logging {
 
   protected val controllerComponents: MessagesControllerComponents = cc
   
@@ -67,10 +71,24 @@ class ClientTaxReferenceController @Inject()(
             BadRequest(view(formWithErrors, waypoints, country)).toFuture,
 
           value =>
-            for {
-              updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientTaxReferencePage, value))
-              _ <- cc.sessionRepository.set(updatedAnswers)
-            } yield Redirect(ClientTaxReferencePage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+            coreRegistrationValidationService.searchTraderId(value).flatMap {
+
+              case Some(activeMatch) if activeMatch.matchType.isActiveTrader && !activeMatch.traderId.isAnIntermediary =>
+                Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
+
+              case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader && !activeMatch.traderId.isAnIntermediary =>
+                Redirect(
+                  controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+                    activeMatch.memberState,
+                    activeMatch.getEffectiveDate)
+                ).toFuture
+
+              case _ =>
+                for {
+                  updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientTaxReferencePage, value))
+                  _ <- cc.sessionRepository.set(updatedAnswers)
+                } yield Redirect(ClientTaxReferencePage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+            }
         )
       }
   }
