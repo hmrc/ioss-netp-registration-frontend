@@ -134,6 +134,8 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
         val mockSessionRepository = mock[SessionRepository]
         val mockEmailService = mock[EmailService]
+        val mockDeclarationView = mock[DeclarationView]
+        val viewMock = mock[play.twirl.api.HtmlFormat.Appendable]
 
         val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
 
@@ -152,6 +154,10 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             .build()
 
         when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
+
+        when(mockDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
+
+        when(viewMock.body) thenReturn "view body"
 
         when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any())) thenReturn Right(intermediaryVatCustomerInfo).toFuture
 
@@ -173,8 +179,12 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
           val result = route(application, request).value
 
+
           val expectedAuditEvent = IntermediaryDeclarationSigningAuditModel.build(
-            IntermediaryDeclarationSigningAuditType.CreateDeclaration, userAnswers, SubmissionResult.Success
+            intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
+            userAnswers = userAnswers,
+            submissionResult = SubmissionResult.Success,
+            submittedDeclarationPageBody = "view body"
           )
 
           status(result) `mustBe` SEE_OTHER
