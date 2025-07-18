@@ -219,7 +219,8 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             .overrides(
               bind[SessionRepository].toInstance(mockSessionRepository),
               bind[RegistrationConnector].toInstance(mockRegistrationConnector),
-              bind[EmailService].toInstance(mockEmailService)
+              bind[EmailService].toInstance(mockEmailService),
+              bind[AuditService].toInstance(mockAuditService)
             )
             .build()
 
