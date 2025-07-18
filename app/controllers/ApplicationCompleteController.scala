@@ -16,6 +16,7 @@
 
 package controllers
 
+import config.FrontendAppConfig
 import connectors.RegistrationConnector
 import controllers.actions.*
 import logging.Logging
@@ -33,6 +34,7 @@ class ApplicationCompleteController @Inject()(
                                                override val messagesApi: MessagesApi,
                                                cc: AuthenticatedControllerComponents,
                                                registrationConnector: RegistrationConnector,
+                                               frontendAppConfig: FrontendAppConfig,
                                                view: ApplicationCompleteView
                                              )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with GetClientCompanyName with Logging {
@@ -46,7 +48,12 @@ class ApplicationCompleteController @Inject()(
         registrationConnector.getPendingRegistration(request.userAnswers.journeyId).flatMap {
           case Right(savedPendingRegistration) =>
 
-            Ok(view(clientCompanyName, savedPendingRegistration.uniqueUrlCode, savedPendingRegistration.activationExpiryDate)).toFuture
+            Ok(view(
+              clientCompanyName,
+              savedPendingRegistration.uniqueUrlCode,
+              savedPendingRegistration.activationExpiryDate,
+              frontendAppConfig.intermediaryYourAccountUrl
+            )).toFuture
 
           case Left(errors) =>
             val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given journey ID: $errors."
