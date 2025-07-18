@@ -157,7 +157,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
         when(mockDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
 
-        when(viewMock.body) thenReturn "view body"
+        when(viewMock.body) thenReturn "test-view-body"
 
         when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any())) thenReturn Right(intermediaryVatCustomerInfo).toFuture
 
@@ -184,7 +184,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
             userAnswers = userAnswers,
             submissionResult = SubmissionResult.Success,
-            submittedDeclarationPageBody = "view body"
+            submittedDeclarationPageBody = "test-view-body"
           )
 
           status(result) `mustBe` SEE_OTHER
@@ -201,10 +201,12 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
         }
       }
 
-      "must submit client registration and redirect to next page with valid data when client email fails to send" in {
+      "must submit client registration, audit event and redirect to next page with valid data when client email fails to send" in {
 
         val mockSessionRepository = mock[SessionRepository]
         val mockEmailService = mock[EmailService]
+        val mockDeclarationView = mock[DeclarationView]
+        val viewMock = mock[play.twirl.api.HtmlFormat.Appendable]
 
         val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
 
@@ -223,11 +225,17 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
         when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
 
+        when(mockDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
+
+        when(viewMock.body) thenReturn "test-view-body"
+
         when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any())) thenReturn Right(intermediaryVatCustomerInfo).toFuture
 
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
 
         when(mockEmailService.sendClientActivationEmail(any, any, any, any, any)(any, any)) thenReturn Future.successful(EMAIL_NOT_SENT)
+
+        doNothing().when(mockAuditService).audit(any())(any(), any())
 
 
         running(application) {
@@ -235,11 +243,22 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             FakeRequest(POST, routes.DeclarationController.onSubmit(waypoints).url)
               .withFormUrlEncodedBody(("declaration", "true"))
 
+          implicit val dataRequest: DataRequest[_] =
+            DataRequest(fakeRequest, userAnswersId, userAnswers)
+
           val result = route(application, request).value
+
+          val expectedAuditEvent = IntermediaryDeclarationSigningAuditModel.build(
+            intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
+            userAnswers = userAnswers,
+            submissionResult = SubmissionResult.Success,
+            submittedDeclarationPageBody = "test-view-body"
+          )
 
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value mustBe DeclarationPage.navigate(waypoints, userAnswers, userAnswers).route.url
           verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(userAnswers))(any())
+          verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
           verify(mockEmailService, times(1)).sendClientActivationEmail(
             any,
             any,
