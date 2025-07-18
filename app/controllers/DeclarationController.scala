@@ -89,16 +89,17 @@ class DeclarationController @Inject()(
 
                   value =>
 
-                    val submittedDeclarationPage: String = view(form, waypoints, intermediaryName, clientCompanyName).body
-
+                    val submittedDeclarationPageBody: String = view(form, waypoints, intermediaryName, clientCompanyName).body
+                    
                     auditService.audit(
                       IntermediaryDeclarationSigningAuditModel.build(
                         IntermediaryDeclarationSigningAuditType.CreateDeclaration,
                         request.userAnswers,
                         SubmissionResult.Success,
-                        submittedDeclarationPage
+                        submittedDeclarationPageBody
                       )
                     )
+                    
                     for {
                       updatedAnswers <- Future.fromTry(request.userAnswers.set(DeclarationPage, value))
                       _ <- cc.sessionRepository.set(updatedAnswers)
