@@ -17,6 +17,7 @@
 package controllers
 
 import base.SpecBase
+import config.FrontendAppConfig
 import connectors.RegistrationConnector
 import models.SavedPendingRegistration
 import models.responses.InternalServerError
@@ -53,10 +54,12 @@ class ApplicationCompleteControllerSpec extends SpecBase {
 
         val result = route(application, request).value
 
+        val config = application.injector.instanceOf[FrontendAppConfig]
+        
         val view = application.injector.instanceOf[ApplicationCompleteView]
 
         status(result) `mustBe` OK
-        contentAsString(result) `mustBe` view(clientName, clientDeclarationLink, activationExpiryDate)(request, messages(application)).toString
+        contentAsString(result) `mustBe` view(clientName, clientDeclarationLink, activationExpiryDate, config.intermediaryYourAccountUrl)(request, messages(application)).toString
         verify(mockRegistrationConnector, times(1)).getPendingRegistration(eqTo(savedPendingRegistration.journeyId))(any())
       }
     }

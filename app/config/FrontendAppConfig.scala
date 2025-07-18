@@ -40,6 +40,8 @@ class FrontendAppConfig @Inject()(configuration: Configuration) {
 
   val allowedRedirectUrls: Seq[String] = configuration.get[Seq[String]]("urls.allowedRedirects")
 
+  val intermediaryYourAccountUrl: String = configuration.get[String]("urls.yourAccountUrl")
+
   private val exitSurveyBaseUrl: String = configuration.get[String]("microservice.services.feedback-frontend.host") +
     configuration.get[String]("microservice.services.feedback-frontend.basePath")
   val exitSurveyUrl: String = s"$exitSurveyBaseUrl/${origin.toLowerCase}"
