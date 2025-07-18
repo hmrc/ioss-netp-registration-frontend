@@ -26,7 +26,7 @@ case class IntermediaryDeclarationSigningAuditModel(
                                                      userAgent: String,
                                                      userAnswers: UserAnswers,
                                                      submissionResult: SubmissionResult,
-                                                     submittedDeclarationPage: String
+                                                     submittedDeclarationPageBody: String
                                                    ) extends JsonAuditModel {
 
   override val auditType: String = intermediaryDeclarationSigningAuditType.auditType
@@ -37,7 +37,7 @@ case class IntermediaryDeclarationSigningAuditModel(
     "browserUserAgent" -> userAgent,
     "userAnswersDetails" -> Json.toJson(userAnswers),
     "submissionResult" -> submissionResult,
-    "submittedDeclarationPage" -> submittedDeclarationPage
+    "submittedDeclarationPageBody" -> submittedDeclarationPageBody
   )
 }
 
@@ -47,7 +47,7 @@ object IntermediaryDeclarationSigningAuditModel {
              intermediaryDeclarationSigningAuditType: IntermediaryDeclarationSigningAuditType,
              userAnswers: UserAnswers,
              submissionResult: SubmissionResult,
-             submittedDeclarationPage: String
+             submittedDeclarationPageBody: String
            )(implicit request: DataRequest[_]): IntermediaryDeclarationSigningAuditModel =
     IntermediaryDeclarationSigningAuditModel(
       intermediaryDeclarationSigningAuditType = intermediaryDeclarationSigningAuditType,
@@ -55,6 +55,6 @@ object IntermediaryDeclarationSigningAuditModel {
       userAgent = request.headers.get("user-agent").getOrElse(""),
       userAnswers = userAnswers,
       submissionResult = submissionResult,
-      submittedDeclarationPage = ""
+      submittedDeclarationPageBody = ""
     )
 }
