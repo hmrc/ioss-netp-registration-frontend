@@ -55,7 +55,7 @@ class AuditServiceSpec extends AnyFreeSpec with MockitoSugar with ScalaFutures w
         userAgent = "test-userAgent",
         userAnswers =  emptyUserAnswers,
         submissionResult = SubmissionResult.Success,
-        submittedDeclarationPageBody = "test-submittedDeclarationPage"
+        submittedDeclarationPageBody = "test-submittedDeclarationPageBody"
       ))(hc, FakeRequest("POST", "test"))
       verify(auditConnector, times(1)).sendExtendedEvent(any())(any(), any())
 

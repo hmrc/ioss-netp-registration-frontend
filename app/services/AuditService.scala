@@ -37,7 +37,8 @@ class AuditService @Inject()(
     auditConnector.sendExtendedEvent(event)
   }
 
-  private def toExtendedDataEvent(auditModel: JsonAuditModel, path: String)(implicit hc: HeaderCarrier): ExtendedDataEvent =
+  private def toExtendedDataEvent(auditModel: JsonAuditModel, path: String)
+                                 (implicit hc: HeaderCarrier): ExtendedDataEvent =
     ExtendedDataEvent(
       auditSource = appConfig.appName,
       auditType   = auditModel.auditType,

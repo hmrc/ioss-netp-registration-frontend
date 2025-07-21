@@ -89,7 +89,8 @@ class DeclarationController @Inject()(
 
                   value =>
 
-                    val submittedDeclarationPageBody: String = view(form, waypoints, intermediaryName, clientCompanyName).body
+                    val submittedDeclarationPageBody: String =
+                      view(form, waypoints, intermediaryName, clientCompanyName).body
                     
                     auditService.audit(
                       IntermediaryDeclarationSigningAuditModel.build(
