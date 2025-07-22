@@ -22,7 +22,8 @@
 @(
         clientName: String,
         clientDeclarationLink: String,
-        activationDate: String
+        activationDate: String,
+        yourAccountUrl: String
 )(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("applicationComplete.title"))) {
@@ -43,5 +44,5 @@
 
   <p class="govuk-body">@messages("applicationComplete.p4", activationDate)</p>
 
-  <p class="govuk-body govuk-!-margin-top-8">@Html(messages("applicationComplete.returnToYourAccount"))</p>
+  <p class="govuk-body govuk-!-margin-top-8">@Html(messages("applicationComplete.returnToYourAccount", yourAccountUrl))</p>
 }
