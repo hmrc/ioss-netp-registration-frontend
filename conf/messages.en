@@ -121,7 +121,7 @@ clientTaxReference.title = What is your client''s national tax number in {0}?
 clientTaxReference.heading = What is your client''s national tax number in {0}?
 clientTaxReference.checkYourAnswersLabel = National tax number
 clientTaxReference.error.required = Enter your client''s tax reference number in {0}
-clientTaxReference.error.length = Tax reference number must be 20 characters or less
+clientTaxReference.error.length = Tax reference number must be 50 characters or less
 clientTaxReference.error.format = Tax reference number must only include letters, numbers and spaces
 clientTaxReference.change.hidden = your client''s tax reference number
 
@@ -414,7 +414,7 @@ tradingNameAndBusinessAddress.stateOrRegion = Region or state (optional)
 tradingNameAndBusinessAddress.postCode = Postcode (optional)
 tradingNameAndBusinessAddress.checkYourAnswersLabel = Trading name and address
 tradingNameAndBusinessAddress.error.tradingName.required = Enter your trading name
-tradingNameAndBusinessAddress.error.tradingName.length = Trading name must be 100 characters or less
+tradingNameAndBusinessAddress.error.tradingName.length = Trading name must be 40 characters or less
 tradingNameAndBusinessAddress.error.tradingName.invalid = Trading name must only include letters, numbers, hyphens, spaces and apostrophes
 tradingNameAndBusinessAddress.change.tradingName.hidden = your trading name
 tradingNameAndBusinessAddress.error.line1.required = Enter address line 1

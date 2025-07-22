@@ -32,7 +32,7 @@ class TradingNameAndBusinessAddressFormProvider @Inject() extends Mappings {
     mapping(
       "tradingName" -> text("tradingNameAndBusinessAddress.error.tradingName.required")
         .verifying(firstError(
-          maxLength(100, "tradingNameAndBusinessAddress.error.tradingName.length"),
+          maxLength(40, "tradingNameAndBusinessAddress.error.tradingName.length"),
           regexp(commonTextPattern, "tradingNameAndBusinessAddress.error.tradingName.invalid")
         )),
       "line1" -> text("tradingNameAndBusinessAddress.error.line1.required")

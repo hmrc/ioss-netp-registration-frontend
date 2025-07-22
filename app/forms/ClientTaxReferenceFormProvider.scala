@@ -28,7 +28,7 @@ class ClientTaxReferenceFormProvider @Inject() extends Mappings {
     Form(
       "value" -> text("clientTaxReference.error.required", args = Seq(country.name))
         .verifying(firstError(
-          maxLength(20, "clientTaxReference.error.length"),
+          maxLength(50, "clientTaxReference.error.length"),
           regexp(alphaNumericWithSpace, "clientTaxReference.error.format")
         ))
     )

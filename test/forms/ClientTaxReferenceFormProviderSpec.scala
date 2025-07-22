@@ -26,7 +26,7 @@ class ClientTaxReferenceFormProviderSpec extends StringFieldBehaviours {
   val requiredKey = "clientTaxReference.error.required"
   val lengthKey = "clientTaxReference.error.length"
   private val formatKey: String = "clientTaxReference.error.format"
-  private val maxLength: Int = 20
+  private val maxLength: Int = 50
   private val minLength: Int = 1
 
   private val country: Country = arbitraryCountry.arbitrary.sample.value
