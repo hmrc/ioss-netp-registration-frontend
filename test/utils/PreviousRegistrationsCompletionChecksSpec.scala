@@ -263,7 +263,6 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
         val result = PreviousRegistrationsCompletionChecksTests.getAllIncompleteRegistrationDetails()
 
         result `mustBe` expected
-
       }
     }
 

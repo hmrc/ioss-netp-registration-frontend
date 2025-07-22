@@ -19,7 +19,7 @@ package utils
 import controllers.previousRegistrations.routes
 import models.previousRegistrations.{PreviousRegistrationDetailsWithOptionalVatNumber, SchemeDetailsWithOptionalVatNumber}
 import models.requests.DataRequest
-import models.{Country, Index, PreviousSchemeType}
+import models.{Country, Index, PreviousScheme, PreviousSchemeType}
 import pages.*
 import pages.previousRegistrations.{ClientHasIntermediaryPage, PreviousSchemeTypePage, PreviouslyRegisteredPage}
 import play.api.mvc.Results.Redirect
@@ -53,12 +53,22 @@ object PreviousRegistrationsCompletionChecks extends CompletionChecks {
 
   def getAllIncompleteRegistrationDetails()(implicit request: DataRequest[AnyContent]): Seq[PreviousRegistrationDetailsWithOptionalVatNumber] = {
     request.userAnswers.get(AllPreviousRegistrationsWithOptionalVatNumberQuery).map(
-      _.filter(scheme =>
+      _.filter { scheme =>
         scheme.previousSchemesDetails.isEmpty ||
-          scheme.previousSchemesDetails.getOrElse(List.empty).exists(_.clientHasIntermediary.isEmpty) ||
-          scheme.previousSchemesDetails.getOrElse(List.empty).exists(_.previousSchemeNumbers.isEmpty)
-      )
+          checkIncompleteForPreviousSchemeType(scheme.previousSchemesDetails)
+      }
     ).getOrElse(List.empty)
+  }
+
+  private def checkIncompleteForPreviousSchemeType(schemeDetails: Option[List[SchemeDetailsWithOptionalVatNumber]]) = {
+    schemeDetails.getOrElse(List.empty).exists { schemeDetailsWithOptionalVatNumber =>
+      schemeDetailsWithOptionalVatNumber.previousScheme match {
+        case Some(PreviousScheme.IOSSWI | PreviousScheme.IOSSWOI) =>
+          schemeDetailsWithOptionalVatNumber.clientHasIntermediary.isEmpty || schemeDetailsWithOptionalVatNumber.previousSchemeNumbers.isEmpty
+        case _ =>
+          schemeDetailsWithOptionalVatNumber.previousSchemeNumbers.isEmpty
+      }
+    }
   }
 
   def incompletePreviousRegistrationRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {

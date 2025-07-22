@@ -29,21 +29,21 @@ import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import queries.previousRegistrations.DeriveNumberOfPreviousRegistrations
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.CompletionChecks
+import utils.FutureSyntax.*
+import utils.ItemsHelper.getDerivedItems
 import utils.PreviousRegistrationsCompletionChecks.{getAllIncompleteRegistrationDetails, incompletePreviousRegistrationRedirect}
 import viewmodels.previousRegistrations.PreviousRegistrationSummary
 import views.html.previousRegistrations.AddPreviousRegistrationView
-import utils.FutureSyntax.*
-import utils.ItemsHelper.getDerivedItems
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class AddPreviousRegistrationController @Inject()(
-                                       override val messagesApi: MessagesApi,
-                                       cc: AuthenticatedControllerComponents,
-                                       formProvider: AddPreviousRegistrationFormProvider,
-                                       view: AddPreviousRegistrationView
-                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with CompletionChecks {
+                                                   override val messagesApi: MessagesApi,
+                                                   cc: AuthenticatedControllerComponents,
+                                                   formProvider: AddPreviousRegistrationFormProvider,
+                                                   view: AddPreviousRegistrationView
+                                                 )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with CompletionChecks {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -51,11 +51,11 @@ class AddPreviousRegistrationController @Inject()(
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
-      
+
       getDerivedItems(waypoints, DeriveNumberOfPreviousRegistrations) { number =>
-        
+
         val canAddCountries = number < Country.euCountries.size
-        
+
         val previousRegistrations = PreviousRegistrationSummary.row(
           answers = request.userAnswers,
           existingPreviousRegistrations = Seq.empty,
@@ -116,6 +116,5 @@ class AddPreviousRegistrationController @Inject()(
           )
         }
       }
-      
   }
 }
