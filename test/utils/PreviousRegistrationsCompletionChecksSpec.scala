@@ -17,6 +17,7 @@
 package utils
 
 import base.SpecBase
+import models.domain.PreviousSchemeNumbers
 import models.previousRegistrations.{PreviousRegistrationDetailsWithOptionalVatNumber, SchemeDetailsWithOptionalVatNumber, SchemeNumbersWithOptionalVatNumber}
 import models.requests.DataRequest
 import models.{Country, Index, PreviousScheme, PreviousSchemeType, UserAnswers}
@@ -43,6 +44,7 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
 
   private val schemeDetails = SchemeDetailsWithOptionalVatNumber(
     previousScheme = Some(PreviousScheme.IOSSWOI),
+    clientHasIntermediary = Some(false),
     previousSchemeNumbers = Some(
       SchemeNumbersWithOptionalVatNumber(Some("IM0401234567")))
   )
@@ -56,6 +58,7 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
     .set(PreviouslyRegisteredPage, true).success.value
     .set(PreviousEuCountryPage(countryIndex), country).success.value
     .set(PreviousSchemeTypePage(countryIndex, schemeIndex), PreviousSchemeType.IOSS).success.value
+    .set(ClientHasIntermediaryPage(countryIndex, schemeIndex), false).success.value
 
   ".isPreviouslyRegisteredDefined" - {
 
@@ -157,6 +160,23 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
 
     }
 
+    "must redirect to the correct page when there is no answer to Client Has Intermediary present" in {
+
+      val invalidAnswers: UserAnswers = validAnswers
+        .remove(ClientHasIntermediaryPage(countryIndex, schemeIndex)).success.value
+
+      val application = applicationBuilder(userAnswers = Some(invalidAnswers)).build()
+
+      running(application) {
+        implicit val request: DataRequest[AnyContent] = mock[DataRequest[AnyContent]]
+        when(request.userAnswers) thenReturn invalidAnswers
+
+        val result = PreviousRegistrationsCompletionChecksTests.incompletePreviousRegistrationRedirect(waypoints)
+
+        result `mustBe` Some(Redirect(ClientHasIntermediaryPage(countryIndex, schemeIndex).route(waypoints).url))
+      }
+    }
+
     "must return None when a valid Number is present" in {
 
       val invalidAnswers: UserAnswers = validAnswers
@@ -184,6 +204,7 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
         .set(PreviousEuCountryPage(countryIndex), country).success.value
         .set(PreviousSchemeTypePage(countryIndex, schemeIndex), PreviousSchemeType.IOSS).success.value
         .set(PreviousSchemePage(countryIndex, schemeIndex), PreviousScheme.IOSSWOI).success.value
+        .set(ClientHasIntermediaryPage(countryIndex, schemeIndex), false).success.value
 
       val expected = List(
         PreviousRegistrationDetailsWithOptionalVatNumber(
@@ -191,6 +212,7 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
           previousSchemesDetails = Some(List(
             SchemeDetailsWithOptionalVatNumber(
               previousScheme = Some(PreviousScheme.IOSSWOI),
+              clientHasIntermediary = Some(false),
               previousSchemeNumbers = None
             )
           ))
@@ -210,6 +232,40 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
       }
     }
 
+    "must return a Seq of incomplete Previous Intermediary Registrations when Client has Intermediary answer is missing" in {
+
+      val invalidAnswers: UserAnswers = emptyUserAnswersWithVatInfo
+        .set(PreviouslyRegisteredPage, true).success.value
+        .set(PreviousEuCountryPage(countryIndex), country).success.value
+        .set(PreviousSchemeTypePage(countryIndex, schemeIndex), PreviousSchemeType.IOSS).success.value
+        .set(PreviousSchemePage(countryIndex, schemeIndex), PreviousScheme.IOSSWOI).success.value
+        .set(PreviousIossNumberPage(Index(0), Index(0)), PreviousSchemeNumbers("123456789")).success.value
+
+      val expected = List(
+        PreviousRegistrationDetailsWithOptionalVatNumber(
+          previousEuCountry = country,
+          previousSchemesDetails = Some(List(
+            SchemeDetailsWithOptionalVatNumber(
+              previousScheme = Some(PreviousScheme.IOSSWOI),
+              clientHasIntermediary = None,
+              previousSchemeNumbers = Some(SchemeNumbersWithOptionalVatNumber(Some("123456789")))
+            )
+          ))
+        )
+      )
+
+      val application = applicationBuilder(userAnswers = Some(invalidAnswers)).build()
+
+      running(application) {
+        implicit val request: DataRequest[AnyContent] = mock[DataRequest[AnyContent]]
+        when(request.userAnswers) thenReturn invalidAnswers
+
+        val result = PreviousRegistrationsCompletionChecksTests.getAllIncompleteRegistrationDetails()
+
+        result `mustBe` expected
+      }
+    }
+
     "must return List.empty when there are no incomplete Previous Intermediary Registration entries present" in {
 
       val completeAnswers = validAnswers
@@ -226,7 +282,6 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
         result `mustBe` List.empty
       }
     }
-
   }
 
   ".emptyPreviousRegistrationRedirect" - {

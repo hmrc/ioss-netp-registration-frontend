@@ -190,5 +190,12 @@ trait UserAnswersEntryGenerators extends PageGenerators with ModelGenerators {
     }
   }
 
-
+  implicit lazy val arbitraryClientHasIntermediaryUserAnswersEntry: Arbitrary[(ClientHasIntermediaryPage, JsValue)] = {
+    Arbitrary {
+      for {
+        page <- arbitrary[ClientHasIntermediaryPage]
+        value <- arbitrary[Boolean].map(Json.toJson(_))
+      } yield (page, value)
+    }
+  }
 }

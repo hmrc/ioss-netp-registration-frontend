@@ -21,8 +21,8 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.TryValues
 import pages.previousRegistrations.*
-import pages.{ClientBusinessAddressPage, *}
 import pages.vatEuDetails.*
+import pages.{ClientBusinessAddressPage, *}
 import play.api.libs.json.{JsValue, Json}
 
 trait UserAnswersGenerator extends TryValues {
@@ -45,6 +45,7 @@ trait UserAnswersGenerator extends TryValues {
       arbitrary[(EuVatNumberPage, JsValue)] ::
       arbitrary[(EuTaxReferencePage, JsValue)] ::
       arbitrary[(AddEuDetailsPage, JsValue)] ::
+      arbitrary[(ClientHasIntermediaryPage, JsValue)] ::
       Nil
   }
 

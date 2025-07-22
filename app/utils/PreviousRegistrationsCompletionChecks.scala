@@ -16,11 +16,12 @@
 
 package utils
 
-import models.{Country, Index, PreviousSchemeType}
-import models.previousRegistrations.PreviousRegistrationDetailsWithOptionalVatNumber
+import controllers.previousRegistrations.routes
+import models.previousRegistrations.{PreviousRegistrationDetailsWithOptionalVatNumber, SchemeDetailsWithOptionalVatNumber}
 import models.requests.DataRequest
+import models.{Country, Index, PreviousScheme, PreviousSchemeType}
 import pages.*
-import pages.previousRegistrations.{PreviousSchemeTypePage, PreviouslyRegisteredPage}
+import pages.previousRegistrations.{ClientHasIntermediaryPage, PreviousSchemeTypePage, PreviouslyRegisteredPage}
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{AnyContent, Result}
 import queries.previousRegistrations.AllPreviousRegistrationsWithOptionalVatNumberQuery
@@ -33,17 +34,17 @@ object PreviousRegistrationsCompletionChecks extends CompletionChecks {
       case false => request.userAnswers.get(AllPreviousRegistrationsWithOptionalVatNumberQuery).getOrElse(List.empty).isEmpty
     }
   }
-  
+
   def emptyPreviousRegistrationRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
     if (!isPreviouslyRegisteredDefined()) {
-      Some(Redirect(controllers.previousRegistrations.routes.PreviouslyRegisteredController.onPageLoad(waypoints)))
+      Some(Redirect(routes.PreviouslyRegisteredController.onPageLoad(waypoints)))
     } else {
       None
     }
   }
 
-  def firstIndexedIncompleteRegisteredCountry(incompleteCountries: Seq[Country])
-                                               (implicit request: DataRequest[AnyContent]):
+  private def firstIndexedIncompleteRegisteredCountry(incompleteCountries: Seq[Country])
+                                                     (implicit request: DataRequest[AnyContent]):
   Option[(PreviousRegistrationDetailsWithOptionalVatNumber, Int)] = {
     request.userAnswers.get(AllPreviousRegistrationsWithOptionalVatNumberQuery)
       .getOrElse(List.empty).zipWithIndex
@@ -52,33 +53,60 @@ object PreviousRegistrationsCompletionChecks extends CompletionChecks {
 
   def getAllIncompleteRegistrationDetails()(implicit request: DataRequest[AnyContent]): Seq[PreviousRegistrationDetailsWithOptionalVatNumber] = {
     request.userAnswers.get(AllPreviousRegistrationsWithOptionalVatNumberQuery).map(
-      _.filter(scheme =>
-      scheme.previousSchemesDetails.isEmpty || scheme.previousSchemesDetails.getOrElse(List.empty).exists(_.previousSchemeNumbers.isEmpty))
+      _.filter { scheme =>
+        scheme.previousSchemesDetails.isEmpty ||
+          checkIncompleteForPreviousSchemeType(scheme.previousSchemesDetails)
+      }
     ).getOrElse(List.empty)
   }
 
+  private def checkIncompleteForPreviousSchemeType(schemeDetails: Option[List[SchemeDetailsWithOptionalVatNumber]]) = {
+    schemeDetails.getOrElse(List.empty).exists { schemeDetailsWithOptionalVatNumber =>
+      schemeDetailsWithOptionalVatNumber.previousScheme match {
+        case Some(PreviousScheme.IOSSWI | PreviousScheme.IOSSWOI) =>
+          schemeDetailsWithOptionalVatNumber.clientHasIntermediary.isEmpty || schemeDetailsWithOptionalVatNumber.previousSchemeNumbers.isEmpty
+        case _ =>
+          schemeDetailsWithOptionalVatNumber.previousSchemeNumbers.isEmpty
+      }
+    }
+  }
+
   def incompletePreviousRegistrationRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
+    def incompleteSchemeDetailsRedirect(
+                                         incompleteCountry: (PreviousRegistrationDetailsWithOptionalVatNumber, Int),
+                                         schemeDetails: (SchemeDetailsWithOptionalVatNumber, Int)
+                                       ) = {
+      request.userAnswers.get(PreviousSchemeTypePage(Index(incompleteCountry._2), Index(schemeDetails._2))) match {
+        case Some(PreviousSchemeType.OSS) =>
+          Some(Redirect(routes.PreviousOssNumberController.onPageLoad(
+            waypoints, Index(incompleteCountry._2), Index(schemeDetails._2))))
+        case Some(PreviousSchemeType.IOSS) =>
+          if (!clientHasIntermediary(Index(incompleteCountry._2), Index(schemeDetails._2))) {
+            Some(Redirect(routes.ClientHasIntermediaryController.onPageLoad(waypoints, Index(incompleteCountry._2), Index(schemeDetails._2))))
+          } else {
+            Some(Redirect(routes.PreviousIossNumberController.onPageLoad(
+              waypoints, Index(incompleteCountry._2), Index(schemeDetails._2))))
+          }
+        case None => None
+      }
+    }
+
     firstIndexedIncompleteRegisteredCountry(getAllIncompleteRegistrationDetails().map(_.previousEuCountry)) match {
       case Some(incompleteCountry) if incompleteCountry._1.previousSchemesDetails.isDefined =>
-        incompleteCountry._1.previousSchemesDetails.getOrElse(List.empty).zipWithIndex.find(_._1.previousSchemeNumbers.isEmpty) match {
-          case Some(schemeDetails) =>
-            request.userAnswers.get(PreviousSchemeTypePage(Index(incompleteCountry._2), Index(schemeDetails._2))) match {
-              case Some(PreviousSchemeType.OSS) =>
-                Some(Redirect(controllers.previousRegistrations.routes.PreviousOssNumberController.onPageLoad(
-                  waypoints, Index(incompleteCountry._2), Index(schemeDetails._2))))
-              case Some(PreviousSchemeType.IOSS) =>
-                Some(Redirect(controllers.previousRegistrations.routes.PreviousIossNumberController.onPageLoad(
-                  waypoints, Index(incompleteCountry._2), Index(schemeDetails._2))))
-              case None => None
-            }
+        incompleteCountry._1.previousSchemesDetails.getOrElse(List.empty).zipWithIndex
+          .find(sd => sd._1.clientHasIntermediary.isEmpty || sd._1.previousSchemeNumbers.isEmpty) match {
+          case Some(schemeDetails) => incompleteSchemeDetailsRedirect(incompleteCountry, schemeDetails)
           case None => None
         }
       case Some(incompleteCountry) =>
-        Some(Redirect(controllers.previousRegistrations.routes.PreviousSchemeController.onPageLoad(
+        Some(Redirect(routes.PreviousSchemeController.onPageLoad(
           waypoints, Index(incompleteCountry._2), Index(0))))
 
       case None => None
-
     }
+  }
+
+  private def clientHasIntermediary(countryIndex: Index, schemeIndex: Index)(implicit request: DataRequest[AnyContent]): Boolean = {
+    request.userAnswers.get(ClientHasIntermediaryPage(countryIndex, schemeIndex)).isDefined
   }
 }

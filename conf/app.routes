@@ -118,6 +118,9 @@ POST       /previous-country/:index                                     controll
 GET        /previous-scheme/:countryIndex/:schemeIndex                  controllers.previousRegistrations.PreviousSchemeController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index, schemeIndex: Index)
 POST       /previous-scheme/:countryIndex/:schemeIndex                  controllers.previousRegistrations.PreviousSchemeController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index, schemeIndex: Index)
 
+GET        /previous-scheme-intermediary/:countryIndex/:schemeIndex     controllers.previousRegistrations.ClientHasIntermediaryController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index, schemeIndex: Index)
+POST       /previous-scheme-intermediary/:countryIndex/:schemeIndex     controllers.previousRegistrations.ClientHasIntermediaryController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, countryIndex: Index, schemeIndex: Index)
+
 GET        /previous-scheme-answers/:index                              controllers.previousRegistrations.CheckPreviousSchemeAnswersController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
 POST       /previous-scheme-answers/:index                              controllers.previousRegistrations.CheckPreviousSchemeAnswersController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
 
@@ -169,4 +172,3 @@ POST       /remove-tax-details/:countryIndex                            controll
 
 GET        /remove-all-tax-details                                      controllers.vatEuDetails.DeleteAllEuDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST       /remove-all-tax-details                                      controllers.vatEuDetails.DeleteAllEuDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
-

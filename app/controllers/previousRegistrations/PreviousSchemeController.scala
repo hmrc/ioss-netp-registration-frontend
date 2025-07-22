@@ -20,27 +20,27 @@ import controllers.GetCountry
 import controllers.actions.*
 import forms.previousRegistrations.PreviousSchemeTypeFormProvider
 import models.Index
-import pages.previousRegistrations.PreviousSchemeTypePage
 import pages.Waypoints
+import pages.previousRegistrations.PreviousSchemeTypePage
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.previousRegistrations.AllPreviousSchemesForCountryWithOptionalVatNumberQuery
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.previousRegistrations.PreviousSchemeView
 import utils.FutureSyntax.*
+import views.html.previousRegistrations.PreviousSchemeView
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class PreviousSchemeController @Inject()(
-                                       override val messagesApi: MessagesApi,
-                                       cc: AuthenticatedControllerComponents,
-                                       formProvider: PreviousSchemeTypeFormProvider,
-                                       view: PreviousSchemeView
-                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
+                                          override val messagesApi: MessagesApi,
+                                          cc: AuthenticatedControllerComponents,
+                                          formProvider: PreviousSchemeTypeFormProvider,
+                                          view: PreviousSchemeView
+                                        )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
 
   protected val controllerComponents: MessagesControllerComponents = cc
-  
+
   def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
       getPreviousCountry(waypoints, countryIndex) {
@@ -63,8 +63,6 @@ class PreviousSchemeController @Inject()(
 
           Ok(view(preparedForm, waypoints, countryIndex, schemeIndex)).toFuture
       }
-
-
   }
 
   def onSubmit(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
@@ -89,7 +87,7 @@ class PreviousSchemeController @Inject()(
             value =>
               for {
                 updatedAnswers <- Future.fromTry(request.userAnswers.set(PreviousSchemeTypePage(countryIndex, schemeIndex), value))
-                _              <- cc.sessionRepository.set(updatedAnswers)
+                _ <- cc.sessionRepository.set(updatedAnswers)
               } yield Redirect(PreviousSchemeTypePage(countryIndex, schemeIndex).navigate(waypoints, request.userAnswers, updatedAnswers).route)
           )
       }
