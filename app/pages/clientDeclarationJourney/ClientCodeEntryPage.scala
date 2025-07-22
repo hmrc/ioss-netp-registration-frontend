@@ -27,7 +27,7 @@ case class ClientCodeEntryPage(uniqueUrlCode: String) extends QuestionPage[Strin
 
   override def toString: String = "clientCodeEntry"
 
-  override def route(waypoints: Waypoints, uniqueUrlCode:String): Call = {
+  override def route(waypoints: Waypoints): Call = {
     controllers.clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(waypoints, uniqueUrlCode)
   }
 
