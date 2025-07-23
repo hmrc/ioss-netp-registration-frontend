@@ -20,13 +20,14 @@ import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.DeclarationFormProvider
 import logging.Logging
-import models.SavedPendingRegistration
+import models.{SavedPendingRegistration, UserAnswers}
 import models.audit.{IntermediaryDeclarationSigningAuditModel, IntermediaryDeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult
+import models.requests.DataRequest
 import pages.{DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Request}
 import services.{AuditService, EmailService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
@@ -86,34 +87,21 @@ class DeclarationController @Inject()(
                 form.bindFromRequest().fold(
                   formWithErrors =>
 
-                    val submittedDeclarationPageBody: String =
-                      view(form, waypoints, intermediaryName, clientCompanyName).body
 
-                    auditService.audit(
-                      IntermediaryDeclarationSigningAuditModel.build(
-                        IntermediaryDeclarationSigningAuditType.CreateDeclaration,
-                        request.userAnswers,
-                        SubmissionResult.Failure,
-                        submittedDeclarationPageBody
-                      )
+                    sendAudit(
+                      result = SubmissionResult.Failure,
+                      submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body,
                     )
 
                     Future.successful(BadRequest(view(formWithErrors, waypoints, intermediaryName, clientCompanyName))),
 
                   value =>
 
-                    val submittedDeclarationPageBody: String =
-                      view(form, waypoints, intermediaryName, clientCompanyName).body
-                    
-                    auditService.audit(
-                      IntermediaryDeclarationSigningAuditModel.build(
-                        IntermediaryDeclarationSigningAuditType.CreateDeclaration,
-                        request.userAnswers,
-                        SubmissionResult.Success,
-                        submittedDeclarationPageBody
-                      )
+                    sendAudit(
+                      result = SubmissionResult.Success,
+                      submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
                     )
-                    
+
                     for {
                       updatedAnswers <- Future.fromTry(request.userAnswers.set(DeclarationPage, value))
                       _ <- cc.sessionRepository.set(updatedAnswers)
@@ -152,6 +140,19 @@ class DeclarationController @Inject()(
       activation_code_expiry_date = submittedRegistration.activationExpiryDate,
       activation_code = submittedRegistration.uniqueActivationCode,
       emailAddress = clientEmail
+    )
+  }
+
+  private def sendAudit(result: SubmissionResult, submittedDeclarationPageBody: String)
+                       (implicit hc: HeaderCarrier, request: DataRequest[_]): Unit = {
+    auditService.audit(
+      IntermediaryDeclarationSigningAuditModel.build(
+        IntermediaryDeclarationSigningAuditType.CreateDeclaration,
+        request.userAnswers,
+        result,
+        submittedDeclarationPageBody
+
+      )
     )
   }
 }
