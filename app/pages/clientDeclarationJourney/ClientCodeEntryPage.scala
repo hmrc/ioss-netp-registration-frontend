@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package utils
+package pages.clientDeclarationJourney
 
 import models.UserAnswers
-import pages.{BusinessContactDetailsPage, JourneyRecoveryPage, Waypoints}
-import play.api.mvc.Result
-import play.api.mvc.Results.Redirect
-import utils.FutureSyntax.FutureOps
+import pages.{Page, QuestionPage, Waypoints}
+import play.api.libs.json.JsPath
+import play.api.mvc.Call
 
-import scala.concurrent.Future
+case class ClientCodeEntryPage(uniqueUrlCode: String) extends QuestionPage[String] {
 
-trait GetClientEmail {
+  override def path: JsPath = JsPath \ toString
 
-  def getClientEmail(waypoints: Waypoints, userAnswers: UserAnswers)
-                    (block: String => Future[Result]): Future[Result] = {
-    userAnswers.get(BusinessContactDetailsPage).map { businessContactDetails =>
-      block(businessContactDetails.emailAddress)
-    }.getOrElse {
-      Redirect(JourneyRecoveryPage.route(waypoints)).toFuture
-    }
+  override def toString: String = "clientCodeEntry"
+
+  override def route(waypoints: Waypoints): Call = {
+    controllers.clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(waypoints, uniqueUrlCode)
+  }
+
+  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
+    ClientDeclarationPage
   }
 }

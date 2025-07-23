@@ -31,7 +31,7 @@ object PreviouslyRegisteredSummary  {
            waypoints: Waypoints,
            sourcePage: CheckAnswersPage
          )(implicit messages: Messages): Option[SummaryListRow] =
-    
+
     answers.get(PreviouslyRegisteredPage).map {
       answer =>
 
