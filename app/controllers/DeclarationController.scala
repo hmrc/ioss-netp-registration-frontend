@@ -85,6 +85,19 @@ class DeclarationController @Inject()(
 
                 form.bindFromRequest().fold(
                   formWithErrors =>
+
+                    val submittedDeclarationPageBody: String =
+                      view(form, waypoints, intermediaryName, clientCompanyName).body
+
+                    auditService.audit(
+                      IntermediaryDeclarationSigningAuditModel.build(
+                        IntermediaryDeclarationSigningAuditType.CreateDeclaration,
+                        request.userAnswers,
+                        SubmissionResult.Failure,
+                        submittedDeclarationPageBody
+                      )
+                    )
+
                     Future.successful(BadRequest(view(formWithErrors, waypoints, intermediaryName, clientCompanyName))),
 
                   value =>

@@ -270,9 +270,11 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
         }
       }
 
-      "must return a Bad Request and errors when the declaration data is invalid and submitted" in {
+      "must return a Bad Request, audit event and errors when the declaration data is invalid and submitted" in {
         val mockSessionRepository = mock[SessionRepository]
         val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
+        val mockDeclarationView = mock[DeclarationView]
+        val viewMock = mock[play.twirl.api.HtmlFormat.Appendable]
 
         val savedPendingRegWithUserAnswers: SavedPendingRegistration = savedPendingRegistration.copy(
           userAnswers = userAnswers
@@ -283,11 +285,19 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
         when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
 
+        when(mockDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
+
+        when(viewMock.body) thenReturn "test-view-body"
+
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
 
+        doNothing().when(mockAuditService).audit(any())(any(), any())
+
         val application = applicationBuilder(userAnswers = Some(userAnswers))
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
-          .build()
+          .overrides(
+            bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+            bind[AuditService].toInstance(mockAuditService)
+          ).build()
 
         running(application) {
           val request =
@@ -296,12 +306,23 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
           val boundForm = form.bind(Map("declaration" -> ""))
 
+          implicit val dataRequest: DataRequest[_] =
+            DataRequest(fakeRequest, userAnswersId, userAnswers)
+
+          val expectedAuditEvent = IntermediaryDeclarationSigningAuditModel.build(
+            intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
+            userAnswers = userAnswers,
+            submissionResult = SubmissionResult.Failure,
+            submittedDeclarationPageBody = "test-view-body"
+          )
+
           val view = application.injector.instanceOf[DeclarationView]
 
           val result = route(application, request).value
 
           status(result) mustEqual BAD_REQUEST
           contentAsString(result) mustEqual view(boundForm, waypoints, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
+          verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
         }
       }
 
