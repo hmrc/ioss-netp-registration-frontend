@@ -16,10 +16,18 @@
 
 package controllers.actions
 
+import config.FrontendAppConfig
+
 import javax.inject.Inject
 import models.requests.{IdentifierRequest, OptionalDataRequest}
-import play.api.mvc.ActionTransformer
+import play.api.mvc.{ActionBuilder, ActionTransformer, AnyContent, BodyParsers, Request, Result}
 import repositories.SessionRepository
+import services.{IntermediaryRegistrationService, UrlBuilderService}
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
+import uk.gov.hmrc.auth.core.retrieve.*
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
+import uk.gov.hmrc.http.{HeaderCarrier, UnauthorizedException}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -36,3 +44,4 @@ class DataRetrievalActionImpl @Inject()(
 }
 
 trait DataRetrievalAction extends ActionTransformer[IdentifierRequest, OptionalDataRequest]
+
