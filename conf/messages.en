@@ -1,4 +1,4 @@
-service.name = ioss-netp-registration-frontend
+service.name = Register a client to your Import One Stop Shop account
 
 site.back = Back
 site.remove = Remove
