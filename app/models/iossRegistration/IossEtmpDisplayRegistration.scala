@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-package models.requests
+package models.iossRegistration
 
-import play.api.mvc.{Request, WrappedRequest}
-import models.UserAnswers
+import play.api.libs.json.{Json, OFormat}
 
-case class OptionalDataRequest[A] (request: Request[A], userId: String, userAnswers: Option[UserAnswers]) extends WrappedRequest[A](request)
+case class IossEtmpDisplayRegistration(
+                                       tradingNames: Seq[IossEtmpTradingName],
+                                       schemeDetails: IossEtmpDisplaySchemeDetails,
+                                       bankDetails: IossEtmpBankDetails,
+                                       exclusions: Seq[IossEtmpExclusion]
+                                  )
 
-case class DataRequest[A] (request: Request[A], userId: String, userAnswers: UserAnswers) extends WrappedRequest[A](request)
+object IossEtmpDisplayRegistration {
+
+  implicit val format: OFormat[IossEtmpDisplayRegistration] = Json.format[IossEtmpDisplayRegistration]
+}

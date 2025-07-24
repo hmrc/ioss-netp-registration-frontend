@@ -14,11 +14,21 @@
  * limitations under the License.
  */
 
-package models.requests
+package models.ossRegistration
 
-import play.api.mvc.{Request, WrappedRequest}
-import models.UserAnswers
+import models.{Enumerable, WithName}
 
-case class OptionalDataRequest[A] (request: Request[A], userId: String, userAnswers: Option[UserAnswers]) extends WrappedRequest[A](request)
+sealed trait OssVatDetailSource
 
-case class DataRequest[A] (request: Request[A], userId: String, userAnswers: UserAnswers) extends WrappedRequest[A](request)
+object OssVatDetailSource extends Enumerable.Implicits {
+  case object Etmp        extends WithName("etmp") with OssVatDetailSource
+  case object UserEntered extends WithName("userEntered") with OssVatDetailSource
+  case object Mixed       extends WithName("mixed") with OssVatDetailSource
+
+  val values: Seq[OssVatDetailSource] = Seq(
+    Etmp, UserEntered, Mixed
+  )
+
+  implicit val enumerable: Enumerable[OssVatDetailSource] =
+    Enumerable(values.map(v => v.toString -> v): _*)
+}

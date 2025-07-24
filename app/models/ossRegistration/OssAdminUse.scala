@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-package models.requests
+package models.ossRegistration
 
-import play.api.mvc.{Request, WrappedRequest}
-import models.UserAnswers
+import play.api.libs.json.{Json, OFormat}
 
-case class OptionalDataRequest[A] (request: Request[A], userId: String, userAnswers: Option[UserAnswers]) extends WrappedRequest[A](request)
+import java.time.LocalDateTime
 
-case class DataRequest[A] (request: Request[A], userId: String, userAnswers: UserAnswers) extends WrappedRequest[A](request)
+case class OssAdminUse(changeDate: Option[LocalDateTime])
+
+object OssAdminUse {
+
+  implicit val format: OFormat[OssAdminUse] = Json.format[OssAdminUse]
+}

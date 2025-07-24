@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package models.requests
+package models.iossRegistration
 
-import play.api.mvc.{Request, WrappedRequest}
-import models.UserAnswers
+import models.{Bic, Iban}
+import play.api.libs.json.{Json, OFormat}
 
-case class OptionalDataRequest[A] (request: Request[A], userId: String, userAnswers: Option[UserAnswers]) extends WrappedRequest[A](request)
+case class IossEtmpBankDetails(accountName: String, bic: Option[Bic], iban: Iban)
 
-case class DataRequest[A] (request: Request[A], userId: String, userAnswers: UserAnswers) extends WrappedRequest[A](request)
+object IossEtmpBankDetails {
+
+  implicit val format: OFormat[IossEtmpBankDetails] = Json.format[IossEtmpBankDetails]
+}

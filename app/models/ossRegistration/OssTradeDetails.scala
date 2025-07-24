@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package models.requests
+package models.ossRegistration
 
-import play.api.mvc.{Request, WrappedRequest}
-import models.UserAnswers
+import models.InternationalAddress
+import play.api.libs.json.{Json, OFormat}
 
-case class OptionalDataRequest[A] (request: Request[A], userId: String, userAnswers: Option[UserAnswers]) extends WrappedRequest[A](request)
+final case class OssTradeDetails(tradingName: String, address: InternationalAddress)
 
-case class DataRequest[A] (request: Request[A], userId: String, userAnswers: UserAnswers) extends WrappedRequest[A](request)
+object OssTradeDetails {
+
+  implicit val format: OFormat[OssTradeDetails] = Json.format[OssTradeDetails]
+}

@@ -21,15 +21,18 @@ import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
 import models.etmp.SchemeType
 import models.euDetails.EuDetails
+import models.iossRegistration.*
+import models.ossRegistration.{ExclusionReason, OssAdminUse, OssContactDetails, OssEuTaxIdentifier, OssEuTaxIdentifierType, OssExcludedTrader, OssRegistration, OssTradeDetails, OssVatDetailSource, OssVatDetails, SalesChannels}
 import models.vatEuDetails.TradingNameAndBusinessAddress
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.{choose, listOfN}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.EitherValues
 import play.api.libs.json.{JsObject, Json}
+import uk.gov.hmrc.domain.Vrn
 
 import java.time.temporal.ChronoUnit
-import java.time.{Instant, LocalDate, ZoneOffset}
+import java.time.{Instant, LocalDate, LocalDateTime, ZoneOffset}
 import java.util.UUID
 
 trait ModelGenerators extends EitherValues {
@@ -275,5 +278,235 @@ trait ModelGenerators extends EitherValues {
         tradingNameAndBusinessAddress = Some(tradingNameAndBusinessAddress),
       )
     }
+  }
+
+  implicit lazy val arbitraryBankDetails: Arbitrary[BankDetails] =
+    Arbitrary {
+      for {
+        accountName <- arbitrary[String]
+        bic <- Gen.option(arbitrary[Bic])
+        iban <- arbitrary[Iban]
+      } yield BankDetails(accountName, bic, iban)
+    }
+
+  implicit lazy val arbitraryBic: Arbitrary[Bic] = {
+    val asciiCodeForA = 65
+    val asciiCodeForN = 78
+    val asciiCodeForP = 80
+    val asciiCodeForZ = 90
+
+    Arbitrary {
+      for {
+        firstChars <- Gen.listOfN(6, Gen.alphaUpperChar).map(_.mkString)
+        char7 <- Gen.oneOf(Gen.alphaUpperChar, Gen.choose(2, 9).map(_.toString.head))
+        char8 <- Gen.oneOf(
+          Gen.choose(asciiCodeForA, asciiCodeForN).map(_.toChar),
+          Gen.choose(asciiCodeForP, asciiCodeForZ).map(_.toChar),
+          Gen.choose(0, 9).map(_.toString.head)
+        )
+        lastChars <- Gen.option(Gen.listOfN(3, Gen.oneOf(Gen.alphaUpperChar, Gen.numChar)).map(_.mkString))
+      } yield Bic(s"$firstChars$char7$char8${lastChars.getOrElse("")}").get
+    }
+  }
+
+  implicit lazy val arbitraryIban: Arbitrary[Iban] = {
+    Arbitrary {
+      Gen.oneOf(
+        "GB94BARC10201530093459",
+        "GB33BUKB20201555555555",
+        "DE29100100100987654321",
+        "GB24BKEN10000031510604",
+        "GB27BOFI90212729823529",
+        "GB17BOFS80055100813796",
+        "GB92BARC20005275849855",
+        "GB66CITI18500812098709",
+        "GB15CLYD82663220400952",
+        "GB26MIDL40051512345674",
+        "GB76LOYD30949301273801",
+        "GB25NWBK60080600724890",
+        "GB60NAIA07011610909132",
+        "GB29RBOS83040210126939",
+        "GB79ABBY09012603367219",
+        "GB21SCBL60910417068859",
+        "GB42CPBK08005470328725"
+      ).map(v => Iban(v).toOption.get)
+    }
+  }
+
+  implicit val arbitraryIossEtmpExclusion: Arbitrary[IossEtmpExclusion] = {
+    Arbitrary {
+      for {
+        exclusionReason <- Gen.oneOf(IossEtmpExclusionReason.values)
+        effectiveDate <- datesBetween(LocalDate.of(2021, 7, 1), LocalDate.of(2022, 12, 31))
+        decisionDate <- datesBetween(LocalDate.of(2021, 7, 1), LocalDate.of(2022, 12, 31))
+        quarantine <- arbitrary[Boolean]
+      } yield IossEtmpExclusion(
+        exclusionReason = exclusionReason,
+        effectiveDate = effectiveDate,
+        decisionDate = decisionDate,
+        quarantine = quarantine
+      )
+    }
+  }
+
+  implicit lazy val arbitraryIossEtmpTradingName: Arbitrary[IossEtmpTradingName] = {
+    Arbitrary {
+      for {
+        tradingName <- Gen.alphaStr
+      } yield IossEtmpTradingName(tradingName)
+    }
+  }
+
+  implicit lazy val arbitraryIossEtmpDisplayRegistration: Arbitrary[IossEtmpDisplayRegistration] = {
+    Arbitrary {
+      for {
+        tradingNames <- Gen.listOfN(3, arbitraryIossEtmpTradingName.arbitrary)
+        schemeDetails <- arbitraryIossEtmpDisplaySchemeDetails.arbitrary
+        bankDetails <- arbitraryIossEtmpBankDetails.arbitrary
+        exclusions <- arbitraryIossEtmpExclusion.arbitrary
+      } yield IossEtmpDisplayRegistration(
+        tradingNames = tradingNames,
+        schemeDetails = schemeDetails,
+        bankDetails = bankDetails,
+        exclusions = Seq(exclusions)
+      )
+    }
+  }
+
+  implicit lazy val arbitraryIossEtmpDisplaySchemeDetails: Arbitrary[IossEtmpDisplaySchemeDetails] = {
+    Arbitrary {
+      for {
+        contactName <- Gen.alphaStr
+        businessTelephoneNumber <- Gen.alphaStr
+        businessEmailId <- Gen.alphaStr
+      } yield IossEtmpDisplaySchemeDetails(
+        contactName = contactName,
+        businessTelephoneNumber = businessTelephoneNumber,
+        businessEmailId = businessEmailId
+      )
+    }
+  }
+
+  implicit lazy val arbitraryIossEtmpBankDetails: Arbitrary[IossEtmpBankDetails] = {
+    Arbitrary {
+      for {
+        accountName <- Gen.alphaStr
+        bic <- Gen.option(arbitrary[Bic])
+        iban <- arbitrary[Iban]
+      } yield IossEtmpBankDetails(accountName, bic, iban)
+    }
+  }
+
+  implicit lazy val arbitrarySalesChannels: Arbitrary[SalesChannels] = {
+    Arbitrary {
+      Gen.oneOf(SalesChannels.values)
+    }
+  }
+
+  implicit lazy val arbitraryFixedEstablishment: Arbitrary[OssTradeDetails] = {
+    Arbitrary {
+      for {
+        tradingName <- arbitrary[String]
+        address <- arbitrary[InternationalAddress]
+      } yield OssTradeDetails(tradingName, address)
+    }
+  }
+
+  implicit val arbitraryEuTaxIdentifierType: Arbitrary[OssEuTaxIdentifierType] = {
+    Arbitrary {
+      Gen.oneOf(OssEuTaxIdentifierType.values)
+    }
+  }
+
+  implicit val arbitraryEuTaxIdentifier: Arbitrary[OssEuTaxIdentifier] = {
+    Arbitrary {
+      for {
+        identifierType <- arbitrary[OssEuTaxIdentifierType]
+        value <- arbitrary[Int].map(_.toString)
+      } yield OssEuTaxIdentifier(identifierType, value)
+    }
+  }
+
+  implicit val arbitraryOssExcludedTrader: Arbitrary[OssExcludedTrader] = {
+    Arbitrary {
+      for {
+        vrn <- arbitraryVrn.arbitrary
+        exclusionReason <- Gen.oneOf(ExclusionReason.values)
+        effectiveDate <- arbitraryDate.arbitrary
+        quarantined <- arbitrary[Boolean]
+      } yield OssExcludedTrader(
+        vrn = vrn,
+        exclusionReason = Some(exclusionReason),
+        effectiveDate = Some(effectiveDate),
+        quarantined = Some(quarantined)
+      )
+    }
+  }
+
+  implicit lazy val arbitraryVrn: Arbitrary[Vrn] = {
+    Arbitrary {
+      for {
+        chars <- Gen.listOfN(9, Gen.numChar)
+      } yield Vrn(chars.mkString(""))
+    }
+  }
+
+  implicit val arbitraryOssRegistration: Arbitrary[OssRegistration] = {
+    Arbitrary {
+      for {
+        vrn <- arbitraryVrn.arbitrary
+        name <- arbitrary[String]
+        vatDetails <- arbitrary[OssVatDetails]
+        contactDetails <- arbitrary[OssContactDetails]
+        bankDetails <- arbitrary[BankDetails]
+        commencementDate <- datesBetween(LocalDate.of(2021, 7, 1), LocalDate.now)
+        isOnlineMarketplace <- arbitrary[Boolean]
+        adminUse <- arbitrary[OssAdminUse]
+      } yield OssRegistration(vrn, name, Nil, vatDetails, Nil, contactDetails, Nil, commencementDate, Nil, bankDetails, isOnlineMarketplace, None, None, None, None, None, None, None, None, adminUse)
+    }
+  }
+
+  implicit lazy val arbitraryOssVatDetails: Arbitrary[OssVatDetails] = {
+    Arbitrary {
+      for {
+        registrationDate <- datesBetween(LocalDate.of(2021, 7, 1), LocalDate.now)
+        address <- arbitrary[Address]
+        partOfVatGroup <- arbitrary[Boolean]
+        source <- arbitrary[OssVatDetailSource]
+      } yield OssVatDetails(registrationDate, address, partOfVatGroup, source)
+    }
+  }
+
+  implicit lazy val arbitraryOssBusinessContactDetails: Arbitrary[OssContactDetails] = {
+    Arbitrary {
+      for {
+        fullName <- arbitrary[String]
+        telephoneNumber <- arbitrary[String]
+        emailAddress <- arbitrary[String]
+      } yield OssContactDetails(fullName, telephoneNumber, emailAddress)
+    }
+  }
+
+  implicit lazy val arbitraryAdminUse: Arbitrary[OssAdminUse] = {
+    Arbitrary {
+      for {
+        changeDate <- Gen.const(LocalDateTime.now())
+      } yield OssAdminUse(Some(changeDate))
+    }
+  }
+
+  implicit val arbitraryAddress: Arbitrary[Address] = {
+    Arbitrary {
+      Gen.oneOf(
+        arbitrary[InternationalAddress],
+        arbitrary[DesAddress]
+      )
+    }
+  }
+
+  implicit val arbitraryOssVatDetailSource: Arbitrary[OssVatDetailSource] = {
+    Arbitrary(
+      Gen.oneOf(OssVatDetailSource.values)
+    )
   }
 }

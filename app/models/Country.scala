@@ -311,6 +311,7 @@ object Country {
     allCountries.filterNot(_.code == "GB")
 
   def getCountryName(countryCode: String): String = euCountries.filter(_.code == countryCode).map(_.name).head
+  def getCountryNameWithNi(countryCode: String): String = euCountriesWithNI.filter(_.code == countryCode).map(_.name).head
 }
 
 object CountryWithValidationDetails extends Logging {
@@ -366,7 +367,7 @@ object CountryWithValidationDetails extends Logging {
   private val luxembourgVatNumberRegex = """^LU[0-9]{8}$"""
   private val latviaVatNumberRegex = """^LV[0-9]{11}$"""
   private val maltaVatNumberRegex = """^MT[0-9]{8}$"""
-  private val northernIslandVatNumberRegex = """^XI[A-Z0-9\+\*]{12}$"""
+  private val northernIslandVatNumberRegex = """^XI[A-Z0-9\+\*]{9}$"""
   private val netherlandsVatNumberRegex = """^NL[A-Z0-9\+\*]{12}$"""
   private val polandVatNumberRegex = """^PL[0-9]{10}$"""
   private val portugalVatNumberRegex = """^PT[0-9]{9}$"""

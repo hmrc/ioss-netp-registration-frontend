@@ -19,22 +19,31 @@ package controllers.previousRegistrations
 import base.SpecBase
 import controllers.routes
 import forms.previousRegistrations.PreviousOssNumberFormProvider
+import models.core.{Match, MatchType, TraderId}
+import models.core.MatchType.*
 import models.domain.PreviousSchemeNumbers
 import models.previousRegistrations.PreviousSchemeHintText
 import models.{Country, CountryWithValidationDetails, Index}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
 import org.scalatest.prop.TableDrivenPropertyChecks
+import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import org.scalatestplus.mockito.MockitoSugar
 import pages.Waypoints
 import pages.previousRegistrations.{PreviousEuCountryPage, PreviousOssNumberPage}
+import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import repositories.SessionRepository
+import services.core.CoreRegistrationValidationService
 import views.html.previousRegistrations.PreviousOssNumberView
+import utils.FutureSyntax.FutureOps
 
 class PreviousOssNumberControllerSpec extends SpecBase with MockitoSugar with TableDrivenPropertyChecks {
 
   private val index = Index(0)
-  private val country = Country("SI", "Slovenia")
-  private val countryWithValidation = CountryWithValidationDetails.euCountriesWithVRNValidationRules.find(_.country.code == "SI").value
+  private val country = Country("LT", "Lithuania")
+  private val countryWithValidation = CountryWithValidationDetails.euCountriesWithVRNValidationRules.find(_.country.code == "LT").value
   private val formProvider = new PreviousOssNumberFormProvider()
   private val form = formProvider(country, Seq.empty)
 
@@ -42,6 +51,24 @@ class PreviousOssNumberControllerSpec extends SpecBase with MockitoSugar with Ta
     controllers.previousRegistrations.routes.PreviousOssNumberController.onPageLoad(waypoints, index, index).url
 
   private val baseAnswers = emptyUserAnswersWithVatInfo.set(PreviousEuCountryPage(index), country).success.value
+
+  private val mockCoreRegistartionValidationService = mock[CoreRegistrationValidationService]
+
+  def createMatchResponse(
+                         matchType: MatchType = TraderIdActiveNETP,
+                         traderId: TraderId = TraderId("123456789"),
+                         exclusionStatusCode: Option[Int] = None
+                         ): Match = Match(
+    matchType = matchType,
+    traderId = traderId,
+    intermediary = None,
+    memberState = "DE",
+    exclusionStatusCode = exclusionStatusCode,
+    exclusionDecisionDate = None,
+    exclusionEffectiveDate = Some("2022-10-10"),
+    nonCompliantReturns = None,
+    nonCompliantPayments = None
+  )
 
   "PreviousOssNumber Controller" - {
 
@@ -131,6 +158,93 @@ class PreviousOssNumberControllerSpec extends SpecBase with MockitoSugar with Ta
           status(result) mustEqual SEE_OTHER
 
           redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+      }
+    }
+
+    "must Redirect to ClientAlreadyRegistered for a post if an active non-intermediary trader is found" in {
+
+      val mockSessionRepository = mock[SessionRepository]
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+
+      val testConditions = Table(
+        ("MatchType", "exclusionStatusCode"),
+        (TraderIdActiveNETP, None),
+        (OtherMSNETPActiveNETP, None),
+        (FixedEstablishmentActiveNETP, None)
+      )
+
+      forAll(testConditions) { (matchType, exclusionStatusCode) =>
+
+        val application =
+          applicationBuilder(userAnswers = Some(baseAnswers))
+            .overrides(
+              bind[SessionRepository].toInstance(mockSessionRepository),
+              bind[CoreRegistrationValidationService].toInstance(mockCoreRegistartionValidationService)
+            )
+            .build()
+
+        running(application) {
+
+          val activeRegistrationMatch = createMatchResponse(
+            matchType = matchType,
+            traderId = TraderId("333344445")
+          )
+
+          when(mockCoreRegistartionValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
+
+          val request = FakeRequest(POST, previousOssNumberRoute(waypoints))
+            .withFormUrlEncodedBody(("value", "LT333344445"))
+
+          val result = route(application, request).value
+
+          status(result) `mustEqual` SEE_OTHER
+          redirectLocation(result).value mustEqual controllers.routes.ClientAlreadyRegisteredController.onPageLoad().url
+        }
+      }
+    }
+
+    "must redirect to OtherCountryExcludedAndQuarantined for a POST if a quarantined intermediary trader is found" in {
+
+      val mockSessionRepository = mock[SessionRepository]
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+
+      val testConditions = Table(
+        ("MatchType", "exclusionStatusCode"),
+        (TraderIdQuarantinedNETP, None),
+        (OtherMSNETPQuarantinedNETP, None),
+        (FixedEstablishmentQuarantinedNETP, None)
+      )
+
+      forAll(testConditions) { (matchType, exclusionStatusCode) =>
+
+        val application =
+          applicationBuilder(userAnswers = Some(baseAnswers))
+            .overrides(
+              bind[SessionRepository].toInstance(mockSessionRepository),
+              bind[CoreRegistrationValidationService].toInstance(mockCoreRegistartionValidationService)
+            )
+            .build()
+
+        running(application) {
+
+          val quarantinedIntermediaryMatch = createMatchResponse(
+            matchType = matchType,
+            traderId = TraderId("333344446"),
+            exclusionStatusCode = exclusionStatusCode
+          )
+
+          when(mockCoreRegistartionValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn
+            Some(quarantinedIntermediaryMatch).toFuture
+
+          val request = FakeRequest(POST, previousOssNumberRoute(waypoints))
+            .withFormUrlEncodedBody(("value", "LT333344446"))
+
+          val result = route(application, request).value
+
+          status(result) `mustEqual` SEE_OTHER
+          redirectLocation(result).value mustEqual controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+            quarantinedIntermediaryMatch.memberState, quarantinedIntermediaryMatch.getEffectiveDate).url
+        }
       }
     }
   }

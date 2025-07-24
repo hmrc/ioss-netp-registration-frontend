@@ -19,12 +19,14 @@ package connectors
 import config.Service
 import connectors.SavedPendingRegistrationHttpParser.SavedPendingRegistrationResponse
 import connectors.SavedPendingRegistrationHttpParser.SavedPendingRegistrationResultResponseReads
+import connectors.RegistrationHttpParser.*
 import connectors.VatCustomerInfoHttpParser.{VatCustomerInfoResponse, VatCustomerInfoResponseReads}
 import logging.Logging
 import models.UserAnswers
 import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue
+import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, StringContextOps}
 
@@ -36,6 +38,8 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
 
   private val baseUrl: Service = config.get[Service]("microservice.services.ioss-netp-registration")
   private val intermediaryUrl: Service = config.get[Service]("microservice.services.ioss-intermediary-registration")
+  private val iossUrl: Service = config.get[Service]("microservice.services.ioss-registration")
+  private val ossUrl: Service = config.get[Service]("microservice.services.one-stop-shop-registration")
 
   def getVatCustomerInfo(ukVatNumber: String)(implicit hc: HeaderCarrier): Future[VatCustomerInfoResponse] = {
     httpClientV2.get(url"$baseUrl/vat-information/$ukVatNumber").execute[VatCustomerInfoResponse]
@@ -55,4 +59,13 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
     httpClientV2.get(url"$baseUrl/save-pending-registration/$journeyId")
       .execute[SavedPendingRegistrationResponse]
   }
+
+  def getIossRegistration(iossNumber: String)(implicit hc: HeaderCarrier): Future[IossEtmpDisplayRegistrationResultResponse] = {
+    httpClientV2.get(url"$iossUrl/registration-as-intermediary/$iossNumber").execute[IossEtmpDisplayRegistrationResultResponse]
+  }
+
+  def getOssRegistration(vrn: Vrn)(implicit hc: HeaderCarrier): Future[OssRegistrationResponse] = {
+    httpClientV2.get(url"$ossUrl/registration/$vrn").execute[OssRegistrationResponse]
+  }
+
 }

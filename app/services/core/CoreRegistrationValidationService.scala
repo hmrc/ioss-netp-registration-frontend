@@ -19,16 +19,25 @@ package services.core
 import connectors.core.ValidateCoreRegistrationConnector
 import logging.Logging
 import models.CountryWithValidationDetails.convertTaxIdentifierForTransfer
-import models.PreviousScheme
-import models.core.{CoreRegistrationRequest, Match, SourceType}
+import models.{Country, PreviousScheme}
+import models.core.Match.ossDateFormatter
+import models.core.{CoreRegistrationRequest, Match, MatchType, SourceType, TraderId}
+import models.iossRegistration.IossEtmpExclusionReason
 import models.requests.DataRequest
+import services.ioss.IossRegistrationService
+import services.oss.OssRegistrationService
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
-class CoreRegistrationValidationService @Inject()(connector: ValidateCoreRegistrationConnector)(implicit ec: ExecutionContext) extends Logging {
+class CoreRegistrationValidationService @Inject()(
+                                                   connector: ValidateCoreRegistrationConnector,
+                                                   iossRegistrationService: IossRegistrationService,
+                                                   ossRegistrationService: OssRegistrationService
+                                                 )(implicit ec: ExecutionContext) extends Logging {
   
   def searchUkVrn(vrn: Vrn)(implicit hc:HeaderCarrier, request: DataRequest[_]): Future[Option[Match]] = {
     
@@ -67,28 +76,36 @@ class CoreRegistrationValidationService @Inject()(connector: ValidateCoreRegistr
       Future.successful(None)
     } else {
 
-      val sourceType = previousScheme match {
-        case PreviousScheme.OSSU => SourceType.EUTraderId
-        case PreviousScheme.OSSNU => SourceType.EUTraderId
-        case PreviousScheme.IOSSWOI => SourceType.TraderId
-        case PreviousScheme.IOSSWI => SourceType.TraderId
-      }
-
-      val convertedSearchNumber = if (sourceType == SourceType.EUTraderId) {
-        convertTaxIdentifierForTransfer(searchNumber, countryCode)
+      if (countryCode == Country.northernIreland.code) {
+        previousScheme match {
+          case PreviousScheme.IOSSWOI | PreviousScheme.IOSSWI =>
+            getIossRegistration(searchNumber)
+          case PreviousScheme.OSSU | PreviousScheme.OSSNU =>
+            getOssRegistration(searchNumber)
+        }
       } else {
-        searchNumber
+
+        val sourceType = previousScheme match {
+          case PreviousScheme.OSSU | PreviousScheme.OSSNU => SourceType.EUTraderId
+          case PreviousScheme.IOSSWOI | PreviousScheme.IOSSWI => SourceType.TraderId
+        }
+
+        val convertedSearchNumber = if (sourceType == SourceType.EUTraderId) {
+          convertTaxIdentifierForTransfer(searchNumber, countryCode)
+        } else {
+          searchNumber
+        }
+
+        val coreRegistrationRequest = CoreRegistrationRequest(
+          source = sourceType.toString,
+          scheme = Some(convertScheme(previousScheme)),
+          searchId = convertedSearchNumber,
+          searchIntermediary = intermediaryNumber,
+          searchIdIssuedBy = countryCode
+        )
+
+        getValidateCoreRegistrationResponse(coreRegistrationRequest)
       }
-
-      val coreRegistrationRequest = CoreRegistrationRequest(
-        source = sourceType.toString,
-        scheme = Some(convertScheme(previousScheme)),
-        searchId = convertedSearchNumber,
-        searchIntermediary = intermediaryNumber,
-        searchIdIssuedBy = countryCode
-      )
-
-      getValidateCoreRegistrationResponse(coreRegistrationRequest)
     }
   }
 
@@ -109,6 +126,78 @@ class CoreRegistrationValidationService @Inject()(connector: ValidateCoreRegistr
       case Left(errorResponse) =>
         logger.error(s"failed getting registration response $errorResponse")
         throw CoreRegistrationValidationException("Error while validating core registration")
+    }
+  }
+
+  private def getIossRegistration(iossNumber: String)(implicit hc: HeaderCarrier): Future[Option[Match]] = {
+    iossRegistrationService.getIossRegistration(Some(iossNumber)).map { maybeRegistration =>
+      maybeRegistration.flatMap { registration =>
+        val maybeExclusion = registration.exclusions.headOption
+        maybeExclusion.map { exclusion =>
+
+          val exclusionStatusCode = getExclusionStatusCode(exclusion.exclusionReason)
+
+          val matchType = if (exclusion.quarantine) {
+            MatchType.TraderIdQuarantinedNETP
+          } else {
+            MatchType.TraderIdActiveNETP
+          }
+
+          Match(
+            matchType = matchType,
+            traderId = TraderId(iossNumber),
+            intermediary = None,
+            memberState = Country.northernIreland.code,
+            exclusionStatusCode = Some(exclusionStatusCode),
+            exclusionDecisionDate = Some(exclusion.decisionDate.format(ossDateFormatter)),
+            exclusionEffectiveDate = Some(exclusion.effectiveDate.format(ossDateFormatter)),
+            nonCompliantReturns = None,
+            nonCompliantPayments = None
+          )
+        }
+      }
+    }
+  }
+
+  private def getOssRegistration(vrn: String)(implicit hc: HeaderCarrier): Future[Option[Match]] = {
+    val normalizeVrn = vrn.stripPrefix(Country.northernIreland.code)
+    ossRegistrationService.getLatestOssRegistration(Some(Vrn(normalizeVrn))).map { maybeRegistration =>
+      maybeRegistration.flatMap { registration =>
+        val maybeExclusion = registration.excludedTrader
+        maybeExclusion.map { exclusion =>
+
+          val isQuarantined = exclusion.quarantined.contains(true)
+          val matchType = if (isQuarantined) {
+            MatchType.TraderIdQuarantinedNETP
+          } else {
+            MatchType.TraderIdActiveNETP
+          }
+          
+          Match(
+            matchType = matchType,
+            traderId = TraderId(registration.vrn.vrn),
+            intermediary = None,
+            memberState = Country.northernIreland.code,
+            exclusionStatusCode = exclusion.exclusionReason.map(_.numberValue),
+            exclusionDecisionDate = None,
+            exclusionEffectiveDate = exclusion.effectiveDate.map(_.format(ossDateFormatter)),
+            nonCompliantReturns = registration.nonCompliantReturns.flatMap(s => Try(s.toInt).toOption),
+            nonCompliantPayments = registration.nonCompliantPayments.flatMap(s => Try(s.toInt).toOption)
+          )
+        }
+      }
+    }
+  }
+
+  private def getExclusionStatusCode(reason: IossEtmpExclusionReason): Int = {
+    reason match {
+      case IossEtmpExclusionReason.FailsToComply => 4
+      case IossEtmpExclusionReason.NoLongerSupplies => 1
+      case IossEtmpExclusionReason.CeasedTrade => 2
+      case IossEtmpExclusionReason.NoLongerMeetsConditions => 3
+      case IossEtmpExclusionReason.VoluntarilyLeaves => 5
+      case IossEtmpExclusionReason.TransferringMSID => 6
+      case IossEtmpExclusionReason.Reversal => -1
     }
   }
 }

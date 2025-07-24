@@ -47,7 +47,8 @@ case class Match(
                 ) {
   def getEffectiveDate: String = {
     exclusionEffectiveDate match {
-      case Some(date) => date
+      case Some(date) =>
+        date
       case _ =>
         val e = new IllegalStateException(s"MatchType $matchType didn't include an expected exclusion effective date")
         logger.error(s"Must have an Exclusion Effective Date ${e.getMessage}", e)
@@ -59,6 +60,7 @@ case class Match(
 object Match {
   
   val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy MM dd")
+  val ossDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
   
   implicit val format: OFormat[Match] = Json.format[Match]
 }

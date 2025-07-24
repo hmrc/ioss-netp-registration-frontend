@@ -40,6 +40,6 @@ class OtherCountryExcludedAndQuarantinedController @Inject()(
     implicit request =>
       
       val exclusionDateFormatted: String = LocalDate.parse(exclusionDate).plusYears(2).format(dateFormatter)
-      Ok(view(Country.getCountryName(countryCode), exclusionDateFormatted))
+      Ok(view(Country.getCountryNameWithNi(countryCode), exclusionDateFormatted))
   }
 }

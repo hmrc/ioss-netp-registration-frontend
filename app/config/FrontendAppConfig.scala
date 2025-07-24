@@ -62,4 +62,8 @@ class FrontendAppConfig @Inject()(configuration: Configuration) {
   val intermediaryEnrolment: String = configuration.get[String]("intermediary-enrolment")
 
   val coreValidationService: Service = configuration.get[Service]("microservice.services.core-validation")
+
+  val ossEnrolment: String = configuration.get[String]("oss-enrolment")
+
+  val iossEnrolment: String = configuration.get[String]("ioss-enrolment")
 }
