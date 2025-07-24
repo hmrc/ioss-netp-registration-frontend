@@ -35,6 +35,8 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
   
   def getData: DataRetrievalAction
   
+  def getUnAuthData: UnidentifiedDataRetrievalAction
+  
   def requireData: DataRequiredAction
 
   def identifyAndGetData: ActionBuilder[DataRequest, AnyContent] =
@@ -60,5 +62,6 @@ case class DefaultAuthenticatedControllerComponents @Inject()(
                                                                  sessionRepository: SessionRepository,
                                                                  identify: IdentifierAction,
                                                                  getData: DataRetrievalAction,
+                                                                 getUnAuthData: UnidentifiedDataRetrievalAction,
                                                                  requireData: DataRequiredAction
                                                                ) extends AuthenticatedControllerComponents

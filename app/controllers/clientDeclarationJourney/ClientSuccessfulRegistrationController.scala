@@ -28,11 +28,12 @@ class ClientSuccessfulRegistrationController @Inject()(
                                                         override val messagesApi: MessagesApi,
                                                         identify: IdentifierAction,
                                                         getData: DataRetrievalAction,
+                                                        unidentifiedDataRetrievalAction: UnidentifiedDataRetrievalAction,
                                                         val controllerComponents: MessagesControllerComponents,
                                                         view: ClientSuccessfulRegistrationView
                                                       ) extends FrontendBaseController with I18nSupport {
 
-  def onPageLoad(): Action[AnyContent] = (identify andThen getData) {
+  def onPageLoad(): Action[AnyContent] = unidentifiedDataRetrievalAction {
     implicit request =>
       Ok(view("IM9001234567"))
   }

@@ -38,7 +38,9 @@ class ClientDeclarationController @Inject()(
                                              override val messagesApi: MessagesApi,
                                              cc: AuthenticatedControllerComponents,
                                              sessionRepository: SessionRepository,
+                                             unidentifiedDataRetrievalAction: UnidentifiedDataRetrievalAction,
                                              registrationConnector: RegistrationConnector,
+                                             requiredAction: DataRequiredAction,
                                              formProvider: ClientDeclarationFormProvider,
                                              view: ClientDeclarationView
                                            )(implicit ec: ExecutionContext)
@@ -48,12 +50,13 @@ class ClientDeclarationController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (unidentifiedDataRetrievalAction andThen requiredAction).async {
     implicit request =>
 
       getClientCompanyName(waypoints) { clientCompanyName =>
         getIntermediaryName().map { intermediaryOpt =>
           val intermediaryName = intermediaryOpt.getOrElse("")
+
           val preparedForm = request.userAnswers.get(ClientDeclarationPage) match {
             case None => form
             case Some(value) => form.fill(value)
@@ -64,7 +67,7 @@ class ClientDeclarationController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (unidentifiedDataRetrievalAction andThen requiredAction).async {
     implicit request =>
 
       getClientCompanyName(waypoints) { clientCompanyName =>

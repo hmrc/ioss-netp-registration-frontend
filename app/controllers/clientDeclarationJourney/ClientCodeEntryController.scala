@@ -39,16 +39,16 @@ import scala.concurrent.{ExecutionContext, Future}
 class ClientCodeEntryController @Inject()(
                                            override val messagesApi: MessagesApi,
                                            sessionRepository: SessionRepository,
-                                           identify: IdentifierAction,
-                                           getData: DataRetrievalAction,
+                                           unidentifiedDataRetrievalAction: UnidentifiedDataRetrievalAction,
                                            formProvider: ClientCodeEntryFormProvider,
                                            registrationConnector: RegistrationConnector,
+                                           dataRequiredAction: DataRequiredAction,
                                            val controllerComponents: MessagesControllerComponents,
                                            view: ClientCodeEntryView
                                          )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientEmail {
   val form: Form[String] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (identify andThen getData).async {
+  def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (unidentifiedDataRetrievalAction).async {
     implicit request =>
 
 
@@ -73,7 +73,7 @@ class ClientCodeEntryController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (identify andThen getData).async {
+  def onSubmit(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (unidentifiedDataRetrievalAction).async {
     implicit request =>
 
 
