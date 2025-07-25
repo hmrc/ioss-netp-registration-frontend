@@ -133,28 +133,25 @@ class CoreRegistrationValidationService @Inject()(
     iossRegistrationService.getIossRegistration(Some(iossNumber)).map { maybeRegistration =>
       maybeRegistration.flatMap { registration =>
         val maybeExclusion = registration.exclusions.headOption
-        maybeExclusion.map { exclusion =>
 
-          val exclusionStatusCode = getExclusionStatusCode(exclusion.exclusionReason)
+        val matchType = maybeExclusion match {
+          case Some(exclusion) if exclusion.quarantine => MatchType.TraderIdQuarantinedNETP
+          case _ => MatchType.TraderIdActiveNETP
+        }
 
-          val matchType = if (exclusion.quarantine) {
-            MatchType.TraderIdQuarantinedNETP
-          } else {
-            MatchType.TraderIdActiveNETP
-          }
-
+        Some(
           Match(
             matchType = matchType,
             traderId = TraderId(iossNumber),
             intermediary = None,
             memberState = Country.northernIreland.code,
-            exclusionStatusCode = Some(exclusionStatusCode),
-            exclusionDecisionDate = Some(exclusion.decisionDate.format(ossDateFormatter)),
-            exclusionEffectiveDate = Some(exclusion.effectiveDate.format(ossDateFormatter)),
+            exclusionStatusCode = maybeExclusion.map(exclusion => getExclusionStatusCode(exclusion.exclusionReason)),
+            exclusionDecisionDate = maybeExclusion.map(exclusion => exclusion.decisionDate.format(ossDateFormatter)),
+            exclusionEffectiveDate = maybeExclusion.map(exclusion => exclusion.effectiveDate.format(ossDateFormatter)),
             nonCompliantReturns = None,
             nonCompliantPayments = None
           )
-        }
+        )
       }
     }
   }
@@ -164,27 +161,27 @@ class CoreRegistrationValidationService @Inject()(
     ossRegistrationService.getLatestOssRegistration(Some(Vrn(normalizeVrn))).map { maybeRegistration =>
       maybeRegistration.flatMap { registration =>
         val maybeExclusion = registration.excludedTrader
-        maybeExclusion.map { exclusion =>
 
-          val isQuarantined = exclusion.quarantined.contains(true)
-          val matchType = if (isQuarantined) {
-            MatchType.TraderIdQuarantinedNETP
-          } else {
-            MatchType.TraderIdActiveNETP
-          }
-          
+        val isQuarantined = maybeExclusion.flatMap(_.quarantined).contains(true)
+        val matchType = if (isQuarantined) {
+          MatchType.TraderIdQuarantinedNETP
+        } else {
+          MatchType.TraderIdActiveNETP
+        }
+
+        Some(
           Match(
             matchType = matchType,
             traderId = TraderId(registration.vrn.vrn),
             intermediary = None,
             memberState = Country.northernIreland.code,
-            exclusionStatusCode = exclusion.exclusionReason.map(_.numberValue),
+            exclusionStatusCode = maybeExclusion.flatMap(_.exclusionReason.map(_.numberValue)),
             exclusionDecisionDate = None,
-            exclusionEffectiveDate = exclusion.effectiveDate.map(_.format(ossDateFormatter)),
+            exclusionEffectiveDate = maybeExclusion.flatMap(_.effectiveDate.map(_.format(ossDateFormatter))),
             nonCompliantReturns = registration.nonCompliantReturns.flatMap(s => Try(s.toInt).toOption),
             nonCompliantPayments = registration.nonCompliantPayments.flatMap(s => Try(s.toInt).toOption)
           )
-        }
+        )
       }
     }
   }
