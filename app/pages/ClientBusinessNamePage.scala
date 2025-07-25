@@ -21,7 +21,7 @@ import models.{ClientBusinessName, UserAnswers}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
-case object ClientBusinessNamePage extends QuestionPage[ClientBusinessName] {
+case object   ClientBusinessNamePage extends QuestionPage[ClientBusinessName] {
   
   override def path: JsPath = JsPath \ toString
 

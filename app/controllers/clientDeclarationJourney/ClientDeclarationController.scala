@@ -53,10 +53,20 @@ class ClientDeclarationController @Inject()(
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (unidentifiedDataRetrievalAction andThen requiredAction).async {
     implicit request =>
 
+      println(s"\n\nrequest:\n")
+      println(s"$request")
+      println(s"\n\nrequest.userAnswers:\n")
+      println(s"${request.userAnswers}")
+      
       getClientCompanyName(waypoints) { clientCompanyName =>
+        println(s"\n\ngetClientCompanyName:\n")
+        println(s"$clientCompanyName")
+
         getIntermediaryName().map { intermediaryOpt =>
           val intermediaryName = intermediaryOpt.getOrElse("")
 
+          println(s"\n\ngetIntermediaryName:\n")
+          println(s"$intermediaryOpt")
           val preparedForm = request.userAnswers.get(ClientDeclarationPage) match {
             case None => form
             case Some(value) => form.fill(value)

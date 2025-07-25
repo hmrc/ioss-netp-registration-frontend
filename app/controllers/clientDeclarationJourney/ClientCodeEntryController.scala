@@ -54,7 +54,9 @@ class ClientCodeEntryController @Inject()(
 
       registrationConnector.getPendingRegistration(uniqueUrlCode).flatMap {
         case Right(savedPendingRegistration) =>
-
+          println(s"\n\nsavePendingReg userAnswers:\n")
+          println(s"${savedPendingRegistration.userAnswers}")
+          
           val preparedForm = request.userAnswers.flatMap(_.get(ClientCodeEntryPage(uniqueUrlCode))) match {
             case None => form
             case Some(value) => form.fill(value)
@@ -75,13 +77,12 @@ class ClientCodeEntryController @Inject()(
 
   def onSubmit(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (unidentifiedDataRetrievalAction).async {
     implicit request =>
-
-
+      
       registrationConnector.getPendingRegistration(uniqueUrlCode).flatMap {
         case Right(savedPendingRegistration) =>
 
-          getClientEmail(waypoints, savedPendingRegistration.userAnswers) { clientEmail =>
 
+          getClientEmail(waypoints, savedPendingRegistration.userAnswers) { clientEmail =>
             form.bindFromRequest().fold(
               formWithErrors =>
 
@@ -101,8 +102,11 @@ class ClientCodeEntryController @Inject()(
                     throw exception
 
                   case Right(value) =>
+                    
+                    val userA = request.userAnswers.getOrElse(UserAnswers(request.userId))
+                    val up = userA.copy(data = originalAnswers.data, vatInfo = originalAnswers.vatInfo)
                     for {
-                      updatedAnswers <- Future.fromTry(originalAnswers.set(ClientCodeEntryPage(uniqueUrlCode), enteredActivationCode))
+                      updatedAnswers <- Future.fromTry(up.set(ClientCodeEntryPage(uniqueUrlCode), enteredActivationCode))
                       _ <- sessionRepository.set(updatedAnswers)
                     } yield Redirect(ClientCodeEntryPage(uniqueUrlCode).navigate(waypoints, originalAnswers, updatedAnswers).route)
                 }
