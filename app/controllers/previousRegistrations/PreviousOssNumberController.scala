@@ -22,13 +22,14 @@ import forms.previousRegistrations.PreviousOssNumberFormProvider
 import models.domain.PreviousSchemeNumbers
 import models.previousRegistrations.{PreviousSchemeHintText, SchemeDetailsWithOptionalVatNumber}
 import models.requests.DataRequest
-import models.{Country, CountryWithValidationDetails, Index, PreviousScheme}
+import models.{Country, CountryWithValidationDetails, Index, PreviousScheme, WithName}
 import pages.previousRegistrations.{PreviousOssNumberPage, PreviousSchemePage}
 import pages.Waypoints
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import queries.previousRegistrations.AllPreviousSchemesForCountryWithOptionalVatNumberQuery
+import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.previousRegistrations.PreviousOssNumberView
 import utils.FutureSyntax.*
@@ -40,7 +41,8 @@ class PreviousOssNumberController @Inject()(
                                         override val messagesApi: MessagesApi,
                                         cc: AuthenticatedControllerComponents,
                                         formProvider: PreviousOssNumberFormProvider,
-                                        view: PreviousOssNumberView
+                                        view: PreviousOssNumberView,
+                                        coreRegistrationValidationService: CoreRegistrationValidationService
                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
 
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -149,10 +151,39 @@ class PreviousOssNumberController @Inject()(
               } else {
                 PreviousScheme.OSSU
               }
-              saveAndRedirect(countryIndex, schemeIndex, value, previousScheme, waypoints)
+              searchSchemeThenSaveAndRedirect(waypoints, countryIndex, schemeIndex, country, value, previousScheme)
             }
           )
       }
+  }
+
+  private def searchSchemeThenSaveAndRedirect(
+                                               waypoints: Waypoints,
+                                               countryIndex: Index,
+                                               schemeIndex: Index,
+                                               country: Country,
+                                               value: String,
+                                               previousScheme: WithName with PreviousScheme
+                                             )(implicit request: DataRequest[AnyContent]): Future[Result] = {
+
+      coreRegistrationValidationService.searchScheme(
+        searchNumber = value,
+        previousScheme = previousScheme,
+        intermediaryNumber = None,
+        countryCode = country.code
+      ).flatMap {
+
+        case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader && !activeMatch.traderId.isAnIntermediary =>
+          Redirect(
+            controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+              activeMatch.memberState,
+              activeMatch.getEffectiveDate)
+          ).toFuture
+
+        case _ =>
+          saveAndRedirect(countryIndex, schemeIndex, value, previousScheme, waypoints)
+      }
+
   }
 
   private def saveAndRedirect(

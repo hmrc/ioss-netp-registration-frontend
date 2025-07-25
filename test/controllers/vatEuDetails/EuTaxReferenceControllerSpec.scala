@@ -29,7 +29,9 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
+import services.core.CoreRegistrationValidationService
 import views.html.vatEuDetails.EuTaxReferenceView
+import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.Future
 
@@ -47,6 +49,7 @@ class EuTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
     .set(EuCountryPage(countryIndex(0)), country).success.value
     .set(RegistrationTypePage(countryIndex(0)), RegistrationType.TaxId).success.value
 
+  private val mockCoreRegistrationValidationService = mock[CoreRegistrationValidationService]
 
   val validAnswer = 0
 
@@ -97,11 +100,16 @@ class EuTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
       val application =
         applicationBuilder(userAnswers = Some(updatedAnswers))
           .overrides(
-            bind[SessionRepository].toInstance(mockSessionRepository)
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
           )
           .build()
 
       running(application) {
+
+        when(mockCoreRegistrationValidationService.searchEuTaxId(any(), any())(any(), any())) thenReturn 
+          None.toFuture
+        
         val request =
           FakeRequest(POST, euTaxReferenceRoute)
             .withFormUrlEncodedBody(("value", euTaxReference))

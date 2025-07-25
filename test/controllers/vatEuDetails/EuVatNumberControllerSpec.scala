@@ -32,6 +32,7 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
+import services.core.CoreRegistrationValidationService
 import views.html.vatEuDetails.EuVatNumberView
 import utils.FutureSyntax.FutureOps
 
@@ -48,6 +49,8 @@ class EuVatNumberControllerSpec extends SpecBase with MockitoSugar {
   private val form: Form[String] = formProvider(country)
 
   private lazy val euVatNumberRoute: String = routes.EuVatNumberController.onPageLoad(waypoints, countryIndex(0)).url
+
+  private val mockCoreRegistrationValidationService = mock[CoreRegistrationValidationService]
 
   private val updatedAnswers: UserAnswers = emptyUserAnswersWithVatInfo
     .set(HasFixedEstablishmentPage, true).success.value
@@ -104,10 +107,14 @@ class EuVatNumberControllerSpec extends SpecBase with MockitoSugar {
         applicationBuilder(userAnswers = Some(updatedAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
           )
           .build()
 
       running(application) {
+
+        when(mockCoreRegistrationValidationService.searchEuVrn(any(), any())(any(), any())) thenReturn
+          None.toFuture
 
         val request =
           FakeRequest(POST, euVatNumberRoute)

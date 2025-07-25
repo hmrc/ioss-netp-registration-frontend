@@ -19,7 +19,7 @@ package base
 import controllers.actions.*
 import generators.Generators
 import models.domain.VatCustomerInfo
-import models.{BusinessContactDetails, Index, CheckMode, UserAnswers}
+import models.{BusinessContactDetails, CheckMode, Index, UserAnswers}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -32,6 +32,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.CSRFTokenHelper.CSRFRequest
 import play.api.test.FakeRequest
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.Vrn
 
 import java.time.{Clock, Instant, LocalDate, ZoneId}
@@ -66,6 +67,8 @@ trait SpecBase
   def emptyUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.copy(vatInfo = Some(vatCustomerInfo))
 
   def basicUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.set(BusinessBasedInUKPage, true).success.value.copy(vatInfo = Some(vatCustomerInfo))
+
+  def testCredentials: Credentials = Credentials(userAnswersId, "GGW")
 
   val vatNumber = "GB123456789"
   val intermediaryNumber = "IN9001234567"

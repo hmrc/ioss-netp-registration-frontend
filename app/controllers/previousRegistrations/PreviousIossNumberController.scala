@@ -20,6 +20,7 @@ import controllers.GetCountry
 import controllers.actions.*
 import forms.previousRegistrations.PreviousIossNumberFormProvider
 import logging.Logging
+import models.PreviousScheme.IOSSWOI
 import models.domain.PreviousSchemeNumbers
 import models.previousRegistrations.IossRegistrationNumberValidation
 import models.requests.DataRequest
@@ -28,6 +29,7 @@ import pages.Waypoints
 import pages.previousRegistrations.{ClientHasIntermediaryPage, PreviousIossNumberPage, PreviousSchemePage}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.previousRegistrations.PreviousIossNumberView
@@ -39,7 +41,8 @@ class PreviousIossNumberController @Inject()(
                                               override val messagesApi: MessagesApi,
                                               cc: AuthenticatedControllerComponents,
                                               formProvider: PreviousIossNumberFormProvider,
-                                              view: PreviousIossNumberView
+                                              view: PreviousIossNumberView,
+                                              coreRegistrationValidationService: CoreRegistrationValidationService,
                                             )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetCountry {
 
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -71,15 +74,32 @@ class PreviousIossNumberController @Inject()(
             )).toFuture,
 
           value =>
-            for {
-              updatedAnswers <- Future.fromTry(request.userAnswers.set(PreviousIossNumberPage(countryIndex, schemeIndex), PreviousSchemeNumbers(value)))
-              updatedAnswersWithPreviousScheme <- Future.fromTry(updatedAnswers.set(
-                PreviousSchemePage(countryIndex, schemeIndex), determinePreviousScheme(countryIndex, schemeIndex)
-              ))
-              _ <- cc.sessionRepository.set(updatedAnswersWithPreviousScheme)
-            } yield Redirect(PreviousIossNumberPage(countryIndex, schemeIndex).navigate(waypoints, request.userAnswers, updatedAnswersWithPreviousScheme).route)
-        )
+            coreRegistrationValidationService.searchScheme(
+              searchNumber = value,
+              previousScheme = IOSSWOI,
+              intermediaryNumber = None,
+              countryCode = country.code
+            ).flatMap {
+              case Some(activeMatch) if activeMatch.matchType.isActiveTrader && !activeMatch.traderId.isAnIntermediary =>
+                Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
 
+              case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader && !activeMatch.traderId.isAnIntermediary =>
+                Redirect(
+                  controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+                    activeMatch.memberState,
+                    activeMatch.getEffectiveDate)
+                ).toFuture
+
+              case _ =>
+                for {
+                  updatedAnswers <- Future.fromTry(request.userAnswers.set(PreviousIossNumberPage(countryIndex, schemeIndex), PreviousSchemeNumbers(value)))
+                  updatedAnswersWithPreviousScheme <- Future.fromTry(updatedAnswers.set(
+                    PreviousSchemePage(countryIndex, schemeIndex), determinePreviousScheme(countryIndex, schemeIndex)
+                  ))
+                  _ <- cc.sessionRepository.set(updatedAnswersWithPreviousScheme)
+                } yield Redirect(PreviousIossNumberPage(countryIndex, schemeIndex).navigate(waypoints, request.userAnswers, updatedAnswersWithPreviousScheme).route)
+            }
+        )
       }
   }
 

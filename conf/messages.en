@@ -458,3 +458,14 @@ error.missing_answers_header = Some information is missing.
 error.missing_answers_prompt = You need to complete the missing information for {0} before you continue.
 error.missing_answers_prompt.general = You need to complete the missing information before you continue.
 error.resolve_missing_answers = Resolve missing answers
+
+otherCountryExcludedAndQuarantined.title = You cannot register this trader
+otherCountryExcludedAndQuarantined.heading = You cannot register this trader
+otherCountryExcludedAndQuarantined.paragraph = {0} has blocked their account from One Stop Shop services until {1}.
+otherCountryExcludedAndQuarantined.contact = If you believe this is an error, contact <a class="govuk-link" href="mailto:vatoss.contact@hmrc.gov.uk">vatoss.contact@hmrc.gov.uk</a>
+
+clientAlreadyRegistered.title = You cannot add this trader
+clientAlreadyRegistered.heading = You cannot add this trader
+clientAlreadyRegistered.p1 = Your client is already registered on the IOSS service.
+clientAlreadyRegistered.p1.companyName = {0} is already registered on the IOSS service.
+clientAlreadyRegistered.p2 = They will need to leave the service before you can add them as a client.

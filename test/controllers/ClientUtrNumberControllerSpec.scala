@@ -28,7 +28,9 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
+import services.core.CoreRegistrationValidationService
 import views.html.ClientUtrNumberView
+import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.Future
 
@@ -41,6 +43,8 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar {
   val form: Form[String] = formProvider()
 
   lazy val clientUtrNumberRoute: String = routes.ClientUtrNumberController.onPageLoad(waypoints).url
+
+  private val mockCoreRegistrationValidationService = mock[CoreRegistrationValidationService]
 
   "ClientUtrNumber Controller" - {
 
@@ -87,11 +91,16 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar {
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
-            bind[SessionRepository].toInstance(mockSessionRepository)
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
           )
           .build()
 
       running(application) {
+
+        when(mockCoreRegistrationValidationService.searchTraderId(any[String])(any(), any())) thenReturn
+          None.toFuture
+        
         val request =
           FakeRequest(POST, clientUtrNumberRoute)
             .withFormUrlEncodedBody(("value", utr))

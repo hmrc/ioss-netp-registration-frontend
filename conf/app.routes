@@ -172,3 +172,8 @@ POST       /remove-tax-details/:countryIndex                            controll
 
 GET        /remove-all-tax-details                                      controllers.vatEuDetails.DeleteAllEuDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST       /remove-all-tax-details                                      controllers.vatEuDetails.DeleteAllEuDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+
+
+GET        /other-country-excluded-and-quarantined                      controllers.OtherCountryExcludedAndQuarantinedController.onPageLoad(countryCode: String, exclusionDate: String)
+
+GET        /client-already-registered                                   controllers.ClientAlreadyRegisteredController.onPageLoad()
