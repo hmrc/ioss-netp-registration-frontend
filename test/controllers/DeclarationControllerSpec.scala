@@ -342,22 +342,42 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
         }
       }
 
-      "must redirect to the correct page when an error is returned from the backend" in {
+      "must audit event and redirect to the correct page when an error is returned from the backend" in {
+        val mockDeclarationView = mock[DeclarationView]
+        val viewMock = mock[play.twirl.api.HtmlFormat.Appendable]
 
         val application = applicationBuilder(userAnswers = Some(userAnswers))
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
-          .build()
+          .overrides(
+            bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+            bind[AuditService].toInstance(mockAuditService)
+          ).build()
 
-        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Left(UnexpectedResponseStatus(500, "Generic Error from database")).toFuture
+        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Left(
+          UnexpectedResponseStatus(500, "Generic Error from database")
+        ).toFuture
 
+        when(mockDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
+
+        when(viewMock.body) thenReturn "test-view-body"
 
         running(application) {
           val request = FakeRequest(POST, routes.DeclarationController.onSubmit(waypoints).url)
+
+          implicit val dataRequest: DataRequest[_] =
+            DataRequest(fakeRequest, userAnswersId, userAnswers)
+
+          val expectedAuditEvent = IntermediaryDeclarationSigningAuditModel.build(
+            intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
+            userAnswers = userAnswers,
+            submissionResult = SubmissionResult.Failure,
+            submittedDeclarationPageBody = "test-view-body"
+          )
 
           val result = route(application, request).value
 
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value `mustBe` ErrorSubmittingPendingRegistrationPage.route(waypoints).url
+          verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
         }
       }
     }
