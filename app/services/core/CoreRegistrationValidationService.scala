@@ -29,6 +29,7 @@ import services.oss.OssRegistrationService
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
 
+import java.time.{Clock, LocalDate}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -36,7 +37,8 @@ import scala.util.Try
 class CoreRegistrationValidationService @Inject()(
                                                    connector: ValidateCoreRegistrationConnector,
                                                    iossRegistrationService: IossRegistrationService,
-                                                   ossRegistrationService: OssRegistrationService
+                                                   ossRegistrationService: OssRegistrationService,
+                                                   clock: Clock
                                                  )(implicit ec: ExecutionContext) extends Logging {
   
   def searchUkVrn(vrn: Vrn)(implicit hc:HeaderCarrier, request: DataRequest[_]): Future[Option[Match]] = {
@@ -132,11 +134,15 @@ class CoreRegistrationValidationService @Inject()(
   private def getIossRegistration(iossNumber: String)(implicit hc: HeaderCarrier): Future[Option[Match]] = {
     iossRegistrationService.getIossRegistration(Some(iossNumber)).map { maybeRegistration =>
       maybeRegistration.flatMap { registration =>
-        val maybeExclusion = registration.exclusions.headOption
 
+        val maybeExclusion = registration.exclusions.headOption
+        val exclusionEffectiveDate = maybeExclusion.map(exclusion => exclusion.effectiveDate)
+        val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
         val matchType = maybeExclusion match {
-          case Some(exclusion) if exclusion.quarantine => MatchType.TraderIdQuarantinedNETP
-          case _ => MatchType.TraderIdActiveNETP
+          case Some(exclusion) if exclusion.quarantine && exclusionEffectiveDate.exists(_.isAfter(quarantineCutOffDate)) =>
+            MatchType.TraderIdQuarantinedNETP
+          case _ =>
+            MatchType.TraderIdActiveNETP
         }
 
         Some(
@@ -160,9 +166,11 @@ class CoreRegistrationValidationService @Inject()(
     val normalizeVrn = vrn.stripPrefix(Country.northernIreland.code)
     ossRegistrationService.getLatestOssRegistration(Some(Vrn(normalizeVrn))).map { maybeRegistration =>
       maybeRegistration.flatMap { registration =>
-        val maybeExclusion = registration.excludedTrader
 
-        val isQuarantined = maybeExclusion.flatMap(_.quarantined).contains(true)
+        val maybeExclusion = registration.excludedTrader
+        val exclusionEffectiveDate = maybeExclusion.flatMap(_.effectiveDate)
+        val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
+        val isQuarantined = maybeExclusion.flatMap(_.quarantined).contains(true) && exclusionEffectiveDate.exists(_.isAfter(quarantineCutOffDate))
         val matchType = if (isQuarantined) {
           MatchType.TraderIdQuarantinedNETP
         } else {

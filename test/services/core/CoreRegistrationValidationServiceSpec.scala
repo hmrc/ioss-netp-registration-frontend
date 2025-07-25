@@ -88,7 +88,12 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       when(connector.validateCoreRegistration(any())(any())) thenReturn Future.successful(Right(coreValidationResponses))
 
-      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService)
+      val coreRegistrationValidationService = new CoreRegistrationValidationService(
+        connector,
+        iossRegistrationService,
+        ossRegistrationService,
+        stubClockAtArbitraryDate
+      )
 
       val value = coreRegistrationValidationService.searchUkVrn(vrn).futureValue.get
 
@@ -102,7 +107,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
       val expectedResponse = coreValidationResponses.copy(matches = Seq[Match]())
       when(connector.validateCoreRegistration(any())(any())) thenReturn Future.successful(Right(expectedResponse))
 
-      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService)
+      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService, stubClockAtArbitraryDate)
 
       val value = coreRegistrationValidationService.searchUkVrn(vrn).futureValue
 
@@ -117,7 +122,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       when(connector.validateCoreRegistration(any())(any())) thenReturn Future.successful(Left(UnexpectedResponseStatus(errorCode, "error")))
 
-      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService)
+      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService, stubClockAtArbitraryDate)
 
       val response = intercept[Exception](coreRegistrationValidationService.searchUkVrn(vrn).futureValue)
 
@@ -134,7 +139,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       when(connector.validateCoreRegistration(any())(any())) thenReturn Future.successful(Right(coreValidationResponses))
 
-      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService)
+      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService, stubClockAtArbitraryDate)
 
       val value = coreRegistrationValidationService.searchEuTaxId(taxRefNo, countryCode).futureValue.get
 
@@ -149,7 +154,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
       val expectedResponse = coreValidationResponses.copy(matches = Seq[Match]())
       when(connector.validateCoreRegistration(any())(any())) thenReturn Future.successful(Right(expectedResponse))
 
-      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService)
+      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService, stubClockAtArbitraryDate)
 
       val value = coreRegistrationValidationService.searchEuTaxId(taxRefNo, countryCode).futureValue
 
@@ -165,7 +170,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       when(connector.validateCoreRegistration(any())(any())) thenReturn Future.successful(Left(UnexpectedResponseStatus(errorCode, "error")))
 
-      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService)
+      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService, stubClockAtArbitraryDate)
 
       val response = intercept[Exception](coreRegistrationValidationService.searchEuTaxId(taxRefNo, countryCode).futureValue)
 
@@ -182,7 +187,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       when(connector.validateCoreRegistration(any())(any())) thenReturn Future.successful(Right(coreValidationResponses))
 
-      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService)
+      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService, stubClockAtArbitraryDate)
 
       val value = coreRegistrationValidationService.searchEuVrn(euVrn, countrycode).futureValue.get
 
@@ -197,7 +202,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
       val expectedResponse = coreValidationResponses.copy(matches = Seq[Match]())
       when(connector.validateCoreRegistration(any())(any())) thenReturn Future.successful(Right(expectedResponse))
 
-      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService)
+      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService, stubClockAtArbitraryDate)
 
       val value = coreRegistrationValidationService.searchEuVrn(euVrn, countryCode).futureValue
 
@@ -213,7 +218,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       when(connector.validateCoreRegistration(any())(any())) thenReturn Future.successful(Left(UnexpectedResponseStatus(errorCode, "error")))
 
-      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService)
+      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService, stubClockAtArbitraryDate)
 
       val response = intercept[Exception](coreRegistrationValidationService.searchEuVrn(euVrn, countryCode).futureValue)
 
@@ -231,7 +236,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       when(connector.validateCoreRegistration(any())(any())) thenReturn Future.successful(Right(coreValidationResponses))
 
-      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService)
+      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService, stubClockAtArbitraryDate)
 
       val value = coreRegistrationValidationService.searchScheme(iossNumber, previousScheme, None, countryCode).futureValue.get
 
@@ -247,7 +252,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       when(connector.validateCoreRegistration(any())(any())) thenReturn Future.successful(Right(coreValidationResponses))
 
-      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService)
+      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService, stubClockAtArbitraryDate)
 
       val value = coreRegistrationValidationService.searchScheme(iossNumber, previousScheme, Some(intermediaryNumber), countryCode).futureValue.get
 
@@ -263,7 +268,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
       val expectedResponse = coreValidationResponses.copy(matches = Seq[Match]())
       when(connector.validateCoreRegistration(any())(any())) thenReturn Future.successful(Right(expectedResponse))
 
-      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService)
+      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService, stubClockAtArbitraryDate)
 
       val value = coreRegistrationValidationService.searchScheme(iossNumber, previousScheme, None, countryCode).futureValue
 
@@ -280,7 +285,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       when(connector.validateCoreRegistration(any())(any())) thenReturn Future.successful(Left(UnexpectedResponseStatus(errorCode, "error")))
 
-      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService)
+      val coreRegistrationValidationService = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService, stubClockAtArbitraryDate)
 
       val response = intercept[Exception](coreRegistrationValidationService.searchScheme(iossNumber, previousScheme, None, countryCode).futureValue)
 
@@ -338,7 +343,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
         nonCompliantPayments = None
       )
 
-      val service = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService)
+      val service = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService, stubClockAtArbitraryDate)
 
       val result = service.searchScheme(iossNumber, previousScheme, None, countryCode).futureValue
 
@@ -405,7 +410,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
         nonCompliantPayments = None
       )
 
-      val service = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService)
+      val service = new CoreRegistrationValidationService(connector, iossRegistrationService, ossRegistrationService, stubClockAtArbitraryDate)
 
       val result = service.searchScheme(vrn, previousScheme, None, countryCode).futureValue
 

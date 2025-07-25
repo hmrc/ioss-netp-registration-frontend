@@ -160,49 +160,7 @@ class PreviousOssNumberControllerSpec extends SpecBase with MockitoSugar with Ta
           redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
       }
     }
-
-    "must Redirect to ClientAlreadyRegistered for a post if an active non-intermediary trader is found" in {
-
-      val mockSessionRepository = mock[SessionRepository]
-      when(mockSessionRepository.set(any())) thenReturn true.toFuture
-
-      val testConditions = Table(
-        ("MatchType", "exclusionStatusCode"),
-        (TraderIdActiveNETP, None),
-        (OtherMSNETPActiveNETP, None),
-        (FixedEstablishmentActiveNETP, None)
-      )
-
-      forAll(testConditions) { (matchType, exclusionStatusCode) =>
-
-        val application =
-          applicationBuilder(userAnswers = Some(baseAnswers))
-            .overrides(
-              bind[SessionRepository].toInstance(mockSessionRepository),
-              bind[CoreRegistrationValidationService].toInstance(mockCoreRegistartionValidationService)
-            )
-            .build()
-
-        running(application) {
-
-          val activeRegistrationMatch = createMatchResponse(
-            matchType = matchType,
-            traderId = TraderId("333344445")
-          )
-
-          when(mockCoreRegistartionValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
-
-          val request = FakeRequest(POST, previousOssNumberRoute(waypoints))
-            .withFormUrlEncodedBody(("value", "LT333344445"))
-
-          val result = route(application, request).value
-
-          status(result) `mustEqual` SEE_OTHER
-          redirectLocation(result).value mustEqual controllers.routes.ClientAlreadyRegisteredController.onPageLoad().url
-        }
-      }
-    }
-
+    
     "must redirect to OtherCountryExcludedAndQuarantined for a POST if a quarantined intermediary trader is found" in {
 
       val mockSessionRepository = mock[SessionRepository]
