@@ -132,78 +132,66 @@ class CoreRegistrationValidationService @Inject()(
   }
 
   private def getIossRegistration(iossNumber: String)(implicit hc: HeaderCarrier): Future[Option[Match]] = {
-    iossRegistrationService.getIossRegistration(Some(iossNumber)).map { maybeRegistration =>
-      maybeRegistration.flatMap { registration =>
+    iossRegistrationService.getIossRegistration(iossNumber).map { registration =>
 
-        val maybeExclusion = registration.exclusions.headOption
-        val exclusionEffectiveDate = maybeExclusion.map(exclusion => exclusion.effectiveDate)
-        val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
-        val matchType = maybeExclusion match {
-          case Some(exclusion) if exclusion.quarantine && exclusionEffectiveDate.exists(_.isAfter(quarantineCutOffDate)) =>
-            MatchType.TraderIdQuarantinedNETP
-          case _ =>
-            MatchType.TraderIdActiveNETP
-        }
-
-        Some(
-          Match(
-            matchType = matchType,
-            traderId = TraderId(iossNumber),
-            intermediary = None,
-            memberState = Country.northernIreland.code,
-            exclusionStatusCode = maybeExclusion.map(exclusion => getExclusionStatusCode(exclusion.exclusionReason)),
-            exclusionDecisionDate = maybeExclusion.map(exclusion => exclusion.decisionDate.format(ossDateFormatter)),
-            exclusionEffectiveDate = maybeExclusion.map(exclusion => exclusion.effectiveDate.format(ossDateFormatter)),
-            nonCompliantReturns = None,
-            nonCompliantPayments = None
-          )
-        )
+      val maybeExclusion = registration.exclusions.headOption
+      val exclusionEffectiveDate = maybeExclusion.map(exclusion => exclusion.effectiveDate)
+      val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
+      val matchType = maybeExclusion match {
+        case Some(exclusion) if exclusion.quarantine && exclusionEffectiveDate.exists(_.isAfter(quarantineCutOffDate)) =>
+          MatchType.TraderIdQuarantinedNETP
+        case _ =>
+          MatchType.TraderIdActiveNETP
       }
+
+      Some(
+        Match(
+          matchType = matchType,
+          traderId = TraderId(iossNumber),
+          intermediary = None,
+          memberState = Country.northernIreland.code,
+          exclusionStatusCode = maybeExclusion.map(exclusion => getExclusionStatusCode(exclusion.exclusionReason)),
+          exclusionDecisionDate = maybeExclusion.map(exclusion => exclusion.decisionDate.format(ossDateFormatter)),
+          exclusionEffectiveDate = maybeExclusion.map(exclusion => exclusion.effectiveDate.format(ossDateFormatter)),
+          nonCompliantReturns = None,
+          nonCompliantPayments = None
+        )
+      )
     }
   }
 
   private def getOssRegistration(vrn: String)(implicit hc: HeaderCarrier): Future[Option[Match]] = {
     val normalizeVrn = vrn.stripPrefix(Country.northernIreland.code)
-    ossRegistrationService.getLatestOssRegistration(Some(Vrn(normalizeVrn))).map { maybeRegistration =>
-      maybeRegistration.flatMap { registration =>
+    ossRegistrationService.getLatestOssRegistration(Vrn(normalizeVrn)).map { registration =>
 
-        val maybeExclusion = registration.excludedTrader
-        val exclusionEffectiveDate = maybeExclusion.flatMap(_.effectiveDate)
-        val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
-        val isQuarantined = maybeExclusion.flatMap(_.quarantined).contains(true) && exclusionEffectiveDate.exists(_.isAfter(quarantineCutOffDate))
-        val matchType = if (isQuarantined) {
-          MatchType.TraderIdQuarantinedNETP
-        } else {
-          MatchType.TraderIdActiveNETP
-        }
-
-        Some(
-          Match(
-            matchType = matchType,
-            traderId = TraderId(registration.vrn.vrn),
-            intermediary = None,
-            memberState = Country.northernIreland.code,
-            exclusionStatusCode = maybeExclusion.flatMap(_.exclusionReason.map(_.numberValue)),
-            exclusionDecisionDate = None,
-            exclusionEffectiveDate = maybeExclusion.flatMap(_.effectiveDate.map(_.format(ossDateFormatter))),
-            nonCompliantReturns = registration.nonCompliantReturns.flatMap(s => Try(s.toInt).toOption),
-            nonCompliantPayments = registration.nonCompliantPayments.flatMap(s => Try(s.toInt).toOption)
-          )
-        )
+      val maybeExclusion = registration.excludedTrader
+      val exclusionEffectiveDate = maybeExclusion.flatMap(_.effectiveDate)
+      val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
+      val isQuarantined = maybeExclusion.flatMap(_.quarantined).contains(true) && exclusionEffectiveDate.exists(_.isAfter(quarantineCutOffDate))
+      val matchType = if (isQuarantined) {
+        MatchType.TraderIdQuarantinedNETP
+      } else {
+        MatchType.TraderIdActiveNETP
       }
+
+      Some(
+        Match(
+          matchType = matchType,
+          traderId = TraderId(registration.vrn.vrn),
+          intermediary = None,
+          memberState = Country.northernIreland.code,
+          exclusionStatusCode = maybeExclusion.flatMap(_.exclusionReason.map(_.numberValue)),
+          exclusionDecisionDate = None,
+          exclusionEffectiveDate = maybeExclusion.flatMap(_.effectiveDate.map(_.format(ossDateFormatter))),
+          nonCompliantReturns = registration.nonCompliantReturns.flatMap(s => Try(s.toInt).toOption),
+          nonCompliantPayments = registration.nonCompliantPayments.flatMap(s => Try(s.toInt).toOption)
+        )
+      )
     }
   }
 
   private def getExclusionStatusCode(reason: IossEtmpExclusionReason): Int = {
-    reason match {
-      case IossEtmpExclusionReason.FailsToComply => 4
-      case IossEtmpExclusionReason.NoLongerSupplies => 1
-      case IossEtmpExclusionReason.CeasedTrade => 2
-      case IossEtmpExclusionReason.NoLongerMeetsConditions => 3
-      case IossEtmpExclusionReason.VoluntarilyLeaves => 5
-      case IossEtmpExclusionReason.TransferringMSID => 6
-      case IossEtmpExclusionReason.Reversal => -1
-    }
+    reason.toString.toInt
   }
 }
 

@@ -20,7 +20,6 @@ import connectors.RegistrationConnector
 import logging.Logging
 import models.iossRegistration.IossEtmpDisplayRegistration
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.FutureSyntax.FutureOps
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,21 +28,15 @@ class IossRegistrationService @Inject()(
                                          registrationConnector: RegistrationConnector
                                        )(implicit ec: ExecutionContext) extends Logging {
 
-  def getIossRegistration(iossNumber: Option[String])(implicit hc: HeaderCarrier): Future[Option[IossEtmpDisplayRegistration]] = {
-    iossNumber match {
-      case Some(iossNumber) =>
-        registrationConnector.getIossRegistration(iossNumber).map {
-          case Right(iossEtmpDisplayRegistration) =>
-            logger.info(s"Successfully fetched IOSS registration for $iossNumber")
-            Some(iossEtmpDisplayRegistration)
-          case Left(error) =>
-            logger.warn(s"Failed to fetch IOSS registration for $iossNumber: $error")
-            None
-        }
-
-      case _ =>
-        logger.warn("No IOSS number provided to fetch registration")
-        None.toFuture
+  def getIossRegistration(iossNumber: String)(implicit hc: HeaderCarrier): Future[IossEtmpDisplayRegistration] = {
+    registrationConnector.getIossRegistration(iossNumber).map {
+      case Right(iossEtmpDisplayRegistration) =>
+        logger.info(s"Successfully fetched IOSS registration for $iossNumber")
+        iossEtmpDisplayRegistration
+      case Left(error) =>
+        val exception = Exception(s"Failed to fetch IOSS registration for $iossNumber: $error")
+        logger.warn(exception.getMessage, exception)
+        throw exception
     }
   }
 }

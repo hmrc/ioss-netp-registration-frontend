@@ -31,21 +31,16 @@ case class OssRegistrationService @Inject()(
                                            config: FrontendAppConfig
                                          )(implicit ec: ExecutionContext) extends Logging {
 
-  def getLatestOssRegistration(vrn: Option[Vrn])(implicit hc: HeaderCarrier): Future[Option[OssRegistration]] = {
-    vrn match {
-      case Some(validVrn) =>
-        registrationConnector.getOssRegistration(validVrn).map {
-          case Right(registration) =>
-            logger.info(s"Successfully fetched OSS registration for VRN ${validVrn.vrn}")
-            Some(registration)
-          case Left(error) =>
-            logger.warn(s"Failed to fetch OSS registration for VRN ${validVrn.vrn}: $error")
-            None
-        }
+  def getLatestOssRegistration(vrn: Vrn)(implicit hc: HeaderCarrier): Future[OssRegistration] = {
+      registrationConnector.getOssRegistration(vrn).map {
+        case Right(registration) =>
+          logger.info(s"Successfully fetched OSS registration for VRN ${vrn.vrn}")
+          registration
+        case Left(error) =>
+          val exception = Exception(s"Failed to fetch OSS registration for VRN ${vrn.vrn}: $error")
+          logger.warn(exception.getMessage, exception)
+          throw exception
+      }
 
-      case None =>
-        logger.warn("No VRN provided to fetch OSS registration")
-        Future.successful(None)
-    }
   }
 }

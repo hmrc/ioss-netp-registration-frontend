@@ -40,26 +40,28 @@ class IossRegistrationServiceSpec extends SpecBase {
 
   "IossRegistrationService" - {
 
-    "must return Right(IossEtmpDisplayRegistration) when connector returns a valid payload" in {
+    "must return IossEtmpDisplayRegistration when connector returns a valid payload" in {
 
       when(mockRegistrationConnector.getIossRegistration(any())(any())) thenReturn Right(iossEtmpDisplayRegistration).toFuture
 
       val service = new IossRegistrationService(mockRegistrationConnector)
 
-      val result = service.getIossRegistration(Some(iossNumber)).futureValue
+      val result = service.getIossRegistration(iossNumber).futureValue
 
-      result mustBe Some(iossEtmpDisplayRegistration)
+      result mustBe iossEtmpDisplayRegistration
     }
 
-    "must return None when connector returns Left(Error)" in {
+    "must throw an exception when connector returns Left(Error)" in {
 
       when(mockRegistrationConnector.getIossRegistration(any())(any())) thenReturn Left(RegistrationNotFound).toFuture
 
       val service = new IossRegistrationService(mockRegistrationConnector)
 
-      val result = service.getIossRegistration(Some(iossNumber)).futureValue
+      val result = intercept[Exception] {
+        service.getIossRegistration(iossNumber).futureValue
+      }
 
-      result mustBe None
+      result.getMessage must include(s"Failed to fetch IOSS registration for $iossNumber")
     }
   }
 }

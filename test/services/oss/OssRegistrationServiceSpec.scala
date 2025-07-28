@@ -49,28 +49,30 @@ class OssRegistrationServiceSpec extends SpecBase with PrivateMethodTester with 
 
     ".getLatestOssRegistration" - {
 
-      "must return an OssRegistration when the connector returns a Right" in {
+      "must return an OssRegistration when the connector returns a a valid payload" in {
 
         when(mockRegistrationConnector.getOssRegistration(any())(any())) thenReturn Right(arbOssRegistration).toFuture
         when(mockConfig.ossEnrolment) thenReturn "HMRC-OSS-ORG"
 
         val service = OssRegistrationService(mockRegistrationConnector, mockConfig)
 
-        val result = service.getLatestOssRegistration(Some(vrn)).futureValue
+        val result = service.getLatestOssRegistration(vrn).futureValue
 
-        result mustBe Some(arbOssRegistration)
+        result mustBe arbOssRegistration
       }
 
-      "must return None when the connector returns a Left" in {
+      "must throw an exception when connector returns Left(Error)" in {
 
         when(mockRegistrationConnector.getOssRegistration(any())(any())) thenReturn Left(RegistrationNotFound).toFuture
         when(mockConfig.ossEnrolment) thenReturn "HMRC-OSS-ORG"
 
         val service = OssRegistrationService(mockRegistrationConnector, mockConfig)
 
-        val result = service.getLatestOssRegistration(Some(vrn)).futureValue
+        val result = intercept[Exception] {
+          service.getLatestOssRegistration(vrn).futureValue
+        }
 
-        result mustBe None
+        result.getMessage must include(s"Failed to fetch OSS registration for VRN $vrn")
       }
     }
   }

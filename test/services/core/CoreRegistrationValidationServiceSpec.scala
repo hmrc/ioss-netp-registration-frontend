@@ -18,7 +18,7 @@ package services.core
 
 import base.SpecBase
 import connectors.core.ValidateCoreRegistrationConnector
-import models.{BankDetails, Bic, Country, DesAddress, Iban, PreviousScheme}
+import models.{BankDetails, Bic, Country, Iban, PreviousScheme}
 import models.core.{CoreRegistrationValidationResult, Match, MatchType, TraderId}
 import models.iossRegistration.{IossEtmpBankDetails, IossEtmpDisplayRegistration, IossEtmpDisplaySchemeDetails, IossEtmpExclusion, IossEtmpExclusionReason, IossEtmpTradingName}
 import models.ossRegistration.*
@@ -319,8 +319,8 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
         exclusions = Seq(exclusion)
       )
 
-      when(iossRegistrationService.getIossRegistration(Some(iossNumber)))
-        .thenReturn(Future.successful(Some(iossDisplayRegistration)))
+      when(iossRegistrationService.getIossRegistration(iossNumber))
+        .thenReturn(Future.successful(iossDisplayRegistration))
 
       when(connector.validateCoreRegistration(any())(any()))
         .thenReturn(Future.successful(Right(CoreRegistrationValidationResult(
@@ -386,8 +386,8 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
         adminUse = mock[OssAdminUse]
       )
 
-      when(ossRegistrationService.getLatestOssRegistration(Some(Vrn(vrn))))
-        .thenReturn(Future.successful(Some(ossDisplayRegistration)))
+      when(ossRegistrationService.getLatestOssRegistration(Vrn(vrn)))
+        .thenReturn(Future.successful(ossDisplayRegistration))
 
       when(connector.validateCoreRegistration(any())(any()))
         .thenReturn(Future.successful(Right(CoreRegistrationValidationResult(
