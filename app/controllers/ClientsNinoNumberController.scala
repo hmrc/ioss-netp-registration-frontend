@@ -32,6 +32,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.ClientsNinoNumberView
 import utils.FutureSyntax.FutureOps
 
+import java.time.{Clock, LocalDate}
 import scala.concurrent.{ExecutionContext, Future}
 
 class ClientsNinoNumberController @Inject()(
@@ -39,7 +40,8 @@ class ClientsNinoNumberController @Inject()(
                                         cc: AuthenticatedControllerComponents,
                                         formProvider: ClientsNinoNumberFormProvider,
                                         view: ClientsNinoNumberView,
-                                        coreRegistrationValidationService: CoreRegistrationValidationService
+                                        coreRegistrationValidationService: CoreRegistrationValidationService,
+                                        clock: Clock
                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetCountry {
 
   val form: Form[String] = formProvider()
@@ -59,6 +61,8 @@ class ClientsNinoNumberController @Inject()(
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
+      val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
+
       form.bindFromRequest().fold(
         formWithErrors =>
           Future.successful(BadRequest(view(formWithErrors, waypoints))),
@@ -69,7 +73,9 @@ class ClientsNinoNumberController @Inject()(
             case Some(activeMatch) if activeMatch.matchType.isActiveTrader && !activeMatch.traderId.isAnIntermediary =>
               Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
 
-            case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader && !activeMatch.traderId.isAnIntermediary =>
+            case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader &&
+              LocalDate.parse(activeMatch.getEffectiveDate).isAfter(quarantineCutOffDate) &&
+              !activeMatch.traderId.isAnIntermediary =>
               Redirect(
                 controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
                   activeMatch.memberState,

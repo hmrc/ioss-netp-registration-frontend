@@ -29,6 +29,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.vatEuDetails.EuTaxReferenceView
 import utils.FutureSyntax.FutureOps
 
+import java.time.{Clock, LocalDate}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,7 +38,8 @@ class EuTaxReferenceController @Inject()(
                                         cc: AuthenticatedControllerComponents,
                                         formProvider: EuTaxReferenceFormProvider,
                                         view: EuTaxReferenceView,
-                                        coreRegistrationValidationService: CoreRegistrationValidationService
+                                        coreRegistrationValidationService: CoreRegistrationValidationService,
+                                        clock: Clock
                                       )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
 
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -61,6 +63,8 @@ class EuTaxReferenceController @Inject()(
   def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
+      val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
+      
       getCountryWithIndex(waypoints, countryIndex) { country =>
         
         val form = formProvider(country)
@@ -75,7 +79,9 @@ class EuTaxReferenceController @Inject()(
               case Some(activeMatch) if activeMatch.matchType.isActiveTrader && !activeMatch.traderId.isAnIntermediary =>
                 Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
 
-              case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader && !activeMatch.traderId.isAnIntermediary =>
+              case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader &&
+                LocalDate.parse(activeMatch.getEffectiveDate).isAfter(quarantineCutOffDate) &&
+                !activeMatch.traderId.isAnIntermediary =>
                 Redirect(
                   controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
                     activeMatch.memberState,
