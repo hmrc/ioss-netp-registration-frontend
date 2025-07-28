@@ -85,11 +85,7 @@ class DeclarationController @Inject()(
 
                 form.bindFromRequest().fold(
                   formWithErrors =>
-                    
-                    sendAudit(
-                      result = SubmissionResult.Failure,
-                      submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body,
-                    )
+
                     Future.successful(BadRequest(view(formWithErrors, waypoints, intermediaryName, clientCompanyName))),
 
                   value =>
