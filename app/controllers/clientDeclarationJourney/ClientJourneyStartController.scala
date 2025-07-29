@@ -44,37 +44,24 @@ class ClientJourneyStartController @Inject()(
 
   def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = unidentifiedDataRetrievalAction.async {
     implicit request =>
-      println("\n\nUserAnswers without stuff:\n")
-      println(request.userAnswers)
 
       registrationConnector.getPendingRegistration(uniqueUrlCode).flatMap {
         case Right(savedPendingRegistration) =>
 
           val clientVatInfo: Option[VatCustomerInfo] = savedPendingRegistration.userAnswers.vatInfo
-          println("\n\nstuff clientVatInfo:\n")
-          println(clientVatInfo)
 
-          //Create new or find old userAnswers
           val clientUserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId, vatInfo = clientVatInfo))
-          println("\n\nstuff clientVatInfo:\n")
-          println(clientUserAnswers)
           for {
             businessContactDetailsIntermediary <- Future.fromTry(
               savedPendingRegistration.userAnswers.get(BusinessContactDetailsPage)
-                .toRight(new IllegalStateException("Missing client business details information"))
+                .toRight(new IllegalStateException("Missing Client Business Details information in userAnswers"))
                 .toTry
             )
-            //Set Business contact details for later
             clientWithBusinessContactDetails <- Future.fromTry(clientUserAnswers.set(BusinessContactDetailsPage, businessContactDetailsIntermediary))
-            //Set Intermediary details for later
             updatedAnswers <- Future.fromTry(clientWithBusinessContactDetails.set(IntermediaryStuffQuery, IntermediaryStuff(savedPendingRegistration.intermediaryStuff.intermediaryNumber, savedPendingRegistration.intermediaryStuff.intermediaryName)))
-            //Update sessionRepository with answers
             _ <- sessionRepository.set(updatedAnswers)
           } yield Redirect(routes.ClientCodeEntryController.onPageLoad(waypoints, uniqueUrlCode))
 
-// TODO SCG-> 
-          //Intermediary number comes from the enrolments during the intermediary journey. As such it is needed in DataRequired to use in the request.
-          // But if we do not add it to the optional etc. then we can make a emthod to .get(Intermediary stuff) instead
         case Left(error) =>
           val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given unique Url Code: $uniqueUrlCode, \n Errors: $error."
           val exception: Exception = new Exception(message)

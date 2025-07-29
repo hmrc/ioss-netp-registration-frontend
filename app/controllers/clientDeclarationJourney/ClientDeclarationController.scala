@@ -54,9 +54,6 @@ class ClientDeclarationController @Inject()(
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (cc.clientIdentify andThen cc.clientGetData).async {
     implicit request =>
       
-      println("\n\nUserAnswers with stuff:\n")
-      println(request.userAnswers.vatInfo)
-      println(request.userAnswers)
       getClientCompanyName(waypoints, request.userAnswers) { clientCompanyName =>
         getIntermediaryName(waypoints, request.userAnswers) { intermediaryName =>
 
