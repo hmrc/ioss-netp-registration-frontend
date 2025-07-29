@@ -25,6 +25,7 @@ import models.emails.EmailSendingResult
 import models.requests.DataRequest
 import models.{IntermediaryStuff, PendingRegistrationRequest, SavedPendingRegistration}
 import pages.{DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints}
+import pages.{ClientBusinessNamePage, DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}

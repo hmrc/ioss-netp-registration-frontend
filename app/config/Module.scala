@@ -32,6 +32,7 @@ class Module extends AbstractModule {
     // For session based storage instead of cred based, change to SessionIdentifierAction
     bind(classOf[IdentifierAction]).to(classOf[AuthenticatedIdentifierAction]).asEagerSingleton()
     bind(classOf[ClientIdentifierAction]).to(classOf[ClientIdentifierActionImpl]).asEagerSingleton()
+    bind(classOf[ClientDataRetrievalAction]).to(classOf[ClientDataRetrievalActionImpl]).asEagerSingleton()
 
     bind(classOf[Clock]).toInstance(Clock.systemDefaultZone.withZone(ZoneOffset.UTC))
   }

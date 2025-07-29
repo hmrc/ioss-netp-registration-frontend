@@ -44,20 +44,20 @@ class ClientJourneyStartController @Inject()(
 
   def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = unidentifiedDataRetrievalAction.async {
     implicit request =>
+      println("\n\nUserAnswers without stuff:\n")
+      println(request.userAnswers)
 
-      println("✅ HTTP Method: " + request.method)
-      println("✅ Path: " + request.path)
-      println("✅ Headers: " + request.headers)
-      println("✅ Query Params: " + request.queryString)
-      println("✅ Session: " + request.session)
-
-      Ok("Check logs for request details.")
       registrationConnector.getPendingRegistration(uniqueUrlCode).flatMap {
         case Right(savedPendingRegistration) =>
 
-          //Create new or find old userAnswers
-          val clientUserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
+          val clientVatInfo: Option[VatCustomerInfo] = savedPendingRegistration.userAnswers.vatInfo
+          println("\n\nstuff clientVatInfo:\n")
+          println(clientVatInfo)
 
+          //Create new or find old userAnswers
+          val clientUserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId, vatInfo = clientVatInfo))
+          println("\n\nstuff clientVatInfo:\n")
+          println(clientUserAnswers)
           for {
             businessContactDetailsIntermediary <- Future.fromTry(
               savedPendingRegistration.userAnswers.get(BusinessContactDetailsPage)

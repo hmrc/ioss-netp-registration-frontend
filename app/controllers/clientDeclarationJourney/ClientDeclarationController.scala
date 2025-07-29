@@ -22,13 +22,13 @@ import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import logging.Logging
 import models.UserAnswers
 import pages.clientDeclarationJourney.ClientDeclarationPage
-import pages.{ClientBusinessNamePage, JourneyRecoveryPage, Waypoints}
+import pages.{BusinessContactDetailsPage, ClientBusinessNamePage, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
+import queries.IntermediaryStuffQuery
 import repositories.SessionRepository
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.clientDeclarationJourney.ClientDeclarationView
@@ -53,26 +53,19 @@ class ClientDeclarationController @Inject()(
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (cc.clientIdentify andThen cc.clientGetData).async {
     implicit request =>
-      println("✅ HTTP Method: " + request.method)
-      println("✅ Path: " + request.path)
-      println("✅ Headers: " + request.headers)
-      println("✅ Query Params: " + request.queryString)
-      println("✅ Session: " + request.session)
-
-      Ok("Check logs for request details.")
-
-      println(" request !!!" + request)
+      
+      println("\n\nUserAnswers with stuff:\n")
+      println(request.userAnswers.vatInfo)
+      println(request.userAnswers)
       getClientCompanyName(waypoints, request.userAnswers) { clientCompanyName =>
-
-        getIntermediaryName().map { intermediaryOpt =>
-          val intermediaryName = intermediaryOpt.getOrElse("")
+        getIntermediaryName(waypoints, request.userAnswers) { intermediaryName =>
 
           val preparedForm = request.userAnswers.get(ClientDeclarationPage) match {
             case None => form
             case Some(value) => form.fill(value)
           }
-          val clientCompanyName = "blah"
-          Ok(view(preparedForm, waypoints, clientCompanyName, intermediaryName))
+
+          Ok(view(preparedForm, waypoints, clientCompanyName, intermediaryName)).toFuture
         }
       }
   }
@@ -81,8 +74,7 @@ class ClientDeclarationController @Inject()(
     implicit request =>
 
       getClientCompanyName(waypoints, request.userAnswers) { clientCompanyName =>
-        getIntermediaryName().flatMap { intermediaryOpt =>
-          val intermediaryName = intermediaryOpt.getOrElse("")
+        getIntermediaryName(waypoints, request.userAnswers) { intermediaryName =>
 
           form.bindFromRequest().fold(
             formWithErrors =>
@@ -98,21 +90,17 @@ class ClientDeclarationController @Inject()(
       }
   }
 
-  private def getIntermediaryName()(implicit hc: HeaderCarrier): Future[Option[String]] = {
-    registrationConnector.getIntermediaryVatCustomerInfo().map {
-      case Right(vatInfo) =>
-        vatInfo.organisationName.orElse(vatInfo.individualName)
-      case _ =>
-        logger.error("Unable to retrieve an intermediary name as no Organisation name or Individual name is registered")
-        throw new IllegalStateException("Unable to retrieve an intermediary name as no Organisation name or Individual name is registered")
-    }
+  private def getIntermediaryName(waypoints: Waypoints, userAnswers: UserAnswers)(block: String => Future[Result]): Future[Result] = {
+    userAnswers.get(IntermediaryStuffQuery).map { intermediaryStuff =>
+      block(intermediaryStuff.intermediaryName)
+    }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
+
   }
 
   private def getClientCompanyName(waypoints: Waypoints, userAnswers: UserAnswers)
                                   (block: String => Future[Result]): Future[Result] = {
     userAnswers.vatInfo match {
       case Some(vatCustomerInfo) =>
-
         vatCustomerInfo.organisationName match {
           case Some(orgName) => block(orgName)
           case _ =>
@@ -122,8 +110,8 @@ class ClientDeclarationController @Inject()(
         }
 
       case _ =>
-        userAnswers.get(ClientBusinessNamePage).map { companyName =>
-          block(companyName.name)
+        userAnswers.get(ClientBusinessNamePage).map { clientBusinessNamePage =>
+          block(clientBusinessNamePage.name)
         }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
     }
   }
