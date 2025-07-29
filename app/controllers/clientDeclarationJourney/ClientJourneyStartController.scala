@@ -17,7 +17,7 @@
 package controllers.clientDeclarationJourney
 
 import connectors.RegistrationConnector
-import controllers.actions.UnidentifiedDataRetrievalAction
+import controllers.actions.ClientIdentifierAction
 import logging.Logging
 import models.UserAnswers
 import models.domain.VatCustomerInfo
@@ -36,7 +36,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import javax.inject.Inject
 
 class ClientJourneyStartController @Inject()(
-                                              unidentifiedDataRetrievalAction: UnidentifiedDataRetrievalAction,
+                                              unidentifiedDataRetrievalAction: ClientIdentifierAction,
                                               registrationConnector: RegistrationConnector,
                                               sessionRepository: SessionRepository,
                                               val controllerComponents: MessagesControllerComponents,
@@ -45,6 +45,13 @@ class ClientJourneyStartController @Inject()(
   def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = unidentifiedDataRetrievalAction.async {
     implicit request =>
 
+      println("✅ HTTP Method: " + request.method)
+      println("✅ Path: " + request.path)
+      println("✅ Headers: " + request.headers)
+      println("✅ Query Params: " + request.queryString)
+      println("✅ Session: " + request.session)
+
+      Ok("Check logs for request details.")
       registrationConnector.getPendingRegistration(uniqueUrlCode).flatMap {
         case Right(savedPendingRegistration) =>
 

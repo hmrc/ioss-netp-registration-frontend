@@ -16,18 +16,10 @@
 
 package controllers.actions
 
-import config.FrontendAppConfig
-
 import javax.inject.Inject
-import models.requests.{ClientOptionalDataRequest, IdentifierRequest, OptionalDataRequest}
-import play.api.mvc.{ActionBuilder, ActionTransformer, AnyContent, BodyParsers, Request, Result, WrappedRequest}
+import models.requests.{IdentifierRequest, OptionalDataRequest}
+import play.api.mvc.ActionTransformer
 import repositories.SessionRepository
-import services.{IntermediaryRegistrationService, UrlBuilderService}
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.auth.core.retrieve.*
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import uk.gov.hmrc.http.{HeaderCarrier, UnauthorizedException}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -35,25 +27,12 @@ class DataRetrievalActionImpl @Inject()(
                                          val sessionRepository: SessionRepository
                                        )(implicit val executionContext: ExecutionContext) extends DataRetrievalAction {
 
-  override protected def transform[A](request: WrappedRequest[A]): Future[OptionalDataRequest[A]] = {
+  override protected def transform[A](request: IdentifierRequest[A]): Future[OptionalDataRequest[A]] = {
 
-    request match {
-      case ClientOptionalDataRequest(request, userId, userAnswers) =>
-        sessionRepository.get(userId).map { userAnswers =>
-          val dummyIntermediaryNumb = "Dummy1234567"
-          OptionalDataRequest(request, userId, userAnswers)
-        }
-      case OptionalDataRequest(request, userId, userAnswers) =>
-        sessionRepository.get(userId).map { userAnswers =>
-          OptionalDataRequest(request, userId, userAnswers)
-        }
-      case IdentifierRequest(request, userId, enrolments, vrn, intermediaryNumber) =>
-        sessionRepository.get(userId).map { userAnswers =>
-          OptionalDataRequest(request, userId, userAnswers, intermediaryNumber)
-        }
+    sessionRepository.get(request.userId).map { userAnswersOption =>
+      OptionalDataRequest(request.request, request.userId, userAnswersOption, Some(request.intermediaryNumber))
     }
   }
 }
 
-trait DataRetrievalAction extends ActionTransformer[WrappedRequest, OptionalDataRequest]
-
+trait DataRetrievalAction extends ActionTransformer[IdentifierRequest, OptionalDataRequest]

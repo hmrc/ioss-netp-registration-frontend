@@ -40,21 +40,20 @@ import scala.concurrent.{ExecutionContext, Future}
 class ClientCodeEntryController @Inject()(
                                            override val messagesApi: MessagesApi,
                                            sessionRepository: SessionRepository,
-                                           unidentifiedDataRetrievalAction: UnidentifiedDataRetrievalAction,
+                                           unidentifiedDataRetrievalAction: ClientIdentifierAction,
                                            formProvider: ClientCodeEntryFormProvider,
                                            registrationConnector: RegistrationConnector,
                                            dataRequiredAction: DataRequiredAction,
-                                           dataRetrievalAction: DataRetrievalAction,
+                                           clientDataRetrievalAction: ClientDataRetrievalAction,
                                            val controllerComponents: MessagesControllerComponents,
                                            view: ClientCodeEntryView
                                          )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientEmail {
   val form: Form[String] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (unidentifiedDataRetrievalAction andThen dataRetrievalAction).async {
+  def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (unidentifiedDataRetrievalAction andThen clientDataRetrievalAction).async {
     implicit request =>
-
-      request.
-      val preparedForm = request.userAnswers.getOrElse(ClientCodeEntryPage(uniqueUrlCode)) match {
+      
+      val preparedForm = request.userAnswers.get(ClientCodeEntryPage(uniqueUrlCode)) match {
         case None => form
         case Some(value) => form.fill(value)
       }
@@ -66,7 +65,7 @@ class ClientCodeEntryController @Inject()(
   }
 
   def onSubmit(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] =
-    (unidentifiedDataRetrievalAction andThen dataRetrievalAction andThen dataRequiredAction).async {
+    (unidentifiedDataRetrievalAction andThen clientDataRetrievalAction).async {
       implicit request =>
 
         getClientEmail(waypoints, request.userAnswers) { clientEmail =>

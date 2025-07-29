@@ -17,14 +17,16 @@
 package controllers.clientDeclarationJourney
 
 import connectors.RegistrationConnector
-import controllers.GetClientCompanyName
-import controllers.actions.{DataRetrievalAction, *}
+import controllers.actions.*
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import logging.Logging
-import pages.Waypoints
+import models.UserAnswers
 import pages.clientDeclarationJourney.ClientDeclarationPage
+import pages.{ClientBusinessNamePage, JourneyRecoveryPage, Waypoints}
+import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import play.api.mvc.Results.Redirect
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import repositories.SessionRepository
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
@@ -36,46 +38,52 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ClientDeclarationController @Inject()(
                                              override val messagesApi: MessagesApi,
-                                             cc: AuthenticatedControllerComponents,
                                              sessionRepository: SessionRepository,
-                                             unidentifiedDataRetrievalAction: UnidentifiedDataRetrievalAction,
-                                             registrationConnector: RegistrationConnector,
-                                             requiredAction: DataRequiredAction,
-                                             dataRetrievalAction: DataRetrievalAction,
+                                             unidentifiedDataRetrievalAction: ClientIdentifierAction,
                                              formProvider: ClientDeclarationFormProvider,
+                                             registrationConnector: RegistrationConnector,
+                                             clientDataRetrievalAction: ClientDataRetrievalAction,
+                                             val controllerComponents: MessagesControllerComponents,
+                                             cc: AuthenticatedControllerComponents,
                                              view: ClientDeclarationView
                                            )(implicit ec: ExecutionContext)
-  extends FrontendBaseController with I18nSupport with GetClientCompanyName with Logging {
+  extends FrontendBaseController with I18nSupport with Logging {
 
-  val form = formProvider()
+  val form: Form[Boolean] = formProvider()
 
-  protected val controllerComponents: MessagesControllerComponents = cc
-
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (unidentifiedDataRetrievalAction andThen dataRetrievalAction andThen requiredAction).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (cc.clientIdentify andThen cc.clientGetData).async {
     implicit request =>
+      println("✅ HTTP Method: " + request.method)
+      println("✅ Path: " + request.path)
+      println("✅ Headers: " + request.headers)
+      println("✅ Query Params: " + request.queryString)
+      println("✅ Session: " + request.session)
 
-      getClientCompanyName(waypoints) { clientCompanyName =>
+      Ok("Check logs for request details.")
+
+      println(" request !!!" + request)
+      getClientCompanyName(waypoints, request.userAnswers) { clientCompanyName =>
 
         getIntermediaryName().map { intermediaryOpt =>
           val intermediaryName = intermediaryOpt.getOrElse("")
-          
+
           val preparedForm = request.userAnswers.get(ClientDeclarationPage) match {
             case None => form
             case Some(value) => form.fill(value)
           }
-
+          val clientCompanyName = "blah"
           Ok(view(preparedForm, waypoints, clientCompanyName, intermediaryName))
         }
       }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (unidentifiedDataRetrievalAction andThen dataRetrievalAction andThen requiredAction).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (cc.clientIdentify andThen cc.clientGetData).async {
     implicit request =>
 
-      getClientCompanyName(waypoints) { clientCompanyName =>
+      getClientCompanyName(waypoints, request.userAnswers) { clientCompanyName =>
         getIntermediaryName().flatMap { intermediaryOpt =>
           val intermediaryName = intermediaryOpt.getOrElse("")
-          
+
           form.bindFromRequest().fold(
             formWithErrors =>
               BadRequest(view(formWithErrors, waypoints, clientCompanyName, intermediaryName)).toFuture,
@@ -100,4 +108,23 @@ class ClientDeclarationController @Inject()(
     }
   }
 
+  private def getClientCompanyName(waypoints: Waypoints, userAnswers: UserAnswers)
+                                  (block: String => Future[Result]): Future[Result] = {
+    userAnswers.vatInfo match {
+      case Some(vatCustomerInfo) =>
+
+        vatCustomerInfo.organisationName match {
+          case Some(orgName) => block(orgName)
+          case _ =>
+            vatCustomerInfo.individualName
+              .map(block)
+              .getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
+        }
+
+      case _ =>
+        userAnswers.get(ClientBusinessNamePage).map { companyName =>
+          block(companyName.name)
+        }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
+    }
+  }
 }

@@ -27,30 +27,28 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-trait UnidentifiedDataRetrievalAction extends ActionBuilder[ClientOptionalDataRequest, AnyContent] with ActionFunction[Request, ClientOptionalDataRequest]
+trait ClientIdentifierAction extends ActionBuilder[OptionalDataRequest, AnyContent] with ActionFunction[Request, OptionalDataRequest]
 
-class UnidentifiedDataRetrievalActionImpl @Inject()(
+class ClientIdentifierActionImpl @Inject()(
                                                      val sessionRepository: SessionRepository,
                                                      override val authConnector: AuthConnector,
                                                      val parser: BodyParsers.Default,
                                                    )(implicit val ec: ExecutionContext)
-  extends UnidentifiedDataRetrievalAction with AuthorisedFunctions {
+  extends ClientIdentifierAction with AuthorisedFunctions {
 
   override protected def executionContext: ExecutionContext = ec
 
   override def invokeBlock[A](
                                request: Request[A],
-                               block: ClientOptionalDataRequest[A] => Future[Result]
+                               block: OptionalDataRequest[A] => Future[Result]
                              ): Future[Result] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 
     authorised().retrieve(Retrievals.internalId) {
       case Some(internalId) =>
-        println("\n\nRetrievals.internalId:\n")
-        println(internalId)
         sessionRepository.get(internalId).flatMap { sessionData =>
-          block(ClientOptionalDataRequest(request, internalId, sessionData, None))
+          block(OptionalDataRequest(request, internalId, sessionData, None))
         }
     }
   }

@@ -71,10 +71,12 @@ class DeclarationController @Inject()(
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
+
       getClientCompanyName(waypoints) { clientCompanyName =>
 
         getIntermediaryName().flatMap { intermediaryOpt =>
           val intermediaryName = intermediaryOpt.getOrElse("")
+
           val pendingRegistrationRequest = PendingRegistrationRequest(request.userAnswers, IntermediaryStuff(request.intermediaryNumber, intermediaryName))
           registrationConnector.submitPendingRegistration(pendingRegistrationRequest).flatMap {
             case Right(submittedRegistration) =>
@@ -160,5 +162,4 @@ private def sendAudit(result: SubmissionResult, submittedDeclarationPageBody: St
 
     )
   )
-}
 }

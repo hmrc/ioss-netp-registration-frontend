@@ -35,7 +35,9 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
   
   def getData: DataRetrievalAction
   
-  def getUnAuthData: UnidentifiedDataRetrievalAction
+  def clientIdentify: ClientIdentifierAction
+  
+  def clientGetData: ClientDataRetrievalAction
   
   def requireData: DataRequiredAction
 
@@ -44,7 +46,7 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
       identify andThen
       getData andThen
       requireData
-
+  
   def identifyAndGetOptionalData: ActionBuilder[OptionalDataRequest, AnyContent] =
     actionBuilder andThen
       identify andThen
@@ -52,16 +54,17 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
 }
 
 case class DefaultAuthenticatedControllerComponents @Inject()(
-                                                                 messagesActionBuilder: MessagesActionBuilder,
-                                                                 actionBuilder: DefaultActionBuilder,
-                                                                 parsers: PlayBodyParsers,
-                                                                 messagesApi: MessagesApi,
-                                                                 langs: Langs,
-                                                                 fileMimeTypes: FileMimeTypes,
-                                                                 executionContext: ExecutionContext,
-                                                                 sessionRepository: SessionRepository,
-                                                                 identify: IdentifierAction,
-                                                                 getData: DataRetrievalAction,
-                                                                 getUnAuthData: UnidentifiedDataRetrievalAction,
-                                                                 requireData: DataRequiredAction
+                                                               messagesActionBuilder: MessagesActionBuilder,
+                                                               actionBuilder: DefaultActionBuilder,
+                                                               parsers: PlayBodyParsers,
+                                                               messagesApi: MessagesApi,
+                                                               langs: Langs,
+                                                               fileMimeTypes: FileMimeTypes,
+                                                               executionContext: ExecutionContext,
+                                                               sessionRepository: SessionRepository,
+                                                               identify: IdentifierAction,
+                                                               getData: DataRetrievalAction,
+                                                               clientIdentify: ClientIdentifierAction,
+                                                               clientGetData: ClientDataRetrievalAction,
+                                                               requireData: DataRequiredAction
                                                                ) extends AuthenticatedControllerComponents

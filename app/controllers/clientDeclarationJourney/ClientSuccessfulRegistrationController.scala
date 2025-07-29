@@ -28,7 +28,7 @@ class ClientSuccessfulRegistrationController @Inject()(
                                                         override val messagesApi: MessagesApi,
                                                         identify: IdentifierAction,
                                                         getData: DataRetrievalAction,
-                                                        unidentifiedDataRetrievalAction: UnidentifiedDataRetrievalAction,
+                                                        unidentifiedDataRetrievalAction: ClientIdentifierAction,
                                                         val controllerComponents: MessagesControllerComponents,
                                                         view: ClientSuccessfulRegistrationView
                                                       ) extends FrontendBaseController with I18nSupport {

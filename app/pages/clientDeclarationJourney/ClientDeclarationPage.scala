@@ -29,7 +29,7 @@ case object ClientDeclarationPage extends QuestionPage[Boolean] {
   override def toString: String = "clientDeclaration"
 
   override def route(waypoints: Waypoints): Call = {
-    routes.ClientDeclarationController.onPageLoad(waypoints)
+    controllers.clientDeclarationJourney.routes.ClientDeclarationController.onPageLoad(waypoints)
   }
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
