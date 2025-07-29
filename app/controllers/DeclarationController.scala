@@ -21,12 +21,14 @@ import controllers.actions.*
 import forms.DeclarationFormProvider
 import logging.Logging
 import models.SavedPendingRegistration
+import models.audit.{IntermediaryDeclarationSigningAuditModel, IntermediaryDeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult
+import models.requests.DataRequest
 import pages.{DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import services.EmailService
+import services.{AuditService, EmailService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
@@ -41,6 +43,7 @@ class DeclarationController @Inject()(
                                        cc: AuthenticatedControllerComponents,
                                        formProvider: DeclarationFormProvider,
                                        registrationConnector: RegistrationConnector,
+                                       auditService: AuditService,
                                        emailService: EmailService,
                                        view: DeclarationView
                                      )(implicit ec: ExecutionContext)
@@ -68,46 +71,62 @@ class DeclarationController @Inject()(
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
+      getClientCompanyName(waypoints) { clientCompanyName =>
 
-      registrationConnector.submitPendingRegistration(request.userAnswers).flatMap {
-        case Right(submittedRegistration) =>
+        getIntermediaryName().flatMap { intermediaryOpt =>
+          val intermediaryName = intermediaryOpt.getOrElse("")
 
-          getClientEmail(waypoints, submittedRegistration.userAnswers) { clientEmail =>
+          registrationConnector.submitPendingRegistration(request.userAnswers).flatMap {
+            case Right(submittedRegistration) =>
 
-            getClientCompanyName(waypoints) { clientCompanyName =>
-
-              getIntermediaryName().flatMap { intermediaryOpt =>
-                val intermediaryName = intermediaryOpt.getOrElse("")
+              getClientEmail(waypoints, submittedRegistration.userAnswers) { clientEmail =>
 
                 sendEmail(submittedRegistration, clientEmail, clientCompanyName, intermediaryName)
 
                 form.bindFromRequest().fold(
                   formWithErrors =>
+
                     Future.successful(BadRequest(view(formWithErrors, waypoints, intermediaryName, clientCompanyName))),
 
                   value =>
+
+                    sendAudit(
+                      result = SubmissionResult.Success,
+                      submittedDeclarationPageBody = view(form.fill(value), waypoints, intermediaryName, clientCompanyName).body
+                    )
                     for {
                       updatedAnswers <- Future.fromTry(request.userAnswers.set(DeclarationPage, value))
                       _ <- cc.sessionRepository.set(updatedAnswers)
                     } yield Redirect(routes.ApplicationCompleteController.onPageLoad())
                 )
               }
-            }
+              
+            case Left(error) =>
+              sendAudit(
+                result = SubmissionResult.Failure,
+                submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
+              )
+              logger.error(s"Received an unexpected error when submitting the pending registration: ${error.body}")
+              Redirect(ErrorSubmittingPendingRegistrationPage.route(waypoints).url).toFuture
           }
-        case Left(error)
-        =>
-          logger.error(s"Received an unexpected error when submitting the pending registration: ${error.body}")
-          Redirect(ErrorSubmittingPendingRegistrationPage.route(waypoints).url).toFuture
+        }
       }
   }
-
+  
   private def getIntermediaryName()(implicit hc: HeaderCarrier): Future[Option[String]] = {
-    registrationConnector.getIntermediaryVatCustomerInfo().map {
-      case Right(vatInfo) =>
-        vatInfo.organisationName.orElse(vatInfo.individualName)
-      case _ =>
-        logger.error("Unable to retrieve an intermediary name as no Organisation name or Individual name is registered")
-        throw new IllegalStateException("Unable to retrieve an intermediary name as no Organisation name or Individual name is registered")
+    val futureResult = registrationConnector.getIntermediaryVatCustomerInfo()
+
+    if (registrationConnector.getIntermediaryVatCustomerInfo() == null) {
+      Future.successful(None)
+    } else {
+      futureResult.map {
+        case Right(vatInfo) =>
+          vatInfo.organisationName.orElse(vatInfo.individualName)
+
+        case _ =>
+          logger.error("Unable to retrieve an intermediary name as no Organisation name or Individual name is registered")
+          throw new IllegalStateException("Unable to retrieve an intermediary name as no Organisation name or Individual name is registered")
+      }
     }
   }
 
@@ -124,6 +143,19 @@ class DeclarationController @Inject()(
       activation_code_expiry_date = submittedRegistration.activationExpiryDate,
       activation_code = submittedRegistration.uniqueActivationCode,
       emailAddress = clientEmail
+    )
+  }
+
+  private def sendAudit(result: SubmissionResult, submittedDeclarationPageBody: String)
+                       (implicit hc: HeaderCarrier, request: DataRequest[_]): Unit = {
+    auditService.audit(
+      IntermediaryDeclarationSigningAuditModel.build(
+        IntermediaryDeclarationSigningAuditType.CreateDeclaration,
+        request.userAnswers,
+        result,
+        submittedDeclarationPageBody
+
+      )
     )
   }
 }
