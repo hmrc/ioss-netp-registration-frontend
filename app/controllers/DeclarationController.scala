@@ -92,7 +92,7 @@ class DeclarationController @Inject()(
 
                     sendAudit(
                       result = SubmissionResult.Success,
-                      submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
+                      submittedDeclarationPageBody = view(form.fill(value), waypoints, intermediaryName, clientCompanyName).body
                     )
                     for {
                       updatedAnswers <- Future.fromTry(request.userAnswers.set(DeclarationPage, value))
