@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package models.requests
+package queries
 
-import play.api.mvc.{Request, WrappedRequest}
-import models.UserAnswers
+import play.api.libs.json.JsPath
+import models.IntermediaryStuff
 
-case class OptionalDataRequest[A] (request: Request[A], userId: String, userAnswers: Option[UserAnswers], intermediaryNumber: String) extends WrappedRequest[A](request)
+case object IntermediaryStuffQuery extends Gettable[IntermediaryStuff] with Settable[IntermediaryStuff] {
 
-case class DataRequest[A](request: Request[A], userId: String, userAnswers: UserAnswers, intermediaryNumber: String) extends WrappedRequest[A](request)
-
-case class ClientOptionalDataRequest[A](request: Request[A], userId: String, userAnswers: Option[UserAnswers]) extends WrappedRequest[A](request)
+  override def path: JsPath = JsPath \ "intermediaryStuff"
+}

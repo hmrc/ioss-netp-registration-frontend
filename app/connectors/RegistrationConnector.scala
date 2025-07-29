@@ -23,6 +23,7 @@ import connectors.ValidateClientCodeHttpParser.validateClientCodeResponse
 import connectors.ValidateClientCodeHttpParser.ValidateClientCodeReads
 import connectors.RegistrationHttpParser.*
 import connectors.VatCustomerInfoHttpParser.{VatCustomerInfoResponse, VatCustomerInfoResponseReads}
+import models.PendingRegistrationRequest
 import logging.Logging
 import models.UserAnswers
 import play.api.Configuration
@@ -51,7 +52,7 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
     httpClientV2.get(url"$intermediaryUrl/vat-information").execute[VatCustomerInfoResponse]
   }
 
-  def submitPendingRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[SavedPendingRegistrationResponse] = {
+  def submitPendingRegistration(userAnswers: PendingRegistrationRequest)(implicit hc: HeaderCarrier): Future[SavedPendingRegistrationResponse] = {
     httpClientV2.post(url"$baseUrl/save-pending-registration")
       .withBody(Json.toJson(userAnswers))
       .execute[SavedPendingRegistrationResponse]

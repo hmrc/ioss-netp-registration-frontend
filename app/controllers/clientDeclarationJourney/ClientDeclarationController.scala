@@ -18,7 +18,7 @@ package controllers.clientDeclarationJourney
 
 import connectors.RegistrationConnector
 import controllers.GetClientCompanyName
-import controllers.actions.*
+import controllers.actions.{DataRetrievalAction, *}
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import logging.Logging
 import pages.Waypoints
@@ -41,6 +41,7 @@ class ClientDeclarationController @Inject()(
                                              unidentifiedDataRetrievalAction: UnidentifiedDataRetrievalAction,
                                              registrationConnector: RegistrationConnector,
                                              requiredAction: DataRequiredAction,
+                                             dataRetrievalAction: DataRetrievalAction,
                                              formProvider: ClientDeclarationFormProvider,
                                              view: ClientDeclarationView
                                            )(implicit ec: ExecutionContext)
@@ -50,23 +51,14 @@ class ClientDeclarationController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (unidentifiedDataRetrievalAction andThen requiredAction).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (unidentifiedDataRetrievalAction andThen dataRetrievalAction andThen requiredAction).async {
     implicit request =>
 
-      println(s"\n\nrequest:\n")
-      println(s"$request")
-      println(s"\n\nrequest.userAnswers:\n")
-      println(s"${request.userAnswers}")
-      
       getClientCompanyName(waypoints) { clientCompanyName =>
-        println(s"\n\ngetClientCompanyName:\n")
-        println(s"$clientCompanyName")
 
         getIntermediaryName().map { intermediaryOpt =>
           val intermediaryName = intermediaryOpt.getOrElse("")
-
-          println(s"\n\ngetIntermediaryName:\n")
-          println(s"$intermediaryOpt")
+          
           val preparedForm = request.userAnswers.get(ClientDeclarationPage) match {
             case None => form
             case Some(value) => form.fill(value)
@@ -77,13 +69,13 @@ class ClientDeclarationController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (unidentifiedDataRetrievalAction andThen requiredAction).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (unidentifiedDataRetrievalAction andThen dataRetrievalAction andThen requiredAction).async {
     implicit request =>
 
       getClientCompanyName(waypoints) { clientCompanyName =>
         getIntermediaryName().flatMap { intermediaryOpt =>
           val intermediaryName = intermediaryOpt.getOrElse("")
-
+          
           form.bindFromRequest().fold(
             formWithErrors =>
               BadRequest(view(formWithErrors, waypoints, clientCompanyName, intermediaryName)).toFuture,

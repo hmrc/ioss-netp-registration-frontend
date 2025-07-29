@@ -16,7 +16,7 @@
 
 package controllers.actions
 
-import models.requests.{IdentifierRequest, OptionalDataRequest}
+import models.requests.{IdentifierRequest, OptionalDataRequest, ClientOptionalDataRequest}
 import play.api.mvc.{ActionBuilder, ActionFunction, AnyContent, BodyParsers, Request, Result}
 import repositories.SessionRepository
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
@@ -27,39 +27,31 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-trait UnidentifiedDataRetrievalAction extends ActionBuilder[OptionalDataRequest, AnyContent] with ActionFunction[Request, OptionalDataRequest]
+trait UnidentifiedDataRetrievalAction extends ActionBuilder[ClientOptionalDataRequest, AnyContent] with ActionFunction[Request, ClientOptionalDataRequest]
 
 class UnidentifiedDataRetrievalActionImpl @Inject()(
-                                     val sessionRepository: SessionRepository,
-                                     override val authConnector: AuthConnector,
-                                     val parser: BodyParsers.Default,
-                                   )(implicit val ec: ExecutionContext)
+                                                     val sessionRepository: SessionRepository,
+                                                     override val authConnector: AuthConnector,
+                                                     val parser: BodyParsers.Default,
+                                                   )(implicit val ec: ExecutionContext)
   extends UnidentifiedDataRetrievalAction with AuthorisedFunctions {
 
   override protected def executionContext: ExecutionContext = ec
 
   override def invokeBlock[A](
                                request: Request[A],
-                               block: OptionalDataRequest[A] => Future[Result]
+                               block: ClientOptionalDataRequest[A] => Future[Result]
                              ): Future[Result] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 
     authorised().retrieve(Retrievals.internalId) {
       case Some(internalId) =>
+        println("\n\nRetrievals.internalId:\n")
+        println(internalId)
         sessionRepository.get(internalId).flatMap { sessionData =>
-         block(OptionalDataRequest(request, internalId, sessionData))
+          block(ClientOptionalDataRequest(request, internalId, sessionData, None))
         }
     }
   }
-
-/**
-  override protected def transform[A](request: OptionalDataRequest[A]): Future[OptionalDataRequest[A]] = {
-
-    sessionRepository.get(request.userId).map {
-      OptionalDataRequest(request.request, request.userId, _)
-    }
-  }
-
- */
 }

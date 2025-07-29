@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package models.requests
+package models
 
-import play.api.mvc.{Request, WrappedRequest}
-import models.UserAnswers
+import play.api.libs.json.*
 
-case class OptionalDataRequest[A] (request: Request[A], userId: String, userAnswers: Option[UserAnswers], intermediaryNumber: String) extends WrappedRequest[A](request)
+case class PendingRegistrationRequest(
+                                       userAnswers: UserAnswers,
+                                       intermediaryStuff: IntermediaryStuff
+                                     )
 
-case class DataRequest[A](request: Request[A], userId: String, userAnswers: UserAnswers, intermediaryNumber: String) extends WrappedRequest[A](request)
-
-case class ClientOptionalDataRequest[A](request: Request[A], userId: String, userAnswers: Option[UserAnswers]) extends WrappedRequest[A](request)
+object PendingRegistrationRequest {
+  implicit lazy val format: OFormat[PendingRegistrationRequest] = Json.format[PendingRegistrationRequest]
+}

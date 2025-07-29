@@ -23,7 +23,7 @@ import models.audit.{IntermediaryDeclarationSigningAuditModel, IntermediaryDecla
 import models.emails.EmailSendingResult.EMAIL_NOT_SENT
 import models.requests.DataRequest
 import models.responses.UnexpectedResponseStatus
-import models.{BusinessContactDetails, ClientBusinessName, SavedPendingRegistration}
+import models.{BusinessContactDetails, ClientBusinessName, PendingRegistrationRequest, SavedPendingRegistration}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{doNothing, times, verify, when}
@@ -52,6 +52,12 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
     .set(ClientBusinessNamePage, clientBusinessName).success.value
     .set(ClientVatNumberPage, vatNumber).success.value
     .set(BusinessContactDetailsPage, businessContactDetails).success.value
+
+  private val pendingRegistrationRequest: PendingRegistrationRequest = PendingRegistrationRequest(
+    userAnswers = userAnswers,
+    intermediaryNumber = intermediaryNumber,
+    intermediaryName = intermediaryVatCustomerInfo.organisationName
+  )
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
   private val mockAuditService: AuditService = mock[AuditService]
@@ -190,7 +196,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value mustBe DeclarationPage.navigate(waypoints, userAnswers, userAnswers).route.url
-          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(userAnswers))(any())
+          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(pendingRegistrationRequest))(any())
           verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
           verify(mockEmailService, times(1)).sendClientActivationEmail(
             any,
@@ -259,9 +265,8 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value mustBe DeclarationPage.navigate(waypoints, userAnswers, userAnswers).route.url
-          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(userAnswers))(any())
-          verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
-          verify(mockEmailService, times(1)).sendClientActivationEmail(
+          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(pendingRegistrationRequest))(any())
+          verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any()) verify (mockEmailService, times(1)).sendClientActivationEmail(
             any,
             any,
             any,

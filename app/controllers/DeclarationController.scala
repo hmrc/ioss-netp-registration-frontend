@@ -20,10 +20,10 @@ import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.DeclarationFormProvider
 import logging.Logging
-import models.SavedPendingRegistration
 import models.audit.{IntermediaryDeclarationSigningAuditModel, IntermediaryDeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult
 import models.requests.DataRequest
+import models.{IntermediaryStuff, PendingRegistrationRequest, SavedPendingRegistration}
 import pages.{DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
@@ -75,8 +75,8 @@ class DeclarationController @Inject()(
 
         getIntermediaryName().flatMap { intermediaryOpt =>
           val intermediaryName = intermediaryOpt.getOrElse("")
-
-          registrationConnector.submitPendingRegistration(request.userAnswers).flatMap {
+          val pendingRegistrationRequest = PendingRegistrationRequest(request.userAnswers, IntermediaryStuff(request.intermediaryNumber, intermediaryName))
+          registrationConnector.submitPendingRegistration(pendingRegistrationRequest).flatMap {
             case Right(submittedRegistration) =>
 
               getClientEmail(waypoints, submittedRegistration.userAnswers) { clientEmail =>
@@ -100,7 +100,7 @@ class DeclarationController @Inject()(
                     } yield Redirect(routes.ApplicationCompleteController.onPageLoad())
                 )
               }
-              
+
             case Left(error) =>
               sendAudit(
                 result = SubmissionResult.Failure,
@@ -113,50 +113,52 @@ class DeclarationController @Inject()(
       }
 
   }
-  
-  private def getIntermediaryName()(implicit hc: HeaderCarrier): Future[Option[String]] = {
-    val futureResult = registrationConnector.getIntermediaryVatCustomerInfo()
+}
 
-    if (registrationConnector.getIntermediaryVatCustomerInfo() == null) {
-      Future.successful(None)
-    } else {
-      futureResult.map {
-        case Right(vatInfo) =>
-          vatInfo.organisationName.orElse(vatInfo.individualName)
 
-        case _ =>
-          logger.error("Unable to retrieve an intermediary name as no Organisation name or Individual name is registered")
-          throw new IllegalStateException("Unable to retrieve an intermediary name as no Organisation name or Individual name is registered")
-      }
+private def getIntermediaryName()(implicit hc: HeaderCarrier): Future[Option[String]] = {
+  val futureResult = registrationConnector.getIntermediaryVatCustomerInfo()
+
+  if (registrationConnector.getIntermediaryVatCustomerInfo() == null) {
+    Future.successful(None)
+  } else {
+    futureResult.map {
+      case Right(vatInfo) =>
+        vatInfo.organisationName.orElse(vatInfo.individualName)
+
+      case _ =>
+        logger.error("Unable to retrieve an intermediary name as no Organisation name or Individual name is registered")
+        throw new IllegalStateException("Unable to retrieve an intermediary name as no Organisation name or Individual name is registered")
     }
   }
+}
 
-  private def sendEmail(
-                         submittedRegistration: SavedPendingRegistration,
-                         clientEmail: String,
-                         clientCompanyName: String,
-                         intermediaryName: String
-                       )(implicit hc: HeaderCarrier, messages: Messages): Future[EmailSendingResult] = {
+private def sendEmail(
+                       submittedRegistration: SavedPendingRegistration,
+                       clientEmail: String,
+                       clientCompanyName: String,
+                       intermediaryName: String
+                     )(implicit hc: HeaderCarrier, messages: Messages): Future[EmailSendingResult] = {
 
-    emailService.sendClientActivationEmail(
-      intermediary_name = intermediaryName,
-      recipientName_line1 = clientCompanyName,
-      activation_code_expiry_date = submittedRegistration.activationExpiryDate,
-      activation_code = submittedRegistration.uniqueActivationCode,
-      emailAddress = clientEmail
+  emailService.sendClientActivationEmail(
+    intermediary_name = intermediaryName,
+    recipientName_line1 = clientCompanyName,
+    activation_code_expiry_date = submittedRegistration.activationExpiryDate,
+    activation_code = submittedRegistration.uniqueActivationCode,
+    emailAddress = clientEmail
+  )
+}
+
+private def sendAudit(result: SubmissionResult, submittedDeclarationPageBody: String)
+                     (implicit hc: HeaderCarrier, request: DataRequest[_]): Unit = {
+  auditService.audit(
+    IntermediaryDeclarationSigningAuditModel.build(
+      IntermediaryDeclarationSigningAuditType.CreateDeclaration,
+      request.userAnswers,
+      result,
+      submittedDeclarationPageBody
+
     )
-  }
-
-  private def sendAudit(result: SubmissionResult, submittedDeclarationPageBody: String)
-                       (implicit hc: HeaderCarrier, request: DataRequest[_]): Unit = {
-    auditService.audit(
-      IntermediaryDeclarationSigningAuditModel.build(
-        IntermediaryDeclarationSigningAuditType.CreateDeclaration,
-        request.userAnswers,
-        result,
-        submittedDeclarationPageBody
-
-      )
-    )
-  }
+  )
+}
 }

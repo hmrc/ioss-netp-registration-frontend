@@ -22,7 +22,7 @@ import models.domain.VatCustomerInfo
 import models.iossRegistration.IossEtmpDisplayRegistration
 import models.ossRegistration.{OssExcludedTrader, OssRegistration}
 import models.responses.*
-import models.{SavedPendingRegistration, UserAnswers}
+import models.{PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import play.api.Application
@@ -38,6 +38,11 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
   private val userAnswers: UserAnswers = arbitraryUserAnswers.arbitrary.sample.value
+  private val pendingRegistrationRequest: PendingRegistrationRequest = PendingRegistrationRequest(
+    userAnswers = userAnswers,
+    intermediaryNumber = intermediaryNumber,
+    intermediaryName = intermediaryVatCustomerInfo.organisationName
+  )
   private val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
 
   private val otherErrorStatuses: Seq[Int] = Seq(BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE, UNPROCESSABLE_ENTITY)
@@ -189,9 +194,9 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
       val url: String = "/ioss-netp-registration/save-pending-registration"
 
       "must return Right when a new Pending registration is created on the backend" in {
-         val responseBody = Json.toJson(savedPendingRegistration).toString
+        val responseBody = Json.toJson(savedPendingRegistration).toString
 
-          running(application) {
+        running(application) {
 
           val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
 
@@ -200,9 +205,9 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
               .willReturn(ok().withBody(responseBody))
           )
 
-          val result = connector.submitPendingRegistration(userAnswers).futureValue
+          val result = connector.submitPendingRegistration(pendingRegistrationRequest).futureValue
 
-            result `mustBe` Right(savedPendingRegistration)
+          result `mustBe` Right(savedPendingRegistration)
         }
       }
 
@@ -222,7 +227,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
                   .withStatus(status))
             )
 
-            val result = connector.submitPendingRegistration(userAnswers).futureValue
+            val result = connector.submitPendingRegistration(pendingRegistrationRequest).futureValue
 
             result `mustBe` Left(response)
           }
@@ -300,7 +305,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
                 .withBody(responseBody))
           )
 
-          val result = connector.validateClientCode(uniqueUrlCode,uniqueActivationCode).futureValue
+          val result = connector.validateClientCode(uniqueUrlCode, uniqueActivationCode).futureValue
 
           result `mustBe` Right(true)
         }

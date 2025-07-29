@@ -27,6 +27,7 @@ import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.IntermediaryStuffQuery
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
@@ -43,81 +44,57 @@ class ClientCodeEntryController @Inject()(
                                            formProvider: ClientCodeEntryFormProvider,
                                            registrationConnector: RegistrationConnector,
                                            dataRequiredAction: DataRequiredAction,
+                                           dataRetrievalAction: DataRetrievalAction,
                                            val controllerComponents: MessagesControllerComponents,
                                            view: ClientCodeEntryView
                                          )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientEmail {
   val form: Form[String] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (unidentifiedDataRetrievalAction).async {
+  def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (unidentifiedDataRetrievalAction andThen dataRetrievalAction).async {
     implicit request =>
 
-
-      registrationConnector.getPendingRegistration(uniqueUrlCode).flatMap {
-        case Right(savedPendingRegistration) =>
-          println(s"\n\nsavePendingReg userAnswers:\n")
-          println(s"${savedPendingRegistration.userAnswers}")
-          
-          val preparedForm = request.userAnswers.flatMap(_.get(ClientCodeEntryPage(uniqueUrlCode))) match {
-            case None => form
-            case Some(value) => form.fill(value)
-          }
-
-          getClientEmail(waypoints, savedPendingRegistration.userAnswers) { clientEmail =>
-            Ok(view(preparedForm, waypoints, clientEmail, uniqueUrlCode)).toFuture
-          }
-
-
-        case Left(errors) =>
-          val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given url code: $uniqueUrlCode; Error message:${errors.body}."
-          val exception: Exception = new Exception(message)
-          logger.error(exception.getMessage, exception)
-          throw exception
+      request.
+      val preparedForm = request.userAnswers.getOrElse(ClientCodeEntryPage(uniqueUrlCode)) match {
+        case None => form
+        case Some(value) => form.fill(value)
       }
+
+      getClientEmail(waypoints, request.userAnswers) { clientEmail =>
+        Ok(view(preparedForm, waypoints, clientEmail, uniqueUrlCode)).toFuture
+      }
+
   }
 
-  def onSubmit(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (unidentifiedDataRetrievalAction).async {
-    implicit request =>
-      
-      registrationConnector.getPendingRegistration(uniqueUrlCode).flatMap {
-        case Right(savedPendingRegistration) =>
+  def onSubmit(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] =
+    (unidentifiedDataRetrievalAction andThen dataRetrievalAction andThen dataRequiredAction).async {
+      implicit request =>
 
+        getClientEmail(waypoints, request.userAnswers) { clientEmail =>
 
-          getClientEmail(waypoints, savedPendingRegistration.userAnswers) { clientEmail =>
-            form.bindFromRequest().fold(
-              formWithErrors =>
+          form.bindFromRequest().fold(
+            formWithErrors =>
+              Future.successful(BadRequest(view(formWithErrors, waypoints, clientEmail, uniqueUrlCode))),
 
-                Future.successful(BadRequest(view(formWithErrors, waypoints, clientEmail, uniqueUrlCode))),
+            enteredActivationCode =>
 
-              enteredActivationCode =>
-                val originalAnswers: UserAnswers = savedPendingRegistration.userAnswers
-                registrationConnector.validateClientCode(savedPendingRegistration.uniqueUrlCode, enteredActivationCode).flatMap {
-                  case Right(value) if !value =>
-                    val formWithErrors = form.bindFromRequest().withError("value", "clientCodeEntry.error")
-                    Future.successful(BadRequest(view(formWithErrors, waypoints, clientEmail, uniqueUrlCode)))
+              registrationConnector.validateClientCode(uniqueUrlCode, enteredActivationCode).flatMap {
+                case Right(value) if !value =>
+                  val formWithErrors = form.bindFromRequest().withError("value", "clientCodeEntry.error")
+                  Future.successful(BadRequest(view(formWithErrors, waypoints, clientEmail, uniqueUrlCode)))
 
-                  case Left(errors) =>
-                    val message: String = s"Received an unexpected error when trying to validate the pending registration for the given journey ID: $errors."
-                    val exception: Exception = new Exception(message)
-                    logger.error(exception.getMessage, exception)
-                    throw exception
+                case Left(errors) =>
+                  val message: String = s"Received an unexpected error when trying to validate the pending registration for the given journey ID: $errors."
+                  val exception: Exception = new Exception(message)
+                  logger.error(exception.getMessage, exception)
+                  throw exception
 
-                  case Right(value) =>
-                    
-                    val userA = request.userAnswers.getOrElse(UserAnswers(request.userId))
-                    val up = userA.copy(data = originalAnswers.data, vatInfo = originalAnswers.vatInfo)
-                    for {
-                      updatedAnswers <- Future.fromTry(up.set(ClientCodeEntryPage(uniqueUrlCode), enteredActivationCode))
-                      _ <- sessionRepository.set(updatedAnswers)
-                    } yield Redirect(ClientCodeEntryPage(uniqueUrlCode).navigate(waypoints, originalAnswers, updatedAnswers).route)
-                }
-            )
-          }
-
-        case Left(errors) =>
-          val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given journey ID: $errors."
-          val exception: Exception = new Exception(message)
-          logger.error(exception.getMessage, exception)
-          throw exception
-      }
-  }
+                case Right(value) =>
+                  for {
+                    updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientCodeEntryPage(uniqueUrlCode), enteredActivationCode))
+                    _ <- sessionRepository.set(updatedAnswers)
+                  } yield Redirect(ClientCodeEntryPage(uniqueUrlCode).navigate(waypoints, request.userAnswers, updatedAnswers).route)
+              }
+          )
+        }
+    }
 }
