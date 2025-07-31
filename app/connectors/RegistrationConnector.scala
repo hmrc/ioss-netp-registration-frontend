@@ -22,10 +22,11 @@ import connectors.SavedPendingRegistrationHttpParser.SavedPendingRegistrationRes
 import connectors.ValidateClientCodeHttpParser.validateClientCodeResponse
 import connectors.ValidateClientCodeHttpParser.ValidateClientCodeReads
 import connectors.RegistrationHttpParser.*
+import connectors.SavedPendingRegistrationHttpParser.{SavedPendingRegistrationResponse, SavedPendingRegistrationResultResponseReads}
+import connectors.ValidateClientCodeHttpParser.{ValidateClientCodeReads, validateClientCodeResponse}
 import connectors.VatCustomerInfoHttpParser.{VatCustomerInfoResponse, VatCustomerInfoResponseReads}
-import models.PendingRegistrationRequest
 import logging.Logging
-import models.UserAnswers
+import models.PendingRegistrationRequest
 import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue

@@ -16,7 +16,6 @@
 
 package pages.clientDeclarationJourney
 
-import controllers.clientDeclarationJourney.routes
 import models.UserAnswers
 import pages.{Page, QuestionPage, Waypoints}
 import play.api.libs.json.JsPath

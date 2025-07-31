@@ -21,7 +21,7 @@ import connectors.RegistrationConnector
 import controllers.{clientDeclarationJourney, routes}
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import models.domain.VatCustomerInfo
-import models.{ClientBusinessName, UserAnswers}
+import models.{ClientBusinessName, IntermediaryStuff, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -31,6 +31,7 @@ import pages.{ClientBusinessNamePage, EmptyWaypoints}
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import queries.IntermediaryStuffQuery
 import repositories.SessionRepository
 import views.html.clientDeclarationJourney.ClientDeclarationView
 
@@ -50,6 +51,10 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
     .set(ClientBusinessNamePage, ClientBusinessName(testClientName))
     .success.value
 
+  val userAnswersWithIntermediaryStuff: UserAnswers = testUserAnswers
+    .set(IntermediaryStuffQuery, IntermediaryStuff("IM Num SCG", testIntermediaryName))
+    .success.value
+
   val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
 
   override def beforeEach(): Unit = reset(mockRegistrationConnector)
@@ -61,14 +66,9 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
     ".onPageLoad() - GET must " - {
       "return OK and the correct view for a GET" in {
+//TODO- SCG- Test is failing as no longer a mock connector call, instead need to enrich with more User Answer data to avoid Journey Recovery page!
 
-        when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any()))
-          .thenReturn(Future.successful(Right(arbitraryVatInfo)))
-
-        val application = applicationBuilder(userAnswers = Some(testUserAnswers))
-          .overrides(
-            bind[RegistrationConnector].toInstance(mockRegistrationConnector)
-          ).build()
+        val application = applicationBuilder(userAnswers = Some(userAnswersWithIntermediaryStuff)).build()
 
         running(application) {
           val request = FakeRequest(GET, clientDeclarationOnPageLoad)
@@ -85,16 +85,10 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
       "return OK and the correct view for a GET when the question has previously been answered" in {
 
-        when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any()))
-          .thenReturn(Future.successful(Right(arbitraryVatInfo)))
-
-        val filledUserAnswers = testUserAnswers
+        val filledUserAnswers = userAnswersWithIntermediaryStuff
           .set(ClientDeclarationPage, true).success.value
 
-        val application = applicationBuilder(userAnswers = Some(filledUserAnswers))
-          .overrides(
-            bind[RegistrationConnector].toInstance(mockRegistrationConnector)
-          ).build()
+        val application = applicationBuilder(userAnswers = Some(filledUserAnswers)).build()
 
         running(application) {
           val request = FakeRequest(GET, clientDeclarationOnPageLoad)
@@ -131,14 +125,10 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
         when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
 
-        when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any()))
-          .thenReturn(Future.successful(Right(arbitraryVatInfo)))
-
         val application =
-          applicationBuilder(userAnswers = Some(testUserAnswers))
+          applicationBuilder(userAnswers = Some(userAnswersWithIntermediaryStuff))
             .overrides(
               bind[SessionRepository].toInstance(mockSessionRepository),
-              bind[RegistrationConnector].toInstance(mockRegistrationConnector)
             )
             .build()
 
@@ -149,26 +139,22 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
           val result = route(application, request).value
 
-          val expectedAnswers = testUserAnswers.set(ClientDeclarationPage, true).success.value
+          val expectedAnswers = userAnswersWithIntermediaryStuff.set(ClientDeclarationPage, true).success.value
 
 
           status(result) mustEqual SEE_OTHER
-          redirectLocation(result).value mustEqual ClientDeclarationPage.navigate(EmptyWaypoints, testUserAnswers, expectedAnswers).url
+          redirectLocation(result).value mustEqual ClientDeclarationPage.navigate(EmptyWaypoints, userAnswersWithIntermediaryStuff, expectedAnswers).url
           verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
-          verify(mockRegistrationConnector, times(1)).getIntermediaryVatCustomerInfo()(any())
 
         }
       }
 
       "return a Bad Request and errors when invalid data is submitted" in {
 
-        when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any()))
-          .thenReturn(Future.successful(Right(arbitraryVatInfo)))
 
         val application =
-          applicationBuilder(userAnswers = Some(testUserAnswers))
+          applicationBuilder(userAnswers = Some(userAnswersWithIntermediaryStuff))
             .overrides(
-              bind[RegistrationConnector].toInstance(mockRegistrationConnector)
             )
             .build()
 

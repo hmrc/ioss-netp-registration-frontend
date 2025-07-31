@@ -38,7 +38,7 @@ class ClientSuccessfulRegistrationControllerSpec extends SpecBase {
         val view = application.injector.instanceOf[ClientSuccessfulRegistrationView]
 
         status(result) mustEqual OK
-        contentAsString(result) mustEqual view("IM9001234567")(request, messages(application)).toString
+        contentAsString(result) mustEqual view("Intermediary dummy Number")(request, messages(application)).toString
         //TODO- VEI-297 To be implemented when IOSS number is returned from HOD
       }
     }

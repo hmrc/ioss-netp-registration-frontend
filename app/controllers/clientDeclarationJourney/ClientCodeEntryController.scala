@@ -20,14 +20,12 @@ import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.clientDeclarationJourney.ClientCodeEntryFormProvider
 import logging.Logging
-import models.UserAnswers
 import pages.Waypoints
 import pages.clientDeclarationJourney.ClientCodeEntryPage
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import queries.IntermediaryStuffQuery
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
@@ -43,7 +41,6 @@ class ClientCodeEntryController @Inject()(
                                            unidentifiedDataRetrievalAction: ClientIdentifierAction,
                                            formProvider: ClientCodeEntryFormProvider,
                                            registrationConnector: RegistrationConnector,
-                                           dataRequiredAction: DataRequiredAction,
                                            clientDataRetrievalAction: ClientDataRetrievalAction,
                                            val controllerComponents: MessagesControllerComponents,
                                            view: ClientCodeEntryView
@@ -52,7 +49,7 @@ class ClientCodeEntryController @Inject()(
 
   def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (unidentifiedDataRetrievalAction andThen clientDataRetrievalAction).async {
     implicit request =>
-      
+    
       val preparedForm = request.userAnswers.get(ClientCodeEntryPage(uniqueUrlCode)) match {
         case None => form
         case Some(value) => form.fill(value)

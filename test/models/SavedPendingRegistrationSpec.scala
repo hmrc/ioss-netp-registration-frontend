@@ -31,7 +31,8 @@ class SavedPendingRegistrationSpec extends SpecBase {
       uniqueUrlCode = UUID.randomUUID().toString,
       userAnswers = userAnswers,
       lastUpdated = userAnswers.lastUpdated,
-      uniqueActivationCode = UUID.randomUUID().toString
+      uniqueActivationCode = UUID.randomUUID().toString,
+      intermediaryStuff = IntermediaryStuff("SCG DUMMY INTERMEDIARY NUMBER", "SCG DUMMY INTERMEDIARY NUMBER")
     )
 
   "SavedPendingRegistration" - {
@@ -43,7 +44,8 @@ class SavedPendingRegistrationSpec extends SpecBase {
         "uniqueUrlCode" -> savedPendingRegistration.uniqueUrlCode,
         "userAnswers" -> savedPendingRegistration.userAnswers,
         "lastUpdated" -> savedPendingRegistration.lastUpdated,
-        "uniqueActivationCode" -> savedPendingRegistration.uniqueActivationCode
+        "uniqueActivationCode" -> savedPendingRegistration.uniqueActivationCode,
+        "intermediaryStuff" -> savedPendingRegistration.intermediaryStuff
       )
 
       val expectedResult: SavedPendingRegistration =
@@ -52,7 +54,8 @@ class SavedPendingRegistrationSpec extends SpecBase {
           uniqueUrlCode = savedPendingRegistration.uniqueUrlCode,
           userAnswers = savedPendingRegistration.userAnswers,
           lastUpdated = savedPendingRegistration.lastUpdated,
-          uniqueActivationCode = savedPendingRegistration.uniqueActivationCode
+          uniqueActivationCode = savedPendingRegistration.uniqueActivationCode,
+          intermediaryStuff = IntermediaryStuff("SCG DUMMY INTERMEDIARY NUMBER","SCG DUMMY INTERMEDIARY NUMBER")
         )
 
       json.validate[SavedPendingRegistration] mustBe JsSuccess(expectedResult)

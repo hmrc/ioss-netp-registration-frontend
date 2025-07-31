@@ -26,15 +26,14 @@ import javax.inject.Inject
 
 class ClientSuccessfulRegistrationController @Inject()(
                                                         override val messagesApi: MessagesApi,
-                                                        identify: IdentifierAction,
-                                                        getData: DataRetrievalAction,
-                                                        unidentifiedDataRetrievalAction: ClientIdentifierAction,
+                                                        clientIdentify: ClientIdentifierAction,
                                                         val controllerComponents: MessagesControllerComponents,
                                                         view: ClientSuccessfulRegistrationView
                                                       ) extends FrontendBaseController with I18nSupport {
 
-  def onPageLoad(): Action[AnyContent] = unidentifiedDataRetrievalAction {
+  def onPageLoad(): Action[AnyContent] = clientIdentify {
     implicit request =>
-      Ok(view("IM9001234567"))
+      val ImNum = request.intermediaryNumber.getOrElse("Intermediary dummy Number")
+      Ok(view(ImNum))
   }
 }

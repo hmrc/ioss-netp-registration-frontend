@@ -117,6 +117,8 @@ trait SpecBase
         bind[DataRequiredAction].to[DataRequiredActionImpl],
         bind[IdentifierAction].to[FakeIdentifierAction],
         bind[DataRetrievalAction].toInstance(new FakeDataRetrievalAction(userAnswers)),
+        bind[ClientDataRetrievalAction].toInstance(new FakeClientDataRetrievalAction(userAnswers)),
+        bind[ClientIdentifierAction].to[FakeClientIdentifierAction],
         bind[Clock].toInstance(clockToBind),
       )
   }

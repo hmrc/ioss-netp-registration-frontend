@@ -17,16 +17,19 @@
 package controllers.actions
 
 import models.UserAnswers
-import models.requests.{IdentifierRequest, OptionalDataRequest}
+import models.requests.{ClientOptionalDataRequest, OptionalDataRequest}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class FakeDataRetrievalAction(dataToReturn: Option[UserAnswers]) extends DataRetrievalAction {
+class FakeClientDataRetrievalAction(dataToReturn: Option[UserAnswers]) extends ClientDataRetrievalAction {
 
-  override protected def transform[A](request: IdentifierRequest[A]): Future[OptionalDataRequest[A]] =
-    Future(OptionalDataRequest(request.request, request.userId, dataToReturn, Some("IN9001234567")))
-    // TODO- SCG- Will there ever be a situation where someone doesn't have an intermediary num
-    // TODO- is this forcing something that should fail?
+  override protected def transform[A](request: OptionalDataRequest[A]): Future[ClientOptionalDataRequest[A]] = {
+    println("\n\n Step2 - FakeClientDataRetrievalAction:\n")
+    val nonOptionalUserAnswers = dataToReturn.getOrElse(UserAnswers("testId"))
+    println("\n\n Step2.1 - FakeClientDataRetrievalAction:\n")
+    println(s"$nonOptionalUserAnswers\n")
+    Future(ClientOptionalDataRequest(request.request, request.userId, nonOptionalUserAnswers))
+  }
 
   override protected implicit val executionContext: ExecutionContext =
     scala.concurrent.ExecutionContext.Implicits.global

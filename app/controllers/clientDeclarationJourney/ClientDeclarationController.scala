@@ -16,13 +16,12 @@
 
 package controllers.clientDeclarationJourney
 
-import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import logging.Logging
 import models.UserAnswers
 import pages.clientDeclarationJourney.ClientDeclarationPage
-import pages.{BusinessContactDetailsPage, ClientBusinessNamePage, JourneyRecoveryPage, Waypoints}
+import pages.{ClientBusinessNamePage, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Results.Redirect
@@ -39,10 +38,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class ClientDeclarationController @Inject()(
                                              override val messagesApi: MessagesApi,
                                              sessionRepository: SessionRepository,
-                                             unidentifiedDataRetrievalAction: ClientIdentifierAction,
                                              formProvider: ClientDeclarationFormProvider,
-                                             registrationConnector: RegistrationConnector,
-                                             clientDataRetrievalAction: ClientDataRetrievalAction,
                                              val controllerComponents: MessagesControllerComponents,
                                              cc: AuthenticatedControllerComponents,
                                              view: ClientDeclarationView
@@ -53,7 +49,7 @@ class ClientDeclarationController @Inject()(
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (cc.clientIdentify andThen cc.clientGetData).async {
     implicit request =>
-      
+      println("\n\n Step3 - ClientDeclarationController.onPageLoad:\n")
       getClientCompanyName(waypoints, request.userAnswers) { clientCompanyName =>
         getIntermediaryName(waypoints, request.userAnswers) { intermediaryName =>
 

@@ -18,19 +18,20 @@ package controllers.clientDeclarationJourney
 
 import base.SpecBase
 import connectors.RegistrationConnector
-import controllers.clientDeclarationJourney
+import controllers.{clientDeclarationJourney, routes}
 import forms.clientDeclarationJourney.ClientCodeEntryFormProvider
-import models.{BusinessContactDetails, SavedPendingRegistration, UserAnswers}
+import models.{BusinessContactDetails, ClientBusinessName, IntermediaryStuff, SavedPendingRegistration, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import pages.clientDeclarationJourney.ClientCodeEntryPage
-import pages.{BusinessContactDetailsPage, EmptyWaypoints}
+import pages.{BusinessContactDetailsPage, ClientBusinessNamePage, EmptyWaypoints}
 import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import queries.IntermediaryStuffQuery
 import repositories.SessionRepository
 import views.html.clientDeclarationJourney.ClientCodeEntryView
 
@@ -45,7 +46,11 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
 
   private val businessContactDetails: BusinessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
   val testClientEmail: String = businessContactDetails.emailAddress
-  val testUserAnswers: UserAnswers = emptyUserAnswers.set(BusinessContactDetailsPage, businessContactDetails).success.value
+  val testClientName: String = "Client Company"
+  val testUserAnswers: UserAnswers = emptyUserAnswers.set(ClientBusinessNamePage, ClientBusinessName(testClientName))
+    .success.value
+
+  private val nonEmptyIntermediaryName: String = intermediaryVatCustomerInfo.organisationName.getOrElse("Dummy Name for Test")
 
   private val savedPendingRegistration: SavedPendingRegistration =
     SavedPendingRegistration(
@@ -54,7 +59,15 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
       userAnswers = testUserAnswers,
       lastUpdated = testUserAnswers.lastUpdated,
       uniqueActivationCode = generate6DigitCode(),
+      intermediaryStuff = IntermediaryStuff(intermediaryNumber, nonEmptyIntermediaryName)
     )
+
+
+  val userAnswersWithIntermediaryStuff2: UserAnswers = testUserAnswers
+    .set(IntermediaryStuffQuery, IntermediaryStuff("IM Num SCG", nonEmptyIntermediaryName))
+    .success.value
+
+  val userAnswersWithIntermediaryStuff: UserAnswers = userAnswersWithIntermediaryStuff2.set(BusinessContactDetailsPage, businessContactDetails).success.value
 
   val testUniqueUrlCode: String = savedPendingRegistration.uniqueUrlCode
   val testDeclarationCode: String = savedPendingRegistration.uniqueActivationCode
@@ -77,13 +90,7 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
 
       "return OK and the correct view for a GET and successful database call" in {
 
-        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
-          .thenReturn(Future.successful(Right(savedPendingRegistration)))
-
-        val application = applicationBuilder(userAnswers = Some(emptyUserAnswers))
-          .overrides(
-            bind[RegistrationConnector].toInstance(mockRegistrationConnector)
-          )
+        val application = applicationBuilder(userAnswers = Some(userAnswersWithIntermediaryStuff))
           .build()
         running(application) {
           val request = FakeRequest(GET, clientCodeEntryOnPageLoad)
@@ -99,16 +106,10 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
 
       "return OK and the correct view for a GET when the question is previously answered" in {
 
-        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
-          .thenReturn(Future.successful(Right(savedPendingRegistration)))
-
-        val userAnswers = UserAnswers(userAnswersId)
+        val userAnswers = userAnswersWithIntermediaryStuff
           .set(ClientCodeEntryPage(testUniqueUrlCode), testDeclarationCode).success.value
 
         val application = applicationBuilder(userAnswers = Some(userAnswers))
-          .overrides(
-            bind[RegistrationConnector].toInstance(mockRegistrationConnector)
-          )
           .build()
 
         running(application) {
@@ -123,15 +124,9 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
         }
       }
 
-      "return OK and the correct view for a GET when there is no existing userAnswer" in {
-
-        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
-          .thenReturn(Future.successful(Right(savedPendingRegistration)))
+      "return an Error GET when there is no existing userAnswer to retrieve the necessary information" in {
 
         val application = applicationBuilder(userAnswers = None)
-          .overrides(
-            bind[RegistrationConnector].toInstance(mockRegistrationConnector)
-          )
           .build()
 
         running(application) {
@@ -141,8 +136,8 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
 
           val view = application.injector.instanceOf[ClientCodeEntryView]
 
-          status(result) mustEqual OK
-          contentAsString(result) mustEqual view(clientCodeEntryForm, waypoints, testClientEmail, testUniqueUrlCode)(request, messages(application)).toString
+          status(result) mustEqual SEE_OTHER
+          redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
         }
       }
 
@@ -155,14 +150,11 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
 
         when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
 
-        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
-          .thenReturn(Future.successful(Right(savedPendingRegistration)))
-
         when(mockRegistrationConnector.validateClientCode(any(), any())(any()))
           .thenReturn(Future.successful(Right(true)))
 
         val application =
-          applicationBuilder(userAnswers = Some(testUserAnswers))
+          applicationBuilder(userAnswers = Some(userAnswersWithIntermediaryStuff))
             .overrides(
               bind[RegistrationConnector].toInstance(mockRegistrationConnector),
               bind[SessionRepository].toInstance(mockSessionRepository))
@@ -175,12 +167,11 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
 
           val result = route(application, request).value
 
-          val expectedAnswers = testUserAnswers.set(ClientCodeEntryPage(testUniqueUrlCode), testDeclarationCode).success.value
+          val expectedAnswers = userAnswersWithIntermediaryStuff.set(ClientCodeEntryPage(testUniqueUrlCode), testDeclarationCode).success.value
 
           status(result) mustEqual SEE_OTHER
-          redirectLocation(result).value mustEqual ClientCodeEntryPage(testUniqueUrlCode).navigate(EmptyWaypoints, testUserAnswers, expectedAnswers).url
+          redirectLocation(result).value mustEqual ClientCodeEntryPage(testUniqueUrlCode).navigate(EmptyWaypoints, userAnswersWithIntermediaryStuff, expectedAnswers).url
           verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
-          verify(mockRegistrationConnector, times(1)).getPendingRegistration(any())(any())
           verify(mockRegistrationConnector, times(1)).validateClientCode(any(), any())(any())
         }
       }
@@ -188,13 +179,7 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
       "return a Bad Request and errors when invalid data is submitted" in {
 
 
-        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
-          .thenReturn(Future.successful(Right(savedPendingRegistration)))
-
-        val application = applicationBuilder(userAnswers = Some(testUserAnswers))
-          .overrides(
-            bind[RegistrationConnector].toInstance(mockRegistrationConnector)
-          )
+        val application = applicationBuilder(userAnswers = Some(userAnswersWithIntermediaryStuff))
           .build()
 
         running(application) {
@@ -213,14 +198,11 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
         }
       }
 
-      "NOT error when existing userAnswers are NOT present" in {
+      "return an error when existing userAnswers are not present" in {
 
         val mockSessionRepository = mock[SessionRepository]
 
         when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
-
-        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
-          .thenReturn(Future.successful(Right(savedPendingRegistration)))
 
         when(mockRegistrationConnector.validateClientCode(any(), any())(any()))
           .thenReturn(Future.successful(Right(true)))
@@ -233,23 +215,15 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
           )
           .build()
 
-        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
-          .thenReturn(Future.successful(Right(savedPendingRegistration)))
-
         running(application) {
           val request =
             FakeRequest(POST, clientCodeEntryOnPageLoad)
               .withFormUrlEncodedBody(("value", testDeclarationCode))
 
           val result = route(application, request).value
-
-          val expectedAnswers = testUserAnswers.set(ClientCodeEntryPage(testUniqueUrlCode), testDeclarationCode).success.value
-
+          
           status(result) mustEqual SEE_OTHER
-          redirectLocation(result).value mustEqual ClientCodeEntryPage(testUniqueUrlCode).navigate(EmptyWaypoints, testUserAnswers, expectedAnswers).url
-          verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
-          verify(mockRegistrationConnector, times(1)).getPendingRegistration(any())(any())
-          verify(mockRegistrationConnector, times(1)).validateClientCode(any(), any())(any())
+          redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
         }
       }
 

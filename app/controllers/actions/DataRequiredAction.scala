@@ -28,12 +28,14 @@ class DataRequiredActionImpl @Inject()(implicit val executionContext: ExecutionC
 
   override protected def refine[A](request: OptionalDataRequest[A]): Future[Either[Result, DataRequest[A]]] = {
 
+    println("\n\nBLAH\n\n")
     val intermediaryNumber = request.intermediaryNumber.getOrElse(
       throw new IllegalStateException(s"The Intermediary Number is required for ${request.userId}")
     )
     
     request.userAnswers match {
       case None =>
+        println("\n\nBLAH\n\n")
         Future.successful(Left(Redirect(routes.JourneyRecoveryController.onPageLoad())))
 
       case Some(data) =>

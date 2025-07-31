@@ -24,6 +24,7 @@ import models.ossRegistration.{OssExcludedTrader, OssRegistration}
 import models.responses.*
 import models.{PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
 import org.scalacheck.Arbitrary.arbitrary
+import models.{IntermediaryStuff, PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
 import org.scalacheck.Gen
 import play.api.Application
 import play.api.http.Status.*
@@ -38,10 +39,10 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
   private val userAnswers: UserAnswers = arbitraryUserAnswers.arbitrary.sample.value
+  private val nonEmptyIntermediaryName: String = intermediaryVatCustomerInfo.organisationName.getOrElse("Dummy Name for Test")
   private val pendingRegistrationRequest: PendingRegistrationRequest = PendingRegistrationRequest(
     userAnswers = userAnswers,
-    intermediaryNumber = intermediaryNumber,
-    intermediaryName = intermediaryVatCustomerInfo.organisationName
+    intermediaryStuff = IntermediaryStuff(intermediaryNumber, nonEmptyIntermediaryName)
   )
   private val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
 

@@ -19,21 +19,17 @@ package controllers.clientDeclarationJourney
 import connectors.RegistrationConnector
 import controllers.actions.ClientIdentifierAction
 import logging.Logging
-import models.UserAnswers
 import models.domain.VatCustomerInfo
+import models.{IntermediaryStuff, UserAnswers}
 import pages.{BusinessContactDetailsPage, Waypoints}
-import pages.clientDeclarationJourney.ClientCodeEntryPage
-import play.api.i18n.{I18nSupport, MessagesApi}
-import models.IntermediaryStuff
-import play.api.libs.json.JsObject
+import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.IntermediaryStuffQuery
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import utils.FutureSyntax.FutureOps
 
-import scala.concurrent.{ExecutionContext, Future}
 import javax.inject.Inject
+import scala.concurrent.{ExecutionContext, Future}
 
 class ClientJourneyStartController @Inject()(
                                               unidentifiedDataRetrievalAction: ClientIdentifierAction,
@@ -52,13 +48,19 @@ class ClientJourneyStartController @Inject()(
 
           val clientUserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId, vatInfo = clientVatInfo))
           for {
-            businessContactDetailsIntermediary <- Future.fromTry(
+            businessContactDetailsIntermediary <- Future.fromTry{
               savedPendingRegistration.userAnswers.get(BusinessContactDetailsPage)
-                .toRight(new IllegalStateException("Missing Client Business Details information in userAnswers"))
+                .toRight{
+                  new IllegalStateException("Missing Client Business Details information in userAnswers")}
                 .toTry
-            )
+            }
             clientWithBusinessContactDetails <- Future.fromTry(clientUserAnswers.set(BusinessContactDetailsPage, businessContactDetailsIntermediary))
-            updatedAnswers <- Future.fromTry(clientWithBusinessContactDetails.set(IntermediaryStuffQuery, IntermediaryStuff(savedPendingRegistration.intermediaryStuff.intermediaryNumber, savedPendingRegistration.intermediaryStuff.intermediaryName)))
+            updatedAnswers <- Future.fromTry(
+              clientWithBusinessContactDetails.set(
+                IntermediaryStuffQuery,
+                IntermediaryStuff(savedPendingRegistration.intermediaryStuff.intermediaryNumber, savedPendingRegistration.intermediaryStuff.intermediaryName)
+              )
+            )
             _ <- sessionRepository.set(updatedAnswers)
           } yield Redirect(routes.ClientCodeEntryController.onPageLoad(waypoints, uniqueUrlCode))
 

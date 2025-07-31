@@ -32,11 +32,11 @@ class ClientDataRetrievalActionImpl @Inject()(
   override protected def transform[A](request: OptionalDataRequest[A]): Future[ClientOptionalDataRequest[A]] = {
 
     sessionRepository.get(request.userId).map { userAnswers =>
-      val noneOptionUserAnswers = userAnswers.getOrElse(
+      val noneOptionUserAnswers = userAnswers.getOrElse {
+        
         throw new IllegalStateException(
-          "userAnswers Are required"
-        )
-      )
+          "userAnswers Are required")
+      }
 
       ClientOptionalDataRequest(request.request, request.userId, noneOptionUserAnswers)
     }

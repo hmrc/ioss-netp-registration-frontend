@@ -23,7 +23,7 @@ import models.audit.{IntermediaryDeclarationSigningAuditModel, IntermediaryDecla
 import models.emails.EmailSendingResult.EMAIL_NOT_SENT
 import models.requests.DataRequest
 import models.responses.UnexpectedResponseStatus
-import models.{BusinessContactDetails, ClientBusinessName, PendingRegistrationRequest, SavedPendingRegistration}
+import models.{BusinessContactDetails, ClientBusinessName, IntermediaryStuff, PendingRegistrationRequest, SavedPendingRegistration}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{doNothing, times, verify, when}
@@ -53,10 +53,10 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
     .set(ClientVatNumberPage, vatNumber).success.value
     .set(BusinessContactDetailsPage, businessContactDetails).success.value
 
+  private val nonEmptyIntermediaryName: String = intermediaryVatCustomerInfo.organisationName.getOrElse("Dummy Name for Test")
   private val pendingRegistrationRequest: PendingRegistrationRequest = PendingRegistrationRequest(
     userAnswers = userAnswers,
-    intermediaryNumber = intermediaryNumber,
-    intermediaryName = intermediaryVatCustomerInfo.organisationName
+    intermediaryStuff = IntermediaryStuff(intermediaryNumber, nonEmptyIntermediaryName)
   )
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
@@ -340,9 +340,9 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             bind[AuditService].toInstance(mockAuditService)
           ).build()
 
-        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Left(
-          UnexpectedResponseStatus(500, "Generic Error from database")
-        ).toFuture
+        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Left(UnexpectedResponseStatus(500, "Generic Error from database")).toFuture
+        when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any()))
+          .thenReturn(Future.successful(Right(intermediaryVatCustomerInfo)))
 
         when(mockDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
 

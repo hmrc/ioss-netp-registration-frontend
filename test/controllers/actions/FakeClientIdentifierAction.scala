@@ -16,18 +16,23 @@
 
 package controllers.actions
 
-import models.UserAnswers
-import models.requests.{IdentifierRequest, OptionalDataRequest}
+import models.requests.OptionalDataRequest
+import play.api.mvc.*
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class FakeDataRetrievalAction(dataToReturn: Option[UserAnswers]) extends DataRetrievalAction {
 
-  override protected def transform[A](request: IdentifierRequest[A]): Future[OptionalDataRequest[A]] =
-    Future(OptionalDataRequest(request.request, request.userId, dataToReturn, Some("IN9001234567")))
-    // TODO- SCG- Will there ever be a situation where someone doesn't have an intermediary num
-    // TODO- is this forcing something that should fail?
+class FakeClientIdentifierAction @Inject()(bodyParsers: PlayBodyParsers) extends ClientIdentifierAction {
 
-  override protected implicit val executionContext: ExecutionContext =
+  override def invokeBlock[A](request: Request[A], block: OptionalDataRequest[A] => Future[Result]): Future[Result] = {
+    println("\n\n Step1 - FakeClientIdentifierAction:\n")
+    block(OptionalDataRequest(request, "12345-credId"))
+  }
+
+  override def parser: BodyParser[AnyContent] =
+    bodyParsers.default
+
+  override protected def executionContext: ExecutionContext =
     scala.concurrent.ExecutionContext.Implicits.global
 }

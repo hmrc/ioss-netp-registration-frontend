@@ -16,11 +16,12 @@
 
 package controllers.actions
 
-import models.requests.{IdentifierRequest, OptionalDataRequest, ClientOptionalDataRequest}
-import play.api.mvc.{ActionBuilder, ActionFunction, AnyContent, BodyParsers, Request, Result}
+import logging.Logging
+import models.requests.OptionalDataRequest
+import play.api.mvc.*
 import repositories.SessionRepository
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
@@ -30,11 +31,11 @@ import scala.concurrent.{ExecutionContext, Future}
 trait ClientIdentifierAction extends ActionBuilder[OptionalDataRequest, AnyContent] with ActionFunction[Request, OptionalDataRequest]
 
 class ClientIdentifierActionImpl @Inject()(
-                                                     val sessionRepository: SessionRepository,
-                                                     override val authConnector: AuthConnector,
-                                                     val parser: BodyParsers.Default,
-                                                   )(implicit val ec: ExecutionContext)
-  extends ClientIdentifierAction with AuthorisedFunctions {
+                                            val sessionRepository: SessionRepository,
+                                            override val authConnector: AuthConnector,
+                                            val parser: BodyParsers.Default,
+                                          )(implicit val ec: ExecutionContext)
+  extends ClientIdentifierAction with AuthorisedFunctions with Logging {
 
   override protected def executionContext: ExecutionContext = ec
 
@@ -50,6 +51,9 @@ class ClientIdentifierActionImpl @Inject()(
         sessionRepository.get(internalId).flatMap { sessionData =>
           block(OptionalDataRequest(request, internalId, sessionData, None))
         }
+      case None =>
+        logger.error(s"No Internal ID found to create User ID.\nRequest Body:${request.body}")
+        Future.failed(new IllegalStateException("Missing Internal ID"))
     }
   }
 }
