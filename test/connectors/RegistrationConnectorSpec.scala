@@ -287,9 +287,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
       val url = s"/one-stop-shop-registration/registration/$vrn"
 
       "must return Right(OssRegistration) when the backend returns valid data" in {
-
-
-
+        
         running(application) {
           val connector = application.injector.instanceOf[RegistrationConnector]
           val ossRegistration = arbitrary[OssRegistration].sample.value
