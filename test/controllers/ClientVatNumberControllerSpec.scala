@@ -32,6 +32,7 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
+import services.core.CoreRegistrationValidationService
 import utils.FutureSyntax.FutureOps
 import views.html.ClientVatNumberView
 
@@ -44,6 +45,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
   private val ukVatNumber: String = "123456789"
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
+  private val mockCoreRegistrationValidationService = mock[CoreRegistrationValidationService]
 
   val formProvider = new ClientVatNumberFormProvider()
   val form: Form[String] = formProvider()
@@ -104,11 +106,15 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[RegistrationConnector].toInstance(mockRegistrationConnector)
+            bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
           )
           .build()
 
       running(application) {
+
+        when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
+
         val request =
           FakeRequest(POST, clientVatNumberRoute)
             .withFormUrlEncodedBody(("value", ukVatNumber))
@@ -135,12 +141,14 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
 
       when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
       when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Future.successful(Right(expiredVrnVatInfo))
+      when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
 
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[RegistrationConnector].toInstance(mockRegistrationConnector)
+            bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
           )
           .build()
 
@@ -164,10 +172,12 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       val application = applicationBuilder(userAnswers = Some(emptyUserAnswers))
         .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
         .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+        .overrides(bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService))
         .build()
 
       when(mockSessionRepository.set(any())) thenReturn false.toFuture
       when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Left(VatCustomerNotFound).toFuture
+      when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
 
       running(application) {
         val request =
@@ -189,10 +199,12 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       val application = applicationBuilder(userAnswers = Some(emptyUserAnswers))
         .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
         .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+        .overrides(bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService))
         .build()
 
       when(mockSessionRepository.set(any())) thenReturn false.toFuture
       when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Left(InternalServerError).toFuture
+      when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
 
       running(application) {
         val request =

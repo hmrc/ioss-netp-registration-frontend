@@ -24,10 +24,12 @@ import pages.vatEuDetails.EuTaxReferencePage
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.vatEuDetails.EuTaxReferenceView
 import utils.FutureSyntax.FutureOps
 
+import java.time.{Clock, LocalDate}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -35,7 +37,9 @@ class EuTaxReferenceController @Inject()(
                                         override val messagesApi: MessagesApi,
                                         cc: AuthenticatedControllerComponents,
                                         formProvider: EuTaxReferenceFormProvider,
-                                        view: EuTaxReferenceView
+                                        view: EuTaxReferenceView,
+                                        coreRegistrationValidationService: CoreRegistrationValidationService,
+                                        clock: Clock
                                       )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
 
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -59,6 +63,8 @@ class EuTaxReferenceController @Inject()(
   def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
+      val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
+      
       getCountryWithIndex(waypoints, countryIndex) { country =>
         
         val form = formProvider(country)
@@ -68,10 +74,26 @@ class EuTaxReferenceController @Inject()(
             Future.successful(BadRequest(view(formWithErrors, waypoints, countryIndex, country))),
 
           value =>
-            for {
-              updatedAnswers <- Future.fromTry(request.userAnswers.set(EuTaxReferencePage(countryIndex), value))
-              _ <- cc.sessionRepository.set(updatedAnswers)
-            } yield Redirect(EuTaxReferencePage(countryIndex).navigate(waypoints, request.userAnswers, updatedAnswers).route)
+            coreRegistrationValidationService.searchEuTaxId(value, country.code).flatMap {
+
+              case Some(activeMatch) if activeMatch.matchType.isActiveTrader && !activeMatch.traderId.isAnIntermediary =>
+                Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
+
+              case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader &&
+                LocalDate.parse(activeMatch.getEffectiveDate).isAfter(quarantineCutOffDate) &&
+                !activeMatch.traderId.isAnIntermediary =>
+                Redirect(
+                  controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+                    activeMatch.memberState,
+                    activeMatch.getEffectiveDate)
+                ).toFuture
+                
+              case _ =>
+                for {
+                  updatedAnswers <- Future.fromTry(request.userAnswers.set(EuTaxReferencePage(countryIndex), value))
+                  _ <- cc.sessionRepository.set(updatedAnswers)
+                } yield Redirect(EuTaxReferencePage(countryIndex).navigate(waypoints, request.userAnswers, updatedAnswers).route)
+            }
         )
       }
   }

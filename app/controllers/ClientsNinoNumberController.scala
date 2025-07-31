@@ -18,6 +18,8 @@ package controllers
 
 import controllers.actions.*
 import forms.ClientsNinoNumberFormProvider
+import logging.Logging
+import models.core.Match
 
 import javax.inject.Inject
 import pages.ClientsNinoNumberPage
@@ -25,17 +27,22 @@ import pages.Waypoints
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.ClientsNinoNumberView
+import utils.FutureSyntax.FutureOps
 
+import java.time.{Clock, LocalDate}
 import scala.concurrent.{ExecutionContext, Future}
 
 class ClientsNinoNumberController @Inject()(
                                         override val messagesApi: MessagesApi,
                                         cc: AuthenticatedControllerComponents,
                                         formProvider: ClientsNinoNumberFormProvider,
-                                        view: ClientsNinoNumberView
-                                    )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+                                        view: ClientsNinoNumberView,
+                                        coreRegistrationValidationService: CoreRegistrationValidationService,
+                                        clock: Clock
+                                    )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetCountry {
 
   val form: Form[String] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -54,15 +61,33 @@ class ClientsNinoNumberController @Inject()(
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
+      val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
+
       form.bindFromRequest().fold(
         formWithErrors =>
           Future.successful(BadRequest(view(formWithErrors, waypoints))),
 
         value =>
-          for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientsNinoNumberPage, value))
-            _              <- cc.sessionRepository.set(updatedAnswers)
-          } yield Redirect(ClientsNinoNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+          coreRegistrationValidationService.searchTraderId(value).flatMap {
+
+            case Some(activeMatch) if activeMatch.matchType.isActiveTrader && !activeMatch.traderId.isAnIntermediary =>
+              Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
+
+            case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader &&
+              LocalDate.parse(activeMatch.getEffectiveDate).isAfter(quarantineCutOffDate) &&
+              !activeMatch.traderId.isAnIntermediary =>
+              Redirect(
+                controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+                  activeMatch.memberState,
+                  activeMatch.getEffectiveDate)
+              ).toFuture
+              
+            case _ =>
+              for {
+                updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientsNinoNumberPage, value))
+                _ <- cc.sessionRepository.set(updatedAnswers)
+              } yield Redirect(ClientsNinoNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+          }
       )
   }
 }

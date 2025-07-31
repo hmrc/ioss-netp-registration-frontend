@@ -120,7 +120,7 @@ class CountrySpec extends SpecBase with ScalaFutures {
       
     "euCountriesWithVRNValidationRules" - {
       "must contain validation rules for all EU countries" in {
-        val expectedCountries = Country.euCountries.map(_.code)
+        val expectedCountries = Country.euCountriesWithNI.map(_.code)
         val actualCountries = CountryWithValidationDetails.euCountriesWithVRNValidationRules.map(_.country.code)
 
         actualCountries.sorted mustBe expectedCountries.sorted

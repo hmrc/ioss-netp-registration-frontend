@@ -20,11 +20,15 @@ import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.ClientVatNumberFormProvider
 import logging.Logging
+import models.core.Match
 import models.responses.VatCustomerNotFound
 import pages.{ClientVatNumberPage, UkVatNumberNotFoundPage, VatApiDownPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.mvc.Results.Redirect
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import services.core.CoreRegistrationValidationService
+import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.ClientVatNumberView
@@ -39,7 +43,8 @@ class ClientVatNumberController @Inject()(
                                            formProvider: ClientVatNumberFormProvider,
                                            registrationConnector: RegistrationConnector,
                                            view: ClientVatNumberView,
-                                           clock: Clock
+                                           clock: Clock,
+                                           coreRegistrationValidationService: CoreRegistrationValidationService
                                          )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
 
   val form: Form[String] = formProvider()
@@ -59,33 +64,50 @@ class ClientVatNumberController @Inject()(
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
+      val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
+
       form.bindFromRequest().fold(
         formWithErrors =>
           BadRequest(view(formWithErrors, waypoints)).toFuture,
 
         ukVatNumber =>
+          coreRegistrationValidationService.searchUkVrn(Vrn(ukVatNumber)).flatMap {
 
-          registrationConnector.getVatCustomerInfo(ukVatNumber).flatMap {
-            case Right(value) =>
-              val today = LocalDate.now(clock)
-              val isExpired = value.deregistrationDecisionDate.exists(!_.isAfter(today))
+            case Some(activeMatch) if activeMatch.matchType.isActiveTrader && !activeMatch.traderId.isAnIntermediary =>
+              Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
 
-              if (isExpired) {
-                logger.info(s"VAT number $ukVatNumber is expired (deregistration date: ${value.deregistrationDecisionDate})")
-                Redirect(controllers.routes.ExpiredVrnDateController.onPageLoad(waypoints).url).toFuture
-              } else {
-                for {
-                  updatedAnswers <- Future.fromTry(request
-                    .userAnswers
-                    .copy(vatInfo = Some(value))
-                    .set(ClientVatNumberPage, ukVatNumber))
-                  _ <- cc.sessionRepository.set(updatedAnswers)
-                } yield Redirect(ClientVatNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+            case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader &&
+              LocalDate.parse(activeMatch.getEffectiveDate).isAfter(quarantineCutOffDate) &&
+              !activeMatch.traderId.isAnIntermediary =>
+              Redirect(
+                controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+                  activeMatch.memberState,
+                  activeMatch.getEffectiveDate)
+              ).toFuture
+
+            case _ =>
+              registrationConnector.getVatCustomerInfo(ukVatNumber).flatMap {
+                case Right(value) =>
+                  val today = LocalDate.now(clock)
+                  val isExpired = value.deregistrationDecisionDate.exists(!_.isAfter(today))
+
+                  if (isExpired) {
+                    logger.info(s"VAT number $ukVatNumber is expired (deregistration date: ${value.deregistrationDecisionDate})")
+                    Redirect(controllers.routes.ExpiredVrnDateController.onPageLoad(waypoints).url).toFuture
+                  } else {
+                    for {
+                      updatedAnswers <- Future.fromTry(request
+                        .userAnswers
+                        .copy(vatInfo = Some(value))
+                        .set(ClientVatNumberPage, ukVatNumber))
+                      _ <- cc.sessionRepository.set(updatedAnswers)
+                    } yield Redirect(ClientVatNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+                  }
+                case Left(VatCustomerNotFound) =>
+                  Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
+                case Left(_) =>
+                  Redirect(VatApiDownPage.route(waypoints).url).toFuture
               }
-            case Left(VatCustomerNotFound) =>
-              Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
-            case Left(_) =>
-              Redirect(VatApiDownPage.route(waypoints).url).toFuture
           }
       )
   }
