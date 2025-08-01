@@ -28,6 +28,7 @@ import pages.{DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints
 import pages.{ClientBusinessNamePage, DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints}
 import models.{IntermediaryStuff, PendingRegistrationRequest, SavedPendingRegistration}
 import models.{IntermediaryInformation, PendingRegistrationRequest, SavedPendingRegistration}
+import models.{IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration}
 import pages.{DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
@@ -82,7 +83,7 @@ class DeclarationController @Inject()(
         getIntermediaryName().flatMap { intermediaryOpt =>
           val intermediaryName = intermediaryOpt.getOrElse("")
 
-          val pendingRegistrationRequest = PendingRegistrationRequest(request.userAnswers, IntermediaryInformation(request.intermediaryNumber, intermediaryName))
+          val pendingRegistrationRequest = PendingRegistrationRequest(request.userAnswers, IntermediaryDetails(request.intermediaryNumber, intermediaryName))
 
           registrationConnector.submitPendingRegistration(pendingRegistrationRequest).flatMap {
             case Right(submittedRegistration) =>

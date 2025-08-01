@@ -23,7 +23,7 @@ import models.audit.{IntermediaryDeclarationSigningAuditModel, IntermediaryDecla
 import models.emails.EmailSendingResult.EMAIL_NOT_SENT
 import models.requests.DataRequest
 import models.responses.UnexpectedResponseStatus
-import models.{BusinessContactDetails, ClientBusinessName, IntermediaryInformation, PendingRegistrationRequest, SavedPendingRegistration}
+import models.{BusinessContactDetails, ClientBusinessName, IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{doNothing, times, verify, when}
@@ -55,7 +55,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
   private val nonEmptyIntermediaryName: String = intermediaryVatCustomerInfo.organisationName.getOrElse("Dummy Name for Test")
   private val pendingRegistrationRequest: PendingRegistrationRequest = PendingRegistrationRequest(
     userAnswers = userAnswers,
-    intermediaryStuff = IntermediaryInformation(intermediaryNumber, nonEmptyIntermediaryName)
+    intermediaryDetails = IntermediaryDetails(intermediaryNumber, nonEmptyIntermediaryName)
   )
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]

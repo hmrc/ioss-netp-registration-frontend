@@ -21,38 +21,35 @@ import connectors.RegistrationConnector
 import controllers.{clientDeclarationJourney, routes}
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import models.domain.VatCustomerInfo
-import models.{ClientBusinessName, IntermediaryInformation, UserAnswers}
+import models.{ClientBusinessName, IntermediaryDetails, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import pages.clientDeclarationJourney.ClientDeclarationPage
 import pages.{ClientBusinessNamePage, EmptyWaypoints}
+import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import queries.IntermediaryStuffQuery
+import queries.IntermediaryDetailsQuery
 import repositories.SessionRepository
 import views.html.clientDeclarationJourney.ClientDeclarationView
 
 import scala.concurrent.Future
 
-class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach{
+class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
-  val testClientName: String = "Client Company"
+  private val arbitraryVatInfo: VatCustomerInfo = arbitraryVatCustomerInfo.arbitrary.sample.value
+  private val testIntermediaryName: String = arbitraryVatInfo.organisationName.getOrElse("Test Intermediary Name")
 
-  val arbitraryVatInfo: VatCustomerInfo = arbitraryVatCustomerInfo.arbitrary.sample.value
-  val testIntermediaryName: String = arbitraryVatInfo.organisationName.getOrElse("")
-
+  private val clientBusinessName: ClientBusinessName = arbitraryClientBusinessName.arbitrary.sample.value
   lazy val clientDeclarationOnPageLoad: String = clientDeclarationJourney.routes.ClientDeclarationController.onPageLoad(waypoints).url
   lazy val clientDeclarationOnSubmit: String = clientDeclarationJourney.routes.ClientDeclarationController.onSubmit(waypoints).url
 
-  val testUserAnswers: UserAnswers = emptyUserAnswers
-    .set(ClientBusinessNamePage, ClientBusinessName(testClientName))
-    .success.value
-
-  val userAnswersWithIntermediaryStuff: UserAnswers = testUserAnswers
-    .set(IntermediaryStuffQuery, IntermediaryInformation("IM Num SCG", testIntermediaryName))
+  val completeUserAnswers: UserAnswers = emptyUserAnswers
+    .set(ClientBusinessNamePage, clientBusinessName).success.value
+    .set(IntermediaryDetailsQuery, IntermediaryDetails(intermediaryNumber, testIntermediaryName))
     .success.value
 
   val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
@@ -60,15 +57,15 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
   override def beforeEach(): Unit = reset(mockRegistrationConnector)
 
   val formProvider = new ClientDeclarationFormProvider()
-  val form = formProvider()
+  val form: Form[Boolean] = formProvider()
 
   "ClientDeclaration Controller" - {
 
     ".onPageLoad() - GET must " - {
-      "return OK and the correct view for a GET" in {
-//TODO- SCG- Test is failing as no longer a mock connector call, instead need to enrich with more User Answer data to avoid Journey Recovery page!
 
-        val application = applicationBuilder(userAnswers = Some(userAnswersWithIntermediaryStuff)).build()
+      "return OK and the correct view with all userAnswers" in {
+
+        val application = applicationBuilder(userAnswers = Some(completeUserAnswers)).build()
 
         running(application) {
           val request = FakeRequest(GET, clientDeclarationOnPageLoad)
@@ -78,14 +75,53 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
           val view = application.injector.instanceOf[ClientDeclarationView]
 
           status(result) mustEqual OK
-
-          contentAsString(result) mustEqual view(form, waypoints, testClientName, testIntermediaryName)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(form, waypoints, clientBusinessName.name, testIntermediaryName)(request, messages(application)).toString
         }
       }
 
-      "return OK and the correct view for a GET when the question has previously been answered" in {
+      "return OK and the correct view with missing ClientBusinessName information" in {
+        val userAnswersWithVatInfo: UserAnswers = emptyUserAnswersWithVatInfo
+          .set(IntermediaryDetailsQuery, IntermediaryDetails(intermediaryNumber, testIntermediaryName))
+          .success.value
 
-        val filledUserAnswers = userAnswersWithIntermediaryStuff
+        val clientBusinessName: Option[String] = emptyUserAnswersWithVatInfo.vatInfo.get.organisationName
+
+        val application = applicationBuilder(userAnswers = Some(userAnswersWithVatInfo)).build()
+
+        running(application) {
+          val request = FakeRequest(GET, clientDeclarationOnPageLoad)
+
+          val result = route(application, request).value
+
+          val view = application.injector.instanceOf[ClientDeclarationView]
+
+          status(result) mustEqual OK
+          contentAsString(result) mustEqual view(form, waypoints, clientBusinessName.get, testIntermediaryName)(request, messages(application)).toString
+        }
+      }
+
+      "return OK and the correct view with missing vat information" in {
+        val userAnswersWithCompanyName: UserAnswers = emptyUserAnswers
+          .set(ClientBusinessNamePage, clientBusinessName).success.value
+          .set(IntermediaryDetailsQuery, IntermediaryDetails(intermediaryNumber, testIntermediaryName))
+          .success.value
+        val application = applicationBuilder(userAnswers = Some(userAnswersWithCompanyName)).build()
+
+        running(application) {
+          val request = FakeRequest(GET, clientDeclarationOnPageLoad)
+
+          val result = route(application, request).value
+
+          val view = application.injector.instanceOf[ClientDeclarationView]
+
+          status(result) mustEqual OK
+          contentAsString(result) mustEqual view(form, waypoints, clientBusinessName.name, testIntermediaryName)(request, messages(application)).toString
+        }
+      }
+
+      "return OK and the correct view when the question has previously been answered" in {
+
+        val filledUserAnswers = completeUserAnswers
           .set(ClientDeclarationPage, true).success.value
 
         val application = applicationBuilder(userAnswers = Some(filledUserAnswers)).build()
@@ -98,7 +134,40 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
           val result = route(application, request).value
 
           status(result) mustEqual OK
-          contentAsString(result) mustEqual view(form.fill(true), waypoints, testClientName, testIntermediaryName)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(form.fill(true), waypoints, clientBusinessName.name, testIntermediaryName)(request, messages(application)).toString
+        }
+      }
+
+      "return an error when userAnswers are missing Intermediary information" in {
+        val userAnswersWithoutIntermediaryInfo: UserAnswers = emptyUserAnswersWithVatInfo
+          .set(ClientBusinessNamePage, clientBusinessName).success.value
+
+        val application = applicationBuilder(userAnswers = Some(userAnswersWithoutIntermediaryInfo)).build()
+
+        running(application) {
+          val request = FakeRequest(GET, clientDeclarationOnPageLoad)
+
+          val result = route(application, request).value
+
+          status(result) mustEqual SEE_OTHER
+          redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+        }
+      }
+
+      "return an error when userAnswers are missing Client Company Information" in {
+        val userAnswersWithoutCompanyInfo: UserAnswers = emptyUserAnswers
+          .set(IntermediaryDetailsQuery, IntermediaryDetails(intermediaryNumber, testIntermediaryName))
+          .success.value
+
+        val application = applicationBuilder(userAnswers = Some(userAnswersWithoutCompanyInfo)).build()
+
+        running(application) {
+          val request = FakeRequest(GET, clientDeclarationOnPageLoad)
+
+          val result = route(application, request).value
+
+          status(result) mustEqual SEE_OTHER
+          redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
         }
       }
 
@@ -119,6 +188,7 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
     }
 
     ".onSubmit() - POST must" - {
+
       "redirect to the next page when valid data is submitted" in {
 
         val mockSessionRepository = mock[SessionRepository]
@@ -126,7 +196,7 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
         when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
 
         val application =
-          applicationBuilder(userAnswers = Some(userAnswersWithIntermediaryStuff))
+          applicationBuilder(userAnswers = Some(completeUserAnswers))
             .overrides(
               bind[SessionRepository].toInstance(mockSessionRepository),
             )
@@ -139,21 +209,19 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
           val result = route(application, request).value
 
-          val expectedAnswers = userAnswersWithIntermediaryStuff.set(ClientDeclarationPage, true).success.value
+          val expectedAnswers = completeUserAnswers.set(ClientDeclarationPage, true).success.value
 
 
           status(result) mustEqual SEE_OTHER
-          redirectLocation(result).value mustEqual ClientDeclarationPage.navigate(EmptyWaypoints, userAnswersWithIntermediaryStuff, expectedAnswers).url
+          redirectLocation(result).value mustEqual ClientDeclarationPage.navigate(EmptyWaypoints, completeUserAnswers, expectedAnswers).url
           verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
 
         }
       }
 
       "return a Bad Request and errors when invalid data is submitted" in {
-
-
         val application =
-          applicationBuilder(userAnswers = Some(userAnswersWithIntermediaryStuff))
+          applicationBuilder(userAnswers = Some(completeUserAnswers))
             .overrides(
             )
             .build()
@@ -170,10 +238,9 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
           val result = route(application, request).value
 
           status(result) mustEqual BAD_REQUEST
-          contentAsString(result) mustEqual view(boundForm, waypoints, testClientName, testIntermediaryName)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(boundForm, waypoints, clientBusinessName.name, testIntermediaryName)(request, messages(application)).toString
         }
       }
-
 
       "redirect to Journey Recovery for a POST if no existing data is found" in {
 

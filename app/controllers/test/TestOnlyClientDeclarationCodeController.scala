@@ -17,7 +17,7 @@
 package controllers.test
 
 import connectors.test.TestOnlyClientDeclarationCodeConnector
-import controllers.actions.{DataRetrievalAction, IdentifierAction}
+import controllers.actions.{ClientDataRetrievalAction, ClientIdentifierAction}
 import logging.Logging
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -28,21 +28,21 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class TestOnlyClientDeclarationCodeController @Inject()(
                                                          testOnlyClientDeclarationConnector: TestOnlyClientDeclarationCodeConnector,
-                                                         identify: IdentifierAction,
-                                                         getData: DataRetrievalAction,
+                                                         getClientData: ClientDataRetrievalAction,
+                                                         clientIdentify: ClientIdentifierAction,
                                                          val controllerComponents: MessagesControllerComponents,
-                                                       )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging{
+                                                       )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
 
-def testOnlyGetClientDeclarationCode(urlCode: String): Action[AnyContent] = (identify andThen getData).async {
-  implicit request =>
-    testOnlyClientDeclarationConnector.getTestOnlyCode(urlCode).flatMap {
-      case Right(response) =>
-        Future.successful(Ok(s"""<p id="testOnlyDeclarationCode">$response</p>"""))
-      case Left(error) =>
-        val message: String = s"Received an unexpected error when trying to retrieve the declaration code: $error."
-        val exception: Exception = new Exception(message)
-        logger.error(exception.getMessage, exception)
-        throw exception
-    }
-}
+  def testOnlyGetClientDeclarationCode(urlCode: String): Action[AnyContent] = (clientIdentify andThen getClientData).async {
+    implicit request =>
+      testOnlyClientDeclarationConnector.getTestOnlyCode(urlCode).flatMap {
+        case Right(response) =>
+          Future.successful(Ok(s"$response"))
+        case Left(error) =>
+          val message: String = s"Received an unexpected error when trying to retrieve the declaration code: $error."
+          val exception: Exception = new Exception(message)
+          logger.error(exception.getMessage, exception)
+          throw exception
+      }
+  }
 }

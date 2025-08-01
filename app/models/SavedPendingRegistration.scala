@@ -28,7 +28,7 @@ case class SavedPendingRegistration(
                                      userAnswers: UserAnswers,
                                      lastUpdated: Instant,
                                      uniqueActivationCode: String,
-                                     intermediaryStuff: IntermediaryInformation
+                                     intermediaryDetails: IntermediaryDetails
                                    ) {
 
   def activationExpiryDate: String = LocalDateTime

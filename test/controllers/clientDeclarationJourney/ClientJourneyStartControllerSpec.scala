@@ -20,7 +20,7 @@ import base.SpecBase
 import connectors.RegistrationConnector
 import controllers.clientDeclarationJourney
 import models.responses.NotFound
-import models.{BusinessContactDetails, ClientBusinessName, IntermediaryInformation, SavedPendingRegistration, UserAnswers}
+import models.{BusinessContactDetails, ClientBusinessName, IntermediaryDetails, SavedPendingRegistration, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -29,11 +29,10 @@ import pages.{BusinessContactDetailsPage, ClientBusinessNamePage, EmptyWaypoints
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import queries.IntermediaryStuffQuery
+import queries.IntermediaryDetailsQuery
 import utils.FutureSyntax.FutureOps
 
 class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
-
 
   def generate6DigitCode(): String = {
     util.Random.alphanumeric.filter(_.isUpper).take(6).mkString
@@ -45,7 +44,7 @@ class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with B
   val incompleteUserAnswers: UserAnswers =
     emptyUserAnswers.set(ClientBusinessNamePage, ClientBusinessName("Client Company"))
       .success.value
-      .set(IntermediaryStuffQuery, IntermediaryInformation(intermediaryNumber, nonEmptyIntermediaryName))
+      .set(IntermediaryDetailsQuery, IntermediaryDetails(intermediaryNumber, nonEmptyIntermediaryName))
       .success.value
 
   val completeUserAnswers: UserAnswers = incompleteUserAnswers.set(BusinessContactDetailsPage, businessContactDetails).success.value
@@ -57,7 +56,7 @@ class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with B
       userAnswers = userAnswers,
       lastUpdated = incompleteUserAnswers.lastUpdated,
       uniqueActivationCode = generate6DigitCode(),
-      intermediaryStuff = IntermediaryInformation(intermediaryNumber, nonEmptyIntermediaryName)
+      intermediaryDetails = IntermediaryDetails(intermediaryNumber, nonEmptyIntermediaryName)
     )
 
   private def clientJourneyStartOnPageLoad(uniqueUrlCode: String): String = clientDeclarationJourney.routes.ClientJourneyStartController.onPageLoad(waypoints, uniqueUrlCode).url
@@ -119,7 +118,6 @@ class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with B
 
       "return error when userAnswers is missing client email" in {
 
-        //SCG TODO- Can we handle the Error better rather than throwing IllegalStateException
         val testSavedPendingRegistration = savedPendingRegistration(incompleteUserAnswers)
         val testUniqueUrl = testSavedPendingRegistration.uniqueUrlCode
 

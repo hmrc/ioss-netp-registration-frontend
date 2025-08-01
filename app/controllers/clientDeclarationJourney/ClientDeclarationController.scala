@@ -26,7 +26,7 @@ import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
-import queries.IntermediaryStuffQuery
+import queries.IntermediaryDetailsQuery
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
@@ -49,7 +49,7 @@ class ClientDeclarationController @Inject()(
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (cc.clientIdentify andThen cc.clientGetData).async {
     implicit request =>
-      println("\n\n Step3 - ClientDeclarationController.onPageLoad:\n")
+
       getClientCompanyName(waypoints, request.userAnswers) { clientCompanyName =>
         getIntermediaryName(waypoints, request.userAnswers) { intermediaryName =>
 
@@ -84,8 +84,8 @@ class ClientDeclarationController @Inject()(
   }
 
   private def getIntermediaryName(waypoints: Waypoints, userAnswers: UserAnswers)(block: String => Future[Result]): Future[Result] = {
-    userAnswers.get(IntermediaryStuffQuery).map { intermediaryStuff =>
-      block(intermediaryStuff.intermediaryName)
+    userAnswers.get(IntermediaryDetailsQuery).map { intermediaryDetails =>
+      block(intermediaryDetails.intermediaryName)
     }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
 
   }

@@ -26,7 +26,7 @@ class ClientCodeEntryFormProvider @Inject() extends Mappings {
   def apply(): Form[String] =
     Form(
       "value" -> text("clientCodeEntry.error")
-        .verifying(regexp("^[A-Za-z]+$","clientCodeEntry.error"))
+        .verifying(regexp("^[A-Za-z]+$", "clientCodeEntry.error"))
         .verifying(maxLength(6, "clientCodeEntry.error"))
         .verifying(minLength(6, "clientCodeEntry.error"))
 

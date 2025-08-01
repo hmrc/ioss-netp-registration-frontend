@@ -24,6 +24,7 @@ import controllers.actions.*
 import generators.Generators
 import models.domain.VatCustomerInfo
 import models.{BusinessContactDetails, CheckMode, Index, UserAnswers}
+import models.{BusinessContactDetails, CheckMode, Index, UserAnswers}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -52,6 +53,7 @@ trait SpecBase
     with Generators {
 
   val userAnswersId: String = "12345-credId"
+
   def countryIndex(index: Int): Index = Index(index)
 
   val journeyId: String = UUID.randomUUID().toString
@@ -101,7 +103,7 @@ trait SpecBase
       deregistrationDecisionDate = None
     )
   }
-  
+
 
   val businessContactDetails: BusinessContactDetails =
     BusinessContactDetails(fullName = "name", telephoneNumber = "0111 2223334", emailAddress = "email@example.com")

@@ -17,14 +17,14 @@
 package viewmodels.previousRegistrations
 
 import models.UserAnswers
-import pages.{CheckAnswersPage, Waypoints}
 import pages.previousRegistrations.PreviouslyRegisteredPage
+import pages.{CheckAnswersPage, Waypoints}
 import play.api.i18n.Messages
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.govuk.summarylist.*
 import viewmodels.implicits.*
 
-object PreviouslyRegisteredSummary  {
+object PreviouslyRegisteredSummary {
 
   def row(
            answers: UserAnswers,
@@ -38,8 +38,8 @@ object PreviouslyRegisteredSummary  {
         val value = if (answer) "site.yes" else "site.no"
 
         SummaryListRowViewModel(
-          key     = "previouslyRegistered.checkYourAnswersLabel",
-          value   = ValueViewModel(value),
+          key = "previouslyRegistered.checkYourAnswersLabel",
+          value = ValueViewModel(value),
           actions = Seq(
             ActionItemViewModel("site.change", controllers.previousRegistrations.routes.PreviouslyRegisteredController.onPageLoad(waypoints).url)
               .withVisuallyHiddenText(messages("previouslyRegistered.change.hidden"))

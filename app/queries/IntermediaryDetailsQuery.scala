@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package models
+package queries
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.JsPath
+import models.IntermediaryDetails
 
-case class IntermediaryInformation(intermediaryNumber: String, intermediaryName: String)
+case object IntermediaryDetailsQuery extends Gettable[IntermediaryDetails] with Settable[IntermediaryDetails] {
 
-object IntermediaryInformation {
-  implicit lazy val format: OFormat[IntermediaryInformation] = Json.format[IntermediaryInformation]
+  override def path: JsPath = JsPath \ "intermediaryDetails"
 }

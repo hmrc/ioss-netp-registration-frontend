@@ -20,11 +20,11 @@ import connectors.RegistrationConnector
 import controllers.actions.ClientIdentifierAction
 import logging.Logging
 import models.domain.VatCustomerInfo
-import models.{IntermediaryInformation, UserAnswers}
+import models.{IntermediaryDetails, UserAnswers}
 import pages.{BusinessContactDetailsPage, Waypoints}
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import queries.IntermediaryStuffQuery
+import queries.IntermediaryDetailsQuery
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 
@@ -32,13 +32,13 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class ClientJourneyStartController @Inject()(
-                                              unidentifiedDataRetrievalAction: ClientIdentifierAction,
+                                              clientIdentify: ClientIdentifierAction,
                                               registrationConnector: RegistrationConnector,
                                               sessionRepository: SessionRepository,
                                               val controllerComponents: MessagesControllerComponents,
                                             )(implicit executionContext: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
 
-  def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = unidentifiedDataRetrievalAction.async {
+  def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = clientIdentify.async {
     implicit request =>
 
       registrationConnector.getPendingRegistration(uniqueUrlCode).flatMap {
@@ -48,24 +48,31 @@ class ClientJourneyStartController @Inject()(
 
           val clientUserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId, vatInfo = clientVatInfo))
           for {
-            businessContactDetailsIntermediary <- Future.fromTry{
+            businessContactDetailsIntermediary <- Future.fromTry {
               savedPendingRegistration.userAnswers.get(BusinessContactDetailsPage)
-                .toRight{
-                  new IllegalStateException("Missing Client Business Details information in userAnswers")}
+                .toRight {
+                  logger.error(
+                    "Unable to retrieve Client Business Details information from user Answers for id: ${savedPendingRegistration.userAnswers.journeyId}"
+                  )
+                  new IllegalStateException(
+                    s"Missing Client Business Details information in userAnswers for id: ${savedPendingRegistration.userAnswers.journeyId}"
+                  )
+                }
                 .toTry
             }
             clientWithBusinessContactDetails <- Future.fromTry(clientUserAnswers.set(BusinessContactDetailsPage, businessContactDetailsIntermediary))
             updatedAnswers <- Future.fromTry(
               clientWithBusinessContactDetails.set(
-                IntermediaryStuffQuery,
-                IntermediaryInformation(savedPendingRegistration.intermediaryStuff.intermediaryNumber, savedPendingRegistration.intermediaryStuff.intermediaryName)
+                IntermediaryDetailsQuery,
+                IntermediaryDetails(savedPendingRegistration.intermediaryDetails.intermediaryNumber, savedPendingRegistration.intermediaryDetails.intermediaryName)
               )
             )
             _ <- sessionRepository.set(updatedAnswers)
           } yield Redirect(routes.ClientCodeEntryController.onPageLoad(waypoints, uniqueUrlCode))
 
         case Left(error) =>
-          val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given unique Url Code: $uniqueUrlCode, \n Errors: $error."
+          val message: String =
+            s"Received an unexpected error when trying to retrieve a pending registration for the given unique Url Code: $uniqueUrlCode, \n Errors: $error."
           val exception: Exception = new Exception(message)
           logger.error(exception.getMessage, exception)
           throw exception

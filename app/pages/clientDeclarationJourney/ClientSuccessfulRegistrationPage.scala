@@ -16,9 +16,9 @@
 
 package pages.clientDeclarationJourney
 
+import controllers.clientDeclarationJourney.routes
 import pages.{Page, Waypoints}
 import play.api.mvc.Call
-import controllers.clientDeclarationJourney.routes
 
 object ClientSuccessfulRegistrationPage extends Page {
 
