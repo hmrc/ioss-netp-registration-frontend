@@ -55,6 +55,6 @@ object IntermediaryDeclarationSigningAuditModel {
       userAgent = request.headers.get("user-agent").getOrElse(""),
       userAnswers = userAnswers,
       submissionResult = submissionResult,
-      submittedDeclarationPageBody = ""
+      submittedDeclarationPageBody = submittedDeclarationPageBody
     )
 }

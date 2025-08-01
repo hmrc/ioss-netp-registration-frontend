@@ -148,6 +148,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             .overrides(
               bind[SessionRepository].toInstance(mockSessionRepository),
               bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+              bind[DeclarationView].toInstance(mockDeclarationView),
               bind[EmailService].toInstance(mockEmailService),
               bind[AuditService].toInstance(mockAuditService)
             )
@@ -167,7 +168,6 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
         doNothing().when(mockAuditService).audit(any())(any(), any())
 
-
         running(application) {
           val request =
             FakeRequest(POST, routes.DeclarationController.onSubmit(waypoints).url)
@@ -179,12 +179,13 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
           val result = route(application, request).value
 
-
           val expectedAuditEvent = IntermediaryDeclarationSigningAuditModel.build(
             intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
             userAnswers = userAnswers,
             submissionResult = SubmissionResult.Success,
-            submittedDeclarationPageBody = "test-view-body"
+            submittedDeclarationPageBody = mockDeclarationView(
+              any, eqTo(waypoints), eqTo("intermediaryName"), eqTo(intermediaryCompanyName))(any(), any()
+            ).body
           )
 
           status(result) `mustBe` SEE_OTHER
@@ -219,6 +220,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             .overrides(
               bind[SessionRepository].toInstance(mockSessionRepository),
               bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+              bind[DeclarationView].toInstance(mockDeclarationView),
               bind[EmailService].toInstance(mockEmailService),
               bind[AuditService].toInstance(mockAuditService)
             )
@@ -253,7 +255,9 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
             userAnswers = userAnswers,
             submissionResult = SubmissionResult.Success,
-            submittedDeclarationPageBody = "test-view-body"
+            submittedDeclarationPageBody = mockDeclarationView(
+              any, eqTo(waypoints), eqTo("intermediaryName"), eqTo(intermediaryCompanyName))(any(), any()
+            ).body
           )
 
           status(result) `mustBe` SEE_OTHER
@@ -331,6 +335,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
         val application = applicationBuilder(userAnswers = Some(userAnswers))
           .overrides(
             bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+            bind[DeclarationView].toInstance(mockDeclarationView),
             bind[AuditService].toInstance(mockAuditService)
           ).build()
 
@@ -352,7 +357,9 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
             userAnswers = userAnswers,
             submissionResult = SubmissionResult.Failure,
-            submittedDeclarationPageBody = "test-view-body"
+            submittedDeclarationPageBody = mockDeclarationView(
+              any, eqTo(waypoints), eqTo("intermediaryName"), eqTo(intermediaryCompanyName))(any(), any()
+            ).body
           )
 
           val result = route(application, request).value
