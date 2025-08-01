@@ -26,7 +26,6 @@ import scala.concurrent.{ExecutionContext, Future}
 class FakeClientIdentifierAction @Inject()(bodyParsers: PlayBodyParsers) extends ClientIdentifierAction {
 
   override def invokeBlock[A](request: Request[A], block: OptionalDataRequest[A] => Future[Result]): Future[Result] = {
-    println("\n\n Step1 - FakeClientIdentifierAction:\n")
     block(OptionalDataRequest(request, "12345-credId"))
   }
 

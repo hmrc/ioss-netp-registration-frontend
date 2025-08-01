@@ -25,6 +25,7 @@ import models.responses.*
 import models.{PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
 import org.scalacheck.Arbitrary.arbitrary
 import models.{IntermediaryStuff, PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
+import models.{IntermediaryInformation, PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
 import org.scalacheck.Gen
 import play.api.Application
 import play.api.http.Status.*
@@ -42,7 +43,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
   private val nonEmptyIntermediaryName: String = intermediaryVatCustomerInfo.organisationName.getOrElse("Dummy Name for Test")
   private val pendingRegistrationRequest: PendingRegistrationRequest = PendingRegistrationRequest(
     userAnswers = userAnswers,
-    intermediaryStuff = IntermediaryStuff(intermediaryNumber, nonEmptyIntermediaryName)
+    intermediaryStuff = IntermediaryInformation(intermediaryNumber, nonEmptyIntermediaryName)
   )
   private val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
 

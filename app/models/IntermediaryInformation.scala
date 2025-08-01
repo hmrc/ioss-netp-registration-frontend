@@ -18,8 +18,8 @@ package models
 
 import play.api.libs.json.{Json, OFormat}
 
-case class IntermediaryStuff(intermediaryNumber: String, intermediaryName: String)
+case class IntermediaryInformation(intermediaryNumber: String, intermediaryName: String)
 
-object IntermediaryStuff {
-  implicit lazy val format: OFormat[IntermediaryStuff] = Json.format[IntermediaryStuff]
+object IntermediaryInformation {
+  implicit lazy val format: OFormat[IntermediaryInformation] = Json.format[IntermediaryInformation]
 }

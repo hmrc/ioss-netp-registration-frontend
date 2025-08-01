@@ -20,7 +20,7 @@ import base.SpecBase
 import connectors.RegistrationConnector
 import controllers.clientDeclarationJourney
 import models.responses.NotFound
-import models.{BusinessContactDetails, ClientBusinessName, IntermediaryStuff, SavedPendingRegistration, UserAnswers}
+import models.{BusinessContactDetails, ClientBusinessName, IntermediaryInformation, SavedPendingRegistration, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -45,7 +45,7 @@ class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with B
   val incompleteUserAnswers: UserAnswers =
     emptyUserAnswers.set(ClientBusinessNamePage, ClientBusinessName("Client Company"))
       .success.value
-      .set(IntermediaryStuffQuery, IntermediaryStuff(intermediaryNumber, nonEmptyIntermediaryName))
+      .set(IntermediaryStuffQuery, IntermediaryInformation(intermediaryNumber, nonEmptyIntermediaryName))
       .success.value
 
   val completeUserAnswers: UserAnswers = incompleteUserAnswers.set(BusinessContactDetailsPage, businessContactDetails).success.value
@@ -57,7 +57,7 @@ class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with B
       userAnswers = userAnswers,
       lastUpdated = incompleteUserAnswers.lastUpdated,
       uniqueActivationCode = generate6DigitCode(),
-      intermediaryStuff = IntermediaryStuff(intermediaryNumber, nonEmptyIntermediaryName)
+      intermediaryStuff = IntermediaryInformation(intermediaryNumber, nonEmptyIntermediaryName)
     )
 
   private def clientJourneyStartOnPageLoad(uniqueUrlCode: String): String = clientDeclarationJourney.routes.ClientJourneyStartController.onPageLoad(waypoints, uniqueUrlCode).url

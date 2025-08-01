@@ -53,9 +53,10 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
     httpClientV2.get(url"$intermediaryUrl/vat-information").execute[VatCustomerInfoResponse]
   }
 
-  def submitPendingRegistration(userAnswers: PendingRegistrationRequest)(implicit hc: HeaderCarrier): Future[SavedPendingRegistrationResponse] = {
+  def submitPendingRegistration(pendingRegistrationRequest: PendingRegistrationRequest)(implicit hc: HeaderCarrier)
+  : Future[SavedPendingRegistrationResponse] = {
     httpClientV2.post(url"$baseUrl/save-pending-registration")
-      .withBody(Json.toJson(userAnswers))
+      .withBody(Json.toJson(pendingRegistrationRequest))
       .execute[SavedPendingRegistrationResponse]
   }
 

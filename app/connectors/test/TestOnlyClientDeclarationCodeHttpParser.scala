@@ -24,7 +24,7 @@ import play.api.libs.json.{JsError, JsSuccess}
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 object TestOnlyClientDeclarationCodeHttpParser extends Logging {
-  
+
   type TestOnlyValidateClientCodeResponse = Either[ErrorResponse, String]
 
   implicit object TestOnlyValidateClientCodeReads extends HttpReads[TestOnlyValidateClientCodeResponse] {
@@ -34,15 +34,15 @@ object TestOnlyClientDeclarationCodeHttpParser extends Logging {
         case OK => response.json.validate[String] match {
           case JsSuccess(clientDeclarationCode, _) => Right(clientDeclarationCode)
           case JsError(errors) =>
-            logger.error(s"Failed trying to parse validation as a boolean")
+            logger.error(s"Failed trying to parse validation as a String")
             Left(InvalidJson)
         }
 
         case status =>
-          logger.error(s"Received unexpected response when validating registration code: ${response.body}, Error Status: $status")
+          logger.error(s"Received unexpected response when retrieving test validation code. Response body: ${response.body}, Error Status: $status")
           Left(UnexpectedResponseStatus(
             response.status,
-            s"Unexpected response when trying to validate registration code, status $status returned")
+            s"Unexpected response when trying to retrieve test registration code, status $status returned")
           )
       }
     }

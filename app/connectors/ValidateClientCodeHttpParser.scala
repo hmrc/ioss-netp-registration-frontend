@@ -38,7 +38,7 @@ object ValidateClientCodeHttpParser extends Logging {
         }
 
         case status =>
-          logger.error(s"Received unexpected response when validating registration code: ${response.body}, Error Status: $status")
+          logger.error(s"Received unexpected response when validating registration code. Response body: ${response.body}, Error Status: $status")
           Left(UnexpectedResponseStatus(
             response.status,
             s"Unexpected response when trying to validate registration code, status $status returned")

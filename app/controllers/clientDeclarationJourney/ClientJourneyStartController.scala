@@ -20,7 +20,7 @@ import connectors.RegistrationConnector
 import controllers.actions.ClientIdentifierAction
 import logging.Logging
 import models.domain.VatCustomerInfo
-import models.{IntermediaryStuff, UserAnswers}
+import models.{IntermediaryInformation, UserAnswers}
 import pages.{BusinessContactDetailsPage, Waypoints}
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -58,7 +58,7 @@ class ClientJourneyStartController @Inject()(
             updatedAnswers <- Future.fromTry(
               clientWithBusinessContactDetails.set(
                 IntermediaryStuffQuery,
-                IntermediaryStuff(savedPendingRegistration.intermediaryStuff.intermediaryNumber, savedPendingRegistration.intermediaryStuff.intermediaryName)
+                IntermediaryInformation(savedPendingRegistration.intermediaryStuff.intermediaryNumber, savedPendingRegistration.intermediaryStuff.intermediaryName)
               )
             )
             _ <- sessionRepository.set(updatedAnswers)

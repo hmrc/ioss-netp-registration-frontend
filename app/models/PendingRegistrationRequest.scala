@@ -20,7 +20,7 @@ import play.api.libs.json.*
 
 case class PendingRegistrationRequest(
                                        userAnswers: UserAnswers,
-                                       intermediaryStuff: IntermediaryStuff
+                                       intermediaryStuff: IntermediaryInformation
                                      )
 
 object PendingRegistrationRequest {

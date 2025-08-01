@@ -19,26 +19,26 @@ package controllers.actions
 import models.requests.{DataRequest, OptionalDataRequest}
 import play.api.http.FileMimeTypes
 import play.api.i18n.{Langs, MessagesApi}
-import play.api.mvc.{ActionBuilder, AnyContent, DefaultActionBuilder, MessagesActionBuilder, MessagesControllerComponents, PlayBodyParsers}
+import play.api.mvc.*
 import repositories.SessionRepository
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 trait AuthenticatedControllerComponents extends MessagesControllerComponents {
-  
+
   def actionBuilder: DefaultActionBuilder
-  
+
   def sessionRepository: SessionRepository
-  
+
   def identify: IdentifierAction
-  
+
   def getData: DataRetrievalAction
-  
+
   def clientIdentify: ClientIdentifierAction
-  
+
   def clientGetData: ClientDataRetrievalAction
-  
+
   def requireData: DataRequiredAction
 
   def identifyAndGetData: ActionBuilder[DataRequest, AnyContent] =
@@ -46,11 +46,12 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
       identify andThen
       getData andThen
       requireData
-  
+
   def identifyAndGetOptionalData: ActionBuilder[OptionalDataRequest, AnyContent] =
     actionBuilder andThen
       identify andThen
       getData
+
 }
 
 case class DefaultAuthenticatedControllerComponents @Inject()(
@@ -64,7 +65,7 @@ case class DefaultAuthenticatedControllerComponents @Inject()(
                                                                sessionRepository: SessionRepository,
                                                                identify: IdentifierAction,
                                                                getData: DataRetrievalAction,
+                                                               requireData: DataRequiredAction,
                                                                clientIdentify: ClientIdentifierAction,
-                                                               clientGetData: ClientDataRetrievalAction,
-                                                               requireData: DataRequiredAction
-                                                               ) extends AuthenticatedControllerComponents
+                                                               clientGetData: ClientDataRetrievalAction
+                                                             ) extends AuthenticatedControllerComponents

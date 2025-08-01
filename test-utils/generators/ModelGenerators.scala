@@ -221,7 +221,7 @@ trait ModelGenerators extends EitherValues {
           userAnswers = userAnswers,
           lastUpdated = userAnswers.lastUpdated,
           uniqueActivationCode = uniqueActivationCode,
-          intermediaryStuff = IntermediaryStuff("IM123456789", "IntermediaryName"))
+          intermediaryStuff = IntermediaryInformation("IM123456789", "IntermediaryName"))
       }
     }
   }

@@ -16,6 +16,7 @@
 
 package controllers.actions
 
+import logging.Logging
 import models.requests.{ClientOptionalDataRequest, OptionalDataRequest}
 import play.api.mvc.ActionTransformer
 import repositories.SessionRepository
@@ -27,15 +28,14 @@ trait ClientDataRetrievalAction extends ActionTransformer[OptionalDataRequest, C
 
 class ClientDataRetrievalActionImpl @Inject()(
                                                val sessionRepository: SessionRepository
-                                             )(implicit val executionContext: ExecutionContext) extends ClientDataRetrievalAction {
+                                             )(implicit val executionContext: ExecutionContext) extends ClientDataRetrievalAction with Logging {
 
   override protected def transform[A](request: OptionalDataRequest[A]): Future[ClientOptionalDataRequest[A]] = {
 
     sessionRepository.get(request.userId).map { userAnswers =>
       val noneOptionUserAnswers = userAnswers.getOrElse {
-        
-        throw new IllegalStateException(
-          "userAnswers Are required")
+        logger.error(s"No userAnswers found for the customer with ID: ${request.userId}")
+        throw new IllegalStateException(s"UserAnswers are required and not present for: ${request.userId}")
       }
 
       ClientOptionalDataRequest(request.request, request.userId, noneOptionUserAnswers)

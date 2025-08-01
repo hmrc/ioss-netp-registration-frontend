@@ -25,8 +25,6 @@ class FakeDataRetrievalAction(dataToReturn: Option[UserAnswers]) extends DataRet
 
   override protected def transform[A](request: IdentifierRequest[A]): Future[OptionalDataRequest[A]] =
     Future(OptionalDataRequest(request.request, request.userId, dataToReturn, Some("IN9001234567")))
-    // TODO- SCG- Will there ever be a situation where someone doesn't have an intermediary num
-    // TODO- is this forcing something that should fail?
 
   override protected implicit val executionContext: ExecutionContext =
     scala.concurrent.ExecutionContext.Implicits.global

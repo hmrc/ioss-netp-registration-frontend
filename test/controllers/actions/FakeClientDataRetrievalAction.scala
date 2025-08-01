@@ -24,10 +24,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class FakeClientDataRetrievalAction(dataToReturn: Option[UserAnswers]) extends ClientDataRetrievalAction {
 
   override protected def transform[A](request: OptionalDataRequest[A]): Future[ClientOptionalDataRequest[A]] = {
-    println("\n\n Step2 - FakeClientDataRetrievalAction:\n")
     val nonOptionalUserAnswers = dataToReturn.getOrElse(UserAnswers("testId"))
-    println("\n\n Step2.1 - FakeClientDataRetrievalAction:\n")
-    println(s"$nonOptionalUserAnswers\n")
     Future(ClientOptionalDataRequest(request.request, request.userId, nonOptionalUserAnswers))
   }
 

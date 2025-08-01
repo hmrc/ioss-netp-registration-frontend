@@ -30,8 +30,8 @@ import uk.gov.hmrc.auth.core.retrieve.*
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.{HeaderCarrier, UnauthorizedException}
-import uk.gov.hmrc.play.bootstrap.binders.{AbsoluteWithHostnameFromAllowlist, OnlyRelative}
 import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl.idFunctor
+import uk.gov.hmrc.play.bootstrap.binders.{AbsoluteWithHostnameFromAllowlist, OnlyRelative}
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import utils.FutureSyntax.FutureOps
 
@@ -51,9 +51,6 @@ class AuthenticatedIdentifierAction @Inject()(
   private lazy val redirectPolicy = (OnlyRelative | AbsoluteWithHostnameFromAllowlist(config.allowedRedirectUrls: _*))
 
   override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
-
-    println(s"\n\nrequest.headers1 :\n")
-    println(request.headers)
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 

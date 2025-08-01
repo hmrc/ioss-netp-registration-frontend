@@ -17,9 +17,9 @@
 package queries
 
 import play.api.libs.json.JsPath
-import models.IntermediaryStuff
+import models.IntermediaryInformation
 
-case object IntermediaryStuffQuery extends Gettable[IntermediaryStuff] with Settable[IntermediaryStuff] {
+case object IntermediaryStuffQuery extends Gettable[IntermediaryInformation] with Settable[IntermediaryInformation] {
 
   override def path: JsPath = JsPath \ "intermediaryStuff"
 }

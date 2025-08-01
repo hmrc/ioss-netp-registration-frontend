@@ -70,7 +70,7 @@ class TestOnlyClientDeclarationCodeConnectorSpec extends SpecBase with WireMockH
     otherErrorStatuses.foreach { status =>
       s"must return Left(UnexpectedResponseStatus) when the server returns status: $status" in {
 
-        val response = UnexpectedResponseStatus(status, s"Unexpected response when trying to validate registration code, status $status returned")
+        val response = UnexpectedResponseStatus(status, s"Unexpected response when trying to retrieve test registration code, status $status returned")
 
         running(application) {
 

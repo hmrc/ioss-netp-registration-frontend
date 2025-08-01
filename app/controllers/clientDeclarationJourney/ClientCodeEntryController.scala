@@ -38,18 +38,18 @@ import scala.concurrent.{ExecutionContext, Future}
 class ClientCodeEntryController @Inject()(
                                            override val messagesApi: MessagesApi,
                                            sessionRepository: SessionRepository,
-                                           unidentifiedDataRetrievalAction: ClientIdentifierAction,
+                                           clientIdentify: ClientIdentifierAction,
                                            formProvider: ClientCodeEntryFormProvider,
                                            registrationConnector: RegistrationConnector,
-                                           clientDataRetrievalAction: ClientDataRetrievalAction,
+                                           clientGetData: ClientDataRetrievalAction,
                                            val controllerComponents: MessagesControllerComponents,
                                            view: ClientCodeEntryView
                                          )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientEmail {
   val form: Form[String] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (unidentifiedDataRetrievalAction andThen clientDataRetrievalAction).async {
+  def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (clientIdentify andThen clientGetData).async {
     implicit request =>
-    
+
       val preparedForm = request.userAnswers.get(ClientCodeEntryPage(uniqueUrlCode)) match {
         case None => form
         case Some(value) => form.fill(value)
@@ -61,36 +61,35 @@ class ClientCodeEntryController @Inject()(
 
   }
 
-  def onSubmit(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] =
-    (unidentifiedDataRetrievalAction andThen clientDataRetrievalAction).async {
-      implicit request =>
+  def onSubmit(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (clientIdentify andThen clientGetData).async {
+    implicit request =>
 
-        getClientEmail(waypoints, request.userAnswers) { clientEmail =>
+      getClientEmail(waypoints, request.userAnswers) { clientEmail =>
 
-          form.bindFromRequest().fold(
-            formWithErrors =>
-              Future.successful(BadRequest(view(formWithErrors, waypoints, clientEmail, uniqueUrlCode))),
+        form.bindFromRequest().fold(
+          formWithErrors =>
+            Future.successful(BadRequest(view(formWithErrors, waypoints, clientEmail, uniqueUrlCode))),
 
-            enteredActivationCode =>
+          enteredActivationCode =>
 
-              registrationConnector.validateClientCode(uniqueUrlCode, enteredActivationCode).flatMap {
-                case Right(value) if !value =>
-                  val formWithErrors = form.bindFromRequest().withError("value", "clientCodeEntry.error")
-                  Future.successful(BadRequest(view(formWithErrors, waypoints, clientEmail, uniqueUrlCode)))
+            registrationConnector.validateClientCode(uniqueUrlCode, enteredActivationCode).flatMap {
+              case Right(value) if !value =>
+                val formWithErrors = form.bindFromRequest().withError("value", "clientCodeEntry.error")
+                Future.successful(BadRequest(view(formWithErrors, waypoints, clientEmail, uniqueUrlCode)))
 
-                case Left(errors) =>
-                  val message: String = s"Received an unexpected error when trying to validate the pending registration for the given journey ID: $errors."
-                  val exception: Exception = new Exception(message)
-                  logger.error(exception.getMessage, exception)
-                  throw exception
+              case Left(errors) =>
+                val message: String = s"Received an unexpected error when trying to validate the pending registration for the given journey ID: $errors."
+                val exception: Exception = new Exception(message)
+                logger.error(exception.getMessage, exception)
+                throw exception
 
-                case Right(value) =>
-                  for {
-                    updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientCodeEntryPage(uniqueUrlCode), enteredActivationCode))
-                    _ <- sessionRepository.set(updatedAnswers)
-                  } yield Redirect(ClientCodeEntryPage(uniqueUrlCode).navigate(waypoints, request.userAnswers, updatedAnswers).route)
-              }
-          )
-        }
-    }
+              case Right(value) =>
+                for {
+                  updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientCodeEntryPage(uniqueUrlCode), enteredActivationCode))
+                  _ <- sessionRepository.set(updatedAnswers)
+                } yield Redirect(ClientCodeEntryPage(uniqueUrlCode).navigate(waypoints, request.userAnswers, updatedAnswers).route)
+            }
+        )
+      }
+  }
 }

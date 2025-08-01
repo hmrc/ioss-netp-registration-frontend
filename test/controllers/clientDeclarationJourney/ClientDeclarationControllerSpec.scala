@@ -21,7 +21,7 @@ import connectors.RegistrationConnector
 import controllers.{clientDeclarationJourney, routes}
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import models.domain.VatCustomerInfo
-import models.{ClientBusinessName, IntermediaryStuff, UserAnswers}
+import models.{ClientBusinessName, IntermediaryInformation, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -52,7 +52,7 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
     .success.value
 
   val userAnswersWithIntermediaryStuff: UserAnswers = testUserAnswers
-    .set(IntermediaryStuffQuery, IntermediaryStuff("IM Num SCG", testIntermediaryName))
+    .set(IntermediaryStuffQuery, IntermediaryInformation("IM Num SCG", testIntermediaryName))
     .success.value
 
   val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
