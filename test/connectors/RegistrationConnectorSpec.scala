@@ -22,11 +22,8 @@ import models.domain.VatCustomerInfo
 import models.iossRegistration.IossEtmpDisplayRegistration
 import models.ossRegistration.{OssExcludedTrader, OssRegistration}
 import models.responses.*
-import models.{PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
-import org.scalacheck.Arbitrary.arbitrary
-import models.{IntermediaryStuff, PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
-import models.{IntermediaryInformation, PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
 import models.{IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import play.api.Application
 import play.api.http.Status.*

@@ -181,7 +181,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
 
           implicit val dataRequest: DataRequest[_] =
-            DataRequest(fakeRequest, userAnswersId, userAnswers)
+            DataRequest(fakeRequest, userAnswersId, userAnswers, intermediaryNumber)
 
           val result = route(application, request).value
 
@@ -251,7 +251,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
               .withFormUrlEncodedBody(("declaration", "true"))
 
           implicit val dataRequest: DataRequest[_] =
-            DataRequest(fakeRequest, userAnswersId, userAnswers)
+            DataRequest(fakeRequest, userAnswersId, userAnswers, intermediaryNumber)
 
           val result = route(application, request).value
 
@@ -265,7 +265,8 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value mustBe DeclarationPage.navigate(waypoints, userAnswers, userAnswers).route.url
           verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(pendingRegistrationRequest))(any())
-          verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any()) verify (mockEmailService, times(1)).sendClientActivationEmail(
+          verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
+          verify(mockEmailService, times(1)).sendClientActivationEmail(
             any,
             any,
             any,
@@ -351,7 +352,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           val request = FakeRequest(POST, routes.DeclarationController.onSubmit(waypoints).url)
 
           implicit val dataRequest: DataRequest[_] =
-            DataRequest(fakeRequest, userAnswersId, userAnswers)
+            DataRequest(fakeRequest, userAnswersId, userAnswers, intermediaryNumber)
 
           val expectedAuditEvent = IntermediaryDeclarationSigningAuditModel.build(
             intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
