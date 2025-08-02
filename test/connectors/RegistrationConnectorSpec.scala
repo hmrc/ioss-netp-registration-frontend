@@ -22,7 +22,7 @@ import models.domain.VatCustomerInfo
 import models.iossRegistration.IossEtmpDisplayRegistration
 import models.ossRegistration.{OssExcludedTrader, OssRegistration}
 import models.responses.*
-import models.{SavedPendingRegistration, UserAnswers}
+import models.{IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import play.api.Application
@@ -38,6 +38,11 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
   private val userAnswers: UserAnswers = arbitraryUserAnswers.arbitrary.sample.value
+  private val nonEmptyIntermediaryName: String = intermediaryVatCustomerInfo.organisationName.getOrElse("Dummy Name for Test")
+  private val pendingRegistrationRequest: PendingRegistrationRequest = PendingRegistrationRequest(
+    userAnswers = userAnswers,
+    intermediaryDetails = IntermediaryDetails(intermediaryNumber, nonEmptyIntermediaryName)
+  )
   private val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
 
   private val otherErrorStatuses: Seq[Int] = Seq(BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE, UNPROCESSABLE_ENTITY)
@@ -189,9 +194,9 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
       val url: String = "/ioss-netp-registration/save-pending-registration"
 
       "must return Right when a new Pending registration is created on the backend" in {
-         val responseBody = Json.toJson(savedPendingRegistration).toString
+        val responseBody = Json.toJson(savedPendingRegistration).toString
 
-          running(application) {
+        running(application) {
 
           val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
 
@@ -200,9 +205,9 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
               .willReturn(ok().withBody(responseBody))
           )
 
-          val result = connector.submitPendingRegistration(userAnswers).futureValue
+          val result = connector.submitPendingRegistration(pendingRegistrationRequest).futureValue
 
-            result `mustBe` Right(savedPendingRegistration)
+          result `mustBe` Right(savedPendingRegistration)
         }
       }
 
@@ -222,7 +227,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
                   .withStatus(status))
             )
 
-            val result = connector.submitPendingRegistration(userAnswers).futureValue
+            val result = connector.submitPendingRegistration(pendingRegistrationRequest).futureValue
 
             result `mustBe` Left(response)
           }
@@ -279,6 +284,77 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
       }
     }
 
+    ".validateClientCode" - {
+
+      val uniqueUrlCode: String = savedPendingRegistration.uniqueUrlCode
+      val uniqueActivationCode: String = savedPendingRegistration.uniqueActivationCode
+
+      val url: String = s"/ioss-netp-registration/validate-pending-registration/$uniqueUrlCode/$uniqueActivationCode"
+
+      "must return a Right(true) for a matching urlCode and activationCode when the server returns true" in {
+
+        val responseBody = Json.toJson(true).toString
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[RegistrationConnector]
+
+          server.stubFor(
+            get(urlEqualTo(url))
+              .willReturn(ok()
+                .withBody(responseBody))
+          )
+
+          val result = connector.validateClientCode(uniqueUrlCode, uniqueActivationCode).futureValue
+
+          result `mustBe` Right(true)
+        }
+      }
+
+      "must return a Right(false) for a none matching urlCode and activationCode when the server returns false" in {
+
+        val responseBody = Json.toJson(false).toString
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[RegistrationConnector]
+
+          server.stubFor(
+            get(urlEqualTo(url))
+              .willReturn(ok()
+                .withBody(responseBody))
+          )
+
+          val result = connector.validateClientCode(uniqueUrlCode, uniqueActivationCode).futureValue
+
+          result `mustBe` Right(false)
+        }
+      }
+
+      otherErrorStatuses.foreach { status =>
+        s"must return Left(UnexpectedResponseStatus) when the server returns status: $status" in {
+
+          val response = UnexpectedResponseStatus(status, s"Unexpected response when trying to validate registration code, status $status returned")
+
+          running(application) {
+
+            val connector = application.injector.instanceOf[RegistrationConnector]
+
+            server.stubFor(
+              get(urlEqualTo(url))
+                .willReturn(aResponse()
+                  .withStatus(status))
+            )
+
+            val result = connector.validateClientCode(uniqueUrlCode, uniqueActivationCode).futureValue
+
+            result `mustBe` Left(response)
+          }
+        }
+      }
+    }
+
+
     ".getOssRegistration" - {
 
       implicit val ossExcludedTraderWrites: OWrites[OssExcludedTrader] = Json.writes[OssExcludedTrader]
@@ -287,7 +363,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
       val url = s"/one-stop-shop-registration/registration/$vrn"
 
       "must return Right(OssRegistration) when the backend returns valid data" in {
-        
+
         running(application) {
           val connector = application.injector.instanceOf[RegistrationConnector]
           val ossRegistration = arbitrary[OssRegistration].sample.value

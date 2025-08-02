@@ -48,6 +48,7 @@ trait SpecBase
     with Generators {
 
   val userAnswersId: String = "12345-credId"
+
   def countryIndex(index: Int): Index = Index(index)
 
   val journeyId: String = UUID.randomUUID().toString
@@ -97,7 +98,7 @@ trait SpecBase
       deregistrationDecisionDate = None
     )
   }
-  
+
 
   val businessContactDetails: BusinessContactDetails =
     BusinessContactDetails(fullName = "name", telephoneNumber = "0111 2223334", emailAddress = "email@example.com")
@@ -113,6 +114,8 @@ trait SpecBase
         bind[DataRequiredAction].to[DataRequiredActionImpl],
         bind[IdentifierAction].to[FakeIdentifierAction],
         bind[DataRetrievalAction].toInstance(new FakeDataRetrievalAction(userAnswers)),
+        bind[ClientDataRetrievalAction].toInstance(new FakeClientDataRetrievalAction(userAnswers)),
+        bind[ClientIdentifierAction].to[FakeClientIdentifierAction],
         bind[Clock].toInstance(clockToBind),
       )
   }

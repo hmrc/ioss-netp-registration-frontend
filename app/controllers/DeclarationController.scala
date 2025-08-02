@@ -20,10 +20,10 @@ import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.DeclarationFormProvider
 import logging.Logging
-import models.SavedPendingRegistration
 import models.audit.{IntermediaryDeclarationSigningAuditModel, IntermediaryDeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult
 import models.requests.DataRequest
+import models.{IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration}
 import pages.{DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
@@ -71,12 +71,15 @@ class DeclarationController @Inject()(
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
+
       getClientCompanyName(waypoints) { clientCompanyName =>
 
         getIntermediaryName().flatMap { intermediaryOpt =>
           val intermediaryName = intermediaryOpt.getOrElse("")
 
-          registrationConnector.submitPendingRegistration(request.userAnswers).flatMap {
+          val pendingRegistrationRequest = PendingRegistrationRequest(request.userAnswers, IntermediaryDetails(request.intermediaryNumber, intermediaryName))
+
+          registrationConnector.submitPendingRegistration(pendingRegistrationRequest).flatMap {
             case Right(submittedRegistration) =>
 
               getClientEmail(waypoints, submittedRegistration.userAnswers) { clientEmail =>
@@ -100,7 +103,7 @@ class DeclarationController @Inject()(
                     } yield Redirect(routes.ApplicationCompleteController.onPageLoad())
                 )
               }
-              
+
             case Left(error) =>
               sendAudit(
                 result = SubmissionResult.Failure,
@@ -111,9 +114,12 @@ class DeclarationController @Inject()(
           }
         }
       }
+
   }
-  
+
+
   private def getIntermediaryName()(implicit hc: HeaderCarrier): Future[Option[String]] = {
+
     val futureResult = registrationConnector.getIntermediaryVatCustomerInfo()
 
     if (registrationConnector.getIntermediaryVatCustomerInfo() == null) {

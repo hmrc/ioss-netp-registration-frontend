@@ -19,22 +19,26 @@ package controllers.actions
 import models.requests.{DataRequest, OptionalDataRequest}
 import play.api.http.FileMimeTypes
 import play.api.i18n.{Langs, MessagesApi}
-import play.api.mvc.{ActionBuilder, AnyContent, DefaultActionBuilder, MessagesActionBuilder, MessagesControllerComponents, PlayBodyParsers}
+import play.api.mvc.*
 import repositories.SessionRepository
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 trait AuthenticatedControllerComponents extends MessagesControllerComponents {
-  
+
   def actionBuilder: DefaultActionBuilder
-  
+
   def sessionRepository: SessionRepository
-  
+
   def identify: IdentifierAction
-  
+
   def getData: DataRetrievalAction
-  
+
+  def clientIdentify: ClientIdentifierAction
+
+  def clientGetData: ClientDataRetrievalAction
+
   def requireData: DataRequiredAction
 
   def identifyAndGetData: ActionBuilder[DataRequest, AnyContent] =
@@ -47,18 +51,21 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
     actionBuilder andThen
       identify andThen
       getData
+
 }
 
 case class DefaultAuthenticatedControllerComponents @Inject()(
-                                                                 messagesActionBuilder: MessagesActionBuilder,
-                                                                 actionBuilder: DefaultActionBuilder,
-                                                                 parsers: PlayBodyParsers,
-                                                                 messagesApi: MessagesApi,
-                                                                 langs: Langs,
-                                                                 fileMimeTypes: FileMimeTypes,
-                                                                 executionContext: ExecutionContext,
-                                                                 sessionRepository: SessionRepository,
-                                                                 identify: IdentifierAction,
-                                                                 getData: DataRetrievalAction,
-                                                                 requireData: DataRequiredAction
-                                                               ) extends AuthenticatedControllerComponents
+                                                               messagesActionBuilder: MessagesActionBuilder,
+                                                               actionBuilder: DefaultActionBuilder,
+                                                               parsers: PlayBodyParsers,
+                                                               messagesApi: MessagesApi,
+                                                               langs: Langs,
+                                                               fileMimeTypes: FileMimeTypes,
+                                                               executionContext: ExecutionContext,
+                                                               sessionRepository: SessionRepository,
+                                                               identify: IdentifierAction,
+                                                               getData: DataRetrievalAction,
+                                                               requireData: DataRequiredAction,
+                                                               clientIdentify: ClientIdentifierAction,
+                                                               clientGetData: ClientDataRetrievalAction
+                                                             ) extends AuthenticatedControllerComponents

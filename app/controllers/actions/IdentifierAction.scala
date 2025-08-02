@@ -30,8 +30,8 @@ import uk.gov.hmrc.auth.core.retrieve.*
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.{HeaderCarrier, UnauthorizedException}
-import uk.gov.hmrc.play.bootstrap.binders.{AbsoluteWithHostnameFromAllowlist, OnlyRelative}
 import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl.idFunctor
+import uk.gov.hmrc.play.bootstrap.binders.{AbsoluteWithHostnameFromAllowlist, OnlyRelative}
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import utils.FutureSyntax.FutureOps
 
@@ -49,9 +49,9 @@ class AuthenticatedIdentifierAction @Inject()(
                                              (implicit val executionContext: ExecutionContext) extends IdentifierAction with AuthorisedFunctions with Logging {
 
   private lazy val redirectPolicy = (OnlyRelative | AbsoluteWithHostnameFromAllowlist(config.allowedRedirectUrls: _*))
-  
+
   override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
-    
+
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 
     authorised().retrieve(Retrievals.internalId and Retrievals.allEnrolments) {
@@ -67,9 +67,9 @@ class AuthenticatedIdentifierAction @Inject()(
                 Future.failed(new IllegalStateException("Missing VAT customer info"))
             }
 
-         case None =>
-           Future.successful(Redirect(routes.CannotUseNotAnIntermediaryController.onPageLoad()))
-       }
+          case None =>
+            Future.successful(Redirect(routes.CannotUseNotAnIntermediaryController.onPageLoad()))
+        }
       case _ =>
         throw new UnauthorizedException("Unable to retrieve internal Id")
     } recover {
@@ -88,7 +88,7 @@ class AuthenticatedIdentifierAction @Inject()(
         throw new IllegalStateException("Missing VAT enrolment")
       }
   }
-  
+
   private def findIntermediaryNumberFromEnrolments(enrolments: Enrolments): Option[String] = {
     enrolments.enrolments
       .find(_.key == config.intermediaryEnrolment)

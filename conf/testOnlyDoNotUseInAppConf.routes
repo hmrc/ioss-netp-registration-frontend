@@ -11,3 +11,5 @@
 
 # Add all the application routes to the prod.routes file
 ->         /                          prod.Routes
+
+GET     /pay-clients-vat-on-eu-sales/register-new-ioss-client/test-only/get-client-code/:urlCode   @controllers.test.TestOnlyClientDeclarationCodeController.testOnlyGetClientDeclarationCode(urlCode: String)

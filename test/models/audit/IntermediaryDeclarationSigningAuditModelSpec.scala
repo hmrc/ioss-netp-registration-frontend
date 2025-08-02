@@ -30,7 +30,7 @@ class IntermediaryDeclarationSigningAuditModelSpec extends SpecBase {
     "must create correct json object" in {
 
       implicit val dataRequest: DataRequest[_] =
-        DataRequest(fakeRequest, userAnswersId, emptyUserAnswers)
+        DataRequest(fakeRequest, userAnswersId, emptyUserAnswers, intermediaryNumber)
 
       val intermediaryDeclarationSigningAuditModel = IntermediaryDeclarationSigningAuditModel.build(
         intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
