@@ -14,16 +14,20 @@
  * limitations under the License.
  *@
 
+@import views.html.components.ButtonGroupProcessing
+@import pages.clientDeclarationJourney.ClientDeclarationPage
+
+
 @this(
     layout: templates.Layout,
     formHelper: FormWithCSRF,
     govukErrorSummary: GovukErrorSummary,
     govukCheckboxes: GovukCheckboxes,
-    govukButton: GovukButton
+    button: ButtonGroupProcessing
 )
 
 @(
-form: Form[_], 
+form: Form[_],
 waypoints: Waypoints,
 clientName: String,
 intermediaryName: String
@@ -70,9 +74,16 @@ intermediaryName: String
         )
     )
 
-    @govukButton(
-        ButtonViewModel(messages("site.agree")).withAttribute("id", "continue")
-        )
+    @button("site.agree", ClientDeclarationPage.route(waypoints).url, waypoints)
 
     }
+<div id="processing-wheel" hidden>
+    <div id="processing" aria-live="polite" class="govuk-!-margin-bottom-9">
+        <h2 class="govuk-heading-m">
+            @messages("site.processing")
+        </h2>
+        <div class="processing-wheel-loader"></div>
+    </div>
+</div>
+
 }
