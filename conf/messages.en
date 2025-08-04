@@ -267,7 +267,7 @@ applicationComplete.title = Request pending
 applicationComplete.heading = Request pending
 applicationComplete.p1 = We have received your request to add <span class="govuk-!-font-weight-bold">{0}</span> to your Import One Stop Shop account.
 applicationComplete.next = What happens next
-applicationComplete.clientLink = You must send your client this link to follow, where they can sign a declaration and confirm this request: <br><a class="govuk-link" href="">/pay-clients-vat-on-eu-sales/register-new-ioss-client/client-code-start/{0}</a>
+applicationComplete.clientLink = You must send your client this link to follow, where they can sign a declaration and confirm this request: <br><a class="govuk-link" href="">{0}</a>
 applicationComplete.p2 = We will also email your client a code, using the address you provided, so they can confirm their address.
 applicationComplete.p3 = Once they have confirmed this, you must manage their monthly IOSS VAT returns and pay any VAT due.
 applicationComplete.p4 = Your client must confirm their activation by {0}. If not, you will need to register them again.
