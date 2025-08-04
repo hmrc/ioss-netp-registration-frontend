@@ -484,7 +484,7 @@ clientDeclaration.information.p1 = I, {0}, wish to appoint {1} as my intermediar
 clientDeclaration.information.p2 = I understand that we are joint and severally liable for any debts that we may incur on my registration.
 clientDeclaration.checkbox.text = I agree to register my business.
 clientDeclaration.checkYourAnswersLabel = clientDeclaration
-clientDeclaration.error.required = Select clientDeclaration
+clientDeclaration.error.required = Agree to the declaration to continue
 clientDeclaration.change.hidden = ClientDeclaration
 
 clientSuccessfulRegistration.title = Registration successful
