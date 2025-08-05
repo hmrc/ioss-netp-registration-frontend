@@ -44,25 +44,9 @@ class ClientJourneyStartController @Inject()(
       registrationConnector.getPendingRegistration(uniqueUrlCode).flatMap {
         case Right(savedPendingRegistration) =>
 
-          val clientVatInfo: Option[VatCustomerInfo] = savedPendingRegistration.userAnswers.vatInfo
-
-          val clientUserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId, vatInfo = clientVatInfo))
           for {
-            businessContactDetailsIntermediary <- Future.fromTry {
-              savedPendingRegistration.userAnswers.get(BusinessContactDetailsPage)
-                .toRight {
-                  logger.error(
-                    "Unable to retrieve Client Business Details information from user Answers for id: ${savedPendingRegistration.userAnswers.journeyId}"
-                  )
-                  new IllegalStateException(
-                    s"Missing Client Business Details information in userAnswers for id: ${savedPendingRegistration.userAnswers.journeyId}"
-                  )
-                }
-                .toTry
-            }
-            clientWithBusinessContactDetails <- Future.fromTry(clientUserAnswers.set(BusinessContactDetailsPage, businessContactDetailsIntermediary))
             updatedAnswers <- Future.fromTry(
-              clientWithBusinessContactDetails.set(
+              savedPendingRegistration.userAnswers.copy(request.userId).set(
                 IntermediaryDetailsQuery,
                 IntermediaryDetails(savedPendingRegistration.intermediaryDetails.intermediaryNumber, savedPendingRegistration.intermediaryDetails.intermediaryName)
               )

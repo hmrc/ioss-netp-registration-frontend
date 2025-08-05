@@ -52,6 +52,7 @@ class ApplicationCompleteController @Inject()(
             Ok(view(
               clientCompanyName,
               clientCodeEntryUrl,
+              savedPendingRegistration.uniqueUrlCode,
               savedPendingRegistration.activationExpiryDate,
               frontendAppConfig.intermediaryYourAccountUrl
             )).toFuture

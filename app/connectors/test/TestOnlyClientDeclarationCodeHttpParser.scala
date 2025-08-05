@@ -19,19 +19,20 @@ package connectors.test
 import connectors.ValidateClientCodeHttpParser.logger
 import logging.Logging
 import models.responses.{ErrorResponse, InvalidJson, UnexpectedResponseStatus}
+import models.testOnly.TestOnlyCodes
 import play.api.http.Status.OK
-import play.api.libs.json.{JsError, JsSuccess}
+import play.api.libs.json.{JsError, JsSuccess, Json}
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 object TestOnlyClientDeclarationCodeHttpParser extends Logging {
 
-  type TestOnlyValidateClientCodeResponse = Either[ErrorResponse, String]
+  type TestOnlyValidateClientCodeResponse = Either[ErrorResponse, TestOnlyCodes]
 
   implicit object TestOnlyValidateClientCodeReads extends HttpReads[TestOnlyValidateClientCodeResponse] {
 
     override def read(method: String, url: String, response: HttpResponse): TestOnlyValidateClientCodeResponse = {
       response.status match {
-        case OK => response.json.validate[String] match {
+        case OK => response.json.validate[TestOnlyCodes] match {
           case JsSuccess(clientDeclarationCode, _) => Right(clientDeclarationCode)
           case JsError(errors) =>
             logger.error(s"Failed trying to parse validation as a String")

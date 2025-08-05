@@ -20,6 +20,8 @@ import connectors.test.TestOnlyClientDeclarationCodeConnector
 import controllers.actions.{ClientDataRetrievalAction, ClientIdentifierAction}
 import logging.Logging
 import play.api.i18n.I18nSupport
+import play.api.http.Writeable.writeableOf_JsValue
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 
@@ -37,7 +39,7 @@ class TestOnlyClientDeclarationCodeController @Inject()(
     implicit request =>
       testOnlyClientDeclarationConnector.getTestOnlyCode(urlCode).flatMap {
         case Right(response) =>
-          Future.successful(Ok(s"$response"))
+          Future.successful(Ok(s"""<div id="${response.clientDeclarationCode}">${response.clientDeclarationCode}</div>"""))
         case Left(error) =>
           val message: String = s"Received an unexpected error when trying to retrieve the declaration code: $error."
           val exception: Exception = new Exception(message)
