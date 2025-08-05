@@ -19,9 +19,8 @@ package controllers.clientDeclarationJourney
 import connectors.RegistrationConnector
 import controllers.actions.ClientIdentifierAction
 import logging.Logging
-import models.domain.VatCustomerInfo
-import models.{IntermediaryDetails, UserAnswers}
-import pages.{BusinessContactDetailsPage, Waypoints}
+import models.IntermediaryDetails
+import pages.Waypoints
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.IntermediaryDetailsQuery

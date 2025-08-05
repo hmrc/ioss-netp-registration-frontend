@@ -20,6 +20,7 @@ import base.SpecBase
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, ok, urlEqualTo}
 import models.responses.UnexpectedResponseStatus
+import models.testOnly.TestOnlyCodes
 import play.api.Application
 import play.api.http.Status.{BAD_REQUEST, UNPROCESSABLE_ENTITY, UNSUPPORTED_MEDIA_TYPE}
 import play.api.libs.json.Json
@@ -43,7 +44,7 @@ class TestOnlyClientDeclarationCodeConnectorSpec extends SpecBase with WireMockH
   ".getTestOnlyCode" - {
 
     val uniqueUrlCode: String = "ABCDEF"
-    val uniqueActivationCode: String = "GHIJKL"
+    val uniqueActivationCode: TestOnlyCodes = TestOnlyCodes(uniqueUrlCode, "GHIJKL")
 
     val url: String = s"/ioss-netp-registration/test-only/ActivationCode/$uniqueUrlCode"
 

@@ -20,8 +20,6 @@ import connectors.test.TestOnlyClientDeclarationCodeConnector
 import controllers.actions.{ClientDataRetrievalAction, ClientIdentifierAction}
 import logging.Logging
 import play.api.i18n.I18nSupport
-import play.api.http.Writeable.writeableOf_JsValue
-import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 

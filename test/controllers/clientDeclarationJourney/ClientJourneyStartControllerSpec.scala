@@ -116,31 +116,6 @@ class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with B
         }
       }
 
-      "return error when userAnswers is missing client email" in {
-
-        val testSavedPendingRegistration = savedPendingRegistration(incompleteUserAnswers)
-        val testUniqueUrl = testSavedPendingRegistration.uniqueUrlCode
-
-        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
-          .thenReturn(Right(testSavedPendingRegistration).toFuture)
-
-        val application = applicationBuilder(userAnswers = Some(incompleteUserAnswers))
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
-          .build()
-
-        running(application) {
-          val request = FakeRequest(GET, clientJourneyStartOnPageLoad(testUniqueUrl))
-
-          val result = route(application, request).value
-
-          whenReady(result.failed) { exp =>
-            exp `mustBe` a[Exception]
-            exp.getMessage `mustBe` exp.getLocalizedMessage
-          }
-
-        }
-      }
-
       "return error when uniqueUrlCode is not valid" in {
 
         when(mockRegistrationConnector.getPendingRegistration(any())(any()))

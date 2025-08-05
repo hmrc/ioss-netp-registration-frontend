@@ -60,7 +60,7 @@ class ApplicationCompleteControllerSpec extends SpecBase {
         val view = application.injector.instanceOf[ApplicationCompleteView]
 
         status(result) `mustBe` OK
-        contentAsString(result) `mustBe` view(clientName, clientDeclarationLink, activationExpiryDate, config.intermediaryYourAccountUrl)(request, messages(application)).toString
+        contentAsString(result) `mustBe` view(clientName, clientDeclarationLink, savedPendingRegistration.uniqueUrlCode, activationExpiryDate, config.intermediaryYourAccountUrl)(request, messages(application)).toString
         verify(mockRegistrationConnector, times(1)).getPendingRegistration(eqTo(savedPendingRegistration.journeyId))(any())
       }
     }
