@@ -19,7 +19,7 @@ package controllers.previousRegistrations
 import controllers.actions.*
 import forms.previousRegistrations.PreviousEuCountryFormProvider
 import models.{Index, UserAnswers}
-import pages.previousRegistrations.{PreviousEuCountryPage, PreviousIossNumberPage, PreviousOssNumberPage}
+import pages.previousRegistrations.{PreviousEuCountryPage, PreviousIossNumberPage, PreviousOssNumberPage, PreviousSchemePage}
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -84,7 +84,8 @@ class PreviousEuCountryController @Inject()(
   private def cleanUp(index: Index, answers: UserAnswers): Try[UserAnswers] = {
     for {
       remove1 <- answers.remove(PreviousOssNumberPage(index, index))
-      cleaned <- remove1.remove(PreviousIossNumberPage(index, index))
+      remove2 <- remove1.remove(PreviousSchemePage(index, index))
+      cleaned <- remove2.remove(PreviousIossNumberPage(index, index))
     } yield cleaned
   }
 }
