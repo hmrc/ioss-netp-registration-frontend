@@ -11,6 +11,7 @@ GET         /language/:lang                                             controll
 GET         /refresh-session                                            controllers.KeepAliveController.keepAlive
 
 GET         /there-is-a-problem                                         controllers.JourneyRecoveryController.onPageLoad(continueUrl: Option[RedirectUrl] ?= None)
+GET         /there-is-a-clientProblem                                   controllers.clientDeclarationJourney.ClientJourneyRecoveryController.onPageLoad()
 
 GET         /check-your-answers                                         controllers.CheckYourAnswersController.onPageLoad()
 POST        /check-your-answers/:incompletePrompt                       controllers.CheckYourAnswersController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, incompletePrompt: Boolean)
