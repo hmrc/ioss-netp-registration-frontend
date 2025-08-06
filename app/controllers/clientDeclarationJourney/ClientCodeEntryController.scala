@@ -20,17 +20,22 @@ import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.clientDeclarationJourney.ClientCodeEntryFormProvider
 import logging.Logging
+import models.requests.{DataRequest, OptionalDataRequest}
+import models.{IntermediaryDetails, UserAnswers}
 import pages.Waypoints
 import pages.clientDeclarationJourney.ClientCodeEntryPage
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.IntermediaryDetailsQuery
 import repositories.SessionRepository
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import utils.GetClientEmail
 import views.html.clientDeclarationJourney.ClientCodeEntryView
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -47,17 +52,21 @@ class ClientCodeEntryController @Inject()(
                                          )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientEmail {
   val form: Form[String] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (clientIdentify andThen clientGetData).async {
+  def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (clientIdentify).async {
     implicit request =>
 
-      val preparedForm = request.userAnswers.get(ClientCodeEntryPage(uniqueUrlCode)) match {
-        case None => form
-        case Some(value) => form.fill(value)
+      updateUserAnswers(uniqueUrlCode, request).flatMap { userAnswers =>
+
+        val preparedForm = userAnswers.get(ClientCodeEntryPage(uniqueUrlCode)) match {
+          case None => form
+          case Some(value) => form.fill(value)
+        }
+
+        getClientEmail(waypoints, userAnswers) { clientEmail =>
+          Ok(view(preparedForm, waypoints, clientEmail, uniqueUrlCode)).toFuture
+        }
       }
 
-      getClientEmail(waypoints, request.userAnswers) { clientEmail =>
-        Ok(view(preparedForm, waypoints, clientEmail, uniqueUrlCode)).toFuture
-      }
 
   }
 
@@ -91,5 +100,32 @@ class ClientCodeEntryController @Inject()(
             }
         )
       }
+  }
+
+  def updateUserAnswers(uniqueUrlCode: String, request: OptionalDataRequest[AnyContent]): Future[UserAnswers] = {
+
+    val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
+    
+      registrationConnector.getPendingRegistration(uniqueUrlCode)(hc).flatMap {
+        case Right(savedPendingRegistration) =>
+
+          for {
+            updatedAnswers <- Future.fromTry(
+              savedPendingRegistration.userAnswers.copy(request.userId).set(
+                IntermediaryDetailsQuery,
+                IntermediaryDetails(savedPendingRegistration.intermediaryDetails.intermediaryNumber, savedPendingRegistration.intermediaryDetails.intermediaryName)
+              )
+            )
+            _ <- sessionRepository.set(updatedAnswers)
+          } yield updatedAnswers
+
+        case Left(error) =>
+          val message: String =
+            s"Received an unexpected error when trying to retrieve a pending registration for the given unique Url Code: $uniqueUrlCode, \n Errors: $error."
+          val exception: Exception = new Exception(message)
+          logger.error(exception.getMessage, exception)
+          throw exception
+      }
+
   }
 }
