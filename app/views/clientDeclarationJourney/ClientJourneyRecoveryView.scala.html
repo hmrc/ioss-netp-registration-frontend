@@ -14,7 +14,7 @@
  * limitations under the License.
  *@
 
-import controllers._
+@import controllers._
 
 @this(
     layout: templates.Layout,
@@ -32,7 +32,7 @@ import controllers._
     <p class="govuk-body">
         @govukButton(
             ButtonViewModel(messages("site.startAgain"))
-                .asLink(clientDeclarationJourney.routes.ClientIndexController.onPageLoad().url)
+                .asLink(controllers.clientDeclarationJourney.routes.ClientIndexController.onPageLoad().url)
         )
     </p>
 }

@@ -16,7 +16,7 @@
 
 package controllers.actions
 
-import controllers.routes
+import controllers.{clientDeclarationJourney, routes}
 import models.requests.{ClientOptionalDataRequest, OptionalDataRequest}
 import pages.clientDeclarationJourney.ClientDeclarationPage
 import play.api.mvc.Results.Redirect
@@ -33,12 +33,12 @@ class ClientDeclarationFilter()
     request.userAnswers match {
       case Some(userAnswers) =>
         userAnswers.get(ClientDeclarationPage) match {
-          case Some(value) if !value => Future.successful(Some(Redirect(routes.JourneyRecoveryController.onPageLoad())))
+          case Some(value) if !value => Future.successful(Some(Redirect(clientDeclarationJourney.routes.ClientJourneyRecoveryController.onPageLoad())))
           case Some(value) => Future.successful(Option.empty[Result])
-          case None => Future.successful(Some(Redirect(routes.JourneyRecoveryController.onPageLoad())))
+          case None => Future.successful(Some(Redirect(clientDeclarationJourney.routes.ClientJourneyRecoveryController.onPageLoad())))
         }
       case None =>
-        Future.successful(Some(Redirect(routes.JourneyRecoveryController.onPageLoad())))
+        Future.successful(Some(Redirect(clientDeclarationJourney.routes.ClientJourneyRecoveryController.onPageLoad())))
     }
 }
 

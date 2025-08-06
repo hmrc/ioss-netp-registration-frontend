@@ -16,29 +16,29 @@
 
 package controllers.clientDeclarationJourney
 
-import controllers.actions.{AuthenticatedControllerComponents, ClientIdentifierAction, IdentifierAction}
+import controllers.actions.{AuthenticatedControllerComponents, ClientIdentifierAction}
 import play.api.Logging
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import uk.gov.hmrc.play.bootstrap.binders.*
-import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl.*
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.{JourneyRecoveryContinueView, JourneyRecoveryStartAgainView}
 import views.html.clientDeclarationJourney.ClientJourneyRecoveryView
 
 import javax.inject.Inject
+import scala.concurrent.ExecutionContext
 
 class ClientJourneyRecoveryController @Inject()(
-                                           val controllerComponents: MessagesControllerComponents,
-                                           clientIdentifierAction: ClientIdentifierAction,
-                                           cc: AuthenticatedControllerComponents,
-                                           clientRecoveryView: ClientJourneyRecoveryView
-                                         ) extends FrontendBaseController with I18nSupport with Logging {
+                                                 val controllerComponents: MessagesControllerComponents,
+                                                 clientIdentifierAction: ClientIdentifierAction,
+                                                 cc: AuthenticatedControllerComponents,
+                                                 clientRecoveryView: ClientJourneyRecoveryView
+                                               )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
 
-  def onPageLoad(): Action[AnyContent] = clientIdentifierAction {
+  def onPageLoad(): Action[AnyContent] = clientIdentifierAction.async {
     implicit request =>
-      
       cc.sessionRepository.clear(request.userId)
         .map(_ => Ok(clientRecoveryView()))
   }
 }
+
+
+
