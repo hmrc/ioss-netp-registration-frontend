@@ -20,7 +20,7 @@ import base.SpecBase
 import controllers.routes
 import forms.previousRegistrations.PreviousEuCountryFormProvider
 import models.{Country, Index}
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{EmptyWaypoints, Waypoints}
@@ -64,7 +64,6 @@ class PreviousEuCountryControllerSpec extends SpecBase with MockitoSugar {
         contentAsString(result) mustEqual view(form, waypoints, index)(request, messages(application)).toString
       }
     }
-
 
     "must populate the view correctly on a GET when the question has previously been answered" in {
 
