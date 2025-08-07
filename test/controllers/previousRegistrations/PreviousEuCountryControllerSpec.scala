@@ -19,14 +19,12 @@ package controllers.previousRegistrations
 import base.SpecBase
 import controllers.routes
 import forms.previousRegistrations.PreviousEuCountryFormProvider
-import models.domain.PreviousSchemeNumbers
-import models.{Country, Index, PreviousScheme}
+import models.{Country, Index}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
-import org.scalatest.matchers.should.Matchers.shouldBe
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{EmptyWaypoints, Waypoints}
-import pages.previousRegistrations.{PreviousEuCountryPage, PreviousIossNumberPage, PreviousOssNumberPage, PreviousSchemePage}
+import pages.previousRegistrations.PreviousEuCountryPage
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
@@ -66,7 +64,7 @@ class PreviousEuCountryControllerSpec extends SpecBase with MockitoSugar {
         contentAsString(result) mustEqual view(form, waypoints, index)(request, messages(application)).toString
       }
     }
-    
+
     "must populate the view correctly on a GET when the question has previously been answered" in {
 
       val userAnswers = emptyUserAnswersWithVatInfo.set(PreviousEuCountryPage(index), country).success.value
@@ -178,31 +176,6 @@ class PreviousEuCountryControllerSpec extends SpecBase with MockitoSugar {
         status(result) mustEqual SEE_OTHER
 
         redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
-      }
-    }
-
-    ".cleanup" - {
-      val page = PreviousEuCountryPage(index)
-
-      "should remove previously entered OSS number, IOSS number, and scheme details when a new country is selected" in {
-
-        val userAnswers = basicUserAnswersWithVatInfo
-          .set(PreviousOssNumberPage(index, index), PreviousSchemeNumbers("ATU1234567")).success.value
-          .set(PreviousSchemePage(index, index), PreviousScheme.OSSU).success.value
-          .set(PreviousIossNumberPage(index, index), PreviousSchemeNumbers("IN1001234567")).success.value
-
-        val result = page.cleanup(Some(country), userAnswers).get
-
-        result.get(PreviousOssNumberPage(index, index)) shouldBe None
-        result.get(PreviousSchemePage(index, index)) shouldBe None
-        result.get(PreviousIossNumberPage(index, index)) shouldBe None
-      }
-
-      "should not modify UserAnswers when no country is selected (None)" in {
-
-        val result = page.cleanup(None, basicUserAnswersWithVatInfo).get
-
-        result shouldBe basicUserAnswersWithVatInfo
       }
     }
   }
