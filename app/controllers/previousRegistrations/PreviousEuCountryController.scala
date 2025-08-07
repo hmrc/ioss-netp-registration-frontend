@@ -18,8 +18,8 @@ package controllers.previousRegistrations
 
 import controllers.actions.*
 import forms.previousRegistrations.PreviousEuCountryFormProvider
-import models.{Index, UserAnswers}
-import pages.previousRegistrations.{PreviousEuCountryPage, PreviousIossNumberPage, PreviousOssNumberPage, PreviousSchemePage}
+import models.Index
+import pages.previousRegistrations.PreviousEuCountryPage
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -30,7 +30,6 @@ import utils.FutureSyntax.*
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Success, Try}
 
 class PreviousEuCountryController @Inject()(
                                        override val messagesApi: MessagesApi,
@@ -64,28 +63,10 @@ class PreviousEuCountryController @Inject()(
           BadRequest(view(formWithErrors, waypoints, index)).toFuture,
 
         value =>
-          val existingCountry = request.userAnswers.get(PreviousEuCountryPage(index))
-
-          val cleanedAnswersTry: Try[UserAnswers] =
-            (existingCountry, Some(value)) match {
-              case (Some(oldCountry), Some(newCountry)) if oldCountry != newCountry =>
-                cleanUp(index, request.userAnswers)
-              case _ =>
-                Success(request.userAnswers)
-            }
           for {
-            cleanedAnswers <- Future.fromTry(cleanedAnswersTry)
-            updatedAnswers <- Future.fromTry(cleanedAnswers.set(PreviousEuCountryPage(index), value))
+            updatedAnswers <- Future.fromTry(request.userAnswers.set(PreviousEuCountryPage(index), value))
             _              <- cc.sessionRepository.set(updatedAnswers)
           } yield Redirect(PreviousEuCountryPage(index).navigate(waypoints, request.userAnswers, updatedAnswers).route)
       )
-  }
-
-  private def cleanUp(index: Index, answers: UserAnswers): Try[UserAnswers] = {
-    for {
-      remove1 <- answers.remove(PreviousOssNumberPage(index, index))
-      remove2 <- remove1.remove(PreviousSchemePage(index, index))
-      cleaned <- remove2.remove(PreviousIossNumberPage(index, index))
-    } yield cleaned
   }
 }
