@@ -55,7 +55,7 @@ class ApplicationCompleteControllerSpec extends SpecBase {
 
         val config = application.injector.instanceOf[FrontendAppConfig]
         
-        val clientDeclarationLink: String = s"${config.clientCodeEntryUrl}${savedPendingRegistration.uniqueUrlCode}"
+        val clientDeclarationLink: String = s"${config.clientCodeEntryUrl}/${savedPendingRegistration.uniqueUrlCode}"
 
         val view = application.injector.instanceOf[ApplicationCompleteView]
 
