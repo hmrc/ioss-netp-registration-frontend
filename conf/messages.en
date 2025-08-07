@@ -474,7 +474,6 @@ clientAlreadyRegistered.p2 = They will need to leave the service before you can 
 clientCodeEntry.title = Enter your activation code
 clientCodeEntry.heading = Enter your activation code
 clientCodeEntry.hint = This is the 6-digit code we emailed to {0}.
-clientCodeEntry.checkYourAnswersLabel = The code you entered is incorrect. Check the code and try again.
 clientCodeEntry.error = The code you entered is incorrect. Check the code and try again.
 clientCodeEntry.change.hidden = The code you entered is incorrect. Check the code and try again.
 
@@ -483,10 +482,8 @@ clientDeclaration.heading = Declaration
 clientDeclaration.information.p1 = I, {0}, wish to appoint {1} as my intermediary on the VAT Import One Stop Shop scheme.
 clientDeclaration.information.p2 = I understand that we are joint and severally liable for any debts that we may incur on my registration.
 clientDeclaration.checkbox.text = I agree to register my business.
-clientDeclaration.checkYourAnswersLabel = clientDeclaration
 clientDeclaration.error.required = Agree to the declaration to continue
 clientDeclaration.change.hidden = ClientDeclaration
-
 clientSuccessfulRegistration.title = Registration successful
 clientSuccessfulRegistration.heading = Registration successful
 clientSuccessfulRegistration.text = Your IOSS number is

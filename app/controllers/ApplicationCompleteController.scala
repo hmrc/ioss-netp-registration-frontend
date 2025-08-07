@@ -47,7 +47,7 @@ class ApplicationCompleteController @Inject()(
 
         registrationConnector.getPendingRegistration(request.userAnswers.journeyId).flatMap {
           case Right(savedPendingRegistration) =>
-            val clientCodeEntryUrl = s"${frontendAppConfig.clientCodeEntryUrl}${savedPendingRegistration.uniqueUrlCode}"
+            val clientCodeEntryUrl = s"${frontendAppConfig.clientCodeEntryUrl}/${savedPendingRegistration.uniqueUrlCode}"
 
             Ok(view(
               clientCompanyName,
