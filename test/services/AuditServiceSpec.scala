@@ -17,7 +17,7 @@
 package services
 
 import config.FrontendAppConfig
-import models.audit.{IntermediaryDeclarationSigningAuditModel, DeclarationSigningAuditType, SubmissionResult}
+import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType, SubmissionResult}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -49,7 +49,7 @@ class AuditServiceSpec extends AnyFreeSpec with MockitoSugar with ScalaFutures w
 
       val service = new AuditService(mockAppConfig, auditConnector)
 
-      service.audit(IntermediaryDeclarationSigningAuditModel(
+      service.audit(DeclarationSigningAuditModel(
         declarationSigningAuditType = DeclarationSigningAuditType.CreateDeclaration,
         credId = "test-cred-Id",
         userAgent = "test-userAgent",

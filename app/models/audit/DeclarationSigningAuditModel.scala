@@ -20,7 +20,7 @@ import models.UserAnswers
 import models.requests.DataRequest
 import play.api.libs.json.{JsValue, Json}
 
-case class IntermediaryDeclarationSigningAuditModel(
+case class DeclarationSigningAuditModel(
                                                      declarationSigningAuditType: DeclarationSigningAuditType,
                                                      credId: String,
                                                      userAgent: String,
@@ -42,15 +42,15 @@ case class IntermediaryDeclarationSigningAuditModel(
   )
 }
 
-object IntermediaryDeclarationSigningAuditModel {
+object DeclarationSigningAuditModel {
 
   def build(
              declarationSigningAuditType: DeclarationSigningAuditType,
              userAnswers: UserAnswers,
              submissionResult: SubmissionResult,
              submittedDeclarationPageBody: String
-           )(implicit request: DataRequest[_]): IntermediaryDeclarationSigningAuditModel =
-    IntermediaryDeclarationSigningAuditModel(
+           )(implicit request: DataRequest[_]): DeclarationSigningAuditModel =
+    DeclarationSigningAuditModel(
       declarationSigningAuditType = declarationSigningAuditType,
       credId = request.userId,
       userAgent = request.headers.get("user-agent").getOrElse(""),

@@ -19,7 +19,7 @@ package controllers
 import base.SpecBase
 import connectors.RegistrationConnector
 import forms.DeclarationFormProvider
-import models.audit.{IntermediaryDeclarationSigningAuditModel, DeclarationSigningAuditType, SubmissionResult}
+import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult.EMAIL_NOT_SENT
 import models.requests.DataRequest
 import models.responses.UnexpectedResponseStatus
@@ -185,7 +185,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
           val result = route(application, request).value
 
-          val expectedAuditEvent = IntermediaryDeclarationSigningAuditModel.build(
+          val expectedAuditEvent = DeclarationSigningAuditModel.build(
             declarationSigningAuditType = DeclarationSigningAuditType.CreateDeclaration,
             userAnswers = userAnswers,
             submissionResult = SubmissionResult.Success,
@@ -257,7 +257,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
           val result = route(application, request).value
 
-          val expectedAuditEvent = IntermediaryDeclarationSigningAuditModel.build(
+          val expectedAuditEvent = DeclarationSigningAuditModel.build(
             declarationSigningAuditType = DeclarationSigningAuditType.CreateDeclaration,
             userAnswers = userAnswers,
             submissionResult = SubmissionResult.Success,
@@ -359,7 +359,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           implicit val dataRequest: DataRequest[_] =
             DataRequest(fakeRequest, userAnswersId, userAnswers, intermediaryNumber)
 
-          val expectedAuditEvent = IntermediaryDeclarationSigningAuditModel.build(
+          val expectedAuditEvent = DeclarationSigningAuditModel.build(
             declarationSigningAuditType = DeclarationSigningAuditType.CreateDeclaration,
             userAnswers = userAnswers,
             submissionResult = SubmissionResult.Failure,

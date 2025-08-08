@@ -21,7 +21,7 @@ import models.requests.DataRequest
 import play.api.libs.json.{JsValue, Json}
 import testutils.RegistrationData.emptyUserAnswers
 
-class IntermediaryDeclarationSigningAuditModelSpec extends SpecBase {
+class DeclarationSigningAuditModelSpec extends SpecBase {
 
   private val submissionResult: SubmissionResult = SubmissionResult.values.head
 
@@ -32,7 +32,7 @@ class IntermediaryDeclarationSigningAuditModelSpec extends SpecBase {
       implicit val dataRequest: DataRequest[_] =
         DataRequest(fakeRequest, userAnswersId, emptyUserAnswers, intermediaryNumber)
 
-      val intermediaryDeclarationSigningAuditModel = IntermediaryDeclarationSigningAuditModel.build(
+      val declarationSigningAuditModel = DeclarationSigningAuditModel.build(
         declarationSigningAuditType = DeclarationSigningAuditType.CreateDeclaration,
         userAnswers = emptyUserAnswers,
         submissionResult = SubmissionResult.Success,
@@ -47,7 +47,7 @@ class IntermediaryDeclarationSigningAuditModelSpec extends SpecBase {
         "submittedDeclarationPageBody" -> ""
       )
 
-      intermediaryDeclarationSigningAuditModel.detail mustBe expectedJson
+      declarationSigningAuditModel.detail mustBe expectedJson
     }
   }
 }
