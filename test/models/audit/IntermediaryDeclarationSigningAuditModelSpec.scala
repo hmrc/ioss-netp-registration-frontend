@@ -33,7 +33,7 @@ class IntermediaryDeclarationSigningAuditModelSpec extends SpecBase {
         DataRequest(fakeRequest, userAnswersId, emptyUserAnswers, intermediaryNumber)
 
       val intermediaryDeclarationSigningAuditModel = IntermediaryDeclarationSigningAuditModel.build(
-        intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
+        declarationSigningAuditType = DeclarationSigningAuditType.CreateDeclaration,
         userAnswers = emptyUserAnswers,
         submissionResult = SubmissionResult.Success,
         submittedDeclarationPageBody = ""

@@ -20,7 +20,7 @@ import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.DeclarationFormProvider
 import logging.Logging
-import models.audit.{IntermediaryDeclarationSigningAuditModel, IntermediaryDeclarationSigningAuditType, SubmissionResult}
+import models.audit.{IntermediaryDeclarationSigningAuditModel, DeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult
 import models.requests.DataRequest
 import models.{IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration}
@@ -156,7 +156,7 @@ class DeclarationController @Inject()(
                        (implicit hc: HeaderCarrier, request: DataRequest[_]): Unit = {
     auditService.audit(
       IntermediaryDeclarationSigningAuditModel.build(
-        IntermediaryDeclarationSigningAuditType.CreateDeclaration,
+        DeclarationSigningAuditType.CreateDeclaration,
         request.userAnswers,
         result,
         submittedDeclarationPageBody

@@ -19,7 +19,7 @@ package controllers
 import base.SpecBase
 import connectors.RegistrationConnector
 import forms.DeclarationFormProvider
-import models.audit.{IntermediaryDeclarationSigningAuditModel, IntermediaryDeclarationSigningAuditType, SubmissionResult}
+import models.audit.{IntermediaryDeclarationSigningAuditModel, DeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult.EMAIL_NOT_SENT
 import models.requests.DataRequest
 import models.responses.UnexpectedResponseStatus
@@ -186,7 +186,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           val result = route(application, request).value
 
           val expectedAuditEvent = IntermediaryDeclarationSigningAuditModel.build(
-            intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
+            declarationSigningAuditType = DeclarationSigningAuditType.CreateDeclaration,
             userAnswers = userAnswers,
             submissionResult = SubmissionResult.Success,
             submittedDeclarationPageBody = mockDeclarationView(
@@ -258,7 +258,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           val result = route(application, request).value
 
           val expectedAuditEvent = IntermediaryDeclarationSigningAuditModel.build(
-            intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
+            declarationSigningAuditType = DeclarationSigningAuditType.CreateDeclaration,
             userAnswers = userAnswers,
             submissionResult = SubmissionResult.Success,
             submittedDeclarationPageBody = mockDeclarationView(
@@ -360,7 +360,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             DataRequest(fakeRequest, userAnswersId, userAnswers, intermediaryNumber)
 
           val expectedAuditEvent = IntermediaryDeclarationSigningAuditModel.build(
-            intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
+            declarationSigningAuditType = DeclarationSigningAuditType.CreateDeclaration,
             userAnswers = userAnswers,
             submissionResult = SubmissionResult.Failure,
             submittedDeclarationPageBody = mockDeclarationView(
