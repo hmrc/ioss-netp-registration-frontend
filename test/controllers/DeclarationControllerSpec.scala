@@ -272,9 +272,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
         when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
 
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
-
-        doNothing().when(mockAuditService).audit(any())(any(), any())
-
+        
         val application = applicationBuilder(userAnswers = Some(userAnswers))
           .overrides(
             bind[RegistrationConnector].toInstance(mockRegistrationConnector),
