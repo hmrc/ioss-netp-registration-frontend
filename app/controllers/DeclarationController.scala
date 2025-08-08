@@ -20,9 +20,8 @@ import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.DeclarationFormProvider
 import logging.Logging
-import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType, SubmissionResult}
+import models.audit.SubmissionResult
 import models.emails.EmailSendingResult
-import models.requests.DataRequest
 import models.{IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration}
 import pages.{DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints}
 import play.api.data.Form
@@ -151,5 +150,5 @@ class DeclarationController @Inject()(
       emailAddress = clientEmail
     )
   }
-  
+
 }
