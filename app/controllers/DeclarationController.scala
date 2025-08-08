@@ -93,7 +93,7 @@ class DeclarationController @Inject()(
 
                   value =>
 
-                    sendAudit(
+                    auditService.sendAudit(
                       result = SubmissionResult.Success,
                       submittedDeclarationPageBody = view(form.fill(value), waypoints, intermediaryName, clientCompanyName).body
                     )
@@ -105,7 +105,7 @@ class DeclarationController @Inject()(
               }
 
             case Left(error) =>
-              sendAudit(
+              auditService.sendAudit(
                 result = SubmissionResult.Failure,
                 submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
               )
@@ -151,17 +151,5 @@ class DeclarationController @Inject()(
       emailAddress = clientEmail
     )
   }
-
-  private def sendAudit(result: SubmissionResult, submittedDeclarationPageBody: String)
-                       (implicit hc: HeaderCarrier, request: DataRequest[_]): Unit = {
-    auditService.audit(
-      DeclarationSigningAuditModel.build(
-        DeclarationSigningAuditType.CreateDeclaration,
-        request.userAnswers,
-        result,
-        submittedDeclarationPageBody
-
-      )
-    )
-  }
+  
 }

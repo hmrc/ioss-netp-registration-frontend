@@ -17,7 +17,8 @@
 package services
 
 import config.FrontendAppConfig
-import models.audit.JsonAuditModel
+import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType, JsonAuditModel, SubmissionResult}
+import models.requests.DataRequest
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.AuditExtensions
@@ -35,6 +36,19 @@ class AuditService @Inject()(
   def audit(dataSource: JsonAuditModel)(implicit hc: HeaderCarrier, request: Request[_]): Unit = {
     val event = toExtendedDataEvent(dataSource, request.path)
     auditConnector.sendExtendedEvent(event)
+  }
+
+  def sendAudit(result: SubmissionResult, submittedDeclarationPageBody: String)
+                       (implicit hc: HeaderCarrier, request: DataRequest[_]): Unit = {
+    audit(
+      DeclarationSigningAuditModel.build(
+        DeclarationSigningAuditType.CreateDeclaration,
+        request.userAnswers,
+        result,
+        submittedDeclarationPageBody
+
+      )
+    )
   }
 
   private def toExtendedDataEvent(auditModel: JsonAuditModel, path: String)
