@@ -22,7 +22,7 @@ import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
 case object ClientBusinessNamePage extends QuestionPage[ClientBusinessName] {
-  
+
   override def path: JsPath = JsPath \ toString
 
   override def toString: String = "clientBusinessName"
@@ -30,6 +30,7 @@ case object ClientBusinessNamePage extends QuestionPage[ClientBusinessName] {
   override def route(waypoints: Waypoints): Call = {
     routes.ClientBusinessNameController.onPageLoad(waypoints)
   }
+
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
     answers.get(BusinessBasedInUKPage) match {
       case Some(true) => ClientHasUtrNumberPage

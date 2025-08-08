@@ -31,7 +31,7 @@ class WaypointSpec extends AnyFreeSpec with Matchers with OptionValues {
     "must return Check Your Answers when given its waypoint" in {
       Waypoint.fromString("anything") mustBe None
     }
-    
+
     "must return Edit Website when given its Check mode waypoint" in {
       Waypoint.fromString("change-add-website-address").value mustBe AddWebsitePage().waypoint(CheckMode)
     }

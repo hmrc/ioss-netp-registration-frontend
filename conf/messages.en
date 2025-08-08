@@ -11,6 +11,7 @@ site.startAgain = Start again
 site.signIn = Sign in
 site.govuk = GOV.UK
 site.agree = Agree and confirm
+site.processing = We are processing your registration.
 
 date.day = Day
 date.month = Month
@@ -266,7 +267,7 @@ applicationComplete.title = Request pending
 applicationComplete.heading = Request pending
 applicationComplete.p1 = We have received your request to add <span class="govuk-!-font-weight-bold">{0}</span> to your Import One Stop Shop account.
 applicationComplete.next = What happens next
-applicationComplete.clientLink = You must send your client this link to follow, where they can sign a declaration and confirm this request: <br><a class="govuk-link" href="">{0}</a>
+applicationComplete.clientLink = You must send your client this link to follow, where they can sign a declaration and confirm this request: <br><a class="govuk-link" href="{0}" id="{1}">{0}</a>
 applicationComplete.p2 = We will also email your client a code, using the address you provided, so they can confirm their address.
 applicationComplete.p3 = Once they have confirmed this, you must manage their monthly IOSS VAT returns and pay any VAT due.
 applicationComplete.p4 = Your client must confirm their activation by {0}. If not, you will need to register them again.
@@ -469,3 +470,22 @@ clientAlreadyRegistered.heading = You cannot add this trader
 clientAlreadyRegistered.p1 = Your client is already registered on the IOSS service.
 clientAlreadyRegistered.p1.companyName = {0} is already registered on the IOSS service.
 clientAlreadyRegistered.p2 = They will need to leave the service before you can add them as a client.
+
+clientCodeEntry.title = Enter your activation code
+clientCodeEntry.heading = Enter your activation code
+clientCodeEntry.hint = This is the 6-digit code we emailed to {0}.
+clientCodeEntry.error = The code you entered is incorrect. Check the code and try again.
+clientCodeEntry.change.hidden = The code you entered is incorrect. Check the code and try again.
+
+clientDeclaration.title = Declaration
+clientDeclaration.heading = Declaration
+clientDeclaration.information.p1 = I, {0}, wish to appoint {1} as my intermediary on the VAT Import One Stop Shop scheme.
+clientDeclaration.information.p2 = I understand that we are joint and severally liable for any debts that we may incur on my registration.
+clientDeclaration.checkbox.text = I agree to register my business.
+clientDeclaration.error.required = Agree to the declaration to continue
+clientDeclaration.change.hidden = ClientDeclaration
+clientSuccessfulRegistration.title = Registration successful
+clientSuccessfulRegistration.heading = Registration successful
+clientSuccessfulRegistration.text = Your IOSS number is
+clientSuccessfulRegistration.info.1 = We have let your intermediary know.
+clientSuccessfulRegistration.info.2 = They must now complete your monthly IOSS VAT returns and pay any VAT due.

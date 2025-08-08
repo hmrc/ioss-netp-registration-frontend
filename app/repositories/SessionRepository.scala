@@ -18,9 +18,9 @@ package repositories
 
 import config.FrontendAppConfig
 import models.UserAnswers
-import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model._
 import org.mongodb.scala.SingleObservableFuture
+import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.*
 import play.api.libs.json.Format
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -41,8 +41,8 @@ class SessionRepository @Inject()(
   extends PlayMongoRepository[UserAnswers](
     collectionName = "user-answers",
     mongoComponent = mongoComponent,
-    domainFormat   = UserAnswers.format,
-    indexes        = Seq(
+    domainFormat = UserAnswers.format,
+    indexes = Seq(
       IndexModel(
         Indexes.ascending("lastUpdated"),
         IndexOptions()
@@ -81,13 +81,14 @@ class SessionRepository @Inject()(
 
     collection
       .replaceOne(
-        filter      = byId(updatedAnswers.id),
+        filter = byId(updatedAnswers.id),
         replacement = updatedAnswers,
-        options     = ReplaceOptions().upsert(true)
+        options = ReplaceOptions().upsert(true)
       )
       .toFuture()
       .map(_ => true)
   }
+
 
   def clear(id: String): Future[Boolean] = Mdc.preservingMdc {
     collection

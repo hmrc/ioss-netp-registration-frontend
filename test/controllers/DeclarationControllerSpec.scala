@@ -23,13 +23,13 @@ import models.audit.{IntermediaryDeclarationSigningAuditModel, IntermediaryDecla
 import models.emails.EmailSendingResult.EMAIL_NOT_SENT
 import models.requests.DataRequest
 import models.responses.UnexpectedResponseStatus
-import models.{BusinessContactDetails, ClientBusinessName, SavedPendingRegistration}
+import models.{BusinessContactDetails, ClientBusinessName, IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{doNothing, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
-import pages.{BusinessContactDetailsPage, ClientBusinessNamePage, ClientVatNumberPage, DeclarationPage, EmptyWaypoints, ErrorSubmittingPendingRegistrationPage, Waypoints}
+import pages.{BusinessContactDetailsPage, ClientBusinessNamePage, DeclarationPage, EmptyWaypoints, ErrorSubmittingPendingRegistrationPage, Waypoints}
 import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
@@ -50,8 +50,13 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
   private val userAnswers = emptyUserAnswersWithVatInfo
     .set(ClientBusinessNamePage, clientBusinessName).success.value
-    .set(ClientVatNumberPage, vatNumber).success.value
     .set(BusinessContactDetailsPage, businessContactDetails).success.value
+
+  private val nonEmptyIntermediaryName: String = intermediaryVatCustomerInfo.organisationName.getOrElse("Dummy Name for Test")
+  private val pendingRegistrationRequest: PendingRegistrationRequest = PendingRegistrationRequest(
+    userAnswers = userAnswers,
+    intermediaryDetails = IntermediaryDetails(intermediaryNumber, nonEmptyIntermediaryName)
+  )
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
   private val mockAuditService: AuditService = mock[AuditService]
@@ -59,6 +64,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
   val formProvider = new DeclarationFormProvider()
   val form: Form[Boolean] = formProvider()
 
+  val declarationRoute: String = routes.DeclarationController.onPageLoad(waypoints).url
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockRegistrationConnector)
@@ -175,7 +181,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
 
           implicit val dataRequest: DataRequest[_] =
-            DataRequest(fakeRequest, userAnswersId, userAnswers)
+            DataRequest(fakeRequest, userAnswersId, userAnswers, intermediaryNumber)
 
           val result = route(application, request).value
 
@@ -190,7 +196,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value mustBe DeclarationPage.navigate(waypoints, userAnswers, userAnswers).route.url
-          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(userAnswers))(any())
+          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(pendingRegistrationRequest))(any())
           verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
           verify(mockEmailService, times(1)).sendClientActivationEmail(
             any,
@@ -202,7 +208,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
         }
       }
 
-      "must submit client registration, audit event and redirect to next page with valid data when client email fails to send" in {
+      "must submit client registration, audit event and redirect to next page with valid data even when client email fails to send" in {
 
         val mockSessionRepository = mock[SessionRepository]
         val mockEmailService = mock[EmailService]
@@ -247,7 +253,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
               .withFormUrlEncodedBody(("declaration", "true"))
 
           implicit val dataRequest: DataRequest[_] =
-            DataRequest(fakeRequest, userAnswersId, userAnswers)
+            DataRequest(fakeRequest, userAnswersId, userAnswers, intermediaryNumber)
 
           val result = route(application, request).value
 
@@ -262,7 +268,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value mustBe DeclarationPage.navigate(waypoints, userAnswers, userAnswers).route.url
-          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(userAnswers))(any())
+          verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(pendingRegistrationRequest))(any())
           verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
           verify(mockEmailService, times(1)).sendClientActivationEmail(
             any,
@@ -339,9 +345,9 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             bind[AuditService].toInstance(mockAuditService)
           ).build()
 
-        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Left(
-          UnexpectedResponseStatus(500, "Generic Error from database")
-        ).toFuture
+        when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Left(UnexpectedResponseStatus(500, "Generic Error from database")).toFuture
+        when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any()))
+          .thenReturn(Future.successful(Right(intermediaryVatCustomerInfo)))
 
         when(mockDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
 
@@ -351,7 +357,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           val request = FakeRequest(POST, routes.DeclarationController.onSubmit(waypoints).url)
 
           implicit val dataRequest: DataRequest[_] =
-            DataRequest(fakeRequest, userAnswersId, userAnswers)
+            DataRequest(fakeRequest, userAnswersId, userAnswers, intermediaryNumber)
 
           val expectedAuditEvent = IntermediaryDeclarationSigningAuditModel.build(
             intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,

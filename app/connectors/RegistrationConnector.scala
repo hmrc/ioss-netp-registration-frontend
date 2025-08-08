@@ -17,12 +17,12 @@
 package connectors
 
 import config.Service
-import connectors.SavedPendingRegistrationHttpParser.SavedPendingRegistrationResponse
-import connectors.SavedPendingRegistrationHttpParser.SavedPendingRegistrationResultResponseReads
 import connectors.RegistrationHttpParser.*
+import connectors.SavedPendingRegistrationHttpParser.{SavedPendingRegistrationResponse, SavedPendingRegistrationResultResponseReads}
+import connectors.ValidateClientCodeHttpParser.{ValidateClientCodeReads, validateClientCodeResponse}
 import connectors.VatCustomerInfoHttpParser.{VatCustomerInfoResponse, VatCustomerInfoResponseReads}
 import logging.Logging
-import models.UserAnswers
+import models.PendingRegistrationRequest
 import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue
@@ -49,15 +49,21 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
     httpClientV2.get(url"$intermediaryUrl/vat-information").execute[VatCustomerInfoResponse]
   }
 
-  def submitPendingRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[SavedPendingRegistrationResponse] = {
+  def submitPendingRegistration(pendingRegistrationRequest: PendingRegistrationRequest)(implicit hc: HeaderCarrier)
+  : Future[SavedPendingRegistrationResponse] = {
     httpClientV2.post(url"$baseUrl/save-pending-registration")
-      .withBody(Json.toJson(userAnswers))
+      .withBody(Json.toJson(pendingRegistrationRequest))
       .execute[SavedPendingRegistrationResponse]
   }
 
-  def getPendingRegistration(journeyId: String)(implicit hc: HeaderCarrier): Future[SavedPendingRegistrationResponse] = {
-    httpClientV2.get(url"$baseUrl/save-pending-registration/$journeyId")
+  def getPendingRegistration(journeyIdOrUrlCode: String)(implicit hc: HeaderCarrier): Future[SavedPendingRegistrationResponse] = {
+    httpClientV2.get(url"$baseUrl/save-pending-registration/$journeyIdOrUrlCode")
       .execute[SavedPendingRegistrationResponse]
+  }
+
+  def validateClientCode(uniqueUrlCode: String, activationCode: String)(implicit hc: HeaderCarrier): Future[validateClientCodeResponse] = {
+    httpClientV2.get(url"$baseUrl/validate-pending-registration/$uniqueUrlCode/$activationCode")
+      .execute[validateClientCodeResponse]
   }
 
   def getIossRegistration(iossNumber: String)(implicit hc: HeaderCarrier): Future[IossEtmpDisplayRegistrationResultResponse] = {

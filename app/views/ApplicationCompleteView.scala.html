@@ -22,6 +22,7 @@
 @(
         clientName: String,
         clientDeclarationLink: String,
+        code: String,
         activationDate: String,
         yourAccountUrl: String
 )(implicit request: Request[_], messages: Messages)
@@ -36,7 +37,7 @@
 
   <h2 class="govuk-heading-m">@messages("applicationComplete.next")</h2>
 
-  <p class="govuk-body">@Html(messages("applicationComplete.clientLink", clientDeclarationLink))</p>
+  <p class="govuk-body">@Html(messages("applicationComplete.clientLink", clientDeclarationLink, code))</p>
 
   <p class="govuk-body">@messages("applicationComplete.p2")</p>
 

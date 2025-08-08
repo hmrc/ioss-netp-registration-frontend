@@ -27,7 +27,9 @@ case class SavedPendingRegistration(
                                      uniqueUrlCode: String,
                                      userAnswers: UserAnswers,
                                      lastUpdated: Instant,
-                                     uniqueActivationCode: String) {
+                                     uniqueActivationCode: String,
+                                     intermediaryDetails: IntermediaryDetails
+                                   ) {
 
   def activationExpiryDate: String = LocalDateTime
     .ofInstant(lastUpdated, ZoneId.systemDefault())
@@ -38,3 +40,4 @@ case class SavedPendingRegistration(
 object SavedPendingRegistration {
   implicit lazy val format: OFormat[SavedPendingRegistration] = Json.format[SavedPendingRegistration]
 }
+

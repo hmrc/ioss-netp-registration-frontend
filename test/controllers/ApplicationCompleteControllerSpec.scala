@@ -36,7 +36,6 @@ class ApplicationCompleteControllerSpec extends SpecBase {
 
   private val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
   private val clientName: String = savedPendingRegistration.userAnswers.vatInfo.flatMap(_.organisationName).value
-  private val clientDeclarationLink: String = savedPendingRegistration.uniqueUrlCode
   private val activationExpiryDate = savedPendingRegistration.activationExpiryDate
 
   "ApplicationComplete Controller" - {
@@ -56,10 +55,12 @@ class ApplicationCompleteControllerSpec extends SpecBase {
 
         val config = application.injector.instanceOf[FrontendAppConfig]
         
+        val clientDeclarationLink: String = s"${config.clientCodeEntryUrl}/${savedPendingRegistration.uniqueUrlCode}"
+
         val view = application.injector.instanceOf[ApplicationCompleteView]
 
         status(result) `mustBe` OK
-        contentAsString(result) `mustBe` view(clientName, clientDeclarationLink, activationExpiryDate, config.intermediaryYourAccountUrl)(request, messages(application)).toString
+        contentAsString(result) `mustBe` view(clientName, clientDeclarationLink, savedPendingRegistration.uniqueUrlCode, activationExpiryDate, config.intermediaryYourAccountUrl)(request, messages(application)).toString
         verify(mockRegistrationConnector, times(1)).getPendingRegistration(eqTo(savedPendingRegistration.journeyId))(any())
       }
     }

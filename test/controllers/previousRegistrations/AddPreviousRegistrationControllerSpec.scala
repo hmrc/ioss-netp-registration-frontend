@@ -164,6 +164,8 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
         status(result) `mustBe` BAD_REQUEST
         contentAsString(result) `mustBe` view(boundForm, waypoints, list, canAddCountries = true)(request, implicitly).toString
       }
+
+
     }
 
     "must redirect to Journey Recovery for a GET if no existing data is found" in {
@@ -178,6 +180,7 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
         status(result) `mustBe` SEE_OTHER
         redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
       }
+
     }
 
     "must redirect to Journey Recovery for a GET if user answers are empty" in {
@@ -192,6 +195,7 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
         status(result) `mustBe` SEE_OTHER
         redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
       }
+
     }
 
     "must redirect to Journey Recovery for a POST if no existing data is found" in {
