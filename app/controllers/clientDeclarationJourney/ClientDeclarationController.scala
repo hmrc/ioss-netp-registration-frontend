@@ -41,13 +41,14 @@ class ClientDeclarationController @Inject()(
                                              formProvider: ClientDeclarationFormProvider,
                                              val controllerComponents: MessagesControllerComponents,
                                              cc: AuthenticatedControllerComponents,
+                                             clientValidationFilter: ClientValidationFilterProvider,
                                              view: ClientDeclarationView
                                            )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with Logging {
 
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (cc.clientIdentify andThen cc.clientGetData).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (cc.clientIdentify andThen cc.clientGetData andThen clientValidationFilter.apply()).async {
     implicit request =>
 
       getClientCompanyName(waypoints, request.userAnswers) { clientCompanyName =>

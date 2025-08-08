@@ -59,6 +59,7 @@ class ClientCodeEntryController @Inject()(
         Ok(view(preparedForm, waypoints, clientEmail, uniqueUrlCode)).toFuture
       }
 
+
   }
 
   def onSubmit(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = (clientIdentify andThen clientGetData).async {
@@ -92,4 +93,5 @@ class ClientCodeEntryController @Inject()(
         )
       }
   }
+
 }
