@@ -20,14 +20,15 @@ import controllers.actions.*
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import logging.Logging
 import models.UserAnswers
+import pages.{ClientBusinessNamePage, ErrorSubmittingRegistrationPage, JourneyRecoveryPage, Waypoints}
 import pages.clientDeclarationJourney.ClientDeclarationPage
-import pages.{ClientBusinessNamePage, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
-import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.Results.Redirect
+import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
+import play.api.mvc.Results.Redirect
 import queries.IntermediaryDetailsQuery
 import repositories.SessionRepository
+import services.RegistrationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.clientDeclarationJourney.ClientDeclarationView
@@ -36,14 +37,15 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class ClientDeclarationController @Inject()(
-                                             override val messagesApi: MessagesApi,
+                                             cc: AuthenticatedControllerComponents,
                                              sessionRepository: SessionRepository,
                                              formProvider: ClientDeclarationFormProvider,
-                                             val controllerComponents: MessagesControllerComponents,
-                                             cc: AuthenticatedControllerComponents,
+                                             registrationService: RegistrationService,
                                              view: ClientDeclarationView
                                            )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with Logging {
+
+  protected val controllerComponents: MessagesControllerComponents = cc
 
   val form: Form[Boolean] = formProvider()
 
@@ -74,10 +76,16 @@ class ClientDeclarationController @Inject()(
               BadRequest(view(formWithErrors, waypoints, clientCompanyName, intermediaryName)).toFuture,
 
             value =>
-              for {
-                updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientDeclarationPage, value))
-                _ <- sessionRepository.set(updatedAnswers)
-              } yield Redirect(routes.ClientSuccessfulRegistrationController.onPageLoad())
+              registrationService.createRegistration(request.userAnswers).flatMap {
+                case Right(response) =>
+                  for {
+                    updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientDeclarationPage, value))
+                    _ <- sessionRepository.set(updatedAnswers)
+                  } yield Redirect(routes.ClientSuccessfulRegistrationController.onPageLoad())
+                case Left(error) =>
+                  logger.error(s"Unexpected result on registration creation submission: ${error.body}")
+                  Redirect(ErrorSubmittingRegistrationPage.route(waypoints)).toFuture
+              }
           )
         }
       }

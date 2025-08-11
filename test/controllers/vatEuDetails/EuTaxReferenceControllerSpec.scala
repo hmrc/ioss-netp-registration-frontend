@@ -18,7 +18,8 @@ package controllers.vatEuDetails
 
 import base.SpecBase
 import forms.vatEuDetails.EuTaxReferenceFormProvider
-import models.{Country, RegistrationType, UserAnswers}
+import models.{Country, UserAnswers}
+import models.vatEuDetails.RegistrationType
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar

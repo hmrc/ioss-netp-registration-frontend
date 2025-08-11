@@ -18,13 +18,18 @@ package base
 
 import controllers.actions.*
 import generators.Generators
+import models.{BusinessContactDetails, CheckMode, Index, UserAnswers, Website}
 import models.domain.VatCustomerInfo
-import models.{BusinessContactDetails, CheckMode, Index, UserAnswers}
+import org.scalatest.{OptionValues, TryValues}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.{OptionValues, TryValues}
-import pages.{BusinessBasedInUKPage, CheckAnswersPage, EmptyWaypoints, NonEmptyWaypoints, Waypoint, Waypoints}
+import pages.*
+import pages.clientDeclarationJourney.*
+import pages.previousRegistrations.*
+import pages.tradingNames.*
+import pages.vatEuDetails.*
+import pages.website.*
 import play.api.Application
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.bind
@@ -67,7 +72,16 @@ trait SpecBase
 
   def emptyUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.copy(vatInfo = Some(vatCustomerInfo))
 
-  def basicUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.set(BusinessBasedInUKPage, true).success.value.copy(vatInfo = Some(vatCustomerInfo))
+  def basicUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers
+    .set(BusinessBasedInUKPage, true).success.value
+    .set(ClientHasVatNumberPage, true).success.value
+    .set(ClientVatNumberPage, "123456789").success.value
+    .set(HasTradingNamePage, false).success.value
+    .set(BusinessContactDetailsPage, BusinessContactDetails("fullName", "555999111", "test@test.com")).success.value
+    .set(HasFixedEstablishmentPage, false).success.value
+    .set(PreviouslyRegisteredPage, false).success.value
+    .set(WebsitePage(Index(0)), Website("www.website.com")).success.value
+    .copy(vatInfo = Some(vatCustomerInfo))
 
   def testCredentials: Credentials = Credentials(userAnswersId, "GGW")
 
@@ -98,7 +112,6 @@ trait SpecBase
       deregistrationDecisionDate = None
     )
   }
-
 
   val businessContactDetails: BusinessContactDetails =
     BusinessContactDetails(fullName = "name", telephoneNumber = "0111 2223334", emailAddress = "email@example.com")

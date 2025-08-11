@@ -189,3 +189,5 @@ GET        /declaration-client                                          controll
 POST       /declaration-client                                          controllers.clientDeclarationJourney.ClientDeclarationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
 GET        /successful-registration                                     controllers.clientDeclarationJourney.ClientSuccessfulRegistrationController.onPageLoad()
+
+GET        /errorSubmittingRegistration                       controllers.ErrorSubmittingRegistrationController.onPageLoad()

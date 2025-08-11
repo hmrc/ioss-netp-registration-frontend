@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 
-package queries.euDetails
+package models.etmp
 
-import models.vatEuDetails.EuDetails
-import play.api.libs.json.JsPath
-import queries.{Gettable, Settable}
+import play.api.libs.json.{Json, OFormat}
 
-case object AllEuDetailsQuery extends Gettable[List[EuDetails]] with Settable[List[EuDetails]] {
+case class EtmpOtherAddress(
+                             issuedBy: String,
+                             tradingName: Option[String],
+                             addressLine1: String,
+                             addressLine2: Option[String],
+                             townOrCity: String,
+                             regionOrState: Option[String],
+                             postcode: Option[String]
+                           )
 
-  override def path: JsPath = JsPath \ "euDetails"
+
+object EtmpOtherAddress {
+  implicit val format: OFormat[EtmpOtherAddress] = Json.format[EtmpOtherAddress]
 }

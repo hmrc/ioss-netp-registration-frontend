@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,12 @@
  * limitations under the License.
  */
 
-package forms.vatEuDetails
+package models.etmp
 
-import forms.mappings.Mappings
-import models.Country
-import models.vatEuDetails.RegistrationType
-import play.api.data.Form
+import play.api.libs.json.{Json, OFormat}
 
-import javax.inject.Inject
+case class EtmpWebsite(websiteAddress: String)
+object EtmpWebsite {
 
-class RegistrationTypeFormProvider @Inject() extends Mappings {
-
-  def apply(country: Country): Form[RegistrationType] =
-    Form(
-      "value" -> enumerable[RegistrationType]("registrationType.error.required", args = Seq(country.name))
-    )
+  implicit val format: OFormat[EtmpWebsite] = Json.format[EtmpWebsite]
 }

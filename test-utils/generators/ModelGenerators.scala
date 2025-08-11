@@ -20,22 +20,21 @@ import models.*
 import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
 import models.etmp.SchemeType
-import models.euDetails.EuDetails
 import models.iossRegistration.*
-import models.ossRegistration.{ExclusionReason, OssAdminUse, OssContactDetails, OssEuTaxIdentifier, OssEuTaxIdentifierType, OssExcludedTrader, OssRegistration, OssTradeDetails, OssVatDetailSource, OssVatDetails, SalesChannels}
-import models.vatEuDetails.TradingNameAndBusinessAddress
+import models.ossRegistration.*
+import models.vatEuDetails.{EuDetails, RegistrationType, TradingNameAndBusinessAddress}
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.{choose, listOfN}
-import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.EitherValues
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.domain.Vrn
 
-import java.time.temporal.ChronoUnit
 import java.time.{Instant, LocalDate, LocalDateTime, ZoneOffset}
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
-trait ModelGenerators extends EitherValues {
+trait ModelGenerators extends EitherValues with EtmpModelGenerators {
 
   implicit lazy val arbitraryRegistrationType: Arbitrary[RegistrationType] = {
     Arbitrary {

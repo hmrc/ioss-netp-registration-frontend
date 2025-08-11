@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,12 @@
  * limitations under the License.
  */
 
-package forms.vatEuDetails
+package pages
 
-import forms.mappings.Mappings
-import models.Country
-import models.vatEuDetails.RegistrationType
-import play.api.data.Form
+import controllers.routes
+import play.api.mvc.Call
 
-import javax.inject.Inject
-
-class RegistrationTypeFormProvider @Inject() extends Mappings {
-
-  def apply(country: Country): Form[RegistrationType] =
-    Form(
-      "value" -> enumerable[RegistrationType]("registrationType.error.required", args = Seq(country.name))
-    )
+object ErrorSubmittingRegistrationPage extends Page {
+  override def route(waypoints: Waypoints): Call =
+    routes.ErrorSubmittingRegistrationController.onPageLoad()
 }

@@ -489,3 +489,9 @@ clientSuccessfulRegistration.heading = Registration successful
 clientSuccessfulRegistration.text = Your IOSS number is
 clientSuccessfulRegistration.info.1 = We have let your intermediary know.
 clientSuccessfulRegistration.info.2 = They must now complete your monthly IOSS VAT returns and pay any VAT due.
+
+errorSubmittingRegistration.title = We have a problem with our service right now
+errorSubmittingRegistration.heading = Your registration is not submitted
+errorSubmittingRegistration.p1 = We have not saved your answers.
+errorSubmittingRegistration.tryAgainLater = You can <a class="govuk-link" href={0}>try again later</a>.
+errorSubmittingRegistration.contactUs = If the problem continues, you can email us at <a class="govuk-link" href="mailto:vatoss.contact@hmrc.gov.uk">vatoss.contact@hmrc.gov.uk</a>

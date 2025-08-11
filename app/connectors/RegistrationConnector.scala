@@ -17,12 +17,13 @@
 package connectors
 
 import config.Service
-import connectors.RegistrationHttpParser.*
+import connectors.RegistrationHttpParser.{RegistrationResultResponse, *}
 import connectors.SavedPendingRegistrationHttpParser.{SavedPendingRegistrationResponse, SavedPendingRegistrationResultResponseReads}
-import connectors.ValidateClientCodeHttpParser.{ValidateClientCodeReads, validateClientCodeResponse}
+import connectors.ValidateClientCodeHttpParser.{validateClientCodeResponse, ValidateClientCodeReads}
 import connectors.VatCustomerInfoHttpParser.{VatCustomerInfoResponse, VatCustomerInfoResponseReads}
 import logging.Logging
 import models.PendingRegistrationRequest
+import models.etmp.EtmpRegistrationRequest
 import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue
@@ -73,5 +74,8 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
   def getOssRegistration(vrn: Vrn)(implicit hc: HeaderCarrier): Future[OssRegistrationResponse] = {
     httpClientV2.get(url"$ossUrl/registration/$vrn").execute[OssRegistrationResponse]
   }
+
+  def createRegistration(registrationRequest: EtmpRegistrationRequest)(implicit hc: HeaderCarrier): Future[RegistrationResultResponse] =
+    httpClientV2.post(url"$baseUrl/create-registration").withBody(Json.toJson(registrationRequest)).execute[RegistrationResultResponse]
 
 }

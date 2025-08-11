@@ -23,12 +23,14 @@ import models.iossRegistration.IossEtmpDisplayRegistration
 import models.ossRegistration.{OssExcludedTrader, OssRegistration}
 import models.responses.*
 import models.{IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
+import models.responses.etmp.EtmpEnrolmentResponse
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import play.api.Application
 import play.api.http.Status.*
 import play.api.libs.json.{Json, OWrites}
 import play.api.test.Helpers.running
+import testutils.RegistrationData.etmpRegistrationRequest
 import testutils.WireMockHelper
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
@@ -497,6 +499,94 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
             result `mustBe` Left(UnexpectedResponseStatus(status, s"Unexpected IOSS registration response, status $status returned"))
           }
+        }
+      }
+    }
+
+    ".createRegistration" - {
+
+      val url: String = "/ioss-netp-registration/create-registration"
+
+      "must return CREATED with a valid ETMP Enrolment Response when backend returns CREATED with a valid response body" in {
+
+        running(application) {
+
+          val etmpEnrolmentResponse: EtmpEnrolmentResponse = EtmpEnrolmentResponse(iossReference = "123456789")
+
+          val responseBody = Json.toJson(etmpEnrolmentResponse).toString()
+
+          server.stubFor(post(urlEqualTo(url))
+            .willReturn(aResponse.withStatus(CREATED)
+              .withBody(responseBody)))
+
+          val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
+
+          val result = connector.createRegistration(etmpRegistrationRequest).futureValue
+
+          result mustBe Right(etmpEnrolmentResponse)
+        }
+      }
+
+      "must return Left(InvalidJson) when the response body is not a valid ETMP Enrolment Response Json" in {
+
+        running(application) {
+
+          server.stubFor(post(urlEqualTo(url))
+            .willReturn(aResponse.withStatus(CREATED)
+              .withBody(Json.toJson("test").toString())))
+
+          val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
+
+          val result = connector.createRegistration(etmpRegistrationRequest).futureValue
+
+          result mustBe Left(InvalidJson)
+        }
+      }
+
+      "must return Conflict when backend responds with Conflict" in {
+
+        running(application) {
+
+          server.stubFor(post(urlEqualTo(url))
+            .willReturn(aResponse.withStatus(CONFLICT)))
+
+          val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
+
+          val result = connector.createRegistration(etmpRegistrationRequest).futureValue
+
+          result mustBe Left(ConflictFound)
+        }
+      }
+
+      "must return Internal Server Error when backend responds with Internal Server Error" in {
+
+        running(application) {
+
+          server.stubFor(post(urlEqualTo(url))
+            .willReturn(aResponse.withStatus(INTERNAL_SERVER_ERROR)))
+
+          val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
+
+          val result = connector.createRegistration(etmpRegistrationRequest).futureValue
+
+          result mustBe Left(InternalServerError)
+        }
+      }
+
+      "must return UnexpectedResponseStatus when any other error is returned" in {
+
+        val status = 123
+
+        running(application) {
+
+          server.stubFor(post(urlEqualTo(url))
+            .willReturn(aResponse.withStatus(status)))
+
+          val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
+
+          val result = connector.createRegistration(etmpRegistrationRequest).futureValue
+
+          result mustBe Left(UnexpectedResponseStatus(status, s"Unexpected response, status $status returned"))
         }
       }
     }

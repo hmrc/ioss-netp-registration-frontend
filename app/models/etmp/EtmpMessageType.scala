@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package forms.vatEuDetails
+package models.etmp
 
-import forms.mappings.Mappings
-import models.Country
-import models.vatEuDetails.RegistrationType
-import play.api.data.Form
+import models.{Enumerable, WithName}
 
-import javax.inject.Inject
+sealed trait EtmpMessageType
 
-class RegistrationTypeFormProvider @Inject() extends Mappings {
+object EtmpMessageType extends Enumerable.Implicits {
 
-  def apply(country: Country): Form[RegistrationType] =
-    Form(
-      "value" -> enumerable[RegistrationType]("registrationType.error.required", args = Seq(country.name))
-    )
+  case object IOSSIntCreate extends WithName("IOSSIntCreate") with EtmpMessageType
+
+  val values: Seq[EtmpMessageType] = Seq(
+    IOSSIntCreate
+  )
+
+  implicit val enumerable: Enumerable[EtmpMessageType] =
+    Enumerable(values.map(v => v.toString -> v): _*)
 }

@@ -17,13 +17,13 @@
 package generators
 
 import models.*
-import models.vatEuDetails.TradingNameAndBusinessAddress
+import models.vatEuDetails.{RegistrationType, TradingNameAndBusinessAddress}
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import pages.previousRegistrations.*
 import pages.vatEuDetails.*
 import pages.{BusinessContactDetailsPage, ClientBusinessAddressPage}
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{Json, JsValue}
 
 trait UserAnswersEntryGenerators extends PageGenerators with ModelGenerators {
 
