@@ -35,6 +35,7 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import queries.IntermediaryDetailsQuery
+import queries.etmp.EtmpEnrolmentResponseQuery
 import repositories.SessionRepository
 import services.RegistrationService
 import utils.FutureSyntax.FutureOps
@@ -216,7 +217,9 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
           val result = route(application, request).value
 
-          val expectedAnswers = completeUserAnswers.set(ClientDeclarationPage, true).success.value
+          val expectedAnswers = completeUserAnswers
+            .set(ClientDeclarationPage, true).success.value
+            .set(EtmpEnrolmentResponseQuery, etmpEnrolmentResponse).success.value
 
           status(result) mustEqual SEE_OTHER
           redirectLocation(result).value mustEqual ClientDeclarationPage.navigate(EmptyWaypoints, completeUserAnswers, expectedAnswers).url
