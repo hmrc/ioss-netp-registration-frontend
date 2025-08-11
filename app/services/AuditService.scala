@@ -33,7 +33,7 @@ class AuditService @Inject()(
                               auditConnector: AuditConnector
                             )(implicit ec: ExecutionContext) {
 
-  def audit(dataSource: JsonAuditModel)(implicit hc: HeaderCarrier, request: Request[_]): Unit = {
+  private def audit(dataSource: JsonAuditModel)(implicit hc: HeaderCarrier, request: Request[_]): Unit = {
     val event = toExtendedDataEvent(dataSource, request.path)
     auditConnector.sendExtendedEvent(event)
   }
