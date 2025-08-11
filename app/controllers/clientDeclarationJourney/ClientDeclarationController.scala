@@ -27,6 +27,7 @@ import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import play.api.mvc.Results.Redirect
 import queries.IntermediaryDetailsQuery
+import queries.etmp.EtmpEnrolmentResponseQuery
 import repositories.SessionRepository
 import services.RegistrationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
@@ -80,7 +81,8 @@ class ClientDeclarationController @Inject()(
                 case Right(response) =>
                   for {
                     updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientDeclarationPage, value))
-                    _ <- sessionRepository.set(updatedAnswers)
+                    updatedAnswers2 <- Future.fromTry(updatedAnswers.set(EtmpEnrolmentResponseQuery, response))
+                    _ <- sessionRepository.set(updatedAnswers2)
                   } yield Redirect(routes.ClientSuccessfulRegistrationController.onPageLoad())
                 case Left(error) =>
                   logger.error(s"Unexpected result on registration creation submission: ${error.body}")

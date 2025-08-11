@@ -25,7 +25,7 @@ import models.domain.VatCustomerInfo
 import models.responses.InternalServerError as ServerError
 import models.responses.etmp.EtmpEnrolmentResponse
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.{reset, times, verify, verifyNoInteractions, when}
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{ClientBusinessNamePage, EmptyWaypoints, ErrorSubmittingRegistrationPage}
@@ -39,8 +39,6 @@ import repositories.SessionRepository
 import services.RegistrationService
 import utils.FutureSyntax.FutureOps
 import views.html.clientDeclarationJourney.ClientDeclarationView
-
-import scala.concurrent.Future
 
 class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 

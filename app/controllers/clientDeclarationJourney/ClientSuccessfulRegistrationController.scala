@@ -17,8 +17,10 @@
 package controllers.clientDeclarationJourney
 
 import controllers.actions.*
+import pages.{EmptyWaypoints, JourneyRecoveryPage}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.etmp.EtmpEnrolmentResponseQuery
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.clientDeclarationJourney.ClientSuccessfulRegistrationView
 
@@ -33,7 +35,11 @@ class ClientSuccessfulRegistrationController @Inject()(
 
   def onPageLoad(): Action[AnyContent] = clientIdentify {
     implicit request =>
-      val ImNum = request.intermediaryNumber.getOrElse("Intermediary dummy Number")
-      Ok(view(ImNum))
+      (for {
+        etmpEnrolmentResponse <- request.userAnswers.flatMap(_.get(EtmpEnrolmentResponseQuery))
+      } yield {
+        Ok(view(etmpEnrolmentResponse.iossReference))
+      }).getOrElse(Redirect(JourneyRecoveryPage.route(EmptyWaypoints)))
+
   }
 }
