@@ -20,6 +20,9 @@ import controllers.actions.*
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import logging.Logging
 import models.UserAnswers
+import models.audit.DeclarationSigningAuditType.{CreateClientDeclaration, CreateDeclaration}
+import models.audit.SubmissionResult
+import models.requests.ClientOptionalDataRequest
 import pages.clientDeclarationJourney.ClientDeclarationPage
 import pages.{ClientBusinessNamePage, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
@@ -28,6 +31,8 @@ import play.api.mvc.Results.Redirect
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import queries.IntermediaryDetailsQuery
 import repositories.SessionRepository
+import services.AuditService
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.clientDeclarationJourney.ClientDeclarationView
@@ -41,7 +46,8 @@ class ClientDeclarationController @Inject()(
                                              formProvider: ClientDeclarationFormProvider,
                                              val controllerComponents: MessagesControllerComponents,
                                              cc: AuthenticatedControllerComponents,
-                                             view: ClientDeclarationView
+                                             view: ClientDeclarationView,
+                                             auditService: AuditService,
                                            )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with Logging {
 
@@ -74,6 +80,11 @@ class ClientDeclarationController @Inject()(
               BadRequest(view(formWithErrors, waypoints, clientCompanyName, intermediaryName)).toFuture,
 
             value =>
+              auditService.sendAudit(
+                declarationSigningAuditType = CreateClientDeclaration,
+                result = SubmissionResult.Failure,
+                submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
+              )
               for {
                 updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientDeclarationPage, value))
                 _ <- sessionRepository.set(updatedAnswers)

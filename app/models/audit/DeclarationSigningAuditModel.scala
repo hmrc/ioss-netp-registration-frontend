@@ -17,7 +17,7 @@
 package models.audit
 
 import models.UserAnswers
-import models.requests.DataRequest
+import models.requests.GenericRequest
 import play.api.libs.json.{JsValue, Json}
 
 case class DeclarationSigningAuditModel(
@@ -49,7 +49,7 @@ object DeclarationSigningAuditModel {
              userAnswers: UserAnswers,
              submissionResult: SubmissionResult,
              submittedDeclarationPageBody: String
-           )(implicit request: DataRequest[_]): DeclarationSigningAuditModel =
+           )(implicit request: GenericRequest[_]): DeclarationSigningAuditModel = {
     DeclarationSigningAuditModel(
       declarationSigningAuditType = declarationSigningAuditType,
       credId = request.userId,
@@ -58,4 +58,5 @@ object DeclarationSigningAuditModel {
       submissionResult = submissionResult,
       submittedDeclarationPageBody = submittedDeclarationPageBody
     )
+    }
 }

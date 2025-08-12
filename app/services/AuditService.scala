@@ -37,7 +37,7 @@ class AuditService @Inject()(
                  declarationSigningAuditType: DeclarationSigningAuditType,
                  result: SubmissionResult,
                  submittedDeclarationPageBody: String
-               )(implicit hc: HeaderCarrier, request: DataRequest[_]): Unit = {
+               )(implicit hc: HeaderCarrier, request: GenericRequest[_]): Unit = {
     audit(
       DeclarationSigningAuditModel.build(
         declarationSigningAuditType,
