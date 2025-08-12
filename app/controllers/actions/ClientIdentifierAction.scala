@@ -22,13 +22,10 @@ import models.requests.OptionalDataRequest
 import play.api.mvc.*
 import play.api.mvc.Results.Redirect
 import repositories.SessionRepository
-import services.UrlBuilderService
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions, NoActiveSession}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.binders.{AbsoluteWithHostnameFromAllowlist, OnlyRelative}
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl.idFunctor
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
