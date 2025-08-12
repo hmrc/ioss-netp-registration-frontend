@@ -60,7 +60,7 @@ class ClientIdentifierActionImpl @Inject()(
         Future.failed(new IllegalStateException("Missing Internal ID"))
     } recover {
       case _: NoActiveSession =>
-        val clientJourneyStartUrl: String = s"${config.clientCodeEntryUrl}${request.path.split("/").last}"
+        val clientJourneyStartUrl: String = s"${config.clientCodeEntryUrl}/${request.path.split("/").last}"
         Redirect(
           config.loginUrl,
           Map("continue" -> Seq(clientJourneyStartUrl)))
