@@ -18,7 +18,7 @@ package models.etmp
 
 import play.api.libs.json.{Json, OFormat}
 
-case class EtmpCustomerIdentification(idType: EtmpIdType, idValue: String)
+case class EtmpCustomerIdentification(idType: EtmpIdType, idValue: String, iossIntermediaryID: String)
 
 object EtmpCustomerIdentification {
 

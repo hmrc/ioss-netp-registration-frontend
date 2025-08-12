@@ -105,9 +105,6 @@ GET         /error-submitting-pending-registration                          cont
 
 GET         /expired-vrn-date                                               controllers.ExpiredVrnDateController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET         /business-contact-details                                       controllers.BusinessContactDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-POST        /business-contact-details                                       controllers.BusinessContactDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
-
 # Previously registered details section
 GET         /previous-oss                                                   controllers.previousRegistrations.PreviouslyRegisteredController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST        /previous-oss                                                   controllers.previousRegistrations.PreviouslyRegisteredController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)

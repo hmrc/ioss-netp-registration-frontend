@@ -23,7 +23,7 @@ import pages.*
 import pages.tradingNames.HasTradingNamePage
 import play.api.libs.json.{Json, OFormat}
 import queries.tradingNames.AllTradingNamesQuery
-import queries.AllWebsites
+import queries.{AllWebsites, IntermediaryDetailsQuery}
 import services.etmp.{EtmpEuRegistrations, EtmpPreviousRegistrationsRequest}
 
 import java.time.LocalDate
@@ -54,43 +54,45 @@ object EtmpRegistrationRequest extends EtmpEuRegistrations with EtmpPreviousRegi
     )
 
   private def getCustomerIdentification(answers: UserAnswers): EtmpCustomerIdentification = {
-    answers.get(ClientHasVatNumberPage).flatMap {
-      case true =>
-        val vatNumber = answers.get(ClientVatNumberPage).getOrElse {
-          val exception = new IllegalStateException("Must have a VAT number if said yes to having a VAT number")
-          logger.error(exception.getMessage, exception)
-          throw exception
-        }
-        Some(EtmpCustomerIdentification(EtmpIdType.VRN, vatNumber))
-      case false =>
-        answers.get(BusinessBasedInUKPage).flatMap {
-          case true =>
-            answers.get(ClientHasUtrNumberPage).map {
-              case true =>
-                val utrNumber = answers.get(ClientUtrNumberPage).getOrElse {
-                  val exception = new IllegalStateException("Must have a UTR number if said yes to having a UTR number")
-                  logger.error(exception.getMessage, exception)
-                  throw exception
-                }
-                EtmpCustomerIdentification(EtmpIdType.UTR, utrNumber)
-              case false =>
-                val ninoNumber = answers.get(ClientsNinoNumberPage).getOrElse {
-                  val exception = new IllegalStateException("Must have a Nino number if said no to having a UTR number")
-                  logger.error(exception.getMessage, exception)
-                  throw exception
-                }
-                EtmpCustomerIdentification(EtmpIdType.NINO, ninoNumber)
-            }
-          case false =>
-            val ftrNumber = answers.get(ClientTaxReferencePage).getOrElse {
-              val exception = new IllegalStateException("Must have a FTR number if said no to having a UK VAT number and not based in UK")
-              logger.error(exception.getMessage, exception)
-              throw exception
-            }
-            Some(EtmpCustomerIdentification(EtmpIdType.FTR, ftrNumber))
-        }
+    answers.get(IntermediaryDetailsQuery).flatMap { intermediaryDetails =>
+      answers.get(ClientHasVatNumberPage).flatMap {
+        case true =>
+          val vatNumber = answers.get(ClientVatNumberPage).getOrElse {
+            val exception = new IllegalStateException("Must have a VAT number if said yes to having a VAT number")
+            logger.error(exception.getMessage, exception)
+            throw exception
+          }
+          Some(EtmpCustomerIdentification(EtmpIdType.VRN, vatNumber,intermediaryDetails.intermediaryNumber))
+        case false =>
+          answers.get(BusinessBasedInUKPage).flatMap {
+            case true =>
+              answers.get(ClientHasUtrNumberPage).map {
+                case true =>
+                  val utrNumber = answers.get(ClientUtrNumberPage).getOrElse {
+                    val exception = new IllegalStateException("Must have a UTR number if said yes to having a UTR number")
+                    logger.error(exception.getMessage, exception)
+                    throw exception
+                  }
+                  EtmpCustomerIdentification(EtmpIdType.UTR, utrNumber, intermediaryDetails.intermediaryNumber)
+                case false =>
+                  val ninoNumber = answers.get(ClientsNinoNumberPage).getOrElse {
+                    val exception = new IllegalStateException("Must have a Nino number if said no to having a UTR number")
+                    logger.error(exception.getMessage, exception)
+                    throw exception
+                  }
+                  EtmpCustomerIdentification(EtmpIdType.NINO, ninoNumber, intermediaryDetails.intermediaryNumber)
+              }
+            case false =>
+              val ftrNumber = answers.get(ClientTaxReferencePage).getOrElse {
+                val exception = new IllegalStateException("Must have a FTR number if said no to having a UK VAT number and not based in UK")
+                logger.error(exception.getMessage, exception)
+                throw exception
+              }
+              Some(EtmpCustomerIdentification(EtmpIdType.FTR, ftrNumber, intermediaryDetails.intermediaryNumber))
+          }
+      }
     }.getOrElse {
-      val exception = new IllegalStateException("Must have answered on having a UK VAT number")
+      val exception = new IllegalStateException("Must have answered on having a UK VAT number and have intermediary details")
       logger.error(exception.getMessage, exception)
       throw exception
     }

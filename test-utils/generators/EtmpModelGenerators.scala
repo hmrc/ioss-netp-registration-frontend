@@ -34,7 +34,8 @@ trait EtmpModelGenerators {
       for {
         etmpIdType <- Gen.oneOf(EtmpIdType.values)
         vrn <- Gen.alphaStr
-      } yield EtmpCustomerIdentification(etmpIdType, vrn)
+        intermediaryDetails <- arbitraryIntermediaryDetails.arbitrary
+      } yield EtmpCustomerIdentification(etmpIdType, vrn, intermediaryDetails.intermediaryNumber)
     }
 
   implicit lazy val arbitraryVatNumberTraderId: Arbitrary[VatNumberTraderId] =

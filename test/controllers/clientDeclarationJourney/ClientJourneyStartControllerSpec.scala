@@ -44,7 +44,7 @@ class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with B
   val incompleteUserAnswers: UserAnswers =
     emptyUserAnswers.set(ClientBusinessNamePage, ClientBusinessName("Client Company"))
       .success.value
-      .set(IntermediaryDetailsQuery, IntermediaryDetails(intermediaryNumber, nonEmptyIntermediaryName))
+      .set(IntermediaryDetailsQuery, intermediaryDetails)
       .success.value
 
   val completeUserAnswers: UserAnswers = incompleteUserAnswers.set(BusinessContactDetailsPage, businessContactDetails).success.value
@@ -56,7 +56,7 @@ class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with B
       userAnswers = userAnswers,
       lastUpdated = incompleteUserAnswers.lastUpdated,
       uniqueActivationCode = generate6DigitCode(),
-      intermediaryDetails = IntermediaryDetails(intermediaryNumber, nonEmptyIntermediaryName)
+      intermediaryDetails = intermediaryDetails
     )
 
   private def clientJourneyStartOnPageLoad(uniqueUrlCode: String): String = clientDeclarationJourney.routes.ClientJourneyStartController.onPageLoad(waypoints, uniqueUrlCode).url

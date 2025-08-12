@@ -18,7 +18,7 @@ package base
 
 import controllers.actions.*
 import generators.Generators
-import models.{BusinessContactDetails, CheckMode, Index, UserAnswers, Website}
+import models.{BusinessContactDetails, CheckMode, Index, IntermediaryDetails, UserAnswers, Website}
 import models.domain.VatCustomerInfo
 import org.scalatest.{OptionValues, TryValues}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -37,6 +37,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.CSRFTokenHelper.CSRFRequest
 import play.api.test.FakeRequest
+import queries.IntermediaryDetailsQuery
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.Vrn
 
@@ -53,6 +54,7 @@ trait SpecBase
     with Generators {
 
   val userAnswersId: String = "12345-credId"
+  val intermediaryDetails: IntermediaryDetails = IntermediaryDetails("IN9001234567", "Intermediary Name")
 
   def countryIndex(index: Int): Index = Index(index)
 
@@ -81,12 +83,12 @@ trait SpecBase
     .set(HasFixedEstablishmentPage, false).success.value
     .set(PreviouslyRegisteredPage, false).success.value
     .set(WebsitePage(Index(0)), Website("www.website.com")).success.value
+    .set(IntermediaryDetailsQuery, intermediaryDetails).success.value
     .copy(vatInfo = Some(vatCustomerInfo))
 
   def testCredentials: Credentials = Credentials(userAnswersId, "GGW")
 
   val vatNumber = "GB123456789"
-  val intermediaryNumber = "IN9001234567"
   val vrn: Vrn = Vrn("123456789")
   val utr: String = "1234567890"
   val nino = "QQ 12 34 56 C"
@@ -106,7 +108,7 @@ trait SpecBase
     VatCustomerInfo(
       registrationDate = LocalDate.now(stubClockAtArbitraryDate),
       desAddress = arbitraryDesAddress.arbitrary.sample.value,
-      organisationName = Some("Intermediary Company name"),
+      organisationName = Some(intermediaryDetails.intermediaryName),
       individualName = None,
       singleMarketIndicator = true,
       deregistrationDecisionDate = None

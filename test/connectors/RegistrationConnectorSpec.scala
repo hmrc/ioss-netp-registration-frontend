@@ -43,7 +43,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
   private val nonEmptyIntermediaryName: String = intermediaryVatCustomerInfo.organisationName.getOrElse("Dummy Name for Test")
   private val pendingRegistrationRequest: PendingRegistrationRequest = PendingRegistrationRequest(
     userAnswers = userAnswers,
-    intermediaryDetails = IntermediaryDetails(intermediaryNumber, nonEmptyIntermediaryName)
+    intermediaryDetails = intermediaryDetails
   )
   private val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
 

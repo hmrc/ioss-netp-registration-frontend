@@ -509,4 +509,16 @@ trait ModelGenerators extends EitherValues with EtmpModelGenerators {
       Gen.oneOf(OssVatDetailSource.values)
     )
   }
+  
+  implicit val arbitraryIntermediaryDetails: Arbitrary[IntermediaryDetails] = {
+    Arbitrary {
+      for {
+        intermediaryNumber <- Gen.alphaNumStr
+        intermediaryName <- Gen.alphaStr
+      } yield IntermediaryDetails(
+        intermediaryNumber,
+        intermediaryName
+      )
+    }
+  }
 }

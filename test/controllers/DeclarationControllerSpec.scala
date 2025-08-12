@@ -44,7 +44,6 @@ import scala.concurrent.Future
 class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
   private val waypoints: Waypoints = EmptyWaypoints
-  private val intermediaryCompanyName: String = intermediaryVatCustomerInfo.organisationName.get
   private val clientBusinessName: ClientBusinessName = ClientBusinessName(vatCustomerInfo.organisationName.value)
   private val businessContactDetails: BusinessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
 
@@ -52,10 +51,9 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
     .set(ClientBusinessNamePage, clientBusinessName).success.value
     .set(BusinessContactDetailsPage, businessContactDetails).success.value
 
-  private val nonEmptyIntermediaryName: String = intermediaryVatCustomerInfo.organisationName.getOrElse("Dummy Name for Test")
   private val pendingRegistrationRequest: PendingRegistrationRequest = PendingRegistrationRequest(
     userAnswers = userAnswers,
-    intermediaryDetails = IntermediaryDetails(intermediaryNumber, nonEmptyIntermediaryName)
+    intermediaryDetails = intermediaryDetails
   )
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
@@ -92,7 +90,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           val view = application.injector.instanceOf[DeclarationView]
 
           status(result) mustEqual OK
-          contentAsString(result) mustEqual view(form, waypoints, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(form, waypoints, intermediaryDetails.intermediaryName, clientBusinessName.name)(request, messages(application)).toString
         }
       }
 
@@ -115,7 +113,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           val result = route(application, request).value
 
           status(result) mustEqual OK
-          contentAsString(result) mustEqual view(form.fill(true), waypoints, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(form.fill(true), waypoints, intermediaryDetails.intermediaryName, clientBusinessName.name)(request, messages(application)).toString
         }
       }
 
@@ -161,17 +159,11 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             .build()
 
         when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
-
         when(mockDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
-
         when(viewMock.body) thenReturn "test-view-body"
-
         when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any())) thenReturn Right(intermediaryVatCustomerInfo).toFuture
-
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
-
         when(mockEmailService.sendClientActivationEmail(any, any, any, any, any)(any, any)) thenReturn Future.successful(())
-
         doNothing().when(mockAuditService).audit(any())(any(), any())
 
         running(application) {
@@ -181,7 +173,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
 
           implicit val dataRequest: DataRequest[_] =
-            DataRequest(fakeRequest, userAnswersId, userAnswers, intermediaryNumber)
+            DataRequest(fakeRequest, userAnswersId, userAnswers, intermediaryDetails.intermediaryNumber)
 
           val result = route(application, request).value
 
@@ -190,7 +182,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             userAnswers = userAnswers,
             submissionResult = SubmissionResult.Success,
             submittedDeclarationPageBody = mockDeclarationView(
-              any, eqTo(waypoints), eqTo("intermediaryName"), eqTo(intermediaryCompanyName))(any(), any()
+              any, eqTo(waypoints), eqTo("intermediaryName"), eqTo(intermediaryDetails.intermediaryName))(any(), any()
             ).body
           )
 
@@ -233,19 +225,12 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             .build()
 
         when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
-
         when(mockDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
-
         when(viewMock.body) thenReturn "test-view-body"
-
         when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any())) thenReturn Right(intermediaryVatCustomerInfo).toFuture
-
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
-
         when(mockEmailService.sendClientActivationEmail(any, any, any, any, any)(any, any)) thenReturn Future.successful(EMAIL_NOT_SENT)
-
         doNothing().when(mockAuditService).audit(any())(any(), any())
-
 
         running(application) {
           val request =
@@ -253,7 +238,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
               .withFormUrlEncodedBody(("declaration", "true"))
 
           implicit val dataRequest: DataRequest[_] =
-            DataRequest(fakeRequest, userAnswersId, userAnswers, intermediaryNumber)
+            DataRequest(fakeRequest, userAnswersId, userAnswers, intermediaryDetails.intermediaryNumber)
 
           val result = route(application, request).value
 
@@ -262,7 +247,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             userAnswers = userAnswers,
             submissionResult = SubmissionResult.Success,
             submittedDeclarationPageBody = mockDeclarationView(
-              any, eqTo(waypoints), eqTo("intermediaryName"), eqTo(intermediaryCompanyName))(any(), any()
+              any, eqTo(waypoints), eqTo("intermediaryName"), eqTo(intermediaryDetails.intermediaryName))(any(), any()
             ).body
           )
 
@@ -314,7 +299,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           val result = route(application, request).value
 
           status(result) mustEqual BAD_REQUEST
-          contentAsString(result) mustEqual view(boundForm, waypoints, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(boundForm, waypoints, intermediaryDetails.intermediaryName, clientBusinessName.name)(request, messages(application)).toString
         }
       }
 
@@ -357,14 +342,14 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           val request = FakeRequest(POST, routes.DeclarationController.onSubmit(waypoints).url)
 
           implicit val dataRequest: DataRequest[_] =
-            DataRequest(fakeRequest, userAnswersId, userAnswers, intermediaryNumber)
+            DataRequest(fakeRequest, userAnswersId, userAnswers, intermediaryDetails.intermediaryNumber)
 
           val expectedAuditEvent = IntermediaryDeclarationSigningAuditModel.build(
             intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
             userAnswers = userAnswers,
             submissionResult = SubmissionResult.Failure,
             submittedDeclarationPageBody = mockDeclarationView(
-              any, eqTo(waypoints), eqTo("intermediaryName"), eqTo(intermediaryCompanyName))(any(), any()
+              any, eqTo(waypoints), eqTo("intermediaryName"), eqTo(intermediaryDetails.intermediaryName))(any(), any()
             ).body
           )
 
