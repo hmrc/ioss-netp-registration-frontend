@@ -19,6 +19,7 @@ package controllers
 import base.SpecBase
 import connectors.RegistrationConnector
 import forms.DeclarationFormProvider
+import models.audit.DeclarationSigningAuditType.CreateDeclaration
 import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult.EMAIL_NOT_SENT
 import models.requests.DataRequest
@@ -173,7 +174,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
         when(mockEmailService.sendClientActivationEmail(any, any, any, any, any)(any, any)) thenReturn Future.successful(())
 
-        doNothing().when(mockAuditService).sendAudit(eqTo(SubmissionResult.Success), eqTo(testViewBody))(any(), any())
+        doNothing().when(mockAuditService).sendAudit(eqTo(CreateDeclaration),eqTo(SubmissionResult.Success), eqTo(testViewBody))(any(), any())
 
         running(application) {
           val request =
@@ -185,7 +186,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value mustBe DeclarationPage.navigate(waypoints, userAnswers, userAnswers).route.url
           verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(pendingRegistrationRequest))(any())
-          verify(mockAuditService, times(1)).sendAudit(eqTo(SubmissionResult.Success),eqTo(testViewBody))(any(), any())
+          verify(mockAuditService, times(1)).sendAudit(eqTo(CreateDeclaration), eqTo(SubmissionResult.Success),eqTo(testViewBody))(any(), any())
           verify(mockEmailService, times(1)).sendClientActivationEmail(
             any,
             any,
@@ -234,7 +235,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
         when(mockEmailService.sendClientActivationEmail(any, any, any, any, any)(any, any)) thenReturn Future.successful(EMAIL_NOT_SENT)
 
-        doNothing().when(mockAuditService).sendAudit(eqTo(SubmissionResult.Success), eqTo(testViewBody))(any(), any())
+        doNothing().when(mockAuditService).sendAudit(eqTo(CreateDeclaration), eqTo(SubmissionResult.Success), eqTo(testViewBody))(any(), any())
 
 
         running(application) {
@@ -247,7 +248,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value mustBe DeclarationPage.navigate(waypoints, userAnswers, userAnswers).route.url
           verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(pendingRegistrationRequest))(any())
-          verify(mockAuditService, times(1)).sendAudit(eqTo(SubmissionResult.Success),eqTo(testViewBody))(any(), any())
+          verify(mockAuditService, times(1)).sendAudit(eqTo(CreateDeclaration), eqTo(SubmissionResult.Success),eqTo(testViewBody))(any(), any())
           verify(mockEmailService, times(1)).sendClientActivationEmail(
             any,
             any,
@@ -330,7 +331,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
         when(viewMock.body) thenReturn testViewBody
 
-        doNothing().when(mockAuditService).sendAudit(eqTo(SubmissionResult.Failure), eqTo(testViewBody))(any(), any())
+        doNothing().when(mockAuditService).sendAudit(eqTo(CreateDeclaration), eqTo(SubmissionResult.Failure), eqTo(testViewBody))(any(), any())
 
         running(application) {
           val request = FakeRequest(POST, routes.DeclarationController.onSubmit(waypoints).url)
@@ -339,7 +340,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
           status(result) `mustBe` SEE_OTHER
           redirectLocation(result).value `mustBe` ErrorSubmittingPendingRegistrationPage.route(waypoints).url
-          verify(mockAuditService, times(1)).sendAudit(eqTo(SubmissionResult.Failure),eqTo(testViewBody))(any(), any())
+          verify(mockAuditService, times(1)).sendAudit(eqTo(CreateDeclaration), eqTo(SubmissionResult.Failure),eqTo(testViewBody))(any(), any())
         }
       }
     }

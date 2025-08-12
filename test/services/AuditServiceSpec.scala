@@ -17,6 +17,7 @@
 package services
 
 import config.FrontendAppConfig
+import models.audit.DeclarationSigningAuditType.CreateDeclaration
 import models.audit.SubmissionResult
 import models.requests.DataRequest
 import org.mockito.ArgumentMatchers.any
@@ -48,9 +49,6 @@ class AuditServiceSpec extends AnyFreeSpec with MockitoSugar with ScalaFutures w
       when(auditConnector.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
 
       val service = new AuditService(mockAppConfig, auditConnector)
-      val testSubmissionResult = SubmissionResult.Failure
-      val testSubmittedDeclarationPageBody = "test-declaration-body"
-
 
       implicit val dataRequest: DataRequest[_] = DataRequest(
           FakeRequest("POST", "/test-path"),
@@ -60,8 +58,9 @@ class AuditServiceSpec extends AnyFreeSpec with MockitoSugar with ScalaFutures w
         )
 
       service.sendAudit(
-        testSubmissionResult,
-        testSubmittedDeclarationPageBody
+        CreateDeclaration,
+        SubmissionResult.Success,
+        "test-declaration-body"
       )
 
       verify(auditConnector, times(1)).sendExtendedEvent(any())(any(), any())

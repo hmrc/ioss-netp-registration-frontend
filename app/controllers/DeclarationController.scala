@@ -20,7 +20,8 @@ import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.DeclarationFormProvider
 import logging.Logging
-import models.audit.SubmissionResult
+import models.audit.DeclarationSigningAuditType.CreateDeclaration
+import models.audit.{DeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult
 import models.{IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration}
 import pages.{DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints}
@@ -93,6 +94,7 @@ class DeclarationController @Inject()(
                   value =>
 
                     auditService.sendAudit(
+                      declarationSigningAuditType = CreateDeclaration,
                       result = SubmissionResult.Success,
                       submittedDeclarationPageBody = view(form.fill(value), waypoints, intermediaryName, clientCompanyName).body
                     )
@@ -105,6 +107,7 @@ class DeclarationController @Inject()(
 
             case Left(error) =>
               auditService.sendAudit(
+                declarationSigningAuditType = CreateDeclaration,
                 result = SubmissionResult.Failure,
                 submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
               )

@@ -38,11 +38,14 @@ class AuditService @Inject()(
     auditConnector.sendExtendedEvent(event)
   }
 
-  def sendAudit(result: SubmissionResult, submittedDeclarationPageBody: String)
-                       (implicit hc: HeaderCarrier, request: DataRequest[_]): Unit = {
+  def sendAudit(
+                 declarationSigningAuditType: DeclarationSigningAuditType,
+                 result: SubmissionResult,
+                 submittedDeclarationPageBody: String
+               )(implicit hc: HeaderCarrier, request: DataRequest[_]): Unit = {
     audit(
       DeclarationSigningAuditModel.build(
-        DeclarationSigningAuditType.CreateDeclaration,
+        declarationSigningAuditType,
         request.userAnswers,
         result,
         submittedDeclarationPageBody
@@ -55,8 +58,8 @@ class AuditService @Inject()(
                                  (implicit hc: HeaderCarrier): ExtendedDataEvent =
     ExtendedDataEvent(
       auditSource = appConfig.appName,
-      auditType   = auditModel.auditType,
-      tags        = AuditExtensions.auditHeaderCarrier(hc).toAuditTags(auditModel.transactionName, path),
-      detail      = auditModel.detail
+      auditType = auditModel.auditType,
+      tags = AuditExtensions.auditHeaderCarrier(hc).toAuditTags(auditModel.transactionName, path),
+      detail = auditModel.detail
     )
 }
