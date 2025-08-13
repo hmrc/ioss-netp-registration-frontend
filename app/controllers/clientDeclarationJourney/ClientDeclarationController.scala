@@ -80,7 +80,7 @@ class ClientDeclarationController @Inject()(
             value =>
               auditService.sendAudit(
                 declarationSigningAuditType = CreateClientDeclaration,
-                result = SubmissionResult.Failure,
+                result = SubmissionResult.Success,
                 submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
               )
               for {
