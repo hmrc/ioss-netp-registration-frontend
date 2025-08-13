@@ -20,10 +20,12 @@ import base.SpecBase
 import connectors.RegistrationConnector
 import controllers.{clientDeclarationJourney, routes}
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
+import models.audit.DeclarationSigningAuditType.{CreateClientDeclaration, CreateDeclaration}
+import models.audit.SubmissionResult
 import models.domain.VatCustomerInfo
 import models.{ClientBusinessName, IntermediaryDetails, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.{reset, times, verify, when}
+import org.mockito.Mockito.{doNothing, reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import pages.clientDeclarationJourney.ClientDeclarationPage
@@ -34,6 +36,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import queries.IntermediaryDetailsQuery
 import repositories.SessionRepository
+import services.AuditService
 import views.html.clientDeclarationJourney.ClientDeclarationView
 
 import scala.concurrent.Future
@@ -189,16 +192,30 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
     ".onSubmit() - POST must" - {
 
-      "redirect to the next page when valid data is submitted" in {
+      "audit event and redirect to the next page when valid data is submitted" in {
 
         val mockSessionRepository = mock[SessionRepository]
+        val mockAuditService: AuditService = mock[AuditService]
+        val mockClientDeclarationView = mock[ClientDeclarationView]
+        val viewMock = mock[play.twirl.api.HtmlFormat.Appendable]
+        val testViewBody  = "test-view-body"
 
         when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
+
+        when(mockClientDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
+
+        when(viewMock.body) thenReturn testViewBody
+
+        doNothing().when(mockAuditService).sendAudit(
+          eqTo(CreateClientDeclaration),eqTo(SubmissionResult.Success), eqTo(testViewBody)
+        )(any(), any())
 
         val application =
           applicationBuilder(userAnswers = Some(completeUserAnswers))
             .overrides(
               bind[SessionRepository].toInstance(mockSessionRepository),
+              bind[AuditService].toInstance(mockAuditService),
+              bind[ClientDeclarationView].toInstance(mockClientDeclarationView),
             )
             .build()
 
@@ -213,6 +230,7 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
 
           status(result) mustEqual SEE_OTHER
+          verify(mockAuditService, times(1)).sendAudit(eqTo(CreateClientDeclaration), eqTo(SubmissionResult.Success),eqTo(testViewBody))(any(), any())
           redirectLocation(result).value mustEqual ClientDeclarationPage.navigate(EmptyWaypoints, completeUserAnswers, expectedAnswers).url
           verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
 
