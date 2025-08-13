@@ -20,7 +20,7 @@ import base.SpecBase
 import connectors.RegistrationConnector
 import controllers.{clientDeclarationJourney, routes}
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
-import models.audit.DeclarationSigningAuditType.{CreateClientDeclaration, CreateDeclaration}
+import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
 import models.audit.SubmissionResult
 import models.domain.VatCustomerInfo
 import models.{ClientBusinessName, IntermediaryDetails, UserAnswers}
