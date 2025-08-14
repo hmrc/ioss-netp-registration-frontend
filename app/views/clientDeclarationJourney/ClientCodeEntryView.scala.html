@@ -21,7 +21,8 @@
     formHelper: FormWithCSRF,
     govukErrorSummary: GovukErrorSummary,
     govukInput: GovukInput,
-    govukButton: GovukButton
+    govukButton: GovukButton,
+    govukDetails: GovukDetails
 )
 
 @(
@@ -47,6 +48,18 @@ uniqueUrlCode: String
             .withWidth(Full)
             .withHint(HintViewModel(messages("clientCodeEntry.hint", clientEmailAddress)))
         )
+
+        @govukDetails(
+            Details(
+                summary = Text(messages("clientCodeEntry.emailNotReceived.detail")),
+                content = HtmlContent(
+            s"""
+            <p class="govuk-body">${messages("clientCodeEntry.checkEmail.p1")}</p>
+            <p class="govuk-body">${messages("clientCodeEntry.checkEmail.p2")}</p>
+
+            """
+            )
+            ))
 
         @govukButton(
             ButtonViewModel(messages("site.continue")).withAttribute("id", "continue")
