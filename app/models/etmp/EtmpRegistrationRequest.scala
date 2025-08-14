@@ -19,6 +19,7 @@ package models.etmp
 import formats.Format.eisDateFormatter
 import logging.Logging
 import models.{BusinessContactDetails, Country, UserAnswers}
+import models.etmp.EtmpIdType.VRN
 import pages.*
 import pages.tradingNames.HasTradingNamePage
 import play.api.libs.json.{Json, OFormat}
@@ -42,16 +43,18 @@ object EtmpRegistrationRequest extends EtmpEuRegistrations with EtmpPreviousRegi
 
   implicit val format: OFormat[EtmpRegistrationRequest] = Json.format[EtmpRegistrationRequest]
 
-  def buildEtmpRegistrationRequest(answers: UserAnswers, commencementDate: LocalDate): EtmpRegistrationRequest =
+  def buildEtmpRegistrationRequest(answers: UserAnswers, commencementDate: LocalDate): EtmpRegistrationRequest = {
+    val customerIdentification = getCustomerIdentification(answers)
     EtmpRegistrationRequest(
       administration = EtmpAdministration(messageType = EtmpMessageType.IOSSIntAddClient),
-      customerIdentification = getCustomerIdentification(answers),
+      customerIdentification = customerIdentification,
       tradingNames = getTradingNames(answers),
       intermediaryDetails = None,
-      otherAddress = getOtherAddress(answers),
+      otherAddress = getOtherAddress(customerIdentification.idType, answers),
       schemeDetails = getSchemeDetails(answers, commencementDate),
       bankDetails = None
     )
+  }
 
   private def getCustomerIdentification(answers: UserAnswers): EtmpCustomerIdentification = {
     answers.get(IntermediaryDetailsQuery).flatMap { intermediaryDetails =>
@@ -62,7 +65,7 @@ object EtmpRegistrationRequest extends EtmpEuRegistrations with EtmpPreviousRegi
             logger.error(exception.getMessage, exception)
             throw exception
           }
-          Some(EtmpCustomerIdentification(EtmpIdType.VRN, vatNumber,intermediaryDetails.intermediaryNumber))
+          Some(EtmpCustomerIdentification(EtmpIdType.VRN, vatNumber, intermediaryDetails.intermediaryNumber))
         case false =>
           answers.get(BusinessBasedInUKPage).flatMap {
             case true =>
@@ -98,27 +101,34 @@ object EtmpRegistrationRequest extends EtmpEuRegistrations with EtmpPreviousRegi
     }
   }
 
-  private def getOtherAddress(answers: UserAnswers): Option[EtmpOtherAddress] = {
-    (for {
-      businessBasedInUK <- answers.get(BusinessBasedInUKPage)
-      clientCountryBased <- answers.get(ClientCountryBasedPage)
-      businessAddress <- answers.get(ClientBusinessAddressPage)
-      businessName <- answers.get(ClientBusinessNamePage)
-    } yield {
-      if (!businessBasedInUK) {
-        Some(EtmpOtherAddress(
-          issuedBy = clientCountryBased.code,
-          tradingName = Some(businessName.name),
-          addressLine1 = businessAddress.line1,
-          addressLine2 = businessAddress.line2,
-          townOrCity = businessAddress.townOrCity,
-          regionOrState = businessAddress.stateOrRegion,
-          postcode = businessAddress.postCode
-        ))
-      } else {
+  private def getOtherAddress(idType: EtmpIdType, answers: UserAnswers): Option[EtmpOtherAddress] = {
+    idType match {
+      case VRN =>
         None
-      }
-    }).flatten
+      case _ =>
+        Some(
+          (for {
+            clientCountryBased <- answers.get(ClientCountryBasedPage)
+            businessAddress <- answers.get(ClientBusinessAddressPage)
+            businessName <- answers.get(ClientBusinessNamePage)
+          } yield {
+
+            EtmpOtherAddress(
+              issuedBy = clientCountryBased.code,
+              tradingName = Some(businessName.name),
+              addressLine1 = businessAddress.line1,
+              addressLine2 = businessAddress.line2,
+              townOrCity = businessAddress.townOrCity,
+              regionOrState = businessAddress.stateOrRegion,
+              postcode = businessAddress.postCode
+            )
+          }).getOrElse {
+            val exception = new IllegalStateException("Didn't have a VRN, so must havea business address, trading name and country")
+            logger.error(exception.getMessage, exception)
+            throw exception
+          }
+        )
+    }
   }
 
   private def getSchemeDetails(answers: UserAnswers, commencementDate: LocalDate): EtmpSchemeDetails = {
