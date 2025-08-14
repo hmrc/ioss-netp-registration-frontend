@@ -18,11 +18,11 @@ package connectors
 
 import base.SpecBase
 import com.github.tomakehurst.wiremock.client.WireMock.*
+import models.{PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
 import models.domain.VatCustomerInfo
 import models.iossRegistration.IossEtmpDisplayRegistration
 import models.ossRegistration.{OssExcludedTrader, OssRegistration}
 import models.responses.*
-import models.{IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
 import models.responses.etmp.EtmpEnrolmentResponse
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
@@ -40,7 +40,6 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
   implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
   private val userAnswers: UserAnswers = arbitraryUserAnswers.arbitrary.sample.value
-  private val nonEmptyIntermediaryName: String = intermediaryVatCustomerInfo.organisationName.getOrElse("Dummy Name for Test")
   private val pendingRegistrationRequest: PendingRegistrationRequest = PendingRegistrationRequest(
     userAnswers = userAnswers,
     intermediaryDetails = intermediaryDetails

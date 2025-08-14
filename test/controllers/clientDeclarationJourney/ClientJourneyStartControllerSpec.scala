@@ -39,7 +39,6 @@ class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with B
   }
 
   private val businessContactDetails: BusinessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
-  private val nonEmptyIntermediaryName: String = intermediaryVatCustomerInfo.organisationName.getOrElse("Intermediary Company Name2")
 
   val incompleteUserAnswers: UserAnswers =
     emptyUserAnswers.set(ClientBusinessNamePage, ClientBusinessName("Client Company"))

@@ -118,7 +118,7 @@ trait ModelGenerators extends EitherValues with EtmpModelGenerators {
 
   implicit lazy val arbitraryCountry: Arbitrary[Country] =
     Arbitrary {
-      Gen.oneOf(Country.allCountries)
+      Gen.oneOf(Country.euCountries)
     }
 
   implicit val arbitraryVatCustomerInfo: Arbitrary[VatCustomerInfo] = {
@@ -158,6 +158,13 @@ trait ModelGenerators extends EitherValues with EtmpModelGenerators {
       datesBetween(LocalDate.of(2021, 7, 1), LocalDate.of(2023, 12, 31))
     }
   }
+
+  implicit lazy val arbitraryWebsite: Arbitrary[Website] =
+    Arbitrary {
+      for {
+        site <- Gen.alphaStr
+      } yield Website(site)
+    }
 
   implicit lazy val arbitraryBusinessContactDetails: Arbitrary[BusinessContactDetails] = {
     Arbitrary {
@@ -245,6 +252,10 @@ trait ModelGenerators extends EitherValues with EtmpModelGenerators {
       countryCode <- Gen.oneOf(Country.euCountries.map(_.code))
       matchedCountryRule = CountryWithValidationDetails.euCountriesWithVRNValidationRules.find(_.country.code == countryCode).head
     } yield s"$countryCode${matchedCountryRule.exampleVrn}"
+  }
+
+  implicit lazy val arbitraryEuTaxReference: Gen[String] = {
+    Gen.listOfN(maxEuTaxReferenceLength, Gen.alphaNumChar).map(_.mkString)
   }
 
   implicit lazy val genEuTaxReference: Gen[String] = {
@@ -509,7 +520,7 @@ trait ModelGenerators extends EitherValues with EtmpModelGenerators {
       Gen.oneOf(OssVatDetailSource.values)
     )
   }
-  
+
   implicit val arbitraryIntermediaryDetails: Arbitrary[IntermediaryDetails] = {
     Arbitrary {
       for {

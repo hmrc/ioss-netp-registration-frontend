@@ -43,8 +43,6 @@ import views.html.clientDeclarationJourney.ClientDeclarationView
 
 class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
-  private val arbitraryVatInfo: VatCustomerInfo = arbitraryVatCustomerInfo.arbitrary.sample.value
-
   private val clientBusinessName: ClientBusinessName = arbitraryClientBusinessName.arbitrary.sample.value
   lazy val clientDeclarationOnPageLoad: String = clientDeclarationJourney.routes.ClientDeclarationController.onPageLoad(waypoints).url
   lazy val clientDeclarationOnSubmit: String = clientDeclarationJourney.routes.ClientDeclarationController.onSubmit(waypoints).url

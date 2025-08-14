@@ -16,7 +16,10 @@
 
 package generators
 
+import models.domain.PreviousSchemeNumbers
 import models.etmp.*
+import models.vatEuDetails.TradingNameAndBusinessAddress
+import models.TradingName
 import org.scalacheck.{Arbitrary, Gen}
 
 trait EtmpModelGenerators {
@@ -103,4 +106,9 @@ trait EtmpModelGenerators {
       )
     }
 
+  implicit lazy val arbitraryPreviousIossSchemeDetails: Arbitrary[PreviousSchemeNumbers] =
+    Arbitrary {
+      PreviousSchemeNumbers("12345667")
+    }
+    
 }

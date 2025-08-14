@@ -25,7 +25,6 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import pages.*
-import pages.clientDeclarationJourney.*
 import pages.previousRegistrations.*
 import pages.tradingNames.*
 import pages.vatEuDetails.*

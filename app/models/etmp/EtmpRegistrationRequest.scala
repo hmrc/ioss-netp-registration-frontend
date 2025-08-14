@@ -44,7 +44,7 @@ object EtmpRegistrationRequest extends EtmpEuRegistrations with EtmpPreviousRegi
 
   def buildEtmpRegistrationRequest(answers: UserAnswers, commencementDate: LocalDate): EtmpRegistrationRequest =
     EtmpRegistrationRequest(
-      administration = EtmpAdministration(messageType = EtmpMessageType.IOSSIntCreate),
+      administration = EtmpAdministration(messageType = EtmpMessageType.IOSSIntAddClient),
       customerIdentification = getCustomerIdentification(answers),
       tradingNames = getTradingNames(answers),
       intermediaryDetails = None,
@@ -99,22 +99,26 @@ object EtmpRegistrationRequest extends EtmpEuRegistrations with EtmpPreviousRegi
   }
 
   private def getOtherAddress(answers: UserAnswers): Option[EtmpOtherAddress] = {
-    for {
+    (for {
       businessBasedInUK <- answers.get(BusinessBasedInUKPage)
       clientCountryBased <- answers.get(ClientCountryBasedPage)
       businessAddress <- answers.get(ClientBusinessAddressPage)
       businessName <- answers.get(ClientBusinessNamePage)
     } yield {
-      EtmpOtherAddress(
-        issuedBy = clientCountryBased.code,
-        tradingName = Some(businessName.name),
-        addressLine1 = businessAddress.line1,
-        addressLine2 = businessAddress.line2,
-        townOrCity = businessAddress.townOrCity,
-        regionOrState = businessAddress.stateOrRegion,
-        postcode = businessAddress.postCode
-      )
-    }
+      if (!businessBasedInUK) {
+        Some(EtmpOtherAddress(
+          issuedBy = clientCountryBased.code,
+          tradingName = Some(businessName.name),
+          addressLine1 = businessAddress.line1,
+          addressLine2 = businessAddress.line2,
+          townOrCity = businessAddress.townOrCity,
+          regionOrState = businessAddress.stateOrRegion,
+          postcode = businessAddress.postCode
+        ))
+      } else {
+        None
+      }
+    }).flatten
   }
 
   private def getSchemeDetails(answers: UserAnswers, commencementDate: LocalDate): EtmpSchemeDetails = {

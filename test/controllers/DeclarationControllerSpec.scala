@@ -19,11 +19,11 @@ package controllers
 import base.SpecBase
 import connectors.RegistrationConnector
 import forms.DeclarationFormProvider
+import models.{BusinessContactDetails, ClientBusinessName, PendingRegistrationRequest, SavedPendingRegistration}
 import models.audit.{IntermediaryDeclarationSigningAuditModel, IntermediaryDeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult.EMAIL_NOT_SENT
 import models.requests.DataRequest
 import models.responses.UnexpectedResponseStatus
-import models.{BusinessContactDetails, ClientBusinessName, IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{doNothing, times, verify, when}
