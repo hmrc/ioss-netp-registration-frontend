@@ -18,6 +18,7 @@ package config
 
 object Constants {
 
+  val maxTradingNames: Int = 10
   val maxWebsites: Int = 10
   val intermediaryEnrolmentKey: String = "IntNumber"
   val pendingRegistrationTTL: Int = 28

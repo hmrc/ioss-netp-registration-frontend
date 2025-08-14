@@ -19,7 +19,7 @@ package controllers.vatEuDetails
 import controllers.GetCountry
 import controllers.actions.*
 import models.Index
-import models.euDetails.EuDetails
+import models.vatEuDetails.EuDetails
 import pages.vatEuDetails.{CheckEuDetailsAnswersPage, EuCountryPage}
 import pages.{Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}

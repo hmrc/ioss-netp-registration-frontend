@@ -18,8 +18,8 @@ package controllers.vatEuDetails
 
 import base.SpecBase
 import forms.vatEuDetails.DeleteAllEuDetailsFormProvider
-import models.vatEuDetails.TradingNameAndBusinessAddress
-import models.{Country, InternationalAddress, RegistrationType, TradingName, UserAnswers}
+import models.vatEuDetails.{RegistrationType, TradingNameAndBusinessAddress}
+import models.{Country, InternationalAddress, TradingName, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar

@@ -15,7 +15,6 @@
  *@
 
 @import controllers.vatEuDetails.routes
-@import models.RegistrationType
 @import models.{Country, Index}
 @import pages.Waypoints
 @import pages.vatEuDetails.RegistrationTypePage
@@ -50,3 +49,4 @@
     @button("site.continue", RegistrationTypePage(countryIndex).route(waypoints).url, waypoints)
   }
 }
+@import models.vatEuDetails.RegistrationType

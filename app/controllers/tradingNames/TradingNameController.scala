@@ -16,6 +16,7 @@
 
 package controllers.tradingNames
 
+import config.Constants.maxTradingNames
 import controllers.actions.*
 import forms.tradingNames.TradingNameFormProvider
 import models.requests.DataRequest
@@ -94,7 +95,6 @@ class TradingNameController @Inject()(
   }
 
   private def maxIndexFilter(index: Index) = {
-    val maxTradingNames: Int = 10
     new ActionFilter[DataRequest] {
       def executionContext: ExecutionContext = defaultExecutionContext
 

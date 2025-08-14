@@ -45,7 +45,7 @@ class ClientDataRetrievalActionSpec extends SpecBase with MockitoSugar {
         when(sessionRepository.get("id")) thenReturn Future(userAnswers)
         val action = new Harness(sessionRepository)
 
-        val result: Throwable = action.callTransform(OptionalDataRequest(FakeRequest(), "id", userAnswers, Some(intermediaryNumber))).failed.futureValue
+        val result: Throwable = action.callTransform(OptionalDataRequest(FakeRequest(), "id", userAnswers, Some(intermediaryDetails.intermediaryNumber))).failed.futureValue
 
         result mustBe a[IllegalStateException]
       }
@@ -61,7 +61,7 @@ class ClientDataRetrievalActionSpec extends SpecBase with MockitoSugar {
         when(sessionRepository.get("id")) thenReturn Future(Some(userAnswers))
         val action = new Harness(sessionRepository)
 
-        val result = action.callTransform(OptionalDataRequest(FakeRequest(), "id", Some(userAnswers), Some(intermediaryNumber))).futureValue
+        val result = action.callTransform(OptionalDataRequest(FakeRequest(), "id", Some(userAnswers), Some(intermediaryDetails.intermediaryNumber))).futureValue
 
         result.userAnswers mustBe userAnswers
       }

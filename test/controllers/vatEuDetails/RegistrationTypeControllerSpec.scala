@@ -34,8 +34,8 @@ package controllers.vatEuDetails
 
 import base.SpecBase
 import forms.vatEuDetails.RegistrationTypeFormProvider
-import models.vatEuDetails.TradingNameAndBusinessAddress
-import models.{Country, Index, InternationalAddress, RegistrationType, TradingName, UserAnswers}
+import models.vatEuDetails.{RegistrationType, TradingNameAndBusinessAddress}
+import models.{Country, Index, InternationalAddress, TradingName, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
