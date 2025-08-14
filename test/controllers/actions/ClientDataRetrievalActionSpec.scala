@@ -39,6 +39,8 @@ class ClientDataRetrievalActionSpec extends SpecBase with MockitoSugar {
   }
 
   "Client Data Retrieval Action" - {
+    
+    val intermediaryNumber = arbitraryIntermediaryDetails.arbitrary.sample.get.intermediaryNumber
 
     "when there is no data in the cache" - {
 

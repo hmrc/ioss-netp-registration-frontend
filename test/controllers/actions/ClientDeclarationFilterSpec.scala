@@ -18,7 +18,7 @@ package controllers.actions
 
 import base.SpecBase
 import models.UserAnswers
-import models.requests.OptionalDataRequest
+import models.requests.ClientOptionalDataRequest
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import pages.clientDeclarationJourney.ClientDeclarationPage
@@ -31,7 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class ClientDeclarationFilterSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
   class Harness() extends ClientDeclarationFilter()(ExecutionContext.Implicits.global) {
-    def callFilter(request: OptionalDataRequest[_]): Future[Option[Result]] = filter(request)
+    def callFilter(request: ClientOptionalDataRequest[_]): Future[Option[Result]] = filter(request)
   }
 
   ".ClientDeclarationFilter" - {
@@ -42,11 +42,11 @@ class ClientDeclarationFilterSpec extends SpecBase with MockitoSugar with Before
 
         val userAnswers = UserAnswers("id").set(ClientDeclarationPage, true).success.value
 
-        val optionalDataRequest = OptionalDataRequest(FakeRequest(), "id", Some(userAnswers), None)
+        val clientOptionalDataRequest = ClientOptionalDataRequest(FakeRequest(), "id", userAnswers)
 
         val action = new Harness()
 
-        val result = action.callFilter(optionalDataRequest).futureValue
+        val result = action.callFilter(clientOptionalDataRequest).futureValue
 
         result mustBe None
 
@@ -58,11 +58,11 @@ class ClientDeclarationFilterSpec extends SpecBase with MockitoSugar with Before
       "when the client declaration page is false" in {
         val userAnswers = UserAnswers("id").set(ClientDeclarationPage, false).success.value
 
-        val optionalDataRequest = OptionalDataRequest(FakeRequest(), "id", Some(userAnswers), None)
+        val clientOptionalDataRequest = ClientOptionalDataRequest(FakeRequest(), "id", userAnswers)
 
         val action = new Harness()
 
-        val result = action.callFilter(optionalDataRequest).futureValue
+        val result = action.callFilter(clientOptionalDataRequest).futureValue
 
         result mustBe Some(Redirect(controllers.clientDeclarationJourney.routes.ClientJourneyRecoveryController.onPageLoad()))
       }
@@ -70,22 +70,11 @@ class ClientDeclarationFilterSpec extends SpecBase with MockitoSugar with Before
       "when the client declaration page has NOT been filled" in {
         val userAnswers = UserAnswers("id")
 
-        val optionalDataRequest = OptionalDataRequest(FakeRequest(), "id", Some(userAnswers), None)
+        val clientOptionalDataRequest = ClientOptionalDataRequest(FakeRequest(), "id", userAnswers)
 
         val action = new Harness()
 
-        val result = action.callFilter(optionalDataRequest).futureValue
-
-        result mustBe Some(Redirect(controllers.clientDeclarationJourney.routes.ClientJourneyRecoveryController.onPageLoad()))
-      }
-
-      "when the userAnswers are not present to continue the journey" in {
-
-        val optionalDataRequest = OptionalDataRequest(FakeRequest(), "id", None, None)
-
-        val action = new Harness()
-
-        val result = action.callFilter(optionalDataRequest).futureValue
+        val result = action.callFilter(clientOptionalDataRequest).futureValue
 
         result mustBe Some(Redirect(controllers.clientDeclarationJourney.routes.ClientJourneyRecoveryController.onPageLoad()))
       }

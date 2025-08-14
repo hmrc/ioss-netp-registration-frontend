@@ -16,14 +16,14 @@
 
 package controllers.actions
 
-import models.requests.OptionalDataRequest
+import models.requests.ClientOptionalDataRequest
 import play.api.mvc.Result
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeClientDeclarationFilter extends ClientDeclarationFilter()(ExecutionContext.Implicits.global) {
 
-  override protected def filter[A](request: OptionalDataRequest[A]): Future[Option[Result]] = {
+  override protected def filter[A](request: ClientOptionalDataRequest[A]): Future[Option[Result]] = {
     Future.successful(None)
   }
 }

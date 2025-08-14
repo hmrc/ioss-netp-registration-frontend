@@ -16,7 +16,7 @@
 
 package controllers.actions
 
-import models.requests.OptionalDataRequest
+import models.requests.ClientOptionalDataRequest
 import pages.clientDeclarationJourney.ClientDeclarationPage
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{ActionFilter, Result}
@@ -25,21 +25,16 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class ClientDeclarationFilter()
-                             (implicit val executionContext: ExecutionContext) extends ActionFilter[OptionalDataRequest] {
+                             (implicit val executionContext: ExecutionContext) extends ActionFilter[ClientOptionalDataRequest] {
 
-  override protected def filter[A](request: OptionalDataRequest[A]): Future[Option[Result]] =
-    request.userAnswers match {
-      case Some(userAnswers) =>
-        userAnswers.get(ClientDeclarationPage) match {
-          case Some(value) if !value =>
-            Future.successful(Some(Redirect(controllers.clientDeclarationJourney.routes.ClientJourneyRecoveryController.onPageLoad())))
+  override protected def filter[A](request: ClientOptionalDataRequest[A]): Future[Option[Result]] =
+    request.userAnswers.get(ClientDeclarationPage) match {
+      case Some(value) if !value =>
+        Future.successful(Some(Redirect(controllers.clientDeclarationJourney.routes.ClientJourneyRecoveryController.onPageLoad())))
 
-          case Some(value) =>
-            Future.successful(None)
+      case Some(value) =>
+        Future.successful(None)
 
-          case None =>
-            Future.successful(Some(Redirect(controllers.clientDeclarationJourney.routes.ClientJourneyRecoveryController.onPageLoad())))
-        }
       case None =>
         Future.successful(Some(Redirect(controllers.clientDeclarationJourney.routes.ClientJourneyRecoveryController.onPageLoad())))
     }

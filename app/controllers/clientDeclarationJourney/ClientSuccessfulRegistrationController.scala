@@ -19,7 +19,7 @@ package controllers.clientDeclarationJourney
 import controllers.actions.*
 import logging.Logging
 import pages.{EmptyWaypoints, JourneyRecoveryPage}
-import play.api.i18n.I18nSupport
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.etmp.EtmpEnrolmentResponseQuery
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
@@ -30,6 +30,7 @@ import javax.inject.Inject
 class ClientSuccessfulRegistrationController @Inject()(
                                                         override val messagesApi: MessagesApi,
                                                         clientIdentify: ClientIdentifierAction,
+                                                        getClientData: ClientDataRetrievalAction,
                                                         clientDeclarationFilterProvider: ClientDeclarationFilterProvider,
                                                         cc: AuthenticatedControllerComponents,
                                                         view: ClientSuccessfulRegistrationView
@@ -37,7 +38,7 @@ class ClientSuccessfulRegistrationController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(): Action[AnyContent] = (clientIdentify andThen clientDeclarationFilterProvider.apply()) {
+  def onPageLoad(): Action[AnyContent] = (clientIdentify andThen getClientData andThen clientDeclarationFilterProvider.apply()) {
     implicit request =>
       (for {
         etmpEnrolmentResponse <- request.userAnswers.get(EtmpEnrolmentResponseQuery)
