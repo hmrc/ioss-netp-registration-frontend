@@ -493,7 +493,7 @@ clientSuccessfulRegistration.info.2 = They must now complete your monthly IOSS V
 
 clientJourneyRecovery.startAgain.title = Sorry, there is a problem with the service
 clientJourneyRecovery.startAgain.heading = Sorry, there is a problem with the service
-clientJourneyRecovery.startAgain.guidance = [Add content to explain why the user needs to start again.]
+clientJourneyRecovery.startAgain.guidance = Something went wrong, please start again to sign the declaration.
 
 errorSubmittingRegistration.title = We have a problem with our service right now
 errorSubmittingRegistration.heading = Your registration is not submitted
