@@ -191,3 +191,5 @@ POST        /declaration-client                                             cont
 GET         /successful-registration                                        controllers.clientDeclarationJourney.ClientSuccessfulRegistrationController.onPageLoad()
 
 GET         /error-submitting-registration                                  controllers.ErrorSubmittingRegistrationController.onPageLoad()
+
+GET        /clientAwaitingActivation                       controllers.ClientAwaitingActivationController.onPageLoad()
