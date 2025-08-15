@@ -20,20 +20,18 @@ import controllers.actions.*
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import logging.Logging
 import models.UserAnswers
-import pages.{ClientBusinessNamePage, ErrorSubmittingRegistrationPage, JourneyRecoveryPage, Waypoints}
 import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
 import models.audit.SubmissionResult
 import pages.clientDeclarationJourney.ClientDeclarationPage
-import pages.{ClientBusinessNamePage, JourneyRecoveryPage, Waypoints}
+import pages.{ClientBusinessNamePage, ErrorSubmittingRegistrationPage, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.I18nSupport
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import play.api.mvc.Results.Redirect
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import queries.IntermediaryDetailsQuery
 import queries.etmp.EtmpEnrolmentResponseQuery
 import repositories.SessionRepository
-import services.RegistrationService
-import services.AuditService
+import services.{AuditService, RegistrationService}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.clientDeclarationJourney.ClientDeclarationView

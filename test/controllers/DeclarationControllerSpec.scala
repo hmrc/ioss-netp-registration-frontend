@@ -21,9 +21,8 @@ import connectors.RegistrationConnector
 import forms.DeclarationFormProvider
 import models.{BusinessContactDetails, ClientBusinessName, PendingRegistrationRequest, SavedPendingRegistration}
 import models.audit.DeclarationSigningAuditType.CreateDeclaration
-import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType, SubmissionResult}
+import models.audit.{DeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult.EMAIL_NOT_SENT
-import models.requests.DataRequest
 import models.responses.UnexpectedResponseStatus
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito

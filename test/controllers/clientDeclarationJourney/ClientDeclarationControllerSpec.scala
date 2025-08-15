@@ -24,7 +24,6 @@ import models.responses.InternalServerError as ServerError
 import models.responses.etmp.EtmpEnrolmentResponse
 import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
 import models.audit.SubmissionResult
-import models.domain.VatCustomerInfo
 import models.{ClientBusinessName, IntermediaryDetails, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.*
