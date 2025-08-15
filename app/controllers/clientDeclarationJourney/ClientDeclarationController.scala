@@ -85,24 +85,22 @@ class ClientDeclarationController @Inject()(
             value =>
               registrationService.createRegistration(request.userAnswers).flatMap {
                 case Right(response) =>
+                  auditService.sendAudit(
+                    declarationSigningAuditType = CreateClientDeclaration,
+                    result = SubmissionResult.Success,
+                    submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
+                  )
                   for {
                     updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientDeclarationPage, value))
                     updatedAnswers2 <- Future.fromTry(updatedAnswers.set(EtmpEnrolmentResponseQuery, response))
                     _ <- sessionRepository.set(updatedAnswers2)
                   } yield Redirect(routes.ClientSuccessfulRegistrationController.onPageLoad())
+
+
                 case Left(error) =>
                   logger.error(s"Unexpected result on registration creation submission: ${error.body}")
                   Redirect(ErrorSubmittingRegistrationPage.route(waypoints)).toFuture
               }
-              auditService.sendAudit(
-                declarationSigningAuditType = CreateClientDeclaration,
-                result = SubmissionResult.Success,
-                submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
-              )
-              for {
-                updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientDeclarationPage, value))
-                _ <- sessionRepository.set(updatedAnswers)
-              } yield Redirect(routes.ClientSuccessfulRegistrationController.onPageLoad())
           )
         }
       }
