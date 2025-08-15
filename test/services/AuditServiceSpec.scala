@@ -28,7 +28,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.FakeRequest
-import testutils.RegistrationData.{emptyUserAnswers, intermediaryNumber, userAnswersId}
+import testutils.RegistrationData.{emptyUserAnswers, intermediaryDetails, userAnswersId}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
@@ -54,7 +54,7 @@ class AuditServiceSpec extends AnyFreeSpec with MockitoSugar with ScalaFutures w
           FakeRequest("POST", "/test-path"),
           userAnswersId,
           emptyUserAnswers,
-          intermediaryNumber
+        intermediaryDetails.intermediaryNumber
         )
 
       service.sendAudit(
