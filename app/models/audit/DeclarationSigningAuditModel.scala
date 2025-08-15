@@ -17,11 +17,11 @@
 package models.audit
 
 import models.UserAnswers
-import models.requests.DataRequest
+import models.requests.GenericRequest
 import play.api.libs.json.{JsValue, Json}
 
-case class IntermediaryDeclarationSigningAuditModel(
-                                                     intermediaryDeclarationSigningAuditType: IntermediaryDeclarationSigningAuditType,
+case class DeclarationSigningAuditModel(
+                                                     declarationSigningAuditType: DeclarationSigningAuditType,
                                                      credId: String,
                                                      userAgent: String,
                                                      userAnswers: UserAnswers,
@@ -29,10 +29,11 @@ case class IntermediaryDeclarationSigningAuditModel(
                                                      submittedDeclarationPageBody: String
                                                    ) extends JsonAuditModel {
 
-  override val auditType: String = intermediaryDeclarationSigningAuditType.auditType
-  override val transactionName: String = intermediaryDeclarationSigningAuditType.transactionName
+  override val auditType: String = declarationSigningAuditType.auditType
+  override val transactionName: String = declarationSigningAuditType.transactionName
 
   override val detail: JsValue = Json.obj(
+    
     "credId" -> credId,
     "browserUserAgent" -> userAgent,
     "userAnswersDetails" -> Json.toJson(userAnswers),
@@ -41,20 +42,21 @@ case class IntermediaryDeclarationSigningAuditModel(
   )
 }
 
-object IntermediaryDeclarationSigningAuditModel {
+object DeclarationSigningAuditModel {
 
   def build(
-             intermediaryDeclarationSigningAuditType: IntermediaryDeclarationSigningAuditType,
+             declarationSigningAuditType: DeclarationSigningAuditType,
              userAnswers: UserAnswers,
              submissionResult: SubmissionResult,
              submittedDeclarationPageBody: String
-           )(implicit request: DataRequest[_]): IntermediaryDeclarationSigningAuditModel =
-    IntermediaryDeclarationSigningAuditModel(
-      intermediaryDeclarationSigningAuditType = intermediaryDeclarationSigningAuditType,
+           )(implicit request: GenericRequest[_]): DeclarationSigningAuditModel = {
+    DeclarationSigningAuditModel(
+      declarationSigningAuditType = declarationSigningAuditType,
       credId = request.userId,
       userAgent = request.headers.get("user-agent").getOrElse(""),
       userAnswers = userAnswers,
       submissionResult = submissionResult,
       submittedDeclarationPageBody = submittedDeclarationPageBody
     )
+    }
 }

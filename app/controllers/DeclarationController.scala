@@ -20,9 +20,9 @@ import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.DeclarationFormProvider
 import logging.Logging
-import models.audit.{IntermediaryDeclarationSigningAuditModel, IntermediaryDeclarationSigningAuditType, SubmissionResult}
+import models.audit.DeclarationSigningAuditType.CreateDeclaration
+import models.audit.{DeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult
-import models.requests.DataRequest
 import models.{IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration}
 import pages.{DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints}
 import play.api.data.Form
@@ -93,7 +93,8 @@ class DeclarationController @Inject()(
 
                   value =>
 
-                    sendAudit(
+                    auditService.sendAudit(
+                      declarationSigningAuditType = CreateDeclaration,
                       result = SubmissionResult.Success,
                       submittedDeclarationPageBody = view(form.fill(value), waypoints, intermediaryName, clientCompanyName).body
                     )
@@ -105,7 +106,8 @@ class DeclarationController @Inject()(
               }
 
             case Left(error) =>
-              sendAudit(
+              auditService.sendAudit(
+                declarationSigningAuditType = CreateDeclaration,
                 result = SubmissionResult.Failure,
                 submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
               )
@@ -152,16 +154,4 @@ class DeclarationController @Inject()(
     )
   }
 
-  private def sendAudit(result: SubmissionResult, submittedDeclarationPageBody: String)
-                       (implicit hc: HeaderCarrier, request: DataRequest[_]): Unit = {
-    auditService.audit(
-      IntermediaryDeclarationSigningAuditModel.build(
-        IntermediaryDeclarationSigningAuditType.CreateDeclaration,
-        request.userAnswers,
-        result,
-        submittedDeclarationPageBody
-
-      )
-    )
-  }
 }
