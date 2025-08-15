@@ -20,16 +20,15 @@ import base.SpecBase
 import connectors.RegistrationConnector
 import controllers.{clientDeclarationJourney, routes}
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
-import models.{ClientBusinessName, IntermediaryDetails, UserAnswers}
-import models.domain.VatCustomerInfo
 import models.responses.InternalServerError as ServerError
 import models.responses.etmp.EtmpEnrolmentResponse
+import models.{ClientBusinessName, IntermediaryDetails, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
-import pages.{ClientBusinessNamePage, EmptyWaypoints, ErrorSubmittingRegistrationPage}
 import pages.clientDeclarationJourney.ClientDeclarationPage
+import pages.{ClientBusinessNamePage, EmptyWaypoints, ErrorSubmittingRegistrationPage}
 import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest

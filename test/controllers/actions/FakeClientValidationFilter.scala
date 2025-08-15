@@ -16,19 +16,18 @@
 
 package controllers.actions
 
-import models.UserAnswers
-import models.requests.{ClientOptionalDataRequest, OptionalDataRequest}
+import models.requests.ClientOptionalDataRequest
 import play.api.mvc.Result
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class FakeClientDataRetrievalAction(dataToReturn: Option[UserAnswers]) extends ClientDataRetrievalAction {
+class FakeClientValidationFilter extends ClientValidationFilter()(ExecutionContext.Implicits.global) {
 
-  override protected def refine[A](request: OptionalDataRequest[A]): Future[Either[Result, ClientOptionalDataRequest[A]]] = {
-    val nonOptionalUserAnswers = dataToReturn.getOrElse(UserAnswers("testId"))
-    Future(Right(ClientOptionalDataRequest(request.request, request.userId, nonOptionalUserAnswers)))
+  override protected def filter[A](request: ClientOptionalDataRequest[A]): Future[Option[Result]] = {
+    Future.successful(None)
   }
+}
 
-  override protected implicit val executionContext: ExecutionContext =
-    scala.concurrent.ExecutionContext.Implicits.global
+class FakeClientValidationFilterProvider extends ClientValidationFilterProvider()(ExecutionContext.Implicits.global) {
+  override def apply(): ClientValidationFilter = new FakeClientValidationFilter
 }

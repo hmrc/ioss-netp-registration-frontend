@@ -19,22 +19,22 @@ package models.etmp
 import base.SpecBase
 import config.Constants.{maxSchemes, maxTradingNames, maxWebsites}
 import formats.Format.eisDateFormatter
-import models.{BankDetails, Bic, BusinessContactDetails, CountryWithValidationDetails, Iban, PreviousScheme, TradingName, UserAnswers, Website}
+import models.PreviousScheme.toEmtpSchemeType
 import models.domain.PreviousSchemeDetails
 import models.previousRegistrations.PreviousRegistrationDetails
 import models.vatEuDetails.*
-import models.PreviousScheme.toEmtpSchemeType
+import models.{BusinessContactDetails, CountryWithValidationDetails, PreviousScheme, TradingName, UserAnswers, Website}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-import pages.{BusinessContactDetailsPage, ClientHasVatNumberPage, ClientVatNumberPage}
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.HasTradingNamePage
 import pages.vatEuDetails.HasFixedEstablishmentPage
-import play.api.libs.json.{JsError, Json, JsSuccess}
-import queries.{AllWebsites, IntermediaryDetailsQuery}
+import pages.{BusinessContactDetailsPage, ClientHasVatNumberPage, ClientVatNumberPage}
+import play.api.libs.json.{JsError, JsSuccess, Json}
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
+import queries.{AllWebsites, IntermediaryDetailsQuery}
 import testutils.RegistrationData.etmpRegistrationRequest
 
 import java.time.LocalDate
