@@ -20,8 +20,8 @@ import config.Service
 import connectors.test.TestOnlyClientDeclarationCodeHttpParser.{TestOnlyValidateClientCodeReads, TestOnlyValidateClientCodeResponse}
 import logging.Logging
 import play.api.Configuration
-import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
+import uk.gov.hmrc.http.client.HttpClientV2
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}

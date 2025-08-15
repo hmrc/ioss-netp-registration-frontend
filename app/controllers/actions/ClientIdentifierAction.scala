@@ -16,12 +16,14 @@
 
 package controllers.actions
 
+import config.FrontendAppConfig
 import logging.Logging
 import models.requests.OptionalDataRequest
 import play.api.mvc.*
+import play.api.mvc.Results.Redirect
 import repositories.SessionRepository
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions, NoActiveSession}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
@@ -33,6 +35,7 @@ trait ClientIdentifierAction extends ActionBuilder[OptionalDataRequest, AnyConte
 class ClientIdentifierActionImpl @Inject()(
                                             val sessionRepository: SessionRepository,
                                             override val authConnector: AuthConnector,
+                                            config: FrontendAppConfig,
                                             val parser: BodyParsers.Default,
                                           )(implicit val ec: ExecutionContext)
   extends ClientIdentifierAction with AuthorisedFunctions with Logging {
@@ -44,6 +47,7 @@ class ClientIdentifierActionImpl @Inject()(
                                block: OptionalDataRequest[A] => Future[Result]
                              ): Future[Result] = {
 
+
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 
     authorised().retrieve(Retrievals.internalId) {
@@ -54,6 +58,13 @@ class ClientIdentifierActionImpl @Inject()(
       case None =>
         logger.error(s"No Internal ID found to create User ID.\nRequest Body:${request.body}")
         Future.failed(new IllegalStateException("Missing Internal ID"))
+    } recover {
+      case _: NoActiveSession =>
+        val clientJourneyStartUrl: String = s"${config.clientCodeEntryUrl}/${request.path.split("/").last}"
+        Redirect(
+          config.loginUrl,
+          Map("continue" -> Seq(clientJourneyStartUrl)))
+
     }
   }
 }

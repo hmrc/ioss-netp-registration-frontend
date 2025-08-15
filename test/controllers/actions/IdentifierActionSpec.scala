@@ -36,12 +36,12 @@ import utils.FutureSyntax.FutureOps
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
-class AuthActionSpec extends SpecBase with MockitoSugar {
+class IdentifierActionSpec extends SpecBase with MockitoSugar {
 
   private val mockIntermediaryRegistrationService: IntermediaryRegistrationService = mock[IntermediaryRegistrationService]
 
-  class Harness(authAction: IdentifierAction) {
-    def onPageLoad(): Action[AnyContent] = authAction { _ => Results.Ok }
+  class Harness(identifierAction: IdentifierAction) {
+    def onPageLoad(): Action[AnyContent] = identifierAction { _ => Results.Ok }
   }
 
   "Auth Action" - {

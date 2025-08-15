@@ -30,7 +30,7 @@ class DeclarationSigningAuditModelSpec extends SpecBase {
     "must create correct json object" in {
 
       implicit val dataRequest: DataRequest[_] =
-        DataRequest(fakeRequest, userAnswersId, emptyUserAnswers, intermediaryNumber)
+        DataRequest(fakeRequest, userAnswersId, emptyUserAnswers, intermediaryDetails.intermediaryNumber)
 
       val declarationSigningAuditModel = DeclarationSigningAuditModel.build(
         declarationSigningAuditType = DeclarationSigningAuditType.CreateDeclaration,

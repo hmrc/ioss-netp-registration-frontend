@@ -19,12 +19,12 @@ package controllers
 import base.SpecBase
 import connectors.RegistrationConnector
 import forms.DeclarationFormProvider
+import models.{BusinessContactDetails, ClientBusinessName, PendingRegistrationRequest, SavedPendingRegistration}
 import models.audit.DeclarationSigningAuditType.CreateDeclaration
 import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult.EMAIL_NOT_SENT
 import models.requests.DataRequest
 import models.responses.UnexpectedResponseStatus
-import models.{BusinessContactDetails, ClientBusinessName, IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{doNothing, times, verify, when}
@@ -45,7 +45,6 @@ import scala.concurrent.Future
 class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
   private val waypoints: Waypoints = EmptyWaypoints
-  private val intermediaryCompanyName: String = intermediaryVatCustomerInfo.organisationName.get
   private val clientBusinessName: ClientBusinessName = ClientBusinessName(vatCustomerInfo.organisationName.value)
   private val businessContactDetails: BusinessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
 
@@ -53,10 +52,9 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
     .set(ClientBusinessNamePage, clientBusinessName).success.value
     .set(BusinessContactDetailsPage, businessContactDetails).success.value
 
-  private val nonEmptyIntermediaryName: String = intermediaryVatCustomerInfo.organisationName.getOrElse("Dummy Name for Test")
   private val pendingRegistrationRequest: PendingRegistrationRequest = PendingRegistrationRequest(
     userAnswers = userAnswers,
-    intermediaryDetails = IntermediaryDetails(intermediaryNumber, nonEmptyIntermediaryName)
+    intermediaryDetails = intermediaryDetails
   )
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
@@ -93,7 +91,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           val view = application.injector.instanceOf[DeclarationView]
 
           status(result) mustEqual OK
-          contentAsString(result) mustEqual view(form, waypoints, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(form, waypoints, intermediaryDetails.intermediaryName, clientBusinessName.name)(request, messages(application)).toString
         }
       }
 
@@ -116,7 +114,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           val result = route(application, request).value
 
           status(result) mustEqual OK
-          contentAsString(result) mustEqual view(form.fill(true), waypoints, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(form.fill(true), waypoints, intermediaryDetails.intermediaryName, clientBusinessName.name)(request, messages(application)).toString
         }
       }
 
@@ -163,17 +161,11 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             .build()
 
         when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
-
         when(mockDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
-
         when(viewMock.body) thenReturn testViewBody
-
         when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any())) thenReturn Right(intermediaryVatCustomerInfo).toFuture
-
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
-
         when(mockEmailService.sendClientActivationEmail(any, any, any, any, any)(any, any)) thenReturn Future.successful(())
-
         doNothing().when(mockAuditService).sendAudit(eqTo(CreateDeclaration),eqTo(SubmissionResult.Success), eqTo(testViewBody))(any(), any())
 
         running(application) {
@@ -224,19 +216,12 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             .build()
 
         when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
-
         when(mockDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
-
         when(viewMock.body) thenReturn testViewBody
-
         when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any())) thenReturn Right(intermediaryVatCustomerInfo).toFuture
-
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
-
         when(mockEmailService.sendClientActivationEmail(any, any, any, any, any)(any, any)) thenReturn Future.successful(EMAIL_NOT_SENT)
-
         doNothing().when(mockAuditService).sendAudit(eqTo(CreateDeclaration), eqTo(SubmissionResult.Success), eqTo(testViewBody))(any(), any())
-
 
         running(application) {
           val request =
@@ -273,7 +258,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
         when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
 
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
-        
+
         val application = applicationBuilder(userAnswers = Some(userAnswers))
           .overrides(
             bind[RegistrationConnector].toInstance(mockRegistrationConnector),
@@ -291,7 +276,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           val result = route(application, request).value
 
           status(result) mustEqual BAD_REQUEST
-          contentAsString(result) mustEqual view(boundForm, waypoints, intermediaryCompanyName, clientBusinessName.name)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(boundForm, waypoints, intermediaryDetails.intermediaryName, clientBusinessName.name)(request, messages(application)).toString
         }
       }
 

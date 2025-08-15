@@ -37,7 +37,7 @@ class ClientBusinessNameControllerSpec extends SpecBase with MockitoSugar {
 
   private val waypoints: Waypoints = EmptyWaypoints
   private val companyName: String = "Company name"
-  private val countries: Seq[Country] = Gen.listOf(arbitraryCountry.arbitrary).sample.value
+  private val countries: Seq[Country] = Gen.listOfN(5, arbitraryCountry.arbitrary).sample.value
   private val country: Country = Gen.oneOf(countries).sample.value
   private val updatedAnswers = emptyUserAnswers
     .set(BusinessBasedInUKPage, false).success.value

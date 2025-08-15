@@ -19,9 +19,14 @@ package controllers.actions
 import base.SpecBase
 import models.UserAnswers
 import models.requests.{ClientOptionalDataRequest, OptionalDataRequest}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.*
 import org.scalatestplus.mockito.MockitoSugar
+import pages.EmptyWaypoints
+import play.api.mvc.Result
+import play.api.mvc.Results.Redirect
 import play.api.test.FakeRequest
+import queries.ClientUrlCodeQuery
 import repositories.SessionRepository
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -30,40 +35,64 @@ import scala.concurrent.Future
 class ClientDataRetrievalActionSpec extends SpecBase with MockitoSugar {
 
   class Harness(sessionRepository: SessionRepository) extends ClientDataRetrievalActionImpl(sessionRepository) {
-    def callTransform[A](request: OptionalDataRequest[A]): Future[ClientOptionalDataRequest[A]] = transform(request)
+    def callRefine[A](request: OptionalDataRequest[A]): Future[Either[Result, ClientOptionalDataRequest[A]]] = refine(request)
   }
 
   "Client Data Retrieval Action" - {
+    
+    val intermediaryNumber = arbitraryIntermediaryDetails.arbitrary.sample.get.intermediaryNumber
 
     "when there is no data in the cache" - {
 
-      "must error when userAnswers are 'None' in the request" in {
+      "must direct the user to ClientJourneyStartController to re-pull data and restart the journey" in {
 
         val userAnswers: Option[UserAnswers] = None
 
         val sessionRepository = mock[SessionRepository]
         when(sessionRepository.get("id")) thenReturn Future(userAnswers)
+
         val action = new Harness(sessionRepository)
 
-        val result: Throwable = action.callTransform(OptionalDataRequest(FakeRequest(), "id", userAnswers, Some(intermediaryNumber))).failed.futureValue
+        val result = action.callRefine(OptionalDataRequest(FakeRequest("GET", "UrlCode"), "id", userAnswers, Some(intermediaryNumber))).futureValue
 
-        result mustBe a[IllegalStateException]
+        result mustBe Left(Redirect(controllers.clientDeclarationJourney.routes.ClientJourneyStartController.onPageLoad(EmptyWaypoints, "UrlCode")))
       }
     }
 
     "when there is data in the cache" - {
 
-      "must build a userAnswers object and add it to the request" in {
+      "and the clientUrlCode is NOT stored, must store the code and build a ClientOptionalDataRequest" in {
 
         val userAnswers = UserAnswers("id")
 
         val sessionRepository = mock[SessionRepository]
         when(sessionRepository.get("id")) thenReturn Future(Some(userAnswers))
+        when(sessionRepository.set(any())) thenReturn Future.successful(true)
         val action = new Harness(sessionRepository)
 
-        val result = action.callTransform(OptionalDataRequest(FakeRequest(), "id", Some(userAnswers), Some(intermediaryNumber))).futureValue
+        val result = action.callRefine(OptionalDataRequest(FakeRequest("GET", "UrlCode"), "id", Some(userAnswers), Some(intermediaryNumber))).futureValue
 
-        result.userAnswers mustBe userAnswers
+        result.value.userAnswers.isDefined
+        result.value.userAnswers.get(ClientUrlCodeQuery).isDefined
+        result.value.userAnswers.get(ClientUrlCodeQuery).value mustEqual "UrlCode"
+        result.exists(_.isInstanceOf[ClientOptionalDataRequest[_]])
+      }
+
+      "and the clientUrlCode is stored, must store the code and build a ClientOptionalDataRequest" in {
+
+        val userAnswers = UserAnswers("id").set(ClientUrlCodeQuery, "UrlCode").success.value
+
+        val sessionRepository = mock[SessionRepository]
+        when(sessionRepository.get("id")) thenReturn Future(Some(userAnswers))
+        val action = new Harness(sessionRepository)
+
+        val result = action.callRefine(OptionalDataRequest(FakeRequest(), "id", Some(userAnswers), Some(intermediaryNumber))).futureValue
+
+
+        result.value.userAnswers.isDefined
+        result.value.userAnswers.get(ClientUrlCodeQuery).isDefined
+        result.value.userAnswers.get(ClientUrlCodeQuery).value mustEqual "UrlCode"
+        result.exists(_.isInstanceOf[ClientOptionalDataRequest[_]])
       }
     }
   }

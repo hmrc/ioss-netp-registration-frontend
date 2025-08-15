@@ -18,27 +18,25 @@ package controllers
 
 import controllers.actions.*
 import forms.ClientHasVatNumberFormProvider
-
-import javax.inject.Inject
-import pages.ClientHasVatNumberPage
-import pages.Waypoints
+import pages.{ClientHasVatNumberPage, Waypoints}
 import play.api.data.Form
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.ClientHasVatNumberView
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class ClientHasVatNumberController @Inject()(
-                                         override val messagesApi: MessagesApi,
                                          cc: AuthenticatedControllerComponents,
                                          formProvider: ClientHasVatNumberFormProvider,
                                          view: ClientHasVatNumberView
                                  )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
-  val form: Form[Boolean] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
+
+  val form: Form[Boolean] = formProvider()
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData {
     implicit request =>

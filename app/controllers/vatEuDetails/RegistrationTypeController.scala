@@ -19,7 +19,8 @@ package controllers.vatEuDetails
 import controllers.GetCountry
 import controllers.actions.*
 import forms.vatEuDetails.RegistrationTypeFormProvider
-import models.{Index, RegistrationType}
+import models.Index
+import models.vatEuDetails.RegistrationType
 import pages.vatEuDetails.RegistrationTypePage
 import pages.Waypoints
 import play.api.data.Form
