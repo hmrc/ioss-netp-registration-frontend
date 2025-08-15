@@ -98,6 +98,11 @@ class ClientDeclarationController @Inject()(
 
 
                 case Left(error) =>
+                  auditService.sendAudit(
+                    declarationSigningAuditType = CreateClientDeclaration,
+                    result = SubmissionResult.Failure,
+                    submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
+                  )
                   logger.error(s"Unexpected result on registration creation submission: ${error.body}")
                   Redirect(ErrorSubmittingRegistrationPage.route(waypoints)).toFuture
               }

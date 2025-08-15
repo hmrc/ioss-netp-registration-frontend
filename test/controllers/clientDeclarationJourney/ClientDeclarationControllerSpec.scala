@@ -207,7 +207,6 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
         when(mockRegistrationService.createRegistration(any())(any())) thenReturn Right(etmpEnrolmentResponse).toFuture
         when(mockClientDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
         when(viewMock.body) thenReturn testViewBody
-
         doNothing().when(mockAuditService).sendAudit(
           eqTo(CreateClientDeclaration),eqTo(SubmissionResult.Success), eqTo(testViewBody)
         )(any(), any())
@@ -245,15 +244,27 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
         val mockSessionRepository = mock[SessionRepository]
         val mockRegistrationService = mock[RegistrationService]
+        val mockAuditService: AuditService = mock[AuditService]
+        val mockClientDeclarationView = mock[ClientDeclarationView]
+        val viewMock = mock[play.twirl.api.HtmlFormat.Appendable]
+        val testViewBody = "test-view-body"
 
         when(mockSessionRepository.set(any())) thenReturn true.toFuture
         when(mockRegistrationService.createRegistration(any())(any())) thenReturn Left(ServerError).toFuture
+        when(mockClientDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
+        when(viewMock.body) thenReturn testViewBody
+        doNothing().when(mockAuditService).sendAudit(
+          eqTo(CreateClientDeclaration),eqTo(SubmissionResult.Failure), eqTo(testViewBody)
+        )(any(), any())
+
 
         val application =
           applicationBuilder(userAnswers = Some(completeUserAnswers))
             .overrides(
               bind[SessionRepository].toInstance(mockSessionRepository),
-              bind[RegistrationService].toInstance(mockRegistrationService)
+              bind[RegistrationService].toInstance(mockRegistrationService),
+              bind[AuditService].toInstance(mockAuditService),
+              bind[ClientDeclarationView].toInstance(mockClientDeclarationView),
             )
             .build()
 
@@ -266,6 +277,7 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
           status(result) mustEqual SEE_OTHER
           redirectLocation(result).value mustEqual ErrorSubmittingRegistrationPage.route(waypoints).url
+          verify(mockAuditService, times(1)).sendAudit(eqTo(CreateClientDeclaration), eqTo(SubmissionResult.Failure), eqTo(testViewBody))(any(), any())
           verifyNoInteractions(mockSessionRepository)
         }
       }
