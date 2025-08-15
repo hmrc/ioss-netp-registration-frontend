@@ -19,7 +19,6 @@ package models.etmp
 import formats.Format.eisDateFormatter
 import logging.Logging
 import models.{BusinessContactDetails, Country, UserAnswers}
-import models.etmp.EtmpIdType.VRN
 import pages.*
 import pages.tradingNames.HasTradingNamePage
 import play.api.libs.json.{Json, OFormat}
@@ -103,12 +102,18 @@ object EtmpRegistrationRequest extends EtmpEuRegistrations with EtmpPreviousRegi
 
   private def getOtherAddress(idType: EtmpIdType, answers: UserAnswers): Option[EtmpOtherAddress] = {
     idType match {
-      case VRN =>
+      case EtmpIdType.VRN =>
         None
       case _ =>
         Some(
           (for {
-            clientCountryBased <- answers.get(ClientCountryBasedPage)
+            basedInUK <- answers.get(BusinessBasedInUKPage)
+            clientCountryBased <- idType match {
+              case EtmpIdType.UTR | EtmpIdType.NINO =>
+                Some(Country.northernIreland)
+              case _ =>
+                answers.get(ClientCountryBasedPage)
+            }
             businessAddress <- answers.get(ClientBusinessAddressPage)
             businessName <- answers.get(ClientBusinessNamePage)
           } yield {
