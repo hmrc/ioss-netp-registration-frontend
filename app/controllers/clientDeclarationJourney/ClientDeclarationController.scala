@@ -20,16 +20,18 @@ import controllers.actions.*
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import logging.Logging
 import models.UserAnswers
-import pages.{ClientBusinessNamePage, ErrorSubmittingRegistrationPage, JourneyRecoveryPage, Waypoints}
+import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
+import models.audit.SubmissionResult
 import pages.clientDeclarationJourney.ClientDeclarationPage
+import pages.{ClientBusinessNamePage, ErrorSubmittingRegistrationPage, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.I18nSupport
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import play.api.mvc.Results.Redirect
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import queries.IntermediaryDetailsQuery
 import queries.etmp.EtmpEnrolmentResponseQuery
 import repositories.SessionRepository
-import services.RegistrationService
+import services.{AuditService, RegistrationService}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.clientDeclarationJourney.ClientDeclarationView
@@ -41,6 +43,7 @@ class ClientDeclarationController @Inject()(
                                              cc: AuthenticatedControllerComponents,
                                              sessionRepository: SessionRepository,
                                              formProvider: ClientDeclarationFormProvider,
+                                             auditService: AuditService,
                                              clientValidationFilter: ClientValidationFilterProvider,
                                              registrationService: RegistrationService,
                                              view: ClientDeclarationView
@@ -80,12 +83,24 @@ class ClientDeclarationController @Inject()(
             value =>
               registrationService.createRegistration(request.userAnswers).flatMap {
                 case Right(response) =>
+                  auditService.sendAudit(
+                    declarationSigningAuditType = CreateClientDeclaration,
+                    result = SubmissionResult.Success,
+                    submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
+                  )
                   for {
                     updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientDeclarationPage, value))
                     updatedAnswers2 <- Future.fromTry(updatedAnswers.set(EtmpEnrolmentResponseQuery, response))
                     _ <- sessionRepository.set(updatedAnswers2)
                   } yield Redirect(routes.ClientSuccessfulRegistrationController.onPageLoad())
+
+
                 case Left(error) =>
+                  auditService.sendAudit(
+                    declarationSigningAuditType = CreateClientDeclaration,
+                    result = SubmissionResult.Failure,
+                    submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
+                  )
                   logger.error(s"Unexpected result on registration creation submission: ${error.body}")
                   Redirect(ErrorSubmittingRegistrationPage.route(waypoints)).toFuture
               }

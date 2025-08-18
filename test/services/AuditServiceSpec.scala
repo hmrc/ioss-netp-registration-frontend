@@ -17,7 +17,9 @@
 package services
 
 import config.FrontendAppConfig
-import models.audit.{IntermediaryDeclarationSigningAuditModel, IntermediaryDeclarationSigningAuditType, SubmissionResult}
+import models.audit.DeclarationSigningAuditType.CreateDeclaration
+import models.audit.SubmissionResult
+import models.requests.DataRequest
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -26,7 +28,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.FakeRequest
-import testutils.RegistrationData.emptyUserAnswers
+import testutils.RegistrationData.{emptyUserAnswers, intermediaryDetails, userAnswersId}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
@@ -42,23 +44,26 @@ class AuditServiceSpec extends AnyFreeSpec with MockitoSugar with ScalaFutures w
     reset(auditConnector)
   }
 
-  ".audit" - {
-
-    "must send Extended Event for create" in {
+  ".sendAudit" - {
+    "must send Extended Event for create declaration" in {
       when(auditConnector.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
 
       val service = new AuditService(mockAppConfig, auditConnector)
 
-      service.audit(IntermediaryDeclarationSigningAuditModel(
-        intermediaryDeclarationSigningAuditType = IntermediaryDeclarationSigningAuditType.CreateDeclaration,
-        credId = "test-cred-Id",
-        userAgent = "test-userAgent",
-        userAnswers =  emptyUserAnswers,
-        submissionResult = SubmissionResult.Success,
-        submittedDeclarationPageBody = "test-submittedDeclarationPageBody"
-      ))(hc, FakeRequest("POST", "test"))
-      verify(auditConnector, times(1)).sendExtendedEvent(any())(any(), any())
+      implicit val dataRequest: DataRequest[_] = DataRequest(
+          FakeRequest("POST", "/test-path"),
+          userAnswersId,
+          emptyUserAnswers,
+        intermediaryDetails.intermediaryNumber
+        )
 
+      service.sendAudit(
+        CreateDeclaration,
+        SubmissionResult.Success,
+        "test-declaration-body"
+      )
+
+      verify(auditConnector, times(1)).sendExtendedEvent(any())(any(), any())
     }
   }
 }

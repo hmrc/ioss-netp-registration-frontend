@@ -17,22 +17,38 @@
 package services
 
 import config.FrontendAppConfig
-import models.audit.JsonAuditModel
+import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType, JsonAuditModel, SubmissionResult}
+import models.requests.GenericRequest
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.AuditExtensions
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class AuditService @Inject()(
                               appConfig: FrontendAppConfig,
                               auditConnector: AuditConnector
                             )(implicit ec: ExecutionContext) {
 
-  def audit(dataSource: JsonAuditModel)(implicit hc: HeaderCarrier, request: Request[_]): Unit = {
+  def sendAudit(
+                 declarationSigningAuditType: DeclarationSigningAuditType,
+                 result: SubmissionResult,
+                 submittedDeclarationPageBody: String
+               )(implicit hc: HeaderCarrier, request: GenericRequest[_]): Unit = {
+    audit(
+      DeclarationSigningAuditModel.build(
+        declarationSigningAuditType,
+        request.userAnswers,
+        result,
+        submittedDeclarationPageBody
+      )
+    )
+  }
+
+  private def audit(dataSource: JsonAuditModel)(implicit hc: HeaderCarrier, request: Request[_]): Future[AuditResult] = {
     val event = toExtendedDataEvent(dataSource, request.path)
     auditConnector.sendExtendedEvent(event)
   }
@@ -41,8 +57,8 @@ class AuditService @Inject()(
                                  (implicit hc: HeaderCarrier): ExtendedDataEvent =
     ExtendedDataEvent(
       auditSource = appConfig.appName,
-      auditType   = auditModel.auditType,
-      tags        = AuditExtensions.auditHeaderCarrier(hc).toAuditTags(auditModel.transactionName, path),
-      detail      = auditModel.detail
+      auditType = auditModel.auditType,
+      tags = AuditExtensions.auditHeaderCarrier(hc).toAuditTags(auditModel.transactionName, path),
+      detail = auditModel.detail
     )
 }

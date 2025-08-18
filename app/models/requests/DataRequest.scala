@@ -19,8 +19,14 @@ package models.requests
 import models.UserAnswers
 import play.api.mvc.{Request, WrappedRequest}
 
-case class OptionalDataRequest[A](request: Request[A], userId: String, userAnswers: Option[UserAnswers] = None, intermediaryNumber: Option[String] = None) extends WrappedRequest[A](request)
+sealed abstract class GenericRequest[+A](request: Request[A], val userId: String, val userAnswers: UserAnswers)
+  extends WrappedRequest[A](request)
 
-case class DataRequest[A](request: Request[A], userId: String, userAnswers: UserAnswers, intermediaryNumber: String) extends WrappedRequest[A](request)
+case class OptionalDataRequest[A](request: Request[A], userId: String, userAnswers: Option[UserAnswers] = None, intermediaryNumber: Option[String] = None)
+  extends WrappedRequest[A](request)
 
-case class ClientOptionalDataRequest[A](request: Request[A], userId: String, userAnswers: UserAnswers) extends WrappedRequest[A](request)
+case class DataRequest[A](request: Request[A], override val userId: String, override val userAnswers: UserAnswers, intermediaryNumber: String)
+  extends GenericRequest[A](request, userId, userAnswers)
+
+case class ClientOptionalDataRequest[A](request: Request[A], override val userId: String, override val userAnswers: UserAnswers)
+  extends GenericRequest[A](request, userId, userAnswers)
