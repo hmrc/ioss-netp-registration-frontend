@@ -20,7 +20,7 @@ import logging.Logging
 import models.{Country, UserAnswers}
 import models.domain.PreviousSchemeDetails
 import models.etmp.EtmpPreviousEuRegistrationDetails
-import models.previousRegistrations.PreviousRegistrationDetails
+import models.previousRegistrations.{NonCompliantDetails, PreviousRegistrationDetails}
 import models.PreviousScheme.toEmtpSchemeType
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
@@ -52,9 +52,9 @@ trait EtmpPreviousRegistrationsRequest extends Logging {
   }
 
   private def processPreviousRegistrationDetails(
-                                                previousEuCountry: Country,
-                                                previousSchemeDetails: PreviousSchemeDetails
-                                                  ): EtmpPreviousEuRegistrationDetails = {
+                                                  previousEuCountry: Country,
+                                                  previousSchemeDetails: PreviousSchemeDetails
+                                                ): EtmpPreviousEuRegistrationDetails = {
     EtmpPreviousEuRegistrationDetails(
       issuedBy = previousEuCountry.code,
       registrationNumber = previousSchemeDetails.previousSchemeNumbers.previousSchemeNumber,
@@ -63,5 +63,25 @@ trait EtmpPreviousRegistrationsRequest extends Logging {
     )
   }
 
+  def getMaximumNonCompliantDetails(answers: UserAnswers): Option[NonCompliantDetails] = {
+    answers.get(PreviouslyRegisteredPage) match {
+      case Some(true) =>
+        answers.get(AllPreviousRegistrationsQuery) match {
+          case Some(previousRegistrations) =>
+            val allNonCompliantDetails = previousRegistrations.flatMap(_.previousSchemesDetails).flatMap(_.nonCompliantDetails)
+            if (allNonCompliantDetails.nonEmpty) {
+              val maximumNonCompliantReturns = allNonCompliantDetails.maxBy(_.nonCompliantReturns).nonCompliantReturns
+              val maximumNonCompliantPayments = allNonCompliantDetails.maxBy(_.nonCompliantPayments).nonCompliantPayments
+              Some(NonCompliantDetails(maximumNonCompliantReturns, maximumNonCompliantPayments))
+            } else {
+              None
+            }
+          case _ => None
+        }
+      case _ =>
+        None
+    }
+
+  }
 }
 

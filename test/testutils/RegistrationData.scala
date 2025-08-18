@@ -21,6 +21,7 @@ import formats.Format.eisDateFormatter
 import models.Country
 import models.etmp.*
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 
 import java.time.LocalDate
 
@@ -52,8 +53,8 @@ object RegistrationData extends SpecBase {
     contactName = arbitrary[String].sample.value,
     businessTelephoneNumber = arbitrary[String].sample.value,
     businessEmailId = arbitrary[String].sample.value,
-    nonCompliantReturns = None, // TODO VEI-294
-    nonCompliantPayments = None // TODO VEI-294
+    nonCompliantReturns = Gen.option(Gen.choose(0, 2).sample.value.toString).sample.value,
+    nonCompliantPayments = Gen.option(Gen.choose(0, 2).sample.value.toString).sample.value
   )
 
   val etmpRegistrationRequest: EtmpRegistrationRequest = EtmpRegistrationRequest(

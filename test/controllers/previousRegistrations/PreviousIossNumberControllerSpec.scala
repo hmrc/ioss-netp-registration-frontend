@@ -19,24 +19,25 @@ package controllers.previousRegistrations
 import base.SpecBase
 import controllers.routes
 import forms.previousRegistrations.PreviousIossNumberFormProvider
+import models.{Country, Index, PreviousScheme}
 import models.core.{Match, MatchType, TraderId}
 import models.core.MatchType.*
 import models.domain.PreviousSchemeNumbers
-import models.{Country, Index}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
-import org.scalatestplus.mockito.MockitoSugar
+import models.previousRegistrations.NonCompliantDetails
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
-import pages.previousRegistrations.{PreviousEuCountryPage, PreviousIossNumberPage}
+import org.scalatestplus.mockito.MockitoSugar
+import pages.previousRegistrations.{PreviousEuCountryPage, PreviousIossNumberPage, PreviousSchemePage}
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import queries.previousRegistrations.NonCompliantDetailsQuery
 import repositories.SessionRepository
 import services.core.CoreRegistrationValidationService
-import views.html.previousRegistrations.PreviousIossNumberView
 import utils.FutureSyntax.FutureOps
-
+import views.html.previousRegistrations.PreviousIossNumberView
 
 class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with TableDrivenPropertyChecks {
 
@@ -57,7 +58,8 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with T
   def createMatchResponse(
                            matchType: MatchType = TraderIdActiveNETP,
                            traderId: TraderId = TraderId("IM0987654321"),
-                           exclusionStatusCode: Option[Int] = None
+                           exclusionStatusCode: Option[Int] = None,
+                           nonCompliantDetails: Option[NonCompliantDetails] = None
                          ): Match = Match(
     matchType = matchType,
     traderId = traderId,
@@ -66,8 +68,8 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with T
     exclusionStatusCode = exclusionStatusCode,
     exclusionDecisionDate = None,
     exclusionEffectiveDate = Some("2022-10-10"),
-    nonCompliantReturns = None,
-    nonCompliantPayments = None
+    nonCompliantReturns = nonCompliantDetails.flatMap(_.nonCompliantReturns),
+    nonCompliantPayments = nonCompliantDetails.flatMap(_.nonCompliantPayments)
   )
 
   "PreviousIossNumber Controller" - {
@@ -240,6 +242,49 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with T
           redirectLocation(result).value mustEqual controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
             quarantinedIntermediaryMatch.memberState, quarantinedIntermediaryMatch.getEffectiveDate).url
         }
+      }
+    }
+
+    "must save and store nonCompliantDetails for a POST if active match for intermediary trader is found" in {
+
+      val mockSessionRepository = mock[SessionRepository]
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+
+      val nonCompliantDetails = NonCompliantDetails(Some(1), Some(2))
+
+      val application =
+        applicationBuilder(userAnswers = Some(baseAnswers))
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistartionValidationService)
+          )
+          .build()
+
+      running(application) {
+
+        val activeMatch = createMatchResponse(
+          matchType = MatchType.TransferringMSID,
+          traderId = TraderId("IM0987654321"),
+          exclusionStatusCode = Some(6),
+          nonCompliantDetails = Some(nonCompliantDetails)
+        )
+
+        when(mockCoreRegistartionValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn
+          Some(activeMatch).toFuture
+
+        val request = FakeRequest(POST, previousIossNumberRoute)
+          .withFormUrlEncodedBody(("value", "IM0401234567"))
+
+        val result = route(application, request).value
+
+        val expectedAnswers = baseAnswers
+          .set(PreviousIossNumberPage(index, index), PreviousSchemeNumbers("IM0401234567")).success.value
+          .set(PreviousSchemePage(index, index), PreviousScheme.IOSSWOI).success.value
+          .set(NonCompliantDetailsQuery(index, index), nonCompliantDetails).success.value
+
+        status(result) `mustEqual` SEE_OTHER
+        redirectLocation(result).value mustEqual controllers.previousRegistrations.routes.CheckPreviousSchemeAnswersController.onPageLoad(waypoints, index).url
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }
   }
