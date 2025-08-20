@@ -478,7 +478,7 @@ clientCodeEntry.error = The code you entered is incorrect. Check the code and tr
 clientCodeEntry.change.hidden = The code you entered is incorrect. Check the code and try again.
 clientCodeEntry.emailNotReceived.detail = I have not received the email
 clientCodeEntry.checkEmail.p1 = Check the above email address is correct. If not, your intermediary can correct it in their Import One Stop Shop service.
-clientCodeEntry.checkEmail.p2 = Check your spam or junk folder. If it still has not arrived you can <a class="govuk-link" rel="noreferrer noopener" href={0}>request a new code.</a>
+clientCodeEntry.checkEmail.p2 = Check your spam or junk folder. If it still has not arrived you can <a class="govuk-link" rel="govuk-link" href={0}>request a new code.</a>
 
 clientDeclaration.title = Declaration
 clientDeclaration.heading = Declaration

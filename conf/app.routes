@@ -184,6 +184,7 @@ GET        /client-code-start/:uniqueUrlCode                            controll
 
 GET        /client-code-entry/:uniqueUrlCode                            controllers.clientDeclarationJourney.ClientCodeEntryController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, uniqueUrlCode: String)
 POST       /client-code-entry/:uniqueUrlCode                            controllers.clientDeclarationJourney.ClientCodeEntryController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, uniqueUrlCode: String)
+GET        /resend-email/:uniqueUrlCode                                 controllers.clientDeclarationJourney.ClientResendEmailController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, uniqueUrlCode: String)
 
 GET        /declaration-client                                          controllers.clientDeclarationJourney.ClientDeclarationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST       /declaration-client                                          controllers.clientDeclarationJourney.ClientDeclarationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
