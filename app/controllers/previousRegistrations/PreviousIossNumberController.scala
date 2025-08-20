@@ -24,12 +24,11 @@ import models.PreviousScheme.IOSSWOI
 import models.domain.PreviousSchemeNumbers
 import models.previousRegistrations.{IossRegistrationNumberValidation, NonCompliantDetails}
 import models.requests.DataRequest
-import models.{Country, Index, PreviousScheme, UserAnswers}
+import models.{Country, Index, PreviousScheme}
 import pages.Waypoints
 import pages.previousRegistrations.{ClientHasIntermediaryPage, PreviousIossNumberPage, PreviousSchemePage}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import queries.previousRegistrations.NonCompliantDetailsQuery
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
