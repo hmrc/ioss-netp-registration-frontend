@@ -55,7 +55,7 @@ uniqueUrlCode: String
                 content = HtmlContent(
             s"""
             <p class="govuk-body">${messages("clientCodeEntry.checkEmail.p1")}</p>
-            <p class="govuk-body">${messages("clientCodeEntry.checkEmail.p2")}</p>
+            <p class="govuk-body">${messages("clientCodeEntry.checkEmail.p2"), controllers.clientDeclarationJourney.routes.ClientResendEmailController.onPageLoad(waypoints, uniqueUrlCode).url)}</p>
 
             """
             )
