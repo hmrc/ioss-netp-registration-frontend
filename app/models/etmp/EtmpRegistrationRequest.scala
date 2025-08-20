@@ -19,7 +19,9 @@ package models.etmp
 import formats.Format.eisDateFormatter
 import logging.Logging
 import models.{BusinessContactDetails, Country, UserAnswers}
+import models.previousRegistrations.NonCompliantDetails
 import pages.*
+import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.HasTradingNamePage
 import play.api.libs.json.{Json, OFormat}
 import queries.tradingNames.AllTradingNamesQuery
@@ -140,6 +142,8 @@ object EtmpRegistrationRequest extends EtmpEuRegistrations with EtmpPreviousRegi
 
     val businessContactDetails = getBusinessContactDetails(answers)
 
+    val nonCompliantDetails = getMaximumNonCompliantDetails(answers)
+
     EtmpSchemeDetails(
       commencementDate = commencementDate.format(eisDateFormatter),
       euRegistrationDetails = getEuTaxRegistrations(answers),
@@ -148,8 +152,8 @@ object EtmpRegistrationRequest extends EtmpEuRegistrations with EtmpPreviousRegi
       contactName = businessContactDetails.fullName,
       businessTelephoneNumber = businessContactDetails.telephoneNumber,
       businessEmailId = businessContactDetails.emailAddress,
-      nonCompliantReturns = None, // TODO VEI-294
-      nonCompliantPayments = None // TODO VEI-294
+      nonCompliantReturns = nonCompliantDetails.flatMap(_.nonCompliantReturns.map(_.toString)),
+      nonCompliantPayments = nonCompliantDetails.flatMap(_.nonCompliantPayments.map(_.toString))
     )
   }
 

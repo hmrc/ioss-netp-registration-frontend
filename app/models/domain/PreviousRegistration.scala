@@ -18,6 +18,7 @@ package models.domain
 
 import models.etmp.EtmpPreviousEuRegistrationDetails
 import models.{Country, PreviousScheme}
+import models.previousRegistrations.NonCompliantDetails
 import play.api.libs.json.{Json, OFormat}
 
 case class PreviousRegistration(country: Country, previousSchemesDetails: Seq[PreviousSchemeDetails])
@@ -57,7 +58,8 @@ object PreviousRegistration {
 
 case class PreviousSchemeDetails(
                                   previousScheme: PreviousScheme,
-                                  previousSchemeNumbers: PreviousSchemeNumbers
+                                  previousSchemeNumbers: PreviousSchemeNumbers,
+                                  nonCompliantDetails: Option[NonCompliantDetails] = None
                                 )
 
 object PreviousSchemeDetails {
@@ -80,7 +82,8 @@ object PreviousSchemeDetails {
         } else {
           etmpPreviousEuRegistrationDetails.registrationNumber
         }
-      )
+      ),
+      nonCompliantDetails = None
     )
   }
 
