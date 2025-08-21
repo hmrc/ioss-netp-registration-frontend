@@ -19,9 +19,7 @@ package models.etmp
 import formats.Format.eisDateFormatter
 import logging.Logging
 import models.{BusinessContactDetails, Country, UserAnswers}
-import models.previousRegistrations.NonCompliantDetails
 import pages.*
-import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.HasTradingNamePage
 import play.api.libs.json.{Json, OFormat}
 import queries.tradingNames.AllTradingNamesQuery
