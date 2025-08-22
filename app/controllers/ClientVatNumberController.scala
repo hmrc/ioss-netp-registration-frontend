@@ -24,9 +24,9 @@ import models.core.Match
 import models.responses.VatCustomerNotFound
 import pages.{ClientVatNumberPage, UkVatNumberNotFoundPage, VatApiDownPage, Waypoints}
 import play.api.data.Form
-import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.Results.Redirect
+import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import play.api.mvc.Results.Redirect
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
@@ -38,7 +38,6 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class ClientVatNumberController @Inject()(
-                                           override val messagesApi: MessagesApi,
                                            cc: AuthenticatedControllerComponents,
                                            formProvider: ClientVatNumberFormProvider,
                                            registrationConnector: RegistrationConnector,
@@ -47,8 +46,9 @@ class ClientVatNumberController @Inject()(
                                            coreRegistrationValidationService: CoreRegistrationValidationService
                                          )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
 
-  val form: Form[String] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
+
+  private val form: Form[String] = formProvider()
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData {
     implicit request =>

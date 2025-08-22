@@ -18,7 +18,7 @@ package utils
 
 import base.SpecBase
 import models.vatEuDetails.TradingNameAndBusinessAddress
-import models.RegistrationType.VatNumber
+import models.vatEuDetails.RegistrationType.VatNumber
 import models.requests.DataRequest
 import models.{Country, InternationalAddress, TradingName, UserAnswers}
 import org.mockito.Mockito.when

@@ -20,28 +20,30 @@ import base.SpecBase
 import connectors.RegistrationConnector
 import controllers.{clientDeclarationJourney, routes}
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
-import models.domain.VatCustomerInfo
+import models.responses.InternalServerError as ServerError
+import models.responses.etmp.EtmpEnrolmentResponse
+import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
+import models.audit.SubmissionResult
 import models.{ClientBusinessName, IntermediaryDetails, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.{reset, times, verify, when}
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import pages.clientDeclarationJourney.ClientDeclarationPage
-import pages.{ClientBusinessNamePage, EmptyWaypoints}
+import pages.{ClientBusinessNamePage, EmptyWaypoints, ErrorSubmittingRegistrationPage}
 import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import queries.IntermediaryDetailsQuery
+import queries.etmp.EtmpEnrolmentResponseQuery
 import repositories.SessionRepository
+import services.AuditService
+import services.RegistrationService
+import utils.FutureSyntax.FutureOps
 import views.html.clientDeclarationJourney.ClientDeclarationView
 
-import scala.concurrent.Future
-
 class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
-
-  private val arbitraryVatInfo: VatCustomerInfo = arbitraryVatCustomerInfo.arbitrary.sample.value
-  private val testIntermediaryName: String = arbitraryVatInfo.organisationName.getOrElse("Test Intermediary Name")
 
   private val clientBusinessName: ClientBusinessName = arbitraryClientBusinessName.arbitrary.sample.value
   lazy val clientDeclarationOnPageLoad: String = clientDeclarationJourney.routes.ClientDeclarationController.onPageLoad(waypoints).url
@@ -49,7 +51,7 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
   val completeUserAnswers: UserAnswers = emptyUserAnswers
     .set(ClientBusinessNamePage, clientBusinessName).success.value
-    .set(IntermediaryDetailsQuery, IntermediaryDetails(intermediaryNumber, testIntermediaryName))
+    .set(IntermediaryDetailsQuery, intermediaryDetails)
     .success.value
 
   val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
@@ -75,13 +77,13 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
           val view = application.injector.instanceOf[ClientDeclarationView]
 
           status(result) mustEqual OK
-          contentAsString(result) mustEqual view(form, waypoints, clientBusinessName.name, testIntermediaryName)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(form, waypoints, clientBusinessName.name, intermediaryDetails.intermediaryName)(request, messages(application)).toString
         }
       }
 
       "return OK and the correct view with missing ClientBusinessName information" in {
         val userAnswersWithVatInfo: UserAnswers = emptyUserAnswersWithVatInfo
-          .set(IntermediaryDetailsQuery, IntermediaryDetails(intermediaryNumber, testIntermediaryName))
+          .set(IntermediaryDetailsQuery, intermediaryDetails)
           .success.value
 
         val clientBusinessName: Option[String] = emptyUserAnswersWithVatInfo.vatInfo.get.organisationName
@@ -96,14 +98,14 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
           val view = application.injector.instanceOf[ClientDeclarationView]
 
           status(result) mustEqual OK
-          contentAsString(result) mustEqual view(form, waypoints, clientBusinessName.get, testIntermediaryName)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(form, waypoints, clientBusinessName.get, intermediaryDetails.intermediaryName)(request, messages(application)).toString
         }
       }
 
       "return OK and the correct view with missing vat information" in {
         val userAnswersWithCompanyName: UserAnswers = emptyUserAnswers
           .set(ClientBusinessNamePage, clientBusinessName).success.value
-          .set(IntermediaryDetailsQuery, IntermediaryDetails(intermediaryNumber, testIntermediaryName))
+          .set(IntermediaryDetailsQuery, intermediaryDetails)
           .success.value
         val application = applicationBuilder(userAnswers = Some(userAnswersWithCompanyName)).build()
 
@@ -115,7 +117,7 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
           val view = application.injector.instanceOf[ClientDeclarationView]
 
           status(result) mustEqual OK
-          contentAsString(result) mustEqual view(form, waypoints, clientBusinessName.name, testIntermediaryName)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(form, waypoints, clientBusinessName.name, intermediaryDetails.intermediaryName)(request, messages(application)).toString
         }
       }
 
@@ -134,7 +136,7 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
           val result = route(application, request).value
 
           status(result) mustEqual OK
-          contentAsString(result) mustEqual view(form.fill(true), waypoints, clientBusinessName.name, testIntermediaryName)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(form.fill(true), waypoints, clientBusinessName.name, intermediaryDetails.intermediaryName)(request, messages(application)).toString
         }
       }
 
@@ -156,7 +158,7 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
       "return an error when userAnswers are missing Client Company Information" in {
         val userAnswersWithoutCompanyInfo: UserAnswers = emptyUserAnswers
-          .set(IntermediaryDetailsQuery, IntermediaryDetails(intermediaryNumber, testIntermediaryName))
+          .set(IntermediaryDetailsQuery, intermediaryDetails)
           .success.value
 
         val application = applicationBuilder(userAnswers = Some(userAnswersWithoutCompanyInfo)).build()
@@ -189,16 +191,32 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
     ".onSubmit() - POST must" - {
 
-      "redirect to the next page when valid data is submitted" in {
+      "audit event and redirect to the next page when valid data is submitted and submit downstream" in {
 
         val mockSessionRepository = mock[SessionRepository]
+        val mockRegistrationService = mock[RegistrationService]
+        val mockAuditService: AuditService = mock[AuditService]
+        val mockClientDeclarationView = mock[ClientDeclarationView]
+        val viewMock = mock[play.twirl.api.HtmlFormat.Appendable]
+        val testViewBody  = "test-view-body"
 
-        when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
+        val etmpEnrolmentResponse: EtmpEnrolmentResponse = EtmpEnrolmentResponse(iossReference = "123456789")
+
+        when(mockSessionRepository.set(any())) thenReturn true.toFuture
+        when(mockRegistrationService.createRegistration(any())(any())) thenReturn Right(etmpEnrolmentResponse).toFuture
+        when(mockClientDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
+        when(viewMock.body) thenReturn testViewBody
+        doNothing().when(mockAuditService).sendAudit(
+          eqTo(CreateClientDeclaration),eqTo(SubmissionResult.Success), eqTo(testViewBody)
+        )(any(), any())
 
         val application =
           applicationBuilder(userAnswers = Some(completeUserAnswers))
             .overrides(
               bind[SessionRepository].toInstance(mockSessionRepository),
+              bind[RegistrationService].toInstance(mockRegistrationService),
+              bind[AuditService].toInstance(mockAuditService),
+              bind[ClientDeclarationView].toInstance(mockClientDeclarationView),
             )
             .build()
 
@@ -209,13 +227,57 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
           val result = route(application, request).value
 
-          val expectedAnswers = completeUserAnswers.set(ClientDeclarationPage, true).success.value
-
+          val expectedAnswers = completeUserAnswers
+            .set(ClientDeclarationPage, true).success.value
+            .set(EtmpEnrolmentResponseQuery, etmpEnrolmentResponse).success.value
 
           status(result) mustEqual SEE_OTHER
+          verify(mockAuditService, times(1)).sendAudit(eqTo(CreateClientDeclaration), eqTo(SubmissionResult.Success),eqTo(testViewBody))(any(), any())
           redirectLocation(result).value mustEqual ClientDeclarationPage.navigate(EmptyWaypoints, completeUserAnswers, expectedAnswers).url
           verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
 
+        }
+      }
+
+      "must save the answers and redirect the Error Submitting Registration page when back end returns any other Error Response" in {
+
+        val mockSessionRepository = mock[SessionRepository]
+        val mockRegistrationService = mock[RegistrationService]
+        val mockAuditService: AuditService = mock[AuditService]
+        val mockClientDeclarationView = mock[ClientDeclarationView]
+        val viewMock = mock[play.twirl.api.HtmlFormat.Appendable]
+        val testViewBody = "test-view-body"
+
+        when(mockSessionRepository.set(any())) thenReturn true.toFuture
+        when(mockRegistrationService.createRegistration(any())(any())) thenReturn Left(ServerError).toFuture
+        when(mockClientDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
+        when(viewMock.body) thenReturn testViewBody
+        doNothing().when(mockAuditService).sendAudit(
+          eqTo(CreateClientDeclaration),eqTo(SubmissionResult.Failure), eqTo(testViewBody)
+        )(any(), any())
+
+
+        val application =
+          applicationBuilder(userAnswers = Some(completeUserAnswers))
+            .overrides(
+              bind[SessionRepository].toInstance(mockSessionRepository),
+              bind[RegistrationService].toInstance(mockRegistrationService),
+              bind[AuditService].toInstance(mockAuditService),
+              bind[ClientDeclarationView].toInstance(mockClientDeclarationView),
+            )
+            .build()
+
+        running(application) {
+          val request =
+            FakeRequest(POST, clientDeclarationOnSubmit)
+              .withFormUrlEncodedBody(("declaration", "true"))
+
+          val result = route(application, request).value
+
+          status(result) mustEqual SEE_OTHER
+          redirectLocation(result).value mustEqual ErrorSubmittingRegistrationPage.route(waypoints).url
+          verify(mockAuditService, times(1)).sendAudit(eqTo(CreateClientDeclaration), eqTo(SubmissionResult.Failure), eqTo(testViewBody))(any(), any())
+          verifyNoInteractions(mockSessionRepository)
         }
       }
 
@@ -238,7 +300,7 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
           val result = route(application, request).value
 
           status(result) mustEqual BAD_REQUEST
-          contentAsString(result) mustEqual view(boundForm, waypoints, clientBusinessName.name, testIntermediaryName)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(boundForm, waypoints, clientBusinessName.name, intermediaryDetails.intermediaryName)(request, messages(application)).toString
         }
       }
 

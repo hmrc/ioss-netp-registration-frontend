@@ -20,7 +20,7 @@ import controllers.GetCountry
 import controllers.actions.*
 import forms.previousRegistrations.PreviousOssNumberFormProvider
 import models.domain.PreviousSchemeNumbers
-import models.previousRegistrations.{PreviousSchemeHintText, SchemeDetailsWithOptionalVatNumber}
+import models.previousRegistrations.{NonCompliantDetails, PreviousSchemeHintText, SchemeDetailsWithOptionalVatNumber}
 import models.requests.DataRequest
 import models.{Country, CountryWithValidationDetails, Index, PreviousScheme, WithName}
 import pages.previousRegistrations.{PreviousOssNumberPage, PreviousSchemePage}
@@ -43,7 +43,7 @@ class PreviousOssNumberController @Inject()(
                                         formProvider: PreviousOssNumberFormProvider,
                                         view: PreviousOssNumberView,
                                         coreRegistrationValidationService: CoreRegistrationValidationService
-                                    )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
+                                    )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry with PreviousNonComplianceAnswers {
 
   protected val controllerComponents: MessagesControllerComponents = cc
   
@@ -180,8 +180,17 @@ class PreviousOssNumberController @Inject()(
               activeMatch.getEffectiveDate)
           ).toFuture
 
+        case Some(activeMatch) =>
+          saveAndRedirect(
+            countryIndex,
+            schemeIndex,
+            value,
+            previousScheme,
+            waypoints,
+            Some(NonCompliantDetails(nonCompliantReturns = activeMatch.nonCompliantReturns, nonCompliantPayments = activeMatch.nonCompliantPayments))
+          )
         case _ =>
-          saveAndRedirect(countryIndex, schemeIndex, value, previousScheme, waypoints)
+          saveAndRedirect(countryIndex, schemeIndex, value, previousScheme, waypoints, None)
       }
 
   }
@@ -191,7 +200,8 @@ class PreviousOssNumberController @Inject()(
                                schemeIndex: Index,
                                registrationNumber: String,
                                previousScheme: PreviousScheme,
-                               waypoints: Waypoints
+                               waypoints: Waypoints,
+                               maybeNonCompliantDetails: Option[NonCompliantDetails]
                              )(implicit request: DataRequest[AnyContent]): Future[Result] = {
     for {
       updatedAnswers <- Future.fromTry(request.userAnswers.set(
@@ -202,8 +212,14 @@ class PreviousOssNumberController @Inject()(
         PreviousSchemePage(countryIndex, schemeIndex),
         previousScheme
       ))
-      _ <- cc.sessionRepository.set(updatedAnswersWithScheme)
-    } yield Redirect(PreviousOssNumberPage(countryIndex, schemeIndex).navigate(waypoints, request.userAnswers, updatedAnswersWithScheme).route)
+      updatedAnswersWithNonCompliantDetails <- setNonCompliantDetailsAnswers(
+        countryIndex,
+        schemeIndex,
+        maybeNonCompliantDetails,
+        updatedAnswersWithScheme
+      )
+      _ <- cc.sessionRepository.set(updatedAnswersWithNonCompliantDetails)
+    } yield Redirect(PreviousOssNumberPage(countryIndex, schemeIndex).navigate(waypoints, request.userAnswers, updatedAnswersWithNonCompliantDetails).route)
   }
 
 }

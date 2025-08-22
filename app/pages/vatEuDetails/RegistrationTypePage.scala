@@ -17,8 +17,9 @@
 package pages.vatEuDetails
 
 import controllers.vatEuDetails.routes
-import models.RegistrationType.{TaxId, VatNumber}
-import models.{Index, RegistrationType, UserAnswers}
+import models.vatEuDetails.RegistrationType.{TaxId, VatNumber}
+import models.{Index, UserAnswers}
+import models.vatEuDetails.RegistrationType
 import pages.{Page, QuestionPage, RecoveryOps, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call

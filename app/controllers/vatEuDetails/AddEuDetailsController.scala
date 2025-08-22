@@ -19,7 +19,7 @@ package controllers.vatEuDetails
 import controllers.actions.*
 import forms.vatEuDetails.AddEuDetailsFormProvider
 import models.Country
-import models.euDetails.EuDetails
+import models.vatEuDetails.EuDetails
 import pages.vatEuDetails.AddEuDetailsPage
 import pages.{JourneyRecoveryPage, Waypoints}
 import play.api.data.Form

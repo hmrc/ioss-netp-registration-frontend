@@ -65,7 +65,7 @@ class CheckPreviousSchemeAnswersControllerSpec extends SpecBase with MockitoSuga
 
       running(application) {
         val request = FakeRequest(GET, checkPreviousSchemeAnswersRoute)
-        val dataRequest = DataRequest(request, baseUserAnswers.id, baseUserAnswers, intermediaryNumber)
+        val dataRequest = DataRequest(request, baseUserAnswers.id, baseUserAnswers, intermediaryDetails.intermediaryNumber)
 
         val result = route(application, request).value
 
@@ -112,7 +112,7 @@ class CheckPreviousSchemeAnswersControllerSpec extends SpecBase with MockitoSuga
           FakeRequest(POST, checkPreviousSchemeAnswersRoute)
             .withFormUrlEncodedBody(("value", ""))
 
-        val dataRequest = DataRequest(request, baseUserAnswers.id, baseUserAnswers, intermediaryNumber)
+        val dataRequest = DataRequest(request, baseUserAnswers.id, baseUserAnswers, intermediaryDetails.intermediaryNumber)
 
         val boundForm = form.bind(Map("value" -> ""))
 

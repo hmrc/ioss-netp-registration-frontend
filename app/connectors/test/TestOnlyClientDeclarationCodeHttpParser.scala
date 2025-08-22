@@ -21,7 +21,7 @@ import logging.Logging
 import models.responses.{ErrorResponse, InvalidJson, UnexpectedResponseStatus}
 import models.testOnly.TestOnlyCodes
 import play.api.http.Status.OK
-import play.api.libs.json.{JsError, JsSuccess, Json}
+import play.api.libs.json.{JsError, JsSuccess}
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 object TestOnlyClientDeclarationCodeHttpParser extends Logging {

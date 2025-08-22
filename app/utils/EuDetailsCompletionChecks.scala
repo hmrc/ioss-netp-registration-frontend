@@ -17,9 +17,9 @@
 package utils
 
 import models.{Country, CountryWithValidationDetails, Index}
-import models.euDetails.EuDetails
-import models.RegistrationType.{TaxId, VatNumber}
+import models.vatEuDetails.RegistrationType.{TaxId, VatNumber}
 import models.requests.DataRequest
+import models.vatEuDetails.EuDetails
 import pages.Waypoints
 import pages.vatEuDetails.*
 import play.api.mvc.Results.Redirect

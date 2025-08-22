@@ -17,8 +17,8 @@
 package controllers.vatEuDetails
 
 import base.SpecBase
-import models.vatEuDetails.TradingNameAndBusinessAddress
-import models.{Country, Index, InternationalAddress, RegistrationType, TradingName, UserAnswers}
+import models.vatEuDetails.{RegistrationType, TradingNameAndBusinessAddress}
+import models.{Country, Index, InternationalAddress, TradingName, UserAnswers}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.mockito.MockitoSugar

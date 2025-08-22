@@ -47,7 +47,10 @@ class ClientJourneyStartController @Inject()(
             updatedAnswers <- Future.fromTry(
               savedPendingRegistration.userAnswers.copy(request.userId).set(
                 IntermediaryDetailsQuery,
-                IntermediaryDetails(savedPendingRegistration.intermediaryDetails.intermediaryNumber, savedPendingRegistration.intermediaryDetails.intermediaryName)
+                IntermediaryDetails(
+                  savedPendingRegistration.intermediaryDetails.intermediaryNumber,
+                  savedPendingRegistration.intermediaryDetails.intermediaryName
+                )
               )
             )
             _ <- sessionRepository.set(updatedAnswers)

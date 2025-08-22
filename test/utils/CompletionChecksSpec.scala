@@ -19,9 +19,8 @@ package utils
 import base.SpecBase
 import models.requests.DataRequest
 import models.*
-import models.euDetails.EuDetails
-import models.RegistrationType.VatNumber
-import models.vatEuDetails.TradingNameAndBusinessAddress
+import models.vatEuDetails.RegistrationType.VatNumber
+import models.vatEuDetails.{EuDetails, TradingNameAndBusinessAddress}
 import org.mockito.Mockito.when
 import org.scalacheck.Gen
 import org.scalatestplus.mockito.MockitoSugar

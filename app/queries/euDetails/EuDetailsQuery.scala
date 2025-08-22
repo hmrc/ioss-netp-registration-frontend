@@ -17,7 +17,7 @@
 package queries.euDetails
 
 import models.Index
-import models.euDetails.EuDetails
+import models.vatEuDetails.EuDetails
 import play.api.libs.json.JsPath
 import queries.{Gettable, Settable}
 

@@ -18,14 +18,15 @@ package controllers.actions
 
 import models.UserAnswers
 import models.requests.{ClientOptionalDataRequest, OptionalDataRequest}
+import play.api.mvc.Result
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeClientDataRetrievalAction(dataToReturn: Option[UserAnswers]) extends ClientDataRetrievalAction {
 
-  override protected def transform[A](request: OptionalDataRequest[A]): Future[ClientOptionalDataRequest[A]] = {
+  override protected def refine[A](request: OptionalDataRequest[A]): Future[Either[Result, ClientOptionalDataRequest[A]]] = {
     val nonOptionalUserAnswers = dataToReturn.getOrElse(UserAnswers("testId"))
-    Future(ClientOptionalDataRequest(request.request, request.userId, nonOptionalUserAnswers))
+    Future(Right(ClientOptionalDataRequest(request.request, request.userId, nonOptionalUserAnswers)))
   }
 
   override protected implicit val executionContext: ExecutionContext =

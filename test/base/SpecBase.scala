@@ -18,13 +18,17 @@ package base
 
 import controllers.actions.*
 import generators.Generators
+import models.{BusinessContactDetails, CheckMode, Index, IntermediaryDetails, UserAnswers, Website}
 import models.domain.VatCustomerInfo
-import models.{BusinessContactDetails, CheckMode, Index, UserAnswers}
+import org.scalatest.{OptionValues, TryValues}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.{OptionValues, TryValues}
-import pages.{BusinessBasedInUKPage, CheckAnswersPage, EmptyWaypoints, NonEmptyWaypoints, Waypoint, Waypoints}
+import pages.*
+import pages.previousRegistrations.*
+import pages.tradingNames.*
+import pages.vatEuDetails.*
+import pages.website.*
 import play.api.Application
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.bind
@@ -32,6 +36,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.CSRFTokenHelper.CSRFRequest
 import play.api.test.FakeRequest
+import queries.IntermediaryDetailsQuery
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.Vrn
 
@@ -48,6 +53,7 @@ trait SpecBase
     with Generators {
 
   val userAnswersId: String = "12345-credId"
+  val intermediaryDetails: IntermediaryDetails = IntermediaryDetails("IN9001234567", "Intermediary Name")
 
   def countryIndex(index: Int): Index = Index(index)
 
@@ -67,12 +73,21 @@ trait SpecBase
 
   def emptyUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.copy(vatInfo = Some(vatCustomerInfo))
 
-  def basicUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers.set(BusinessBasedInUKPage, true).success.value.copy(vatInfo = Some(vatCustomerInfo))
+  def basicUserAnswersWithVatInfo: UserAnswers = emptyUserAnswers
+    .set(BusinessBasedInUKPage, true).success.value
+    .set(ClientHasVatNumberPage, true).success.value
+    .set(ClientVatNumberPage, "123456789").success.value
+    .set(HasTradingNamePage, false).success.value
+    .set(BusinessContactDetailsPage, BusinessContactDetails("fullName", "555999111", "test@test.com")).success.value
+    .set(HasFixedEstablishmentPage, false).success.value
+    .set(PreviouslyRegisteredPage, false).success.value
+    .set(WebsitePage(Index(0)), Website("www.website.com")).success.value
+    .set(IntermediaryDetailsQuery, intermediaryDetails).success.value
+    .copy(vatInfo = Some(vatCustomerInfo))
 
   def testCredentials: Credentials = Credentials(userAnswersId, "GGW")
 
   val vatNumber = "GB123456789"
-  val intermediaryNumber = "IN9001234567"
   val vrn: Vrn = Vrn("123456789")
   val utr: String = "1234567890"
   val nino = "QQ 12 34 56 C"
@@ -92,13 +107,12 @@ trait SpecBase
     VatCustomerInfo(
       registrationDate = LocalDate.now(stubClockAtArbitraryDate),
       desAddress = arbitraryDesAddress.arbitrary.sample.value,
-      organisationName = Some("Intermediary Company name"),
+      organisationName = Some(intermediaryDetails.intermediaryName),
       individualName = None,
       singleMarketIndicator = true,
       deregistrationDecisionDate = None
     )
   }
-
 
   val businessContactDetails: BusinessContactDetails =
     BusinessContactDetails(fullName = "name", telephoneNumber = "0111 2223334", emailAddress = "email@example.com")
@@ -116,6 +130,8 @@ trait SpecBase
         bind[DataRetrievalAction].toInstance(new FakeDataRetrievalAction(userAnswers)),
         bind[ClientDataRetrievalAction].toInstance(new FakeClientDataRetrievalAction(userAnswers)),
         bind[ClientIdentifierAction].to[FakeClientIdentifierAction],
+        bind[ClientValidationFilterProvider].to[FakeClientValidationFilterProvider],
+        bind[ClientDeclarationFilterProvider].to[FakeClientDeclarationFilterProvider],
         bind[Clock].toInstance(clockToBind),
       )
   }

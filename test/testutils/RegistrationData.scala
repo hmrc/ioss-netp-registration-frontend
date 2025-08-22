@@ -17,9 +17,13 @@
 package testutils
 
 import base.SpecBase
+import formats.Format.eisDateFormatter
 import models.Country
-import models.etmp._
+import models.etmp.*
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
+
+import java.time.LocalDate
 
 object RegistrationData extends SpecBase {
 
@@ -28,6 +32,39 @@ object RegistrationData extends SpecBase {
     registrationNumber = arbitrary[String].sample.value,
     schemeType = arbitrary[SchemeType].sample.value,
     intermediaryNumber = Some(arbitrary[String].sample.value)
+  )
+
+  val etmpEuRegistrationDetails: EtmpEuRegistrationDetails = EtmpEuRegistrationDetails(
+    countryOfRegistration = arbitrary[Country].sample.value.code,
+    traderId = arbitraryVatNumberTraderId.arbitrary.sample.value,
+    tradingName = arbitraryEtmpTradingName.arbitrary.sample.value.tradingName,
+    fixedEstablishmentAddressLine1 = arbitrary[String].sample.value,
+    fixedEstablishmentAddressLine2 = Some(arbitrary[String].sample.value),
+    townOrCity = arbitrary[String].sample.value,
+    regionOrState = Some(arbitrary[String].sample.value),
+    postcode = Some(arbitrary[String].sample.value)
+  )
+
+  val etmpSchemeDetails: EtmpSchemeDetails = EtmpSchemeDetails(
+    commencementDate = LocalDate.now.format(eisDateFormatter),
+    euRegistrationDetails = Seq(etmpEuRegistrationDetails),
+    previousEURegistrationDetails = Seq(etmpEuPreviousRegistrationDetails),
+    websites = Some(Seq(arbitrary[EtmpWebsite].sample.value)),
+    contactName = arbitrary[String].sample.value,
+    businessTelephoneNumber = arbitrary[String].sample.value,
+    businessEmailId = arbitrary[String].sample.value,
+    nonCompliantReturns = Gen.option(Gen.choose(0, 2).sample.value.toString).sample.value,
+    nonCompliantPayments = Gen.option(Gen.choose(0, 2).sample.value.toString).sample.value
+  )
+
+  val etmpRegistrationRequest: EtmpRegistrationRequest = EtmpRegistrationRequest(
+    administration = arbitrary[EtmpAdministration].sample.value,
+    customerIdentification = arbitrary[EtmpCustomerIdentification].sample.value,
+    tradingNames = Seq(arbitrary[EtmpTradingName].sample.value),
+    intermediaryDetails = Some(arbitrary[EtmpIntermediaryDetails].sample.value),
+    otherAddress = Some(arbitrary[EtmpOtherAddress].sample.value),
+    schemeDetails = etmpSchemeDetails,
+    bankDetails = None
   )
   
 }

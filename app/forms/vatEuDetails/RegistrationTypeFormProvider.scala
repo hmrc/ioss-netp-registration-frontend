@@ -17,7 +17,8 @@
 package forms.vatEuDetails
 
 import forms.mappings.Mappings
-import models.{Country, RegistrationType}
+import models.Country
+import models.vatEuDetails.RegistrationType
 import play.api.data.Form
 
 import javax.inject.Inject

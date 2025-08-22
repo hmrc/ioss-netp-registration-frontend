@@ -20,14 +20,18 @@ import controllers.actions.*
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import logging.Logging
 import models.UserAnswers
+import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
+import models.audit.SubmissionResult
 import pages.clientDeclarationJourney.ClientDeclarationPage
-import pages.{ClientBusinessNamePage, JourneyRecoveryPage, Waypoints}
+import pages.{ClientBusinessNamePage, ErrorSubmittingRegistrationPage, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.I18nSupport
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import queries.IntermediaryDetailsQuery
+import queries.etmp.EtmpEnrolmentResponseQuery
 import repositories.SessionRepository
+import services.{AuditService, RegistrationService}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.clientDeclarationJourney.ClientDeclarationView
@@ -36,18 +40,21 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class ClientDeclarationController @Inject()(
-                                             override val messagesApi: MessagesApi,
+                                             cc: AuthenticatedControllerComponents,
                                              sessionRepository: SessionRepository,
                                              formProvider: ClientDeclarationFormProvider,
-                                             val controllerComponents: MessagesControllerComponents,
-                                             cc: AuthenticatedControllerComponents,
+                                             auditService: AuditService,
+                                             clientValidationFilter: ClientValidationFilterProvider,
+                                             registrationService: RegistrationService,
                                              view: ClientDeclarationView
                                            )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with Logging {
 
+  protected val controllerComponents: MessagesControllerComponents = cc
+
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (cc.clientIdentify andThen cc.clientGetData).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (cc.clientIdentify andThen cc.clientGetData andThen clientValidationFilter.apply()).async {
     implicit request =>
 
       getClientCompanyName(waypoints, request.userAnswers) { clientCompanyName =>
@@ -74,10 +81,29 @@ class ClientDeclarationController @Inject()(
               BadRequest(view(formWithErrors, waypoints, clientCompanyName, intermediaryName)).toFuture,
 
             value =>
-              for {
-                updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientDeclarationPage, value))
-                _ <- sessionRepository.set(updatedAnswers)
-              } yield Redirect(routes.ClientSuccessfulRegistrationController.onPageLoad())
+              registrationService.createRegistration(request.userAnswers).flatMap {
+                case Right(response) =>
+                  auditService.sendAudit(
+                    declarationSigningAuditType = CreateClientDeclaration,
+                    result = SubmissionResult.Success,
+                    submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
+                  )
+                  for {
+                    updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientDeclarationPage, value))
+                    updatedAnswers2 <- Future.fromTry(updatedAnswers.set(EtmpEnrolmentResponseQuery, response))
+                    _ <- sessionRepository.set(updatedAnswers2)
+                  } yield Redirect(routes.ClientSuccessfulRegistrationController.onPageLoad())
+
+
+                case Left(error) =>
+                  auditService.sendAudit(
+                    declarationSigningAuditType = CreateClientDeclaration,
+                    result = SubmissionResult.Failure,
+                    submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
+                  )
+                  logger.error(s"Unexpected result on registration creation submission: ${error.body}")
+                  Redirect(ErrorSubmittingRegistrationPage.route(waypoints)).toFuture
+              }
           )
         }
       }

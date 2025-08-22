@@ -20,15 +20,38 @@ import logging.Logging
 import models.iossRegistration.IossEtmpDisplayRegistration
 import models.ossRegistration.OssRegistration
 import models.responses.*
-import play.api.http.Status.OK
+import models.responses.etmp.EtmpEnrolmentResponse
+import play.api.http.Status.*
 import play.api.libs.json.{JsError, JsSuccess}
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
-
 object RegistrationHttpParser extends Logging {
-  
+
+  type RegistrationResultResponse = Either[ErrorResponse, EtmpEnrolmentResponse]
   type IossEtmpDisplayRegistrationResultResponse = Either[ErrorResponse, IossEtmpDisplayRegistration]
   type OssRegistrationResponse = Either[ErrorResponse, OssRegistration]
+
+  implicit object RegistrationResponseReads extends HttpReads[RegistrationResultResponse] {
+
+    override def read(method: String, url: String, response: HttpResponse): RegistrationResultResponse =
+      response.status match {
+        case CREATED => response.json.validate[EtmpEnrolmentResponse] match {
+          case JsSuccess(enrolmentResponse, _) => Right(enrolmentResponse)
+          case JsError(errors) =>
+            logger.error(s"Failed trying to parse JSON, but was successfully created ${response.body} ${errors}", errors)
+            Left(InvalidJson)
+        }
+        case CONFLICT =>
+          logger.error(s"Received ConflictFound when trying to submit registration")
+          Left(ConflictFound)
+        case INTERNAL_SERVER_ERROR =>
+          logger.error(s"Received InternalServerError when trying to submit registration with message: ${InternalServerError.body}")
+          Left(InternalServerError)
+        case status =>
+          logger.error(s"Received unexpected error when trying to submit registration with status $status and body ${response.body}")
+          Left(UnexpectedResponseStatus(response.status, s"Unexpected response, status $status returned"))
+      }
+  }
 
   implicit object IossEtmpDisplayRegistrationReads extends HttpReads[IossEtmpDisplayRegistrationResultResponse] {
 

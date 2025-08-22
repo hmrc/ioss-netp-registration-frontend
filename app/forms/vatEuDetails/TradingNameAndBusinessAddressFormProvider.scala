@@ -57,15 +57,15 @@ class TradingNameAndBusinessAddressFormProvider @Inject() extends Mappings {
           TradingName(tradingName),
           InternationalAddress(line1, line2, townOrCity, stateOrRegion, postCode, Some(country))
         )
-    } (model =>
-          Some((
-            model.tradingName.name,
-            model.address.line1,
-            model.address.line2,
-            model.address.townOrCity,
-            model.address.stateOrRegion,
-            model.address.postCode
-          ))
-  ))
+    }(model =>
+      Some((
+        model.tradingName.name,
+        model.address.line1,
+        model.address.line2,
+        model.address.townOrCity,
+        model.address.stateOrRegion,
+        model.address.postCode
+      ))
+    ))
 }
 

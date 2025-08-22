@@ -22,7 +22,7 @@ import forms.previousRegistrations.PreviousIossNumberFormProvider
 import logging.Logging
 import models.PreviousScheme.IOSSWOI
 import models.domain.PreviousSchemeNumbers
-import models.previousRegistrations.IossRegistrationNumberValidation
+import models.previousRegistrations.{IossRegistrationNumberValidation, NonCompliantDetails}
 import models.requests.DataRequest
 import models.{Country, Index, PreviousScheme}
 import pages.Waypoints
@@ -43,7 +43,7 @@ class PreviousIossNumberController @Inject()(
                                               formProvider: PreviousIossNumberFormProvider,
                                               view: PreviousIossNumberView,
                                               coreRegistrationValidationService: CoreRegistrationValidationService,
-                                            )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetCountry {
+                                            )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetCountry with PreviousNonComplianceAnswers {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -90,17 +90,41 @@ class PreviousIossNumberController @Inject()(
                     activeMatch.getEffectiveDate)
                 ).toFuture
 
+              case Some(activeMatch) =>
+                submitAnswersAndRedirect(
+                  waypoints,
+                  countryIndex,
+                  schemeIndex,
+                  value,
+                  Some(NonCompliantDetails(nonCompliantReturns = activeMatch.nonCompliantReturns, nonCompliantPayments = activeMatch.nonCompliantPayments))
+                )
               case _ =>
-                for {
-                  updatedAnswers <- Future.fromTry(request.userAnswers.set(PreviousIossNumberPage(countryIndex, schemeIndex), PreviousSchemeNumbers(value)))
-                  updatedAnswersWithPreviousScheme <- Future.fromTry(updatedAnswers.set(
-                    PreviousSchemePage(countryIndex, schemeIndex), determinePreviousScheme(countryIndex, schemeIndex)
-                  ))
-                  _ <- cc.sessionRepository.set(updatedAnswersWithPreviousScheme)
-                } yield Redirect(PreviousIossNumberPage(countryIndex, schemeIndex).navigate(waypoints, request.userAnswers, updatedAnswersWithPreviousScheme).route)
+                submitAnswersAndRedirect(waypoints, countryIndex, schemeIndex, value, None)
             }
         )
       }
+  }
+
+  private def submitAnswersAndRedirect(
+                                        waypoints: Waypoints,
+                                        countryIndex: Index,
+                                        schemeIndex: Index,
+                                        value: String,
+                                        maybeNonCompliantDetails: Option[NonCompliantDetails]
+                                      )(implicit request: DataRequest[_]) = {
+    for {
+      updatedAnswers <- Future.fromTry(request.userAnswers.set(PreviousIossNumberPage(countryIndex, schemeIndex), PreviousSchemeNumbers(value)))
+      updatedAnswersWithPreviousScheme <- Future.fromTry(updatedAnswers.set(
+        PreviousSchemePage(countryIndex, schemeIndex), determinePreviousScheme(countryIndex, schemeIndex)
+      ))
+      updatedAnswersWithNonCompliantDetails <- setNonCompliantDetailsAnswers(
+        countryIndex,
+        schemeIndex,
+        maybeNonCompliantDetails,
+        updatedAnswersWithPreviousScheme
+      )
+      _ <- cc.sessionRepository.set(updatedAnswersWithNonCompliantDetails)
+    } yield Redirect(PreviousIossNumberPage(countryIndex, schemeIndex).navigate(waypoints, request.userAnswers, updatedAnswersWithNonCompliantDetails).route)
   }
 
   private def getIossHintText(country: Country): String = {
@@ -112,7 +136,7 @@ class PreviousIossNumberController @Inject()(
   private def determinePreviousScheme(
                                        countryIndex: Index,
                                        schemeIndex: Index
-                                     )(implicit request: DataRequest[AnyContent]): PreviousScheme = {
+                                     )(implicit request: DataRequest[_]): PreviousScheme = {
     request.userAnswers.get(ClientHasIntermediaryPage(countryIndex, schemeIndex)) match {
       case Some(true) => PreviousScheme.IOSSWI
       case _ => PreviousScheme.IOSSWOI

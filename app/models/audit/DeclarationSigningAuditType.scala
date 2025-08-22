@@ -18,15 +18,21 @@ package models.audit
 
 import models.{Enumerable, WithName}
 
-sealed trait IntermediaryDeclarationSigningAuditType {
+sealed trait DeclarationSigningAuditType {
   val auditType: String
   val transactionName: String
 }
 
-object IntermediaryDeclarationSigningAuditType extends Enumerable.Implicits {
-  case object CreateDeclaration extends WithName("CreateDeclaration") with IntermediaryDeclarationSigningAuditType {
+object DeclarationSigningAuditType extends Enumerable.Implicits {
+
+  case object CreateDeclaration extends WithName("CreateDeclaration") with DeclarationSigningAuditType {
     override val auditType: String = "DeclarationSubmitted"
     override val transactionName: String = "declaration-submitted"
+  }
+
+  case object CreateClientDeclaration extends WithName("CreateClientDeclaration") with DeclarationSigningAuditType {
+    override val auditType: String = "ClientDeclarationSubmitted"
+    override val transactionName: String = "client-declaration-submitted"
   }
   
 }

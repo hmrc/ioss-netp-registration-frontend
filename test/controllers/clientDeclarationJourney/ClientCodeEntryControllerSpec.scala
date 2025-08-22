@@ -47,11 +47,10 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
   private val businessContactDetails: BusinessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
   private val testClientEmail: String = businessContactDetails.emailAddress
   private val testClientName: String = businessContactDetails.fullName
-  private val nonEmptyIntermediaryName: String = intermediaryVatCustomerInfo.organisationName.getOrElse("Dummy Name for Test")
 
   val incompleteUserAnswers: UserAnswers = emptyUserAnswers
     .set(ClientBusinessNamePage, ClientBusinessName(testClientName)).success.value
-    .set(IntermediaryDetailsQuery, IntermediaryDetails(intermediaryNumber, nonEmptyIntermediaryName))
+    .set(IntermediaryDetailsQuery, intermediaryDetails)
     .success.value
 
   val completeUserAnswers: UserAnswers = incompleteUserAnswers
@@ -65,7 +64,7 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
       userAnswers = completeUserAnswers,
       lastUpdated = completeUserAnswers.lastUpdated,
       uniqueActivationCode = generate6DigitCode(),
-      intermediaryDetails = IntermediaryDetails(intermediaryNumber, nonEmptyIntermediaryName)
+      intermediaryDetails = intermediaryDetails
     )
 
   val testUniqueUrlCode: String = savedPendingRegistration.uniqueUrlCode

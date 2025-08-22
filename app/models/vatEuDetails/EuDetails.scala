@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package models.euDetails
+package models.vatEuDetails
 
-import models.vatEuDetails.TradingNameAndBusinessAddress
-import models.{Country, RegistrationType}
+import models.Country
 import play.api.libs.json.{Json, OFormat}
 
 case class EuDetails(

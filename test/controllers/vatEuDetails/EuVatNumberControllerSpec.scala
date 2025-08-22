@@ -18,7 +18,7 @@ package controllers.vatEuDetails
 
 import base.SpecBase
 import forms.vatEuDetails.EuVatNumberFormProvider
-import models.RegistrationType.VatNumber
+import models.vatEuDetails.RegistrationType.VatNumber
 import models.vatEuDetails.TradingNameAndBusinessAddress
 import models.{Country, CountryWithValidationDetails, Index, InternationalAddress, TradingName, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}

@@ -33,7 +33,8 @@
 package forms.vatEuDetails
 
 import forms.behaviours.OptionFieldBehaviours
-import models.{Country, RegistrationType}
+import models.Country
+import models.vatEuDetails.RegistrationType
 import play.api.data.{Form, FormError}
 
 class RegistrationTypeFormProviderSpec extends OptionFieldBehaviours {

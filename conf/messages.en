@@ -40,10 +40,10 @@ checkYourAnswers.details.heading = Import One Stop Shop details
 
 journeyRecovery.continue.title = Sorry, there is a problem with the service
 journeyRecovery.continue.heading = Sorry, there is a problem with the service
-journeyRecovery.continue.guidance = [Add content to explain how to proceed.]
+journeyRecovery.continue.guidance = Something has gone wrong and you will need to start again to complete your registration.
 journeyRecovery.startAgain.title = Sorry, there is a problem with the service
 journeyRecovery.startAgain.heading = Sorry, there is a problem with the service
-journeyRecovery.startAgain.guidance = [Add content to explain why the user needs to start again.]
+journeyRecovery.startAgain.guidance = Something has gone wrong and you will need to start again to complete your registration.
 
 signedOut.title = For your security, we signed you out
 signedOut.heading = For your security, we signed you out
@@ -487,8 +487,19 @@ clientDeclaration.information.p2 = I understand that we are joint and severally 
 clientDeclaration.checkbox.text = I agree to register my business.
 clientDeclaration.error.required = Agree to the declaration to continue
 clientDeclaration.change.hidden = ClientDeclaration
+
 clientSuccessfulRegistration.title = Registration successful
 clientSuccessfulRegistration.heading = Registration successful
 clientSuccessfulRegistration.text = Your IOSS number is
 clientSuccessfulRegistration.info.1 = We have let your intermediary know.
 clientSuccessfulRegistration.info.2 = They must now complete your monthly IOSS VAT returns and pay any VAT due.
+
+clientJourneyRecovery.startAgain.title = Sorry, there is a problem with the service
+clientJourneyRecovery.startAgain.heading = Sorry, there is a problem with the service
+clientJourneyRecovery.startAgain.guidance = Something went wrong, please start again to sign the declaration.
+
+errorSubmittingRegistration.title = We have a problem with our service right now
+errorSubmittingRegistration.heading = Your registration is not submitted
+errorSubmittingRegistration.p1 = We have not saved your answers.
+errorSubmittingRegistration.tryAgainLater = You can <a class="govuk-link" href={0}>try again later</a>.
+errorSubmittingRegistration.contactUs = If the problem continues, you can email us at <a class="govuk-link" href="mailto:vatoss.contact@hmrc.gov.uk">vatoss.contact@hmrc.gov.uk</a>

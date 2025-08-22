@@ -18,8 +18,10 @@ package controllers.clientDeclarationJourney
 
 import base.SpecBase
 import controllers.clientDeclarationJourney
+import models.responses.etmp.EtmpEnrolmentResponse
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import queries.etmp.EtmpEnrolmentResponseQuery
 import views.html.clientDeclarationJourney.ClientSuccessfulRegistrationView
 
 class ClientSuccessfulRegistrationControllerSpec extends SpecBase {
@@ -28,7 +30,11 @@ class ClientSuccessfulRegistrationControllerSpec extends SpecBase {
 
     "must return OK and the correct view for a GET" in {
 
-      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
+      val iossNumber = "IM9004444444"
+      val userAnswers = basicUserAnswersWithVatInfo
+        .set(EtmpEnrolmentResponseQuery, EtmpEnrolmentResponse(iossNumber)).success.value
+
+      val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
 
       running(application) {
         val request = FakeRequest(GET, clientDeclarationJourney.routes.ClientSuccessfulRegistrationController.onPageLoad().url)
@@ -38,8 +44,7 @@ class ClientSuccessfulRegistrationControllerSpec extends SpecBase {
         val view = application.injector.instanceOf[ClientSuccessfulRegistrationView]
 
         status(result) mustEqual OK
-        contentAsString(result) mustEqual view("Intermediary dummy Number")(request, messages(application)).toString
-        //TODO- VEI-297 To be implemented when IOSS number is returned from HOD
+        contentAsString(result) mustEqual view(iossNumber)(request, messages(application)).toString
       }
     }
   }
