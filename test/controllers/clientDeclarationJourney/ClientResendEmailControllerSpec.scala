@@ -40,6 +40,7 @@ import scala.concurrent.Future
 class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
   private val testIntermediaryName = "Test Intermediary Ltd"
+  private val testIntermediaryNumber = "Test Intermediary No"
   private val testUniqueUrlCode = "ABC123XYZ"
   private val testClientEmail = "client@example.com"
   private val testActivationCode = "12345"
@@ -52,7 +53,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
   )
 
   private val clientBusinessName = ClientBusinessName("Test Client Company Ltd")
-  private val intermediaryDetails = IntermediaryDetails(intermediaryNumber, testIntermediaryName)
+  private val intermediaryDetails = IntermediaryDetails(testIntermediaryNumber, testIntermediaryName)
 
   private val baseUserAnswers = emptyUserAnswers
     .set(ClientBusinessNamePage, clientBusinessName).success.value
