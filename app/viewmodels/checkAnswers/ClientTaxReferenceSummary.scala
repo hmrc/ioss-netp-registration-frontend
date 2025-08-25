@@ -47,4 +47,21 @@ object ClientTaxReferenceSummary {
       )
     }
   }
+
+  def rowWithoutAction(
+           waypoints: Waypoints,
+           answers: UserAnswers
+         )(implicit messages: Messages): Option[SummaryListRow] = {
+
+    for {
+      taxRef <- answers.get(ClientTaxReferencePage)
+      country <- answers.get(ClientCountryBasedPage)
+    } yield {
+
+      SummaryListRowViewModel(
+        key = messages("clientTaxReference.checkYourAnswersLabel", country.name),
+        value = ValueViewModel(HtmlFormat.escape(taxRef).toString)
+      )
+    }
+  }
 }

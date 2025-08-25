@@ -68,4 +68,24 @@ object WebsiteSummary  {
 
         listRowViewModel
     }
+
+  def checkAnswersRowWithoutAction(
+                       waypoints: Waypoints,
+                       answers: UserAnswers
+                     )(implicit messages: Messages): Option[SummaryListRow] =
+    answers.get(AllWebsites).map {
+      websites =>
+
+        val value = websites.map {
+          website =>
+            HtmlFormat.escape(website.site)
+        }.mkString("<br/>")
+        
+        val listRowViewModel = SummaryListRowViewModel(
+          key = "website.checkYourAnswersLabel",
+          value = ValueViewModel(HtmlContent(value))
+        )
+
+        listRowViewModel
+    }
 }

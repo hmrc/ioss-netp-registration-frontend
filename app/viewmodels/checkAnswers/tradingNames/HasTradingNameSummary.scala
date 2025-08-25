@@ -41,4 +41,16 @@ object HasTradingNameSummary  {
           )
         )
     }
+
+  def rowWithoutAction(answers: UserAnswers, waypoints: Waypoints)(implicit messages: Messages): Option[SummaryListRow] =
+    answers.get(HasTradingNamePage).map {
+      answer =>
+
+        val value = if (answer) "site.yes" else "site.no"
+
+        SummaryListRowViewModel(
+          key = "hasTradingName.checkYourAnswersLabel",
+          value = ValueViewModel(value)
+        )
+    }
 }

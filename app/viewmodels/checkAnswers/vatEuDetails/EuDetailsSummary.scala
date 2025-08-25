@@ -77,4 +77,21 @@ object EuDetailsSummary {
       )
     }
   }
+
+  def checkAnswersRowWithoutAction(
+                       waypoints: Waypoints,
+                       answers: UserAnswers
+                     )(implicit messages: Messages): Option[SummaryListRow] = {
+    answers.get(AllEuDetailsQuery).map { euDetails =>
+
+      val value = euDetails.map { details =>
+        HtmlFormat.escape(details.euCountry.name)
+      }.mkString("<br/>")
+
+      SummaryListRowViewModel(
+        key = "euDetails.checkYourAnswersLabel",
+        value = ValueViewModel(HtmlContent(value))
+      )
+    }
+  }
 }

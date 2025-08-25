@@ -43,6 +43,18 @@ object BusinessContactDetailsSummary {
     }
   }
 
+  def rowFullNameWithoutAction(waypoints: Waypoints, answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] = {
+    answers.get(BusinessContactDetailsPage).map { answer =>
+
+      val value = HtmlFormat.escape(answer.fullName).toString
+
+      SummaryListRowViewModel(
+        key = "businessContactDetails.fullName",
+        value = ValueViewModel(HtmlContent(value))
+      )
+    }
+  }
+
   def rowTelephoneNumber(waypoints: Waypoints, answers: UserAnswers, sourcePage: CheckAnswersPage)(implicit messages: Messages): Option[SummaryListRow] = {
     answers.get(BusinessContactDetailsPage).map { answer =>
 
@@ -59,6 +71,18 @@ object BusinessContactDetailsSummary {
     }
   }
 
+  def rowTelephoneNumberWithoutAction(waypoints: Waypoints, answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] = {
+    answers.get(BusinessContactDetailsPage).map { answer =>
+
+      val value = HtmlFormat.escape(answer.telephoneNumber).toString
+
+      SummaryListRowViewModel(
+        key = "businessContactDetails.telephoneNumber",
+        value = ValueViewModel(HtmlContent(value))
+      )
+    }
+  }
+
   def rowEmailAddress(waypoints: Waypoints, answers: UserAnswers, sourcePage: CheckAnswersPage)(implicit messages: Messages): Option[SummaryListRow] = {
     answers.get(BusinessContactDetailsPage).map { answer =>
 
@@ -71,6 +95,18 @@ object BusinessContactDetailsSummary {
           ActionItemViewModel("site.change", BusinessContactDetailsPage.changeLink(waypoints, sourcePage).url)
             .withVisuallyHiddenText(messages("businessContactDetails.change.emailAddress.hidden"))
         )
+      )
+    }
+  }
+
+  def rowEmailAddressWithoutAction(waypoints: Waypoints, answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] = {
+    answers.get(BusinessContactDetailsPage).map { answer =>
+
+      val value = HtmlFormat.escape(answer.emailAddress).toString
+
+      SummaryListRowViewModel(
+        key = "businessContactDetails.emailAddress",
+        value = ValueViewModel(HtmlContent(value))
       )
     }
   }

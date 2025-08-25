@@ -63,4 +63,20 @@ object TradingNameSummary {
           )
         )
     }
+
+  def checkAnswersRowWithoutAction(waypoints: Waypoints, answers: UserAnswers)
+                     (implicit messages: Messages): Option[SummaryListRow] =
+    answers.get(AllTradingNamesQuery).map {
+      tradingNames =>
+
+        val value = tradingNames.map {
+          name =>
+            HtmlFormat.escape(name.name)
+        }.mkString("<br/>")
+
+        SummaryListRowViewModel(
+          key = "tradingName.checkYourAnswersLabel",
+          value = ValueViewModel(HtmlContent(value))
+        )
+    }
 }

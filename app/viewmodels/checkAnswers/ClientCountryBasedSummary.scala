@@ -43,4 +43,17 @@ object ClientCountryBasedSummary {
       )
     }
   }
+
+  def rowWithoutAction(
+           waypoints: Waypoints,
+           answers: UserAnswers
+         )(implicit messages: Messages): Option[SummaryListRow] = {
+    answers.get(ClientCountryBasedPage).map { answer =>
+
+      SummaryListRowViewModel(
+        key = "clientCountryBased.checkYourAnswersLabel",
+        value = ValueViewModel(HtmlFormat.escape(answer.name).toString)
+      )
+    }
+  }
 }

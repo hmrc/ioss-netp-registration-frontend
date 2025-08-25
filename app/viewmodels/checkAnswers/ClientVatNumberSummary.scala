@@ -42,4 +42,17 @@ object ClientVatNumberSummary  {
           )
         )
     }
+
+  def rowWithoutAction(
+           waypoints: Waypoints,
+           answers: UserAnswers
+         )(implicit messages: Messages): Option[SummaryListRow] =
+    answers.get(ClientVatNumberPage).map { answer =>
+
+      SummaryListRowViewModel(
+        key     = "clientVatNumber.checkYourAnswersLabel",
+        value   = ValueViewModel(HtmlFormat.escape(answer).toString)
+      )
+    }
+  
 }
