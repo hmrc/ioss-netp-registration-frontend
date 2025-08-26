@@ -22,8 +22,8 @@ import models.{BusinessContactDetails, Country, UserAnswers}
 import pages.*
 import pages.tradingNames.HasTradingNamePage
 import play.api.libs.json.{Json, OFormat}
-import queries.tradingNames.AllTradingNamesQuery
 import queries.{AllWebsites, IntermediaryDetailsQuery}
+import queries.tradingNames.AllTradingNamesQuery
 import services.etmp.{EtmpEuRegistrations, EtmpPreviousRegistrationsRequest}
 
 import java.time.LocalDate

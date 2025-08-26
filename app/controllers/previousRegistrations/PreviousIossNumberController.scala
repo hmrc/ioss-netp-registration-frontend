@@ -20,11 +20,11 @@ import controllers.GetCountry
 import controllers.actions.*
 import forms.previousRegistrations.PreviousIossNumberFormProvider
 import logging.Logging
+import models.{Country, Index, PreviousScheme}
 import models.PreviousScheme.IOSSWOI
 import models.domain.PreviousSchemeNumbers
 import models.previousRegistrations.{IossRegistrationNumberValidation, NonCompliantDetails}
 import models.requests.DataRequest
-import models.{Country, Index, PreviousScheme}
 import pages.Waypoints
 import pages.previousRegistrations.{ClientHasIntermediaryPage, PreviousIossNumberPage, PreviousSchemePage}
 import play.api.i18n.{I18nSupport, MessagesApi}

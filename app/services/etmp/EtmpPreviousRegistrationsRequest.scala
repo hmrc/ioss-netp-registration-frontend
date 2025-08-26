@@ -17,7 +17,7 @@
 package services.etmp
 
 import logging.Logging
-import models.{Country, UserAnswers}
+import models.{Country, CountryWithValidationDetails, UserAnswers}
 import models.domain.PreviousSchemeDetails
 import models.etmp.EtmpPreviousEuRegistrationDetails
 import models.previousRegistrations.{NonCompliantDetails, PreviousRegistrationDetails}
@@ -57,7 +57,10 @@ trait EtmpPreviousRegistrationsRequest extends Logging {
                                                 ): EtmpPreviousEuRegistrationDetails = {
     EtmpPreviousEuRegistrationDetails(
       issuedBy = previousEuCountry.code,
-      registrationNumber = previousSchemeDetails.previousSchemeNumbers.previousSchemeNumber,
+      registrationNumber = CountryWithValidationDetails.convertTaxIdentifierForTransfer(
+        previousSchemeDetails.previousSchemeNumbers.previousSchemeNumber,
+        previousEuCountry.code
+      ),
       schemeType = toEmtpSchemeType(previousSchemeDetails.previousScheme),
       intermediaryNumber = None
     )
