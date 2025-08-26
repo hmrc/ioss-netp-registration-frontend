@@ -86,7 +86,7 @@ class ClientDeclarationController @Inject()(
                   auditService.sendAudit(
                     declarationSigningAuditType = CreateClientDeclaration,
                     result = SubmissionResult.Success,
-                    submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
+                    submittedDeclarationPageBody = view(form.fill(value), waypoints, clientCompanyName, intermediaryName).body
                   )
                   for {
                     updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientDeclarationPage, value))
@@ -99,7 +99,7 @@ class ClientDeclarationController @Inject()(
                   auditService.sendAudit(
                     declarationSigningAuditType = CreateClientDeclaration,
                     result = SubmissionResult.Failure,
-                    submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
+                    submittedDeclarationPageBody = view(form.fill(value), waypoints, clientCompanyName, intermediaryName).body
                   )
                   logger.error(s"Unexpected result on registration creation submission: ${error.body}")
                   Redirect(ErrorSubmittingRegistrationPage.route(waypoints)).toFuture
