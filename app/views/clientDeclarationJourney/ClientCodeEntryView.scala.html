@@ -29,7 +29,8 @@
 form: Form[_], 
 waypoints: Waypoints,
 clientEmailAddress: String,
-uniqueUrlCode: String
+uniqueUrlCode: String,
+emailWasSent: Boolean
 )(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = title(form, messages("clientCodeEntry.title")), showBackLink = false) {
@@ -40,6 +41,16 @@ uniqueUrlCode: String
             @govukErrorSummary(ErrorSummaryViewModel(form))
         }
 
+        @if(emailWasSent) {
+        @govukInput(
+            InputViewModel(
+                field = form("value"),
+                label = LabelViewModel(messages("clientCodeEntry.heading")).asPageHeading()
+            )
+            .withWidth(Full)
+            .withHint(HintViewModel(messages("clientCodeEntry.hint.sent", clientEmailAddress)))
+        )
+         } else {
         @govukInput(
             InputViewModel(
                 field = form("value"),
@@ -47,7 +58,7 @@ uniqueUrlCode: String
             )
             .withWidth(Full)
             .withHint(HintViewModel(messages("clientCodeEntry.hint", clientEmailAddress)))
-        )
+        ) }
 
         @govukDetails(
             Details(

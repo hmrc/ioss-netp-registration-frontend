@@ -55,8 +55,13 @@ class ClientCodeEntryController @Inject()(
         case Some(value) => form.fill(value)
       }
 
+      //val emailWasSent = request.userAnswers.get(myGettable) match {
+      // case None => false
+      // case Some(_) => true
+      // }
+
       getClientEmail(waypoints, request.userAnswers) { clientEmail =>
-        Ok(view(preparedForm, waypoints, clientEmail, uniqueUrlCode)).toFuture
+        Ok(view(preparedForm, waypoints, clientEmail, uniqueUrlCode, emailWasSent)).toFuture
       }
 
   }
