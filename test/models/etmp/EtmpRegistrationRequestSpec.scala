@@ -179,13 +179,6 @@ class EtmpRegistrationRequestSpec extends SpecBase {
           (allReturns.maxOption.map(_.toString), allPayments.maxOption.map(_.toString))
         }
 
-        println()
-        println()
-        println()
-        println(Json.toJson(previousEuRegistrations))
-        println()
-        println()
-
         val etmpSchemeDetails = EtmpSchemeDetails(
           commencementDate = LocalDate.now(stubClockAtArbitraryDate).format(eisDateFormatter),
           euRegistrationDetails = etmpEuRegistrationDetails,
