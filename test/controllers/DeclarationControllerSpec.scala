@@ -164,7 +164,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
         when(viewMock.body) thenReturn testViewBody
         when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any())) thenReturn Right(intermediaryVatCustomerInfo).toFuture
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
-        when(mockEmailService.sendClientActivationEmail(any, any, any, any, any)(any, any)) thenReturn Future.successful(())
+        when(mockEmailService.sendClientActivationEmail(any, any, any, any, any, any)(any, any)) thenReturn Future.successful(())
         doNothing().when(mockAuditService).sendAudit(eqTo(CreateDeclaration),eqTo(SubmissionResult.Success), eqTo(testViewBody))(any(), any())
 
         running(application) {
@@ -179,6 +179,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(pendingRegistrationRequest))(any())
           verify(mockAuditService, times(1)).sendAudit(eqTo(CreateDeclaration), eqTo(SubmissionResult.Success),eqTo(testViewBody))(any(), any())
           verify(mockEmailService, times(1)).sendClientActivationEmail(
+            any,
             any,
             any,
             any,
@@ -219,7 +220,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
         when(viewMock.body) thenReturn testViewBody
         when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any())) thenReturn Right(intermediaryVatCustomerInfo).toFuture
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
-        when(mockEmailService.sendClientActivationEmail(any, any, any, any, any)(any, any)) thenReturn Future.successful(EMAIL_NOT_SENT)
+        when(mockEmailService.sendClientActivationEmail(any, any, any, any, any, any)(any, any)) thenReturn Future.successful(EMAIL_NOT_SENT)
         doNothing().when(mockAuditService).sendAudit(eqTo(CreateDeclaration), eqTo(SubmissionResult.Success), eqTo(testViewBody))(any(), any())
 
         running(application) {
@@ -234,6 +235,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           verify(mockRegistrationConnector, times(1)).submitPendingRegistration(eqTo(pendingRegistrationRequest))(any())
           verify(mockAuditService, times(1)).sendAudit(eqTo(CreateDeclaration), eqTo(SubmissionResult.Success),eqTo(testViewBody))(any(), any())
           verify(mockEmailService, times(1)).sendClientActivationEmail(
+            any,
             any,
             any,
             any,

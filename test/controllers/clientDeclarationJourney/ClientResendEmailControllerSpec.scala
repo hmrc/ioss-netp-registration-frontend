@@ -88,7 +88,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
         when(mockRegistrationConnector.getPendingRegistration(eqTo(testUniqueUrlCode))(any()))
           .thenReturn(Future.successful(Right(testSavedPendingRegistration)))
 
-        when(mockEmailService.sendClientActivationEmail(any(), any(), any(), any(), any())(any(), any()))
+        when(mockEmailService.sendClientActivationEmail(any(), any(), any(), any(), any(), any())(any(), any()))
           .thenReturn(Future.successful(EmailSendingResult.EMAIL_ACCEPTED))
 
         val application = applicationBuilder(userAnswers = Some(baseUserAnswers))
@@ -112,7 +112,8 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
             eqTo(clientBusinessName.name),
             eqTo(testActivationCode),
             eqTo(testSavedPendingRegistration.activationExpiryDate),
-            eqTo(testClientEmail)
+            eqTo(testClientEmail),
+            eqTo(Some("priority"))
           )(any(), any())
         }
       }
@@ -121,7 +122,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
         when(mockRegistrationConnector.getPendingRegistration(eqTo(testUniqueUrlCode))(any()))
           .thenReturn(Future.successful(Right(testSavedPendingRegistration)))
 
-        when(mockEmailService.sendClientActivationEmail(any(), any(), any(), any(), any())(any(), any()))
+        when(mockEmailService.sendClientActivationEmail(any(), any(), any(), any(), any(), any())(any(), any()))
           .thenReturn(Future.failed(new RuntimeException("Email service unavailable")))
 
         val application = applicationBuilder(userAnswers = Some(baseUserAnswers))
@@ -140,7 +141,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
             clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(waypoints, testUniqueUrlCode).url
 
           verify(mockRegistrationConnector, times(1)).getPendingRegistration(eqTo(testUniqueUrlCode))(any())
-          verify(mockEmailService, times(1)).sendClientActivationEmail(any(), any(), any(), any(), any())(any(), any())
+          verify(mockEmailService, times(1)).sendClientActivationEmail(any(), any(), any(), any(), any(), any())(any(), any())
         }
       }
 
@@ -154,7 +155,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
         when(mockRegistrationConnector.getPendingRegistration(eqTo(testUniqueUrlCode))(any()))
           .thenReturn(Future.successful(Right(testSavedPendingRegistration)))
 
-        when(mockEmailService.sendClientActivationEmail(any(), any(), any(), any(), any())(any(), any()))
+        when(mockEmailService.sendClientActivationEmail(any(), any(), any(), any(), any(), any())(any(), any()))
           .thenReturn(Future.successful(EmailSendingResult.EMAIL_ACCEPTED))
 
         val application = applicationBuilder(userAnswers = Some(userAnswersWithVatInfo))
@@ -175,7 +176,8 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
             eqTo(expectedCompanyName),
             eqTo(testActivationCode),
             eqTo(testSavedPendingRegistration.activationExpiryDate),
-            eqTo(testClientEmail)
+            eqTo(testClientEmail),
+            eqTo(Some("priority"))
           )(any(), any())
         }
       }
@@ -200,7 +202,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
             clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(waypoints, testUniqueUrlCode).url
 
           verify(mockRegistrationConnector, times(1)).getPendingRegistration(eqTo(testUniqueUrlCode))(any())
-          verify(mockEmailService, never()).sendClientActivationEmail(any(), any(), any(), any(), any())(any(), any())
+          verify(mockEmailService, never()).sendClientActivationEmail(any(), any(), any(), any(), any(), any())(any(), any())
         }
       }
 
@@ -224,7 +226,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
             clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(waypoints, testUniqueUrlCode).url
 
           verify(mockRegistrationConnector, times(1)).getPendingRegistration(eqTo(testUniqueUrlCode))(any())
-          verify(mockEmailService, never()).sendClientActivationEmail(any(), any(), any(), any(), any())(any(), any())
+          verify(mockEmailService, never()).sendClientActivationEmail(any(), any(), any(), any(), any(), any())(any(), any())
         }
       }
 
@@ -248,7 +250,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
           redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
 
           verify(mockRegistrationConnector, never()).getPendingRegistration(any())(any())
-          verify(mockEmailService, never()).sendClientActivationEmail(any(), any(), any(), any(), any())(any(), any())
+          verify(mockEmailService, never()).sendClientActivationEmail(any(), any(), any(), any(), any(), any())(any(), any())
         }
       }
 
@@ -272,7 +274,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
           redirectLocation(result).value mustEqual JourneyRecoveryPage.route(waypoints).url
 
           verify(mockRegistrationConnector, never()).getPendingRegistration(any())(any())
-          verify(mockEmailService, never()).sendClientActivationEmail(any(), any(), any(), any(), any())(any(), any())
+          verify(mockEmailService, never()).sendClientActivationEmail(any(), any(), any(), any(), any(), any())(any(), any())
         }
       }
 
@@ -296,7 +298,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
           redirectLocation(result).value mustEqual JourneyRecoveryPage.route(waypoints).url
 
           verify(mockRegistrationConnector, never()).getPendingRegistration(any())(any())
-          verify(mockEmailService, never()).sendClientActivationEmail(any(), any(), any(), any(), any())(any(), any())
+          verify(mockEmailService, never()).sendClientActivationEmail(any(), any(), any(), any(), any(), any())(any(), any())
         }
       }
 
@@ -316,7 +318,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
           redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
 
           verify(mockRegistrationConnector, never()).getPendingRegistration(any())(any())
-          verify(mockEmailService, never()).sendClientActivationEmail(any(), any(), any(), any(), any())(any(), any())
+          verify(mockEmailService, never()).sendClientActivationEmail(any(), any(), any(), any(), any(), any())(any(), any())
         }
       }
 
@@ -345,7 +347,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
           redirectLocation(result).value mustEqual JourneyRecoveryPage.route(waypoints).url
 
           verify(mockRegistrationConnector, never()).getPendingRegistration(any())(any())
-          verify(mockEmailService, never()).sendClientActivationEmail(any(), any(), any(), any(), any())(any(), any())
+          verify(mockEmailService, never()).sendClientActivationEmail(any(), any(), any(), any(), any(), any())(any(), any())
         }
       }
     }
