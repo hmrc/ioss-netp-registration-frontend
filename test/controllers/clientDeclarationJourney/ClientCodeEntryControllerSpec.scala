@@ -32,7 +32,7 @@ import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import queries.IntermediaryDetailsQuery
+import queries.{EmailWasSentQuery, IntermediaryDetailsQuery}
 import repositories.SessionRepository
 import views.html.clientDeclarationJourney.ClientCodeEntryView
 
@@ -55,6 +55,9 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
 
   val completeUserAnswers: UserAnswers = incompleteUserAnswers
     .set(BusinessContactDetailsPage, businessContactDetails).success.value
+
+  val completeUserAnswersWithEmailSent: UserAnswers = completeUserAnswers
+    .set(EmailWasSentQuery, true).success.value
 
 
   private val savedPendingRegistration: SavedPendingRegistration =
@@ -96,7 +99,23 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
           val view = application.injector.instanceOf[ClientCodeEntryView]
 
           status(result) mustEqual OK
-          contentAsString(result) mustEqual view(clientCodeEntryForm, waypoints, testClientEmail, testUniqueUrlCode)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(clientCodeEntryForm, waypoints, testClientEmail, testUniqueUrlCode, false)(request, messages(application)).toString
+        }
+      }
+
+      "return OK and the correct view for a GET when the user has requested a new code" in {
+
+        val application = applicationBuilder(userAnswers = Some(completeUserAnswersWithEmailSent))
+          .build()
+        running(application) {
+          val request = FakeRequest(GET, clientCodeEntryOnPageLoad)
+
+          val result = route(application, request).value
+
+          val view = application.injector.instanceOf[ClientCodeEntryView]
+
+          status(result) mustEqual OK
+          contentAsString(result) mustEqual view(clientCodeEntryForm, waypoints, testClientEmail, testUniqueUrlCode, true)(request, messages(application)).toString
         }
       }
 
@@ -116,7 +135,7 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
           val result = route(application, request).value
 
           status(result) mustEqual OK
-          contentAsString(result) mustEqual view(clientCodeEntryForm.fill(testDeclarationCode), waypoints, testClientEmail, testUniqueUrlCode)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(clientCodeEntryForm.fill(testDeclarationCode), waypoints, testClientEmail, testUniqueUrlCode, false)(request, messages(application)).toString
         }
       }
 
@@ -202,7 +221,7 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
           val result = route(application, request).value
 
           status(result) mustEqual BAD_REQUEST
-          contentAsString(result) mustEqual view(boundForm, waypoints, testClientEmail, testUniqueUrlCode)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(boundForm, waypoints, testClientEmail, testUniqueUrlCode, false)(request, messages(application)).toString
         }
       }
 
@@ -252,7 +271,7 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
           val result = route(application, request).value
 
           status(result) mustEqual BAD_REQUEST
-          contentAsString(result) mustEqual view(boundForm, waypoints, testClientEmail, testUniqueUrlCode)(request, messages(application)).toString
+          contentAsString(result) mustEqual view(boundForm, waypoints, testClientEmail, testUniqueUrlCode, false)(request, messages(application)).toString
         }
       }
 

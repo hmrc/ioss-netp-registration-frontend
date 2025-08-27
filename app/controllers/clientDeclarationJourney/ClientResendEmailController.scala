@@ -25,7 +25,8 @@ import models.responses.ErrorResponse
 import pages.{ClientBusinessNamePage, JourneyRecoveryPage}
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
-import queries.IntermediaryDetailsQuery
+import queries.{IntermediaryDetailsQuery, EmailWasSentQuery}
+import repositories.SessionRepository
 import services.EmailService
 import utils.FutureSyntax.FutureOps
 import uk.gov.hmrc.http.HeaderCarrier
@@ -43,6 +44,7 @@ class ClientResendEmailController @Inject()(
                                              clientGetData: ClientDataRetrievalAction,
                                              registrationConnector: RegistrationConnector,
                                              emailService: EmailService,
+                                             sessionRepository: SessionRepository,
                                              val controllerComponents: MessagesControllerComponents
                                            )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientEmail {
 
@@ -63,9 +65,15 @@ class ClientResendEmailController @Inject()(
                   clientEmail,
                   clientCompanyName,
                   intermediaryName
-                ).map { _ =>
+                ).flatMap { _ =>
                   logger.info(s"Successfully resent activation email for uniqueUrlCode: $uniqueUrlCode")
-                  Redirect(controllers.clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(waypoints, uniqueUrlCode))
+
+                  for {
+                    updatedAnswers <- Future.fromTry(request.userAnswers.set(EmailWasSentQuery, true))
+                    _ <- sessionRepository.set(updatedAnswers)
+                  } yield {
+                    Redirect(controllers.clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(waypoints, uniqueUrlCode))
+                  }
                 }.recover {
                   case ex =>
                     logger.error(s"Failed to resend activation email: ${ex.getMessage}", ex)

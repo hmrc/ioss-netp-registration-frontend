@@ -26,6 +26,7 @@ import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.EmailWasSentQuery
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
@@ -55,10 +56,10 @@ class ClientCodeEntryController @Inject()(
         case Some(value) => form.fill(value)
       }
 
-      //val emailWasSent = request.userAnswers.get(myGettable) match {
-      // case None => false
-      // case Some(_) => true
-      // }
+      val emailWasSent = request.userAnswers.get(EmailWasSentQuery) match {
+       case None => false
+       case Some(_) => true
+       }
 
       getClientEmail(waypoints, request.userAnswers) { clientEmail =>
         Ok(view(preparedForm, waypoints, clientEmail, uniqueUrlCode, emailWasSent)).toFuture
@@ -71,16 +72,18 @@ class ClientCodeEntryController @Inject()(
 
       getClientEmail(waypoints, request.userAnswers) { clientEmail =>
 
+        val emailWasSent = false
+
         form.bindFromRequest().fold(
           formWithErrors =>
-            Future.successful(BadRequest(view(formWithErrors, waypoints, clientEmail, uniqueUrlCode))),
+            Future.successful(BadRequest(view(formWithErrors, waypoints, clientEmail, uniqueUrlCode, emailWasSent))),
 
           enteredActivationCode =>
 
             registrationConnector.validateClientCode(uniqueUrlCode, enteredActivationCode).flatMap {
               case Right(value) if !value =>
                 val formWithErrors = form.bindFromRequest().withError("value", "clientCodeEntry.error")
-                Future.successful(BadRequest(view(formWithErrors, waypoints, clientEmail, uniqueUrlCode)))
+                Future.successful(BadRequest(view(formWithErrors, waypoints, clientEmail, uniqueUrlCode, emailWasSent)))
 
               case Left(errors) =>
                 val message: String = s"Received an unexpected error when trying to validate the pending registration for the given journey ID: $errors."

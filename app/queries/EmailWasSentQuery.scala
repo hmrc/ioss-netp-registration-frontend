@@ -18,7 +18,7 @@ package queries
 
 import play.api.libs.json.JsPath
 
-case object EmailWasSentQuery extends Gettable[String] with Settable[String] {
+case object EmailWasSentQuery extends Gettable[Boolean] with Settable[Boolean] {
 
   override def path: JsPath = JsPath \ "emailWasSent"
 }
