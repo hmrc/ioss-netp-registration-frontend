@@ -1,11 +1,69 @@
+@*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import viewmodels.CheckVatDetailsViewModel
+
 @this(
-        layout: templates.Layout,
-        govukButton: GovukButton
+    layout: templates.Layout,
+    govukSummaryList: GovukSummaryList,
+    govukButton: GovukButton
 )
 
-@()(implicit request: Request[_], messages: Messages)
+@(
+    waypoints: Waypoints,
+    viewModel: Option[CheckVatDetailsViewModel],
+    summaryList: SummaryList,
+    clientDetailsSummaryList: SummaryList,
+    companyName: String,
+    isBasedInUk: Boolean,
+    hasVatNumber: Boolean,
+    emailAddress: String,
+    clientCodeEntryUrl: String,
+    activationExpiryDate: String
+)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = titleNoForm(messages("clientNotActivated.title"))) {
-
-    <h1 class="govuk-heading-xl">@messages("clientNotActivated.heading")</h1>
-}
+    @layout(pageTitle = titleNoForm(messages("clientNotActivated.title", companyName))) {
+    
+        <h1 class="govuk-heading-l">@messages("clientNotActivated.heading", companyName)</h1>
+        
+        <p class="govuk-body">@Html(messages("clientNotActivated.p1.link", clientCodeEntryUrl))</p>
+        <p class="govuk-body">@messages("clientNotActivated.p2")</p>
+        
+        <p class="govuk-inset-text">@Html(messages("clientNotActivated.info", emailAddress))</p>
+        
+        <p class="govuk-body">@messages("clientNotActivated.p3", activationExpiryDate)</p>
+        
+        <h2 class="govuk-heading-m">@messages("checkYourAnswers.vatRegistrationDetails.heading")</h2>
+        
+        @{
+            val maybeAddressRow = if (isBasedInUk) {
+                viewModel.map { model =>
+                    SummaryListRow(
+                        key = Key(content = Text(messages("checkVatDetails.address"))),
+                        value = Value(content = HtmlContent(model.formattedAddress.body))
+                    )
+                }
+            } else None
+            
+            val rowsWithAddress = summaryList.rows ++ maybeAddressRow.toSeq
+            
+            govukSummaryList(summaryList.copy(rows = rowsWithAddress))
+        }
+        
+        <h2 class="govuk-heading-m">@messages("checkYourAnswers.details.heading")</h2>
+        
+        @govukSummaryList(clientDetailsSummaryList)
+    }
