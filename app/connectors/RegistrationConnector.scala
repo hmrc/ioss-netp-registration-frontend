@@ -17,9 +17,10 @@
 package connectors
 
 import config.Service
-import connectors.RegistrationHttpParser.{RegistrationResultResponse, *}
+import connectors.RegistrationHttpParser.*
 import connectors.SavedPendingRegistrationHttpParser.{SavedPendingRegistrationResponse, SavedPendingRegistrationResultResponseReads}
 import connectors.ValidateClientCodeHttpParser.{validateClientCodeResponse, ValidateClientCodeReads}
+import connectors.SavedPendingRegistrationsHttpParser._
 import connectors.VatCustomerInfoHttpParser.{VatCustomerInfoResponse, VatCustomerInfoResponseReads}
 import logging.Logging
 import models.PendingRegistrationRequest
@@ -60,6 +61,11 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
   def getPendingRegistration(journeyIdOrUrlCode: String)(implicit hc: HeaderCarrier): Future[SavedPendingRegistrationResponse] = {
     httpClientV2.get(url"$baseUrl/save-pending-registration/$journeyIdOrUrlCode")
       .execute[SavedPendingRegistrationResponse]
+  }
+
+  def getPendingRegistrationsByIntermediaryNumber(intermediaryNumber: String)(implicit hc: HeaderCarrier): Future[SavedPendingRegistrationsResponse] = {
+    httpClientV2.get(url"$baseUrl/pending-registrations/$intermediaryNumber")
+      .execute[SavedPendingRegistrationsResponse]
   }
 
   def validateClientCode(uniqueUrlCode: String, activationCode: String)(implicit hc: HeaderCarrier): Future[validateClientCodeResponse] = {
