@@ -23,7 +23,7 @@ import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import models.responses.InternalServerError as ServerError
 import models.responses.etmp.EtmpEnrolmentResponse
 import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
-import models.audit.SubmissionResult
+import models.audit.{DeclarationSigningAuditType, SubmissionResult}
 import models.{ClientBusinessName, IntermediaryDetails, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.*
@@ -231,15 +231,21 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
             .set(ClientDeclarationPage, true).success.value
             .set(EtmpEnrolmentResponseQuery, etmpEnrolmentResponse).success.value
 
-          status(result) mustEqual SEE_OTHER
-          verify(mockAuditService, times(1)).sendAudit(eqTo(CreateClientDeclaration), eqTo(SubmissionResult.Success),eqTo(testViewBody))(any(), any())
           redirectLocation(result).value mustEqual ClientDeclarationPage.navigate(EmptyWaypoints, completeUserAnswers, expectedAnswers).url
+          verify(mockAuditService, times(1)).sendAudit(eqTo(CreateClientDeclaration), eqTo(SubmissionResult.Success),eqTo(testViewBody))(any(), any())
           verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
+          verify(mockClientDeclarationView, times(1))
+            .apply(
+              form = eqTo(form.fill(true)),
+              waypoints = any(),
+              clientName = eqTo(clientBusinessName.name),
+              intermediaryName = eqTo(intermediaryDetails.intermediaryName)
+            )(any(), any())
 
         }
       }
 
-      "must save the answers and redirect the Error Submitting Registration page when back end returns any other Error Response" in {
+      "must save the answers, audit event and redirect the Error Submitting Registration page when back end returns any other Error Response" in {
 
         val mockSessionRepository = mock[SessionRepository]
         val mockRegistrationService = mock[RegistrationService]
@@ -278,6 +284,13 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
           redirectLocation(result).value mustEqual ErrorSubmittingRegistrationPage.route(waypoints).url
           verify(mockAuditService, times(1)).sendAudit(eqTo(CreateClientDeclaration), eqTo(SubmissionResult.Failure), eqTo(testViewBody))(any(), any())
           verifyNoInteractions(mockSessionRepository)
+          verify(mockClientDeclarationView, times(1))
+            .apply(
+              form = eqTo(form.fill(true)),
+              waypoints = any(),
+              clientName = eqTo(clientBusinessName.name),
+              intermediaryName = eqTo(intermediaryDetails.intermediaryName)
+            )(any(), any())
         }
       }
 
