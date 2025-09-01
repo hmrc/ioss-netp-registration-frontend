@@ -24,7 +24,6 @@ import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import utils.FutureSyntax.FutureOps
 import views.html.ApplicationCompleteView
 
 import javax.inject.Inject
@@ -49,13 +48,17 @@ class ApplicationCompleteController @Inject()(
           case Right(savedPendingRegistration) =>
             val clientCodeEntryUrl = s"${frontendAppConfig.clientCodeEntryUrl}/${savedPendingRegistration.uniqueUrlCode}"
 
-            Ok(view(
-              clientCompanyName,
-              clientCodeEntryUrl,
-              savedPendingRegistration.uniqueUrlCode,
-              savedPendingRegistration.activationExpiryDate,
-              frontendAppConfig.intermediaryYourAccountUrl
-            )).toFuture
+            for {
+              _ <- cc.sessionRepository.clear(request.userId)
+            } yield {
+              Ok(view(
+                clientCompanyName,
+                clientCodeEntryUrl,
+                savedPendingRegistration.uniqueUrlCode,
+                savedPendingRegistration.activationExpiryDate,
+                frontendAppConfig.intermediaryYourAccountUrl
+              ))
+            }
 
           case Left(errors) =>
             val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given journey ID: $errors."

@@ -134,7 +134,6 @@ class CheckYourAnswersController @Inject()(
           for {
             _ <- cc.sessionRepository.set(request.userAnswers)
           } yield Redirect(CheckYourAnswersPage.navigate(waypoints, request.userAnswers, request.userAnswers).route)
-
       }
   }
 }
