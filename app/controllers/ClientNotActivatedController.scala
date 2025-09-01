@@ -46,10 +46,11 @@ class ClientNotActivatedController @Inject()(
                                        frontendAppConfig: FrontendAppConfig,
                                        view: ClientNotActivatedView
                                      )(implicit ec: ExecutionContext)
-  extends FrontendBaseController with I18nSupport with GetClientCompanyName with Logging {
+  extends FrontendBaseController with I18nSupport with GetOrganisationOrBusinessName with Logging {
   
   def onPageLoad(waypoints: Waypoints, journeyId: String): Action[AnyContent] = (cc.actionBuilder andThen cc.identify).async {
     implicit request =>
+
       registrationConnector.getPendingRegistrationsByIntermediaryNumber(request.intermediaryNumber).map {
         case Right(savedPendingRegistrations) =>
           savedPendingRegistrations.find(_.journeyId == journeyId) match {
@@ -65,8 +66,7 @@ class ClientNotActivatedController @Inject()(
 
               val clientCodeEntryUrl = s"${frontendAppConfig.clientCodeEntryUrl}/${registration.uniqueUrlCode}"
               val activationExpiryDate = registration.activationExpiryDate
-              val clientCompanyName = registration.userAnswers.vatInfo.get.organisationName
-                .getOrElse(registration.userAnswers.vatInfo.get.individualName.getOrElse(""))
+              val clientCompanyName = getClientCompanyName(registration)
 
               if (isBasedInUk && hasVatNumber) {
                 registration.userAnswers.vatInfo match {
