@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package formats
+package models
 
-import java.time.format.DateTimeFormatter
+import models.domain.VatCustomerInfo
+import play.api.libs.json.{JsObject, JsValue, Json, OFormat}
+import uk.gov.hmrc.domain.Vrn
 
-object Format {
+import java.time.Instant
 
-  val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
-  val dateMonthYearFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM yyyy")
-  val dateHintFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d M yyyy")
-  val eisDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-  val saveForLaterDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
+case class SavedUserAnswers(
+                             journeyID: String,
+                             data: JsValue,
+                             intermediaryNumber: String,
+                             lastUpdated: Instant
+                           )
+
+object SavedUserAnswers {
+  
+  implicit val format: OFormat[SavedUserAnswers] = Json.format[SavedUserAnswers]
 }

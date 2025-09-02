@@ -1,0 +1,41 @@
+@*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@this(
+        layout: templates.Layout,
+        govukPanel: GovukPanel
+)
+
+@(answersExpiry: String, continueUrl: String, ggwLoginUrl: String)(implicit request: Request[_], messages: Messages)
+
+@layout(pageTitle = titleNoForm(messages("savedProgress.title")), showBackLink = false) {
+
+    @govukPanel(Panel(
+    title = Text(messages("savedProgress.title")),
+    content = HtmlContent(messages("savedProgress.subtitle", answersExpiry))
+    ))
+
+    <h2 class="govuk-heading-m">@messages("savedProgress.nextSteps")</h2>
+
+    <p class="govuk-body">@messages("savedProgress.listStart")</p>
+
+    <ul class="govuk-list govuk-list--bullet">
+        <li><a class="govuk-link" id="continueToYourRegistration" href="@continueUrl">@messages("savedProgress.continueRegistration")</a></li>
+        <li><a class="govuk-link" id="signOut" href="@controllers.auth.routes.AuthController.signOut().url">@messages("savedProgress.signOut")</a></li>
+    </ul>
+
+    <p class="govuk-body" id="signInGovernmentGateway">@Html(messages("savedProgress.signIn", ggwLoginUrl))</p>
+}

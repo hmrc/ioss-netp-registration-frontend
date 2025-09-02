@@ -190,3 +190,7 @@ POST        /declaration-client                                             cont
 GET         /successful-registration                                        controllers.clientDeclarationJourney.ClientSuccessfulRegistrationController.onPageLoad()
 
 GET         /error-submitting-registration                                  controllers.ErrorSubmittingRegistrationController.onPageLoad()
+
+
+# Save for later section
+GET        /progress-saved                                                  controllers.SavedProgressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, continueUrl: RedirectUrl)
