@@ -67,6 +67,10 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
     httpClientV2.get(url"$baseUrl/pending-registrations/$intermediaryNumber")
       .execute[SavedPendingRegistrationsResponse]
   }
+  
+  def deletePendingRegistration(journeyId: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
+    httpClientV2.delete(url"$baseUrl/pending-registrations/$journeyId").execute[Boolean]
+  }
 
   def validateClientCode(uniqueUrlCode: String, activationCode: String)(implicit hc: HeaderCarrier): Future[validateClientCodeResponse] = {
     httpClientV2.get(url"$baseUrl/validate-pending-registration/$uniqueUrlCode/$activationCode")
@@ -83,5 +87,4 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
 
   def createRegistration(registrationRequest: EtmpRegistrationRequest)(implicit hc: HeaderCarrier): Future[RegistrationResultResponse] =
     httpClientV2.post(url"$baseUrl/create-registration").withBody(Json.toJson(registrationRequest)).execute[RegistrationResultResponse]
-
 }

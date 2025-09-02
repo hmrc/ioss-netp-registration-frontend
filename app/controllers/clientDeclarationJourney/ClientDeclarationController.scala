@@ -16,6 +16,7 @@
 
 package controllers.clientDeclarationJourney
 
+import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import logging.Logging
@@ -46,6 +47,7 @@ class ClientDeclarationController @Inject()(
                                              auditService: AuditService,
                                              clientValidationFilter: ClientValidationFilterProvider,
                                              registrationService: RegistrationService,
+                                             registrationConnector: RegistrationConnector,
                                              view: ClientDeclarationView
                                            )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with Logging {
@@ -83,6 +85,8 @@ class ClientDeclarationController @Inject()(
             value =>
               registrationService.createRegistration(request.userAnswers).flatMap {
                 case Right(response) =>
+                  registrationConnector.deletePendingRegistration(request.userAnswers.journeyId)
+                  
                   auditService.sendAudit(
                     declarationSigningAuditType = CreateClientDeclaration,
                     result = SubmissionResult.Success,
