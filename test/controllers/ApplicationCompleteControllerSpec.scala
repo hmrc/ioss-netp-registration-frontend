@@ -27,6 +27,7 @@ import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import repositories.SessionRepository
 import utils.FutureSyntax.FutureOps
 import views.html.ApplicationCompleteView
 
@@ -40,10 +41,17 @@ class ApplicationCompleteControllerSpec extends SpecBase {
 
   "ApplicationComplete Controller" - {
 
-    "must return OK and the correct view for a GET" in {
+    "must return OK and the correct view and clear the user answers for a GET" in {
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.clear(any())) thenReturn true.toFuture
 
       val application = applicationBuilder(userAnswers = Some(savedPendingRegistration.userAnswers))
-        .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+        .overrides(
+          bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[RegistrationConnector].toInstance(mockRegistrationConnector)
+        )
         .build()
 
       when(mockRegistrationConnector.getPendingRegistration(any())(any())) thenReturn Right(savedPendingRegistration).toFuture
@@ -62,6 +70,7 @@ class ApplicationCompleteControllerSpec extends SpecBase {
         status(result) `mustBe` OK
         contentAsString(result) `mustBe` view(clientName, clientDeclarationLink, savedPendingRegistration.uniqueUrlCode, activationExpiryDate, config.intermediaryYourAccountUrl)(request, messages(application)).toString
         verify(mockRegistrationConnector, times(1)).getPendingRegistration(eqTo(savedPendingRegistration.journeyId))(any())
+        verify(mockSessionRepository, times(1)).clear(eqTo(userAnswersId))
       }
     }
 
