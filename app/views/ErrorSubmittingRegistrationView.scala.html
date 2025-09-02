@@ -33,9 +33,7 @@
         classes = "red-background"
     ))
 
-    <p class="govuk-body">@Html(messages("errorSubmittingRegistration.p1"))</p>
-
     <p class="govuk-body">@Html(messages("errorSubmittingRegistration.tryAgainLater", ClientDeclarationPage.route(EmptyWaypoints).url))</p>
 
-    <p class="govuk-body">@Html(messages("errorSubmittingRegistration.contactUs"))</p>
+    <p class="govuk-body">@messages("errorSubmittingRegistration.contactUs")</p>
 }

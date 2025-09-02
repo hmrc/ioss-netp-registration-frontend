@@ -496,7 +496,6 @@ clientJourneyRecovery.startAgain.heading = Sorry, there is a problem with the se
 clientJourneyRecovery.startAgain.guidance = Something went wrong, please start again to sign the declaration.
 
 errorSubmittingRegistration.title = We have a problem with our service right now
-errorSubmittingRegistration.heading = Your registration is not submitted
-errorSubmittingRegistration.p1 = We have not saved your answers.
-errorSubmittingRegistration.tryAgainLater = You can <a class="govuk-link" href={0}>try again later</a>.
-errorSubmittingRegistration.contactUs = If the problem continues, you can email us at <a class="govuk-link" href="mailto:vatoss.contact@hmrc.gov.uk">vatoss.contact@hmrc.gov.uk</a>
+errorSubmittingRegistration.heading = Your account has not been activated
+errorSubmittingRegistration.tryAgainLater = You can use the same link your intermediary provided to <a class="govuk-link" href={0}>try again later</a>.
+errorSubmittingRegistration.contactUs = If the problem continues, contact your intermediary.
