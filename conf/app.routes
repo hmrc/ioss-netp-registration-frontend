@@ -202,3 +202,7 @@ GET        /update-client-email-address/:journeyId                         contr
 POST       /update-client-email-address/:journeyId                         controllers.UpdateClientEmailAddressController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
 
 GET        /client-email-updated/:journeyId                                controllers.ClientEmailUpdatedController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
+
+
+# Save for later section
+GET        /progress-saved                                                  controllers.SavedProgressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, continueUrl: RedirectUrl)
