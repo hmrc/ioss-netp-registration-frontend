@@ -58,7 +58,7 @@ class AuthenticatedIdentifierAction @Inject()(
       case Some(internalId) ~ enrolments =>
         findIntermediaryNumberFromEnrolments(enrolments) match {
           case Some(intermediaryNumber) =>
-            val vrn = findVrnFromEnrolments(enrolments)
+            val vrn: Vrn = findVrnFromEnrolments(enrolments)
             intermediaryRegistrationService.getIntermediaryRegistration().flatMap {
               case Some(_) =>
                 block(IdentifierRequest(request, internalId, enrolments, vrn, intermediaryNumber))
