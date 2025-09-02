@@ -38,6 +38,7 @@ class EmailService @Inject()(
                                  activation_code: String,
                                  activation_code_expiry_date: String,
                                  emailAddress: String,
+                                 alertQueue: Option[String] = None
                                )(implicit hc: HeaderCarrier, messages: Messages): Future[EmailSendingResult] = {
 
     val emailParameters =
@@ -52,7 +53,8 @@ class EmailService @Inject()(
       EmailToSendRequest(
         List(emailAddress),
         clientDeclarationEmailTemplateId,
-        emailParameters
+        emailParameters,
+        alertQueue = alertQueue
       )
     )
   }

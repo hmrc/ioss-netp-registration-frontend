@@ -22,7 +22,8 @@ case class EmailToSendRequest(
                                to: List[String],
                                templateId: String,
                                parameters: ClientDeclarationEmailParameters,
-                               force: Boolean = false
+                               force: Boolean = false,
+                               alertQueue: Option[String] = None
 )
 
 object EmailToSendRequest {

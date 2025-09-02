@@ -473,9 +473,13 @@ clientAlreadyRegistered.p2 = They will need to leave the service before you can 
 
 clientCodeEntry.title = Enter your activation code
 clientCodeEntry.heading = Enter your activation code
-clientCodeEntry.hint = This is the 6-digit code we emailed to {0}.
+clientCodeEntry.hint = This is the 6-digit code we emailed to {0}
+clientCodeEntry.hint.sent = We have emailed your 6-digit code to {0}
 clientCodeEntry.error = The code you entered is incorrect. Check the code and try again.
 clientCodeEntry.change.hidden = The code you entered is incorrect. Check the code and try again.
+clientCodeEntry.emailNotReceived.detail = I have not received the email
+clientCodeEntry.checkEmail.p1 = Check the above email address is correct. If not, your intermediary can correct it in their Import One Stop Shop service.
+clientCodeEntry.checkEmail.p2 = Check your spam or junk folder. If it still has not arrived we can <a class="govuk-link" rel="govuk-link" href={0}>send the code again.</a>
 
 clientDeclaration.title = Declaration
 clientDeclaration.heading = Declaration
