@@ -216,7 +216,6 @@ object Country {
     Country("KZ", "Kazakhstan"),
     Country("KE", "Kenya"),
     Country("KI", "Kiribati"),
-    Country("XK", "Kosovo"),
     Country("KW", "Kuwait"),
     Country("KG", "Kyrgyzstan"),
     Country("LA", "Laos"),
