@@ -23,6 +23,7 @@ import logging.Logging
 import models.audit.DeclarationSigningAuditType.CreateDeclaration
 import models.audit.SubmissionResult.{Failure, Success}
 import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType, SubmissionResult}
+import models.audit.{DeclarationSigningAuditType, SubmissionResult, RegistrationAuditModel, RegistrationAuditType}
 import models.emails.EmailSendingResult
 import models.{IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration}
 import pages.{DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints}
@@ -81,6 +82,13 @@ class DeclarationController @Inject()(
 
           registrationConnector.submitPendingRegistration(pendingRegistrationRequest).flatMap {
             case Right(submittedRegistration) =>
+
+              auditService.sendRegistrationAudit(
+                RegistrationAuditType.CreateRegistration,
+                None,
+                SubmissionResult.Success
+              )
+
               getClientEmail(waypoints, submittedRegistration.userAnswers) { clientEmail =>
                 sendEmail(submittedRegistration, clientEmail, clientCompanyName, intermediaryName)
 
