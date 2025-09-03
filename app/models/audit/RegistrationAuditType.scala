@@ -26,7 +26,7 @@ sealed trait RegistrationAuditType {
 object RegistrationAuditType extends Enumerable.Implicits {
 
   case object CreateRegistration extends WithName("CreateRegistration") with RegistrationAuditType {
-    override val auditType: String = "NETPageistrationSubmitted"
+    override val auditType: String = "NETPRegistrationSubmitted"
     override val transactionName: String = "netp-registration-submitted"
   }
 }
