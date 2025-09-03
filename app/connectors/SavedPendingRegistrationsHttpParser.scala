@@ -40,16 +40,16 @@ object SavedPendingRegistrationsHttpParser extends Logging {
         case OK | CREATED => response.json.validate[Seq[SavedPendingRegistration]] match {
           case JsSuccess(savedPendingRegistration, _) => Right(savedPendingRegistration)
           case JsError(errors) =>
-            logger.error(s"Failed trying to parse Pending Registration JSON with errors $errors.")
+            logger.error(s"Failed trying to parse Pending Registrations JSON with errors $errors.")
             Left(InvalidJson)
         }
 
         case status =>
-          logger.error(s"Received unexpected error when trying to ${operation(method)} a Pending Registration with the given intermediary number " +
+          logger.error(s"Received unexpected error when trying to ${operation(method)} Pending Registrations with the given intermediary number " +
             s"with status $status and body ${response.body}")
           Left(UnexpectedResponseStatus(
             response.status,
-            s"Unexpected response when trying to ${operation(method)} the pending registration, status $status returned")
+            s"Unexpected response when trying to ${operation(method)} pending registrations, status $status returned")
           )
       }
     }

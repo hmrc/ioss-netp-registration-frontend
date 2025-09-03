@@ -285,6 +285,73 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
       }
     }
 
+    ".getPendingRegistrationsByIntermediaryNumber" - {
+
+      val url: String = s"/ioss-netp-registration/pending-registrations/$intermediaryNumber"
+
+      "must return a Right(Seq(SavedPendingRegistration)) for a given intermediaryNumber when pending registrations exist in the database" in {
+
+        val responseBody = Json.toJson(Seq(savedPendingRegistration)).toString
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[RegistrationConnector]
+
+          server.stubFor(
+            get(urlEqualTo(url))
+              .willReturn(ok()
+                .withBody(responseBody))
+          )
+
+          val result = connector.getPendingRegistrationsByIntermediaryNumber(intermediaryNumber).futureValue
+
+          result `mustBe` Right(Seq(savedPendingRegistration))
+        }
+      }
+
+      otherErrorStatuses.foreach { status =>
+        s"must return Left(UnexpectedResponseStatus) when the server returns status: $status" in {
+
+          val response = UnexpectedResponseStatus(status, s"Unexpected response when trying to retrieve pending registrations, status $status returned")
+
+          running(application) {
+
+            val connector = application.injector.instanceOf[RegistrationConnector]
+
+            server.stubFor(
+              get(urlEqualTo(url))
+                .willReturn(aResponse()
+                  .withStatus(status))
+            )
+
+            val result = connector.getPendingRegistrationsByIntermediaryNumber(intermediaryNumber).futureValue
+
+            result `mustBe` Left(response)
+          }
+        }
+      }
+    }
+
+    ".deletePendingRegistration" - {
+
+      val url: String = s"/ioss-netp-registration/pending-registrations/$journeyId"
+
+      "must return true when a pending registration is successfully deleted" in {
+
+          val connector = application.injector.instanceOf[RegistrationConnector]
+
+          server.stubFor(
+            delete(urlEqualTo(url))
+              .willReturn(ok()
+              .withBody("true"))
+          )
+
+          val result = connector.deletePendingRegistration(journeyId).futureValue
+
+          result mustEqual true
+      }
+    }
+
     ".validateClientCode" - {
 
       val uniqueUrlCode: String = savedPendingRegistration.uniqueUrlCode
@@ -354,7 +421,6 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
         }
       }
     }
-
 
     ".getOssRegistration" - {
 
