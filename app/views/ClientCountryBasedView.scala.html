@@ -26,7 +26,7 @@
     formHelper: FormWithCSRF,
     govukErrorSummary: GovukErrorSummary,
     govukSelect: GovukSelect,
-    button: ButtonGroup
+    govukButton: GovukButton
 )
 
 @(form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
@@ -54,6 +54,8 @@
             )           
         )
 
-        @button("site.continue", ClientCountryBasedPage.route(waypoints).url, waypoints)
+        @govukButton(
+            ButtonViewModel(messages("site.continue")).withAttribute("id", "continue")
+        )
     }
 }
