@@ -16,9 +16,7 @@
 
 package models
 
-import models.domain.VatCustomerInfo
 import play.api.libs.json.{JsObject, JsValue, Json, OFormat}
-import uk.gov.hmrc.domain.Vrn
 
 import java.time.Instant
 
@@ -30,6 +28,6 @@ case class SavedUserAnswers(
                            )
 
 object SavedUserAnswers {
-  
+
   implicit val format: OFormat[SavedUserAnswers] = Json.format[SavedUserAnswers]
 }
