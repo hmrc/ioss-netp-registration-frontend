@@ -54,7 +54,7 @@ class SavedProgressController @Inject()(
         .atZone(clock.getZone).toLocalDate.format(saveForLaterDateFormatter)
 
       Future.fromTry(request.userAnswers.set(SavedProgressPage, continueUrl.get(OnlyRelative).url)).flatMap { savedProgressAnswers =>
-        val saveForLaterRequest: SaveForLaterRequest = SaveForLaterRequest(savedProgressAnswers, request.intermediaryNumber) 
+        val saveForLaterRequest: SaveForLaterRequest = SaveForLaterRequest(savedProgressAnswers, request.intermediaryNumber)
         (for {
           saveForLaterResult <- saveForLaterConnector.submit(saveForLaterRequest)
         } yield {

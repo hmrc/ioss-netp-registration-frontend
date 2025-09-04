@@ -500,3 +500,22 @@ errorSubmittingRegistration.heading = Your registration is not submitted
 errorSubmittingRegistration.p1 = We have not saved your answers.
 errorSubmittingRegistration.tryAgainLater = You can <a class="govuk-link" href={0}>try again later</a>.
 errorSubmittingRegistration.contactUs = If the problem continues, you can email us at <a class="govuk-link" href="mailto:vatoss.contact@hmrc.gov.uk">vatoss.contact@hmrc.gov.uk</a>
+
+savedProgress.title = We have saved your progress
+savedProgress.subtitle = We''ll keep your information until <br>{0}
+savedProgress.nextSteps = What happens next
+savedProgress.listStart = You can:
+savedProgress.continueRegistration = continue to complete your registration
+savedProgress.signOut = sign out and come back later
+savedProgress.signIn = If you sign out, you must sign back into your <a href="{0}" class="govuk-link">Government Gateway</a> to continue.
+saveProgress.button = Save and come back later
+
+continueRegistration.title = You have a registration in progress. Do you want to continue?
+continueRegistration.heading = You have a registration in progress. Do you want to continue?
+continueRegistration.error.required = Select yes if want to continue your registration
+continueRegistration.continue = Yes
+continueRegistration.delete = No, delete my answers and start again
+
+noRegistrationInProgress.title = We did not find a registration in progress
+noRegistrationInProgress.heading = We did not find a registration in progress
+noRegistrationInProgress.sessionExpired = Your previous session may have expired.
