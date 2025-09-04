@@ -33,33 +33,3 @@ object SaveForLaterRequest {
     SaveForLaterRequest(journeyId = userAnswers.journeyId, data = userAnswers.data, intermediaryNumber = intermediaryNumber)
   }
 }
-
-
-/** Notes below on the change of this class
- * TLDR -> Not all NETP have VRN so makes no sense to use as their ID, we perform no checks on ID's we cannot check i.e. FTR, All have a uniqueID and Intermediary Number which is needed to call the DB later on */
-
-
-/**
- * Original case class:
- * case class SaveForLaterRequest(
- * vrn: Vrn,
- * data: JsValue,
- * vatInfo: Option[VatCustomerInfo]
- * )
- *
- * It appears we send the VRN as a way to identify this
- * // Why are we sending of the VRN? is this to determine the intermediary? could we do this with intermediaryNumber??
- * // After checking the BE it appears we just use this to identify the answers?
- * // Intermediary Number should always be present?
- * // But could the Intermediary start the journey for one, then to another?
- * // The link in the dashboard needs the tax identifier number so i believe this will need to be stored in the data request.
- *
- *
- * Option 1:
- * We could store things by JourneyID- This would make sure they are unique. When reading from the database run a similar method to: getCustomerIdentification to get the data.
- * Pro- always unique
- * Con- More logic when reading, possibly more logic when generating next page
- *
- * Option 2:
- * Store things by their customerIdentification i.e. VRN etc. We never ensure these are unique
- */
