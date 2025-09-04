@@ -11,13 +11,13 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.slf4j.MDC
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
-import uk.gov.hmrc.play.bootstrap.dispatchers.MDCPropagatingExecutorService
 
 import java.time.temporal.ChronoUnit
 import java.time.{Clock, Instant, ZoneId}
-import java.util.concurrent.Executors
 import scala.concurrent.{ExecutionContext, Future}
 
 class SessionRepositorySpec
@@ -28,6 +28,10 @@ class SessionRepositorySpec
     with IntegrationPatience
     with OptionValues
     with MockitoSugar {
+
+  private val app: Application = new GuiceApplicationBuilder().build()
+
+  implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
   private val instant = Instant.now.truncatedTo(ChronoUnit.MILLIS)
   private val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
@@ -41,7 +45,7 @@ class SessionRepositorySpec
     mongoComponent = mongoComponent,
     appConfig = mockAppConfig,
     clock = stubClock
-  )(scala.concurrent.ExecutionContext.Implicits.global)
+  )(ec)
 
   ".set" - {
 
@@ -134,9 +138,6 @@ class SessionRepositorySpec
 
   private def mustPreserveMdc[A](f: => Future[A])(implicit pos: Position): Unit =
     "must preserve MDC" in {
-
-      implicit lazy val ec: ExecutionContext =
-        ExecutionContext.fromExecutor(new MDCPropagatingExecutorService(Executors.newFixedThreadPool(2)))
 
       MDC.put("test", "foo")
 

@@ -44,4 +44,19 @@ object ClientHasVatNumberSummary {
       )
     }
   }
+
+  def rowWithoutAction(
+           waypoints: Waypoints,
+           answers: UserAnswers
+         )(implicit messages: Messages): Option[SummaryListRow] = {
+    answers.get(ClientHasVatNumberPage).map { answer =>
+
+      val value = if (answer) "site.yes" else "site.no"
+
+      SummaryListRowViewModel(
+        key = "clientHasVatNumber.checkYourAnswersLabel",
+        value = ValueViewModel(value)
+      )
+    }
+  }
 }

@@ -43,4 +43,18 @@ object ClientHasUtrNumberSummary  {
           )
         )
     }
+
+  def rowWithoutAction(
+           waypoints: Waypoints,
+           answers: UserAnswers
+         )(implicit messages: Messages): Option[SummaryListRow] =
+    answers.get(ClientHasUtrNumberPage).map { answer =>
+
+      val value = if (answer) "site.yes" else "site.no"
+
+      SummaryListRowViewModel(
+        key = "clientHasUtrNumber.checkYourAnswersLabel",
+        value = ValueViewModel(value)
+      )
+    }
 }

@@ -42,4 +42,16 @@ object ClientsNinoNumberSummary  {
           )
         )
     }
+
+  def rowWithoutAction(
+           waypoints: Waypoints,
+           answers: UserAnswers
+         )(implicit messages: Messages): Option[SummaryListRow] =
+    answers.get(ClientsNinoNumberPage).map { answer =>
+
+      SummaryListRowViewModel(
+        key = "clientsNinoNumber.checkYourAnswersLabel",
+        value = ValueViewModel(HtmlFormat.escape(answer).toString)
+      )
+    }
 }

@@ -17,9 +17,10 @@
 package connectors
 
 import config.Service
-import connectors.RegistrationHttpParser.{RegistrationResultResponse, *}
+import connectors.RegistrationHttpParser.*
 import connectors.SavedPendingRegistrationHttpParser.{SavedPendingRegistrationResponse, SavedPendingRegistrationResultResponseReads}
 import connectors.ValidateClientCodeHttpParser.{validateClientCodeResponse, ValidateClientCodeReads}
+import connectors.SavedPendingRegistrationsHttpParser._
 import connectors.VatCustomerInfoHttpParser.{VatCustomerInfoResponse, VatCustomerInfoResponseReads}
 import logging.Logging
 import models.PendingRegistrationRequest
@@ -62,6 +63,15 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
       .execute[SavedPendingRegistrationResponse]
   }
 
+  def getPendingRegistrationsByIntermediaryNumber(intermediaryNumber: String)(implicit hc: HeaderCarrier): Future[SavedPendingRegistrationsResponse] = {
+    httpClientV2.get(url"$baseUrl/pending-registrations/$intermediaryNumber")
+      .execute[SavedPendingRegistrationsResponse]
+  }
+  
+  def deletePendingRegistration(journeyId: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
+    httpClientV2.delete(url"$baseUrl/pending-registrations/$journeyId").execute[Boolean]
+  }
+
   def validateClientCode(uniqueUrlCode: String, activationCode: String)(implicit hc: HeaderCarrier): Future[validateClientCodeResponse] = {
     httpClientV2.get(url"$baseUrl/validate-pending-registration/$uniqueUrlCode/$activationCode")
       .execute[validateClientCodeResponse]
@@ -77,5 +87,4 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
 
   def createRegistration(registrationRequest: EtmpRegistrationRequest)(implicit hc: HeaderCarrier): Future[RegistrationResultResponse] =
     httpClientV2.post(url"$baseUrl/create-registration").withBody(Json.toJson(registrationRequest)).execute[RegistrationResultResponse]
-
 }

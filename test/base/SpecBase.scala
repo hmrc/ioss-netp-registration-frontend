@@ -88,6 +88,8 @@ trait SpecBase
   def testCredentials: Credentials = Credentials(userAnswersId, "GGW")
 
   val vatNumber = "GB123456789"
+  val intermediaryNumber = "IN9001234567"
+  val intermediaryName = "Intermediary Company Name"
   val vrn: Vrn = Vrn("123456789")
   val utr: String = "1234567890"
   val nino = "QQ 12 34 56 C"

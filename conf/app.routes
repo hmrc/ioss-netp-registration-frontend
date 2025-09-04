@@ -191,3 +191,7 @@ POST        /declaration-client                                             cont
 GET         /successful-registration                                        controllers.clientDeclarationJourney.ClientSuccessfulRegistrationController.onPageLoad()
 
 GET         /error-submitting-registration                                  controllers.ErrorSubmittingRegistrationController.onPageLoad()
+
+
+# Client Activation Section
+GET        /client-not-activated/:journeyId                                controllers.ClientNotActivatedController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
