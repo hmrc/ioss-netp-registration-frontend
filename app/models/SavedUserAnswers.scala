@@ -21,7 +21,7 @@ import play.api.libs.json.{JsObject, JsValue, Json, OFormat}
 import java.time.Instant
 
 case class SavedUserAnswers(
-                             journeyID: String,
+                             journeyId: String,
                              data: JsValue,
                              intermediaryNumber: String,
                              lastUpdated: Instant

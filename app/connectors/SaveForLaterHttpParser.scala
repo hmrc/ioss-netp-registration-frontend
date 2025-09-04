@@ -32,6 +32,9 @@ object SaveForLaterHttpParser extends Logging {
     override def read(method: String, url: String, response: HttpResponse): SaveForLaterResponse = {
       response.status match {
         case OK | CREATED =>
+          println("\n\n in the validation")
+          println(response.json)
+          println(response.json.validate[SavedUserAnswers])
           response.json.validate[SavedUserAnswers] match {
             case JsSuccess(answers, _) => Right(Some(answers))
             case JsError(errors) =>

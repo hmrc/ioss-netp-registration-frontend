@@ -20,12 +20,13 @@
 @import pages.Waypoints
 @import views.html.components.ButtonGroup
 
+
 @this(
         layout: templates.Layout,
         formHelper: FormWithCSRF,
         govukErrorSummary: GovukErrorSummary,
         govukRadios: GovukRadios,
-        govukButton: GovukButton
+        button: ButtonGroup
 )
 
 @(form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
@@ -45,8 +46,6 @@
       )
     )
 
-    @govukButton(
-        ButtonViewModel(messages("site.continue")).withAttribute("id", "continue")
-    )
+    @button("site.continue", HasFixedEstablishmentPage.route(waypoints).url, waypoints)
   }
 }

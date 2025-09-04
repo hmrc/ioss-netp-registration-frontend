@@ -60,7 +60,9 @@ class SavedProgressController @Inject()(
         } yield {
           saveForLaterResult
         }).flatMap {
-          case Right(Some(_: SavedUserAnswers)) =>
+          case Right(Some(userAnswers: SavedUserAnswers)) =>
+            println("\n\n userAnswers")
+            println(userAnswers)
             for {
               _ <- cc.sessionRepository.set(savedProgressAnswers)
             } yield {
