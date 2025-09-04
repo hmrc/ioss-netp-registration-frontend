@@ -19,11 +19,13 @@ package services.core
 import connectors.core.ValidateCoreRegistrationConnector
 import logging.Logging
 import models.CountryWithValidationDetails.convertTaxIdentifierForTransfer
-import models.{Country, PreviousScheme}
+import models.audit.CoreRegistrationAuditModel
 import models.core.Match.ossDateFormatter
-import models.core.{CoreRegistrationRequest, Match, MatchType, SourceType, TraderId}
+import models.core.*
 import models.iossRegistration.IossEtmpExclusionReason
 import models.requests.DataRequest
+import models.{Country, PreviousScheme}
+import services.AuditService
 import services.ioss.IossRegistrationService
 import services.oss.OssRegistrationService
 import uk.gov.hmrc.domain.Vrn
@@ -38,6 +40,7 @@ class CoreRegistrationValidationService @Inject()(
                                                    connector: ValidateCoreRegistrationConnector,
                                                    iossRegistrationService: IossRegistrationService,
                                                    ossRegistrationService: OssRegistrationService,
+                                                   auditService: AuditService,
                                                    clock: Clock
                                                  )(implicit ec: ExecutionContext) extends Logging {
   
@@ -121,9 +124,15 @@ class CoreRegistrationValidationService @Inject()(
   }
 
   private def getValidateCoreRegistrationResponse(coreRegistrationRequest: CoreRegistrationRequest)
-                                                 (implicit hc: HeaderCarrier): Future[Option[Match]] = {
+                                                 (implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Match]] = {
     connector.validateCoreRegistration(coreRegistrationRequest).map {
       case Right(coreRegistrationResponse) =>
+        auditService.audit(
+          CoreRegistrationAuditModel.build(
+            coreRegistrationRequest = coreRegistrationRequest,
+              coreRegistrationValidationResult = coreRegistrationResponse
+          )
+        )
         coreRegistrationResponse.matches.headOption
       case Left(errorResponse) =>
         logger.error(s"failed getting registration response $errorResponse")
