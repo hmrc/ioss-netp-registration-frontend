@@ -398,134 +398,132 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
         value `mustBe` None
         verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
       }
+    }
 
-      // TODO -> Audit event?
-      "and return IOSS Match when countryCode is XI and previousScheme is IOSS" in {
+    "must return IOSS Match when countryCode is XI and previousScheme is IOSS" in {
 
-        val iossNumber = "IM900123456789"
-        val countryCode = Country.northernIreland.code
-        val previousScheme = PreviousScheme.IOSSWOI
+      val iossNumber = "IM900123456789"
+      val countryCode = Country.northernIreland.code
+      val previousScheme = PreviousScheme.IOSSWOI
 
-        val exclusion = IossEtmpExclusion(
-          exclusionReason = IossEtmpExclusionReason.FailsToComply,
-          decisionDate = LocalDate.of(2022, 1, 1),
-          effectiveDate = LocalDate.of(2022, 2, 1),
-          quarantine = true
-        )
+      val exclusion = IossEtmpExclusion(
+        exclusionReason = IossEtmpExclusionReason.FailsToComply,
+        decisionDate = LocalDate.of(2022, 1, 1),
+        effectiveDate = LocalDate.of(2022, 2, 1),
+        quarantine = true
+      )
 
-        val iossDisplayRegistration = IossEtmpDisplayRegistration(
-          tradingNames = Seq(IossEtmpTradingName("test 1")),
-          schemeDetails = IossEtmpDisplaySchemeDetails(
-            contactName = "Test Trader",
-            businessTelephoneNumber = "123456",
-            businessEmailId = "test@example.com"
-          ),
-          bankDetails = IossEtmpBankDetails(
-            accountName = "Test Account",
-            iban = Iban("GB33BUKB20201555555555").value,
-            bic = Some(Bic("ABCDGB2A").get)
-          ),
-          exclusions = Seq(exclusion)
-        )
+      val iossDisplayRegistration = IossEtmpDisplayRegistration(
+        tradingNames = Seq(IossEtmpTradingName("test 1")),
+        schemeDetails = IossEtmpDisplaySchemeDetails(
+          contactName = "Test Trader",
+          businessTelephoneNumber = "123456",
+          businessEmailId = "test@example.com"
+        ),
+        bankDetails = IossEtmpBankDetails(
+          accountName = "Test Account",
+          iban = Iban("GB33BUKB20201555555555").value,
+          bic = Some(Bic("ABCDGB2A").get)
+        ),
+        exclusions = Seq(exclusion)
+      )
 
-        val expectedResponse: CoreRegistrationValidationResult = coreValidationResponses.copy(
-          searchId = iossNumber,
-          searchIdIssuedBy = countryCode,
-          matches = Seq.empty
-        )
+      val expectedResponse: CoreRegistrationValidationResult = coreValidationResponses.copy(
+        searchId = iossNumber,
+        searchIdIssuedBy = countryCode,
+        matches = Seq.empty
+      )
 
-        when(iossRegistrationService.getIossRegistration(iossNumber)) thenReturn iossDisplayRegistration.toFuture
-        when(connector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
+      when(iossRegistrationService.getIossRegistration(iossNumber)) thenReturn iossDisplayRegistration.toFuture
+      when(connector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
 
-        val expectedMatch = Match(
-          matchType = MatchType.TraderIdQuarantinedNETP,
-          traderId = TraderId(iossNumber),
-          intermediary = None,
-          memberState = countryCode,
-          exclusionStatusCode = Some(4),
-          exclusionDecisionDate = Some("2022-01-01"),
-          exclusionEffectiveDate = Some("2022-02-01"),
-          nonCompliantReturns = None,
-          nonCompliantPayments = None
-        )
+      val expectedMatch = Match(
+        matchType = MatchType.TraderIdQuarantinedNETP,
+        traderId = TraderId(iossNumber),
+        intermediary = None,
+        memberState = countryCode,
+        exclusionStatusCode = Some(4),
+        exclusionDecisionDate = Some("2022-01-01"),
+        exclusionEffectiveDate = Some("2022-02-01"),
+        nonCompliantReturns = None,
+        nonCompliantPayments = None
+      )
 
-        val service = new CoreRegistrationValidationService(
-          connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
-        )
+      val service = new CoreRegistrationValidationService(
+        connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+      )
 
-        val result = service.searchScheme(iossNumber, previousScheme, None, countryCode).futureValue
+      val result = service.searchScheme(iossNumber, previousScheme, None, countryCode).futureValue
 
-        result `mustBe` Some(expectedMatch)
-        verifyNoInteractions(mockAuditService)
-      }
+      result `mustBe` Some(expectedMatch)
+      verifyNoInteractions(mockAuditService)
+    }
 
-      // TODO -> Audit event?
-      "and return OSS Match when countryCode is XI and previousScheme is OSS" in {
+    "must return OSS Match when countryCode is XI and previousScheme is OSS" in {
 
-        val vrn = "600000014"
-        val countryCode = Country.northernIreland.code
-        val previousScheme = PreviousScheme.OSSU
+      val vrn = "600000014"
+      val countryCode = Country.northernIreland.code
+      val previousScheme = PreviousScheme.OSSU
 
-        val exclusion = OssExcludedTrader(
-          vrn = Vrn(vrn),
-          exclusionReason = Some(ExclusionReason.FailsToComply),
-          effectiveDate = Some(LocalDate.of(2022, 2, 1)),
-          quarantined = Some(true)
-        )
+      val exclusion = OssExcludedTrader(
+        vrn = Vrn(vrn),
+        exclusionReason = Some(ExclusionReason.FailsToComply),
+        effectiveDate = Some(LocalDate.of(2022, 2, 1)),
+        quarantined = Some(true)
+      )
 
-        val ossDisplayRegistration = OssRegistration(
-          vrn = Vrn(vrn),
-          registeredCompanyName = "Company Name",
-          tradingNames = Seq("Trade1", "Trade2"),
-          vatDetails = mock[OssVatDetails],
-          euRegistrations = Seq.empty,
-          contactDetails = OssContactDetails("Test name", "0123456789", "test@test.com"),
-          websites = Seq("https://example.com"),
-          commencementDate = LocalDate.now(),
-          previousRegistrations = Seq.empty,
-          bankDetails = BankDetails("Test name", None, Iban("GB33BUKB20201555555555").value),
-          isOnlineMarketplace = false,
-          niPresence = None,
-          dateOfFirstSale = Some(LocalDate.now()),
-          submissionReceived = Some(Instant.now()),
-          lastUpdated = Some(Instant.now()),
-          excludedTrader = Some(exclusion),
-          transferringMsidEffectiveFromDate = None,
-          nonCompliantReturns = None,
-          nonCompliantPayments = None,
-          adminUse = mock[OssAdminUse]
-        )
+      val ossDisplayRegistration = OssRegistration(
+        vrn = Vrn(vrn),
+        registeredCompanyName = "Company Name",
+        tradingNames = Seq("Trade1", "Trade2"),
+        vatDetails = mock[OssVatDetails],
+        euRegistrations = Seq.empty,
+        contactDetails = OssContactDetails("Test name", "0123456789", "test@test.com"),
+        websites = Seq("https://example.com"),
+        commencementDate = LocalDate.now(),
+        previousRegistrations = Seq.empty,
+        bankDetails = BankDetails("Test name", None, Iban("GB33BUKB20201555555555").value),
+        isOnlineMarketplace = false,
+        niPresence = None,
+        dateOfFirstSale = Some(LocalDate.now()),
+        submissionReceived = Some(Instant.now()),
+        lastUpdated = Some(Instant.now()),
+        excludedTrader = Some(exclusion),
+        transferringMsidEffectiveFromDate = None,
+        nonCompliantReturns = None,
+        nonCompliantPayments = None,
+        adminUse = mock[OssAdminUse]
+      )
 
-        val expectedResponse: CoreRegistrationValidationResult = coreValidationResponses.copy(
-          searchId = vrn,
-          searchIdIssuedBy = countryCode,
-          matches = Seq.empty
-        )
+      val expectedResponse: CoreRegistrationValidationResult = coreValidationResponses.copy(
+        searchId = vrn,
+        searchIdIssuedBy = countryCode,
+        matches = Seq.empty
+      )
 
-        when(ossRegistrationService.getLatestOssRegistration(Vrn(vrn))) thenReturn ossDisplayRegistration.toFuture
-        when(connector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
+      when(ossRegistrationService.getLatestOssRegistration(Vrn(vrn))) thenReturn ossDisplayRegistration.toFuture
+      when(connector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
 
-        val expectedMatch = Match(
-          matchType = MatchType.TraderIdQuarantinedNETP,
-          traderId = TraderId(vrn),
-          intermediary = None,
-          memberState = countryCode,
-          exclusionStatusCode = Some(4),
-          exclusionDecisionDate = None,
-          exclusionEffectiveDate = Some("2022-02-01"),
-          nonCompliantReturns = None,
-          nonCompliantPayments = None
-        )
+      val expectedMatch = Match(
+        matchType = MatchType.TraderIdQuarantinedNETP,
+        traderId = TraderId(vrn),
+        intermediary = None,
+        memberState = countryCode,
+        exclusionStatusCode = Some(4),
+        exclusionDecisionDate = None,
+        exclusionEffectiveDate = Some("2022-02-01"),
+        nonCompliantReturns = None,
+        nonCompliantPayments = None
+      )
 
-        val service = new CoreRegistrationValidationService(
-          connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
-        )
+      val service = new CoreRegistrationValidationService(
+        connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+      )
 
-        val result = service.searchScheme(vrn, previousScheme, None, countryCode).futureValue
+      val result = service.searchScheme(vrn, previousScheme, None, countryCode).futureValue
 
-        result `mustBe` Some(expectedMatch)
-        verifyNoInteractions(mockAuditService)
-      }
+      result `mustBe` Some(expectedMatch)
+      verifyNoInteractions(mockAuditService)
     }
 
     "must return exception when server responds with an error" in {
