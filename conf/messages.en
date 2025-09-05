@@ -510,3 +510,9 @@ clientNotActivated.p1.link = To activate their account, you must send your clien
 clientNotActivated.p2 = There they can agree to the terms and sign the declaration.
 clientNotActivated.info = If your client has not received an activation code from HMRC, you might need to check the email address you gave us: <span class="govuk-!-font-weight-bold"> {0} </span> <br> <a class="govuk-link" href="">Update email address</a>
 clientNotActivated.p3 = Your client must confirm their activation by {0}. If not, you will need to register them again.
+updateClientEmailAddress.title = updateClientEmailAddress
+updateClientEmailAddress.heading = updateClientEmailAddress
+updateClientEmailAddress.checkYourAnswersLabel = updateClientEmailAddress
+updateClientEmailAddress.error.required = Enter updateClientEmailAddress
+updateClientEmailAddress.error.length = UpdateClientEmailAddress must be 100 characters or less
+updateClientEmailAddress.change.hidden = UpdateClientEmailAddress
