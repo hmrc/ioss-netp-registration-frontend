@@ -37,7 +37,10 @@ object BusinessBasedInUKSummary {
       SummaryListRowViewModel(
         key = "businessBasedInUK.checkYourAnswersLabel",
         value = ValueViewModel(value),
-        actions = Seq.empty
+        actions = Seq(
+          ActionItemViewModel("site.change", BusinessBasedInUKPage.changeLink(waypoints, sourcePage).url)
+            .withVisuallyHiddenText(messages("businessBasedInUK.change.hidden"))
+        )
       )
     }
   }
