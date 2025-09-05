@@ -43,8 +43,8 @@ class SessionRepositorySpec
 
   protected override val repository: SessionRepository = new SessionRepository(
     mongoComponent = mongoComponent,
-    appConfig = mockAppConfig,
-    clock = stubClock
+    appConfig      = mockAppConfig,
+    clock          = stubClock
   )(ec)
 
   ".set" - {
@@ -70,7 +70,7 @@ class SessionRepositorySpec
 
         insert(userAnswers).futureValue
 
-        val result = repository.get(userAnswers.id).futureValue
+        val result         = repository.get(userAnswers.id).futureValue
         val expectedResult = userAnswers copy (lastUpdated = instant)
 
         result.value `mustBe` expectedResult
