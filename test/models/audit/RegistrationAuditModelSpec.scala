@@ -24,8 +24,7 @@ import play.api.mvc.AnyContent
 import play.api.test.FakeRequest
 
 class RegistrationAuditModelSpec extends SpecBase {
-
-  private val registrationAuditType: RegistrationAuditType = RegistrationAuditType.CreateRegistration
+  
   private val submissionResult: SubmissionResult = SubmissionResult.Success
   private val etmpEnrolmentResponse: EtmpEnrolmentResponse = EtmpEnrolmentResponse(iossReference = "123456789")
   private val testUserId = "test-user-id-12345"
@@ -46,7 +45,6 @@ class RegistrationAuditModelSpec extends SpecBase {
       )
 
       val registrationAuditModel = RegistrationAuditModel.build(
-        registrationAuditType = registrationAuditType,
         userAnswers = emptyUserAnswers,
         etmpEnrolmentResponse = Some(etmpEnrolmentResponse),
         submissionResult = submissionResult
@@ -76,7 +74,6 @@ class RegistrationAuditModelSpec extends SpecBase {
       )
 
       val registrationAuditModel = RegistrationAuditModel.build(
-        registrationAuditType = registrationAuditType,
         userAnswers = emptyUserAnswers,
         etmpEnrolmentResponse = None,
         submissionResult = SubmissionResult.Failure
@@ -106,7 +103,6 @@ class RegistrationAuditModelSpec extends SpecBase {
       )
 
       val registrationAuditModel = RegistrationAuditModel.build(
-        registrationAuditType = registrationAuditType,
         userAnswers = emptyUserAnswers,
         etmpEnrolmentResponse = Some(etmpEnrolmentResponse),
         submissionResult = submissionResult

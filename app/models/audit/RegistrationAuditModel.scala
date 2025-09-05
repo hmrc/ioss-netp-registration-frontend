@@ -22,7 +22,6 @@ import models.responses.etmp.EtmpEnrolmentResponse
 import play.api.libs.json.{JsValue, Json}
 
 case class RegistrationAuditModel(
-                                   registrationAuditType: RegistrationAuditType,
                                    credId: String,
                                    userAgent: String,
                                    userAnswers: UserAnswers,
@@ -30,10 +29,9 @@ case class RegistrationAuditModel(
                                    submissionResult: SubmissionResult
                                  ) extends JsonAuditModel {
 
-  override val auditType: String = registrationAuditType.auditType
-
-  override val transactionName: String = registrationAuditType.transactionName
-
+  override val auditType: String = "NETPRegistrationSubmitted"
+  override val transactionName: String = "netp-registration-submitted"
+  
   override val detail: JsValue = Json.obj(
     "credId" -> credId,
     "browserUserAgent" -> userAgent,
@@ -46,13 +44,11 @@ case class RegistrationAuditModel(
 object RegistrationAuditModel {
 
   def build(
-             registrationAuditType: RegistrationAuditType,
              userAnswers: UserAnswers,
              etmpEnrolmentResponse: Option[EtmpEnrolmentResponse],
              submissionResult: SubmissionResult
            )(implicit request: DataRequest[_]): RegistrationAuditModel =
     RegistrationAuditModel(
-      registrationAuditType = registrationAuditType,
       credId = request.userId,
       userAgent = request.headers.get("user-agent").getOrElse(""),
       userAnswers = userAnswers,

@@ -83,12 +83,6 @@ class DeclarationController @Inject()(
           registrationConnector.submitPendingRegistration(pendingRegistrationRequest).flatMap {
             case Right(submittedRegistration) =>
 
-              auditService.sendRegistrationAudit(
-                RegistrationAuditType.CreateRegistration,
-                None,
-                SubmissionResult.Success
-              )
-
               getClientEmail(waypoints, submittedRegistration.userAnswers) { clientEmail =>
                 sendEmail(submittedRegistration, clientEmail, clientCompanyName, intermediaryName)
 
