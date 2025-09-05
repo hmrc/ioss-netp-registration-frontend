@@ -56,19 +56,4 @@ object BusinessBasedInUKSummary {
       )
     }
   }
-
-  def rowWithoutAction(
-           waypoints: Waypoints,
-           answers: UserAnswers,
-         )(implicit messages: Messages): Option[SummaryListRow] = {
-    answers.get(BusinessBasedInUKPage).map { answer =>
-
-      val value = if (answer) "site.yes" else "site.no"
-
-      SummaryListRowViewModel(
-        key = "businessBasedInUK.checkYourAnswersLabel",
-        value = ValueViewModel(value)
-      )
-    }
-  }
 }
