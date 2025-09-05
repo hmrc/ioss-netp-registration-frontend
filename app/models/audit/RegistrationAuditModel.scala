@@ -17,7 +17,7 @@
 package models.audit
 
 import models.UserAnswers
-import models.requests.DataRequest
+import models.requests.{ClientOptionalDataRequest, DataRequest}
 import models.responses.etmp.EtmpEnrolmentResponse
 import play.api.libs.json.{JsValue, Json}
 
@@ -47,7 +47,7 @@ object RegistrationAuditModel {
              userAnswers: UserAnswers,
              etmpEnrolmentResponse: Option[EtmpEnrolmentResponse],
              submissionResult: SubmissionResult
-           )(implicit request: DataRequest[_]): RegistrationAuditModel =
+           )(implicit request: ClientOptionalDataRequest[_]): RegistrationAuditModel =
     RegistrationAuditModel(
       credId = request.userId,
       userAgent = request.headers.get("user-agent").getOrElse(""),

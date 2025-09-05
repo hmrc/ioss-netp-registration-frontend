@@ -17,14 +17,14 @@
 package models.audit
 
 import base.SpecBase
-import models.requests.DataRequest
+import models.requests.{ClientOptionalDataRequest, DataRequest}
 import models.responses.etmp.EtmpEnrolmentResponse
 import play.api.libs.json.Json
 import play.api.mvc.AnyContent
 import play.api.test.FakeRequest
 
 class RegistrationAuditModelSpec extends SpecBase {
-  
+
   private val submissionResult: SubmissionResult = SubmissionResult.Success
   private val etmpEnrolmentResponse: EtmpEnrolmentResponse = EtmpEnrolmentResponse(iossReference = "123456789")
   private val testUserId = "test-user-id-12345"
@@ -37,11 +37,10 @@ class RegistrationAuditModelSpec extends SpecBase {
       val fakeRequest = FakeRequest("POST", "/declaration")
         .withHeaders("user-agent" -> "test-browser/1.0")
 
-      implicit val dataRequest: DataRequest[AnyContent] = DataRequest(
+      implicit val dataRequest: ClientOptionalDataRequest[AnyContent] = ClientOptionalDataRequest(
         fakeRequest,
         testUserId,
-        emptyUserAnswers,
-        testIntermediaryNumber
+        emptyUserAnswers
       )
 
       val registrationAuditModel = RegistrationAuditModel.build(
@@ -66,11 +65,10 @@ class RegistrationAuditModelSpec extends SpecBase {
 
       val fakeRequest = FakeRequest("POST", "/declaration")
 
-      implicit val dataRequest: DataRequest[AnyContent] = DataRequest(
+      implicit val dataRequest: ClientOptionalDataRequest[AnyContent] = ClientOptionalDataRequest(
         fakeRequest,
         testUserId,
-        emptyUserAnswers,
-        testIntermediaryNumber
+        emptyUserAnswers
       )
 
       val registrationAuditModel = RegistrationAuditModel.build(
@@ -95,11 +93,10 @@ class RegistrationAuditModelSpec extends SpecBase {
 
       val fakeRequest = FakeRequest("POST", "/declaration")
 
-      implicit val dataRequest: DataRequest[AnyContent] = DataRequest(
+      implicit val dataRequest: ClientOptionalDataRequest[AnyContent] = ClientOptionalDataRequest(
         fakeRequest,
         testUserId,
-        emptyUserAnswers,
-        testIntermediaryNumber
+        emptyUserAnswers
       )
 
       val registrationAuditModel = RegistrationAuditModel.build(
@@ -107,7 +104,7 @@ class RegistrationAuditModelSpec extends SpecBase {
         etmpEnrolmentResponse = Some(etmpEnrolmentResponse),
         submissionResult = submissionResult
       )
-      
+
       val jsonDetail = registrationAuditModel.detail
       (jsonDetail \ "browserUserAgent").as[String] mustBe ""
     }

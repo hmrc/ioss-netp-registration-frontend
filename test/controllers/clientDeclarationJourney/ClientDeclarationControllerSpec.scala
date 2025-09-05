@@ -26,6 +26,8 @@ import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType, 
 import models.requests.ClientOptionalDataRequest
 import models.responses.InternalServerError as ServerError
 import models.responses.etmp.EtmpEnrolmentResponse
+import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
+import models.audit.{RegistrationAuditModel, SubmissionResult}
 import models.{ClientBusinessName, IntermediaryDetails, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.*
@@ -43,6 +45,8 @@ import repositories.SessionRepository
 import services.{AuditService, RegistrationService}
 import utils.FutureSyntax.FutureOps
 import views.html.clientDeclarationJourney.ClientDeclarationView
+
+import scala.concurrent.Future
 
 class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
