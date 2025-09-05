@@ -22,7 +22,8 @@ import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import logging.Logging
 import models.UserAnswers
 import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
-import models.audit.SubmissionResult
+import models.audit.SubmissionResult.{Failure, Success}
+import models.audit.{DeclarationSigningAuditModel, SubmissionResult}
 import pages.clientDeclarationJourney.ClientDeclarationPage
 import pages.{ClientBusinessNamePage, ErrorSubmittingRegistrationPage, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
@@ -86,24 +87,32 @@ class ClientDeclarationController @Inject()(
               registrationService.createRegistration(request.userAnswers).flatMap {
                 case Right(response) =>
                   registrationConnector.deletePendingRegistration(request.userAnswers.journeyId)
-                  
-                  auditService.sendAudit(
-                    declarationSigningAuditType = CreateClientDeclaration,
-                    result = SubmissionResult.Success,
-                    submittedDeclarationPageBody = view(form.fill(value), waypoints, clientCompanyName, intermediaryName).body
-                  )
+
                   for {
                     updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientDeclarationPage, value))
                     updatedAnswers2 <- Future.fromTry(updatedAnswers.set(EtmpEnrolmentResponseQuery, response))
                     _ <- sessionRepository.set(updatedAnswers2)
-                  } yield Redirect(routes.ClientSuccessfulRegistrationController.onPageLoad())
+                  } yield {
+                    auditService.audit(
+                      DeclarationSigningAuditModel.build(
+                        declarationSigningAuditType = CreateClientDeclaration,
+                        userAnswers = updatedAnswers2,
+                        submissionResult = Success,
+                        submittedDeclarationPageBody = view(form.fill(value), waypoints, clientCompanyName, intermediaryName).body
+                      )
+                    )
+                    Redirect(routes.ClientSuccessfulRegistrationController.onPageLoad())
+                  }
 
 
                 case Left(error) =>
-                  auditService.sendAudit(
-                    declarationSigningAuditType = CreateClientDeclaration,
-                    result = SubmissionResult.Failure,
-                    submittedDeclarationPageBody = view(form.fill(value), waypoints, clientCompanyName, intermediaryName).body
+                  auditService.audit(
+                    DeclarationSigningAuditModel.build(
+                      declarationSigningAuditType = CreateClientDeclaration,
+                      userAnswers = request.userAnswers,
+                      submissionResult = Failure,
+                      submittedDeclarationPageBody = view(form.fill(value), waypoints, clientCompanyName, intermediaryName).body
+                    )
                   )
                   logger.error(s"Unexpected result on registration creation submission: ${error.body}")
                   Redirect(ErrorSubmittingRegistrationPage.route(waypoints)).toFuture

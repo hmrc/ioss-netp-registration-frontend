@@ -21,7 +21,8 @@ import controllers.actions.*
 import forms.DeclarationFormProvider
 import logging.Logging
 import models.audit.DeclarationSigningAuditType.CreateDeclaration
-import models.audit.{DeclarationSigningAuditType, SubmissionResult}
+import models.audit.SubmissionResult.{Failure, Success}
+import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType, SubmissionResult}
 import models.emails.EmailSendingResult
 import models.{IntermediaryDetails, PendingRegistrationRequest, SavedPendingRegistration}
 import pages.{DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints}
@@ -73,7 +74,6 @@ class DeclarationController @Inject()(
     implicit request =>
 
       getClientCompanyName(waypoints) { clientCompanyName =>
-
         getIntermediaryName().flatMap { intermediaryOpt =>
           val intermediaryName = intermediaryOpt.getOrElse("")
 
@@ -81,35 +81,39 @@ class DeclarationController @Inject()(
 
           registrationConnector.submitPendingRegistration(pendingRegistrationRequest).flatMap {
             case Right(submittedRegistration) =>
-
               getClientEmail(waypoints, submittedRegistration.userAnswers) { clientEmail =>
-
                 sendEmail(submittedRegistration, clientEmail, clientCompanyName, intermediaryName)
 
                 form.bindFromRequest().fold(
                   formWithErrors =>
-
-                    Future.successful(BadRequest(view(formWithErrors, waypoints, intermediaryName, clientCompanyName))),
+                    BadRequest(view(formWithErrors, waypoints, intermediaryName, clientCompanyName)).toFuture,
 
                   value =>
-
-                    auditService.sendAudit(
-                      declarationSigningAuditType = CreateDeclaration,
-                      result = SubmissionResult.Success,
-                      submittedDeclarationPageBody = view(form.fill(value), waypoints, intermediaryName, clientCompanyName).body
-                    )
                     for {
                       updatedAnswers <- Future.fromTry(request.userAnswers.set(DeclarationPage, value))
                       _ <- cc.sessionRepository.set(updatedAnswers)
-                    } yield Redirect(routes.ApplicationCompleteController.onPageLoad())
+                    } yield {
+                      auditService.audit(
+                        DeclarationSigningAuditModel.build(
+                          declarationSigningAuditType = CreateDeclaration,
+                          userAnswers = updatedAnswers,
+                          submissionResult = Success,
+                          submittedDeclarationPageBody = view(form.fill(value), waypoints, intermediaryName, clientCompanyName).body
+                        )
+                      )
+                      Redirect(routes.ApplicationCompleteController.onPageLoad())
+                    }
                 )
               }
 
             case Left(error) =>
-              auditService.sendAudit(
-                declarationSigningAuditType = CreateDeclaration,
-                result = SubmissionResult.Failure,
-                submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
+              auditService.audit(
+                DeclarationSigningAuditModel.build(
+                  declarationSigningAuditType = CreateDeclaration,
+                  userAnswers = request.userAnswers,
+                  submissionResult = Failure,
+                  submittedDeclarationPageBody = view(form, waypoints, intermediaryName, clientCompanyName).body
+                )
               )
               logger.error(s"Received an unexpected error when submitting the pending registration: ${error.body}")
               Redirect(ErrorSubmittingPendingRegistrationPage.route(waypoints).url).toFuture
@@ -125,7 +129,7 @@ class DeclarationController @Inject()(
     val futureResult = registrationConnector.getIntermediaryVatCustomerInfo()
 
     if (registrationConnector.getIntermediaryVatCustomerInfo() == null) {
-      Future.successful(None)
+      None.toFuture
     } else {
       futureResult.map {
         case Right(vatInfo) =>
@@ -153,5 +157,4 @@ class DeclarationController @Inject()(
       emailAddress = clientEmail
     )
   }
-
 }

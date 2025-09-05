@@ -17,38 +17,22 @@
 package services
 
 import config.FrontendAppConfig
-import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType, JsonAuditModel, SubmissionResult}
-import models.requests.GenericRequest
+import models.audit.JsonAuditModel
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.AuditExtensions
-import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class AuditService @Inject()(
                               appConfig: FrontendAppConfig,
                               auditConnector: AuditConnector
                             )(implicit ec: ExecutionContext) {
 
-  def sendAudit(
-                 declarationSigningAuditType: DeclarationSigningAuditType,
-                 result: SubmissionResult,
-                 submittedDeclarationPageBody: String
-               )(implicit hc: HeaderCarrier, request: GenericRequest[_]): Unit = {
-    audit(
-      DeclarationSigningAuditModel.build(
-        declarationSigningAuditType,
-        request.userAnswers,
-        result,
-        submittedDeclarationPageBody
-      )
-    )
-  }
-
-  private def audit(dataSource: JsonAuditModel)(implicit hc: HeaderCarrier, request: Request[_]): Future[AuditResult] = {
+  def audit(dataSource: JsonAuditModel)(implicit hc: HeaderCarrier, request: Request[_]): Unit = {
     val event = toExtendedDataEvent(dataSource, request.path)
     auditConnector.sendExtendedEvent(event)
   }

@@ -34,5 +34,4 @@ object DeclarationSigningAuditType extends Enumerable.Implicits {
     override val auditType: String = "ClientDeclarationSubmitted"
     override val transactionName: String = "client-declaration-submitted"
   }
-  
 }

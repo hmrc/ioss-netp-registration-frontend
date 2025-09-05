@@ -157,7 +157,7 @@ object Country {
     Country("CU", "Cuba"),
     Country("CW", "Curaçao"),
     Country("CY", "Cyprus"),
-    Country("CZ", "Czechia"),
+    Country("CZ", "Czech Republic"),
     Country("DK", "Denmark"),
     Country("DJ", "Djibouti"),
     Country("DM", "Dominica"),

@@ -18,7 +18,7 @@ package services
 
 import config.FrontendAppConfig
 import models.audit.DeclarationSigningAuditType.CreateDeclaration
-import models.audit.SubmissionResult
+import models.audit.{DeclarationSigningAuditModel, SubmissionResult}
 import models.requests.DataRequest
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, times, verify, when}
@@ -32,8 +32,8 @@ import testutils.RegistrationData.{emptyUserAnswers, intermediaryDetails, userAn
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class AuditServiceSpec extends AnyFreeSpec with MockitoSugar with ScalaFutures with Matchers with BeforeAndAfterEach {
   private val auditConnector = mock[AuditConnector]
@@ -44,23 +44,30 @@ class AuditServiceSpec extends AnyFreeSpec with MockitoSugar with ScalaFutures w
     reset(auditConnector)
   }
 
-  ".sendAudit" - {
+  ".audit" - {
+
     "must send Extended Event for create declaration" in {
+
       when(auditConnector.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
 
       val service = new AuditService(mockAppConfig, auditConnector)
 
       implicit val dataRequest: DataRequest[_] = DataRequest(
-          FakeRequest("POST", "/test-path"),
-          userAnswersId,
-          emptyUserAnswers,
+        FakeRequest("POST", "/test-path"),
+        userAnswersId,
+        emptyUserAnswers,
         intermediaryDetails.intermediaryNumber
-        )
+      )
 
-      service.sendAudit(
-        CreateDeclaration,
-        SubmissionResult.Success,
-        "test-declaration-body"
+      service.audit(
+        DeclarationSigningAuditModel(
+          declarationSigningAuditType = CreateDeclaration,
+          credId = "test",
+          userAgent = "test",
+          userAnswers = emptyUserAnswers,
+          submissionResult = SubmissionResult.Success,
+          submittedDeclarationPageBody = "test-declaration-body"
+        )
       )
 
       verify(auditConnector, times(1)).sendExtendedEvent(any())(any(), any())

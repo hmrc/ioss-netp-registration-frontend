@@ -21,19 +21,19 @@ import models.requests.GenericRequest
 import play.api.libs.json.{JsValue, Json}
 
 case class DeclarationSigningAuditModel(
-                                                     declarationSigningAuditType: DeclarationSigningAuditType,
-                                                     credId: String,
-                                                     userAgent: String,
-                                                     userAnswers: UserAnswers,
-                                                     submissionResult: SubmissionResult,
-                                                     submittedDeclarationPageBody: String
-                                                   ) extends JsonAuditModel {
+                                         declarationSigningAuditType: DeclarationSigningAuditType,
+                                         credId: String,
+                                         userAgent: String,
+                                         userAnswers: UserAnswers,
+                                         submissionResult: SubmissionResult,
+                                         submittedDeclarationPageBody: String
+                                       ) extends JsonAuditModel {
 
   override val auditType: String = declarationSigningAuditType.auditType
   override val transactionName: String = declarationSigningAuditType.transactionName
 
   override val detail: JsValue = Json.obj(
-    
+
     "credId" -> credId,
     "browserUserAgent" -> userAgent,
     "userAnswersDetails" -> Json.toJson(userAnswers),
@@ -58,5 +58,5 @@ object DeclarationSigningAuditModel {
       submissionResult = submissionResult,
       submittedDeclarationPageBody = submittedDeclarationPageBody
     )
-    }
+  }
 }
