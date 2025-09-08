@@ -196,7 +196,7 @@ GET         /error-submitting-registration                                  cont
 # Client Activation Section
 GET        /client-not-activated/:journeyId                                controllers.ClientNotActivatedController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
 
-GET        /updateClientEmailAddress                        controllers.UpdateClientEmailAddressController.onPageLoad(mode: Mode = NormalMode)
-POST       /updateClientEmailAddress                        controllers.UpdateClientEmailAddressController.onSubmit(mode: Mode = NormalMode)
-GET        /changeUpdateClientEmailAddress                  controllers.UpdateClientEmailAddressController.onPageLoad(mode: Mode = CheckMode)
-POST       /changeUpdateClientEmailAddress                  controllers.UpdateClientEmailAddressController.onSubmit(mode: Mode = CheckMode)
+
+# Update Client Email Address
+GET        /update-client-email-address/:journeyId                         controllers.UpdateClientEmailAddressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
+POST       /update-client-email-address/:journeyId                         controllers.UpdateClientEmailAddressController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
