@@ -20,9 +20,8 @@ import base.SpecBase
 import connectors.RegistrationConnector
 import controllers.{clientDeclarationJourney, routes}
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
-import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
 import models.audit.SubmissionResult.{Failure, Success}
-import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType, SubmissionResult}
+import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType}
 import models.requests.ClientOptionalDataRequest
 import models.responses.InternalServerError as ServerError
 import models.responses.etmp.EtmpEnrolmentResponse
