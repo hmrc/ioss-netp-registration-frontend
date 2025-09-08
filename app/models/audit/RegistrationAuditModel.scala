@@ -17,7 +17,7 @@
 package models.audit
 
 import models.UserAnswers
-import models.requests.{ClientOptionalDataRequest, DataRequest}
+import models.requests.ClientOptionalDataRequest
 import models.responses.etmp.EtmpEnrolmentResponse
 import play.api.libs.json.{JsValue, Json}
 

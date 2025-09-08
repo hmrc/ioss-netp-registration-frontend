@@ -244,10 +244,18 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
             CreateClientDeclaration, expectedAnswers, Success, testViewBody
           )
 
+          val expectedRegistrationAuditEvent = RegistrationAuditModel.build(
+            completeUserAnswers,
+            Some(etmpEnrolmentResponse),
+            SubmissionResult.Success
+          )
+
           doNothing().when(mockAuditService).audit(eqTo(expectedAuditEvent))(any(), any())
+          doNothing().when(mockAuditService).audit(eqTo(expectedRegistrationAuditEvent))(any(), any())
 
           redirectLocation(result).value mustEqual ClientDeclarationPage.navigate(EmptyWaypoints, completeUserAnswers, expectedAnswers).url
           verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
+          verify(mockAuditService, times(1)).audit(eqTo(expectedRegistrationAuditEvent))(any(), any())
           verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
           verify(mockClientDeclarationView, times(1))
             .apply(
@@ -297,11 +305,19 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
             CreateClientDeclaration, completeUserAnswers, Failure, testViewBody
           )
 
+          val expectedRegistrationAuditEvent = RegistrationAuditModel.build(
+            completeUserAnswers,
+            None,
+            SubmissionResult.Failure
+          )
+
           doNothing().when(mockAuditService).audit(eqTo(expectedAuditEvent))(any(), any())
+          doNothing().when(mockAuditService).audit(eqTo(expectedRegistrationAuditEvent))(any(), any())
 
           status(result) mustEqual SEE_OTHER
           redirectLocation(result).value mustEqual ErrorSubmittingRegistrationPage.route(waypoints).url
           verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
+          verify(mockAuditService, times(1)).audit(eqTo(expectedRegistrationAuditEvent))(any(), any())
           verifyNoInteractions(mockSessionRepository)
           verify(mockClientDeclarationView, times(1))
             .apply(
