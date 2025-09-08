@@ -67,6 +67,7 @@ class ClientNotActivatedController @Inject()(
               val clientCodeEntryUrl = s"${frontendAppConfig.clientCodeEntryUrl}/${registration.uniqueUrlCode}"
               val activationExpiryDate = registration.activationExpiryDate
               val clientCompanyName = getClientCompanyName(registration)
+              val redirectToUpdateClientEmailAddressPage = s"${frontendAppConfig.redirectToUpdateClientEmailAddressPage}/${registration.journeyId}"
 
               if (isBasedInUk && hasVatNumber) {
                 registration.userAnswers.vatInfo match {
@@ -74,13 +75,13 @@ class ClientNotActivatedController @Inject()(
                   case Some(vatCustomerInfo) =>
                     val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatCustomerInfo)
 
-                    Ok(view(waypoints, Some(viewModel), registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate))
+                    Ok(view(waypoints, Some(viewModel), registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage))
 
                   case None =>
                     Redirect(JourneyRecoveryPage.route(waypoints).url)
                 }
               } else {
-                Ok(view(waypoints, None, registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate))
+                Ok(view(waypoints, None, registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage))
               }
             case None => Redirect(JourneyRecoveryPage.route(waypoints).url)
           }

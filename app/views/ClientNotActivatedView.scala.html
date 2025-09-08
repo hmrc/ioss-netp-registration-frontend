@@ -32,7 +32,8 @@
     hasVatNumber: Boolean,
     emailAddress: String,
     clientCodeEntryUrl: String,
-    activationExpiryDate: String
+    activationExpiryDate: String,
+    redirectToUpdateClientEmailAddressPage: String
 )(implicit request: Request[_], messages: Messages)
 
     @layout(pageTitle = titleNoForm(messages("clientNotActivated.title", companyName))) {
@@ -42,7 +43,7 @@
         <p class="govuk-body">@Html(messages("clientNotActivated.p1.link", clientCodeEntryUrl))</p>
         <p class="govuk-body">@messages("clientNotActivated.p2")</p>
         
-        <p class="govuk-inset-text">@Html(messages("clientNotActivated.info", emailAddress))</p>
+        <p class="govuk-inset-text">@Html(messages("clientNotActivated.info", emailAddress, redirectToUpdateClientEmailAddressPage))</p>
         
         <p class="govuk-body">@messages("clientNotActivated.p3", activationExpiryDate)</p>
         
