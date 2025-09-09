@@ -22,10 +22,9 @@ import forms.UpdateClientEmailAddressFormProvider
 import logging.Logging
 
 import javax.inject.Inject
-import pages.{BusinessContactDetailsPage, JourneyRecoveryPage, UpdateClientEmailAddressPage, Waypoints}
+import pages.{BusinessContactDetailsPage, UpdateClientEmailAddressPage, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.UpdateClientEmailAddressView
 
@@ -33,7 +32,6 @@ import scala.concurrent.ExecutionContext
 
 class UpdateClientEmailAddressController @Inject()(
                                         override val messagesApi: MessagesApi,
-                                        sessionRepository: SessionRepository,
                                         cc: AuthenticatedControllerComponents,
                                         formProvider: UpdateClientEmailAddressFormProvider,
                                         val controllerComponents: MessagesControllerComponents,
@@ -46,25 +44,23 @@ class UpdateClientEmailAddressController @Inject()(
   def onPageLoad(waypoints: Waypoints, journeyId: String): Action[AnyContent] = (cc.actionBuilder andThen cc.identify).async {
     implicit request =>
 
-      registrationConnector.getPendingRegistrationsByIntermediaryNumber(request.intermediaryNumber).map {
+      registrationConnector.getPendingRegistration(journeyId).map {
         case Right(savedPendingRegistrations) =>
-          savedPendingRegistrations.find(_.journeyId == journeyId) match
-            case Some(registration) =>
-              
-              val clientCompanyName = getClientCompanyName(registration)
-              val emailAddress = registration.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
+          
+            val clientCompanyName = getClientCompanyName(savedPendingRegistrations)
+            val emailAddress = savedPendingRegistrations.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
 
-              val preparedForm = registration.userAnswers.get(UpdateClientEmailAddressPage(journeyId)) match {
-                case None => form
-                case Some(value) => form.fill(value)
-              }
-    
-              Ok(view(preparedForm, waypoints, journeyId, clientCompanyName, emailAddress))
-              
-            case None => Redirect(JourneyRecoveryPage.route(waypoints).url)
+            val preparedForm = savedPendingRegistrations.userAnswers.get(UpdateClientEmailAddressPage(journeyId)) match {
+              case None => form
+              case Some(value) => form.fill(value)
+            }
+  
+            Ok(view(preparedForm, waypoints, journeyId, clientCompanyName, emailAddress))
             
         case Left(errors) =>
-          val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given intermediary number: $errors."
+          val message: String =
+            s"Received an unexpected error when trying to retrieve a pending registration for the given journeyId: [$journeyId] with error: $errors."
+            
           val exception: Exception = new Exception(message)
           logger.error(exception.getMessage, exception)
           throw exception
