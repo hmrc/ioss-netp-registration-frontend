@@ -520,5 +520,8 @@ updateClientEmailAddress.error.required = Enter your client''s email address
 updateClientEmailAddress.error.length = Email address must be 50 characters or less
 updateClientEmailAddress.error.invalid = Enter an email address in the correct format, like yourname@example.com
 
-clientEmailUpdated.title = clientEmailUpdated
-clientEmailUpdated.heading = clientEmailUpdated
+clientEmailUpdated.title = Email address for {0} updated
+clientEmailUpdated.heading = Email address for {0} updated
+clientEmailUpdated.p1 = We have sent the activation code to <span class="govuk-!-font-weight-bold">{0}</span>. They must use that to confirm their registration to your account.
+clientEmailUpdated.link = <a class="govuk-link" href="{0}">Return to your account</a>
+

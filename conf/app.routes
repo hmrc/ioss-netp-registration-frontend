@@ -201,4 +201,4 @@ GET        /client-not-activated/:journeyId                                contr
 GET        /update-client-email-address/:journeyId                         controllers.UpdateClientEmailAddressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
 POST       /update-client-email-address/:journeyId                         controllers.UpdateClientEmailAddressController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
 
-GET        /clientEmailUpdated                       controllers.ClientEmailUpdatedController.onPageLoad()
+GET        /client-email-updated/:journeyId                                controllers.ClientEmailUpdatedController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
