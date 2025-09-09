@@ -16,11 +16,11 @@
 
 package models
 
-import play.api.libs.json.{JsValue, Json, OFormat}
+import play.api.libs.json.{JsObject, Json, OFormat}
 
 case class SaveForLaterRequest(
                                 journeyId: String,
-                                data: JsValue,
+                                data: JsObject,
                                 intermediaryNumber: String
                               )
 

@@ -2,8 +2,8 @@
 
 ->          /hmrc-frontend                                                  hmrcfrontend.Routes
 
-GET         /                                                           controllers.IndexController.onPageLoad()
-GET         /A                                                          controllers.clientDeclarationJourney.ClientIndexController.onPageLoad()
+GET         /                                                               controllers.IndexController.onPageLoad()
+GET         /A                                                              controllers.clientDeclarationJourney.ClientIndexController.onPageLoad()
 
 GET         /assets/*file                                                   controllers.Assets.versioned(path="/public", file: Asset)
 
@@ -11,8 +11,8 @@ GET         /language/:lang                                                 cont
 
 GET         /refresh-session                                                controllers.KeepAliveController.keepAlive
 
-GET         /there-is-a-problem                                         controllers.JourneyRecoveryController.onPageLoad(continueUrl: Option[RedirectUrl] ?= None)
-GET         /there-is-a-problem-client                       controllers.clientDeclarationJourney.ClientJourneyRecoveryController.onPageLoad()
+GET         /there-is-a-problem                                             controllers.JourneyRecoveryController.onPageLoad(continueUrl: Option[RedirectUrl] ?= None)
+GET         /there-is-a-problem-client                                      controllers.clientDeclarationJourney.ClientJourneyRecoveryController.onPageLoad()
 
 GET         /check-your-answers                                             controllers.CheckYourAnswersController.onPageLoad()
 POST        /check-your-answers/:incompletePrompt                           controllers.CheckYourAnswersController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, incompletePrompt: Boolean)
@@ -209,4 +209,13 @@ GET        /start-amend-journey/:iossNumber                                contr
 
 
 # Save for later section
-GET        /progress-saved                                                  controllers.SavedProgressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, continueUrl: RedirectUrl)
+GET        /progress-saved                                                  controllers.saveAndComeBack.SavedProgressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, continueUrl: RedirectUrl)
+
+GET        /clients-continue-registration                                   controllers.saveAndComeBack.ContinueRegistrationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST       /clients-continue-registration                                   controllers.saveAndComeBack.ContinueRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+
+GET        /clients-continue-registration-selection                         controllers.saveAndComeBack.ContinueRegistrationSelectionController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST       /clients-continue-registration-selection                         controllers.saveAndComeBack.ContinueRegistrationSelectionController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+
+
+# GET        /no-registration-in-progress                                     controllers.NoRegistrationInProgressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)

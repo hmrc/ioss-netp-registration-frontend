@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-package models
+package forms
 
-import play.api.libs.json.{JsObject, JsValue, Json, OFormat}
+import forms.mappings.Mappings
+import models.ContinueRegistration
+import play.api.data.Form
 
-import java.time.Instant
+import javax.inject.Inject
 
-case class SavedUserAnswers(
-                             journeyId: String,
-                             data: JsObject,
-                             intermediaryNumber: String,
-                             lastUpdated: Instant
-                           )
+class ContinueRegistrationFormProvider @Inject() extends Mappings {
 
-object SavedUserAnswers {
-
-  implicit val format: OFormat[SavedUserAnswers] = Json.format[SavedUserAnswers]
+  def apply(): Form[ContinueRegistration] =
+    Form(
+      "value" -> enumerable[ContinueRegistration]("continueRegistration.error.required")
+    )
 }
