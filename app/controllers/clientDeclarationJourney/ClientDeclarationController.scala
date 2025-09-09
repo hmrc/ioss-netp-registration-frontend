@@ -23,7 +23,7 @@ import logging.Logging
 import models.UserAnswers
 import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
 import models.audit.SubmissionResult.{Failure, Success}
-import models.audit.{DeclarationSigningAuditModel, SubmissionResult}
+import models.audit.{DeclarationSigningAuditModel, RegistrationAuditModel, SubmissionResult}
 import pages.clientDeclarationJourney.ClientDeclarationPage
 import pages.{ClientBusinessNamePage, ErrorSubmittingRegistrationPage, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
@@ -93,6 +93,12 @@ class ClientDeclarationController @Inject()(
                     updatedAnswers2 <- Future.fromTry(updatedAnswers.set(EtmpEnrolmentResponseQuery, response))
                     _ <- sessionRepository.set(updatedAnswers2)
                   } yield {
+                    auditService.audit(RegistrationAuditModel.build(
+                      request.userAnswers,
+                      Some(response),
+                      SubmissionResult.Success
+                    ))
+
                     auditService.audit(
                       DeclarationSigningAuditModel.build(
                         declarationSigningAuditType = CreateClientDeclaration,
@@ -104,8 +110,13 @@ class ClientDeclarationController @Inject()(
                     Redirect(routes.ClientSuccessfulRegistrationController.onPageLoad())
                   }
 
-
                 case Left(error) =>
+                  auditService.audit(RegistrationAuditModel.build(
+                    request.userAnswers,
+                    None,
+                    SubmissionResult.Failure
+                  ))
+
                   auditService.audit(
                     DeclarationSigningAuditModel.build(
                       declarationSigningAuditType = CreateClientDeclaration,

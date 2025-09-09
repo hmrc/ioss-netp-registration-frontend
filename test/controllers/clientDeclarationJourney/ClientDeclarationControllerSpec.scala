@@ -20,12 +20,13 @@ import base.SpecBase
 import connectors.RegistrationConnector
 import controllers.{clientDeclarationJourney, routes}
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
-import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
 import models.audit.SubmissionResult.{Failure, Success}
-import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType, SubmissionResult}
+import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType}
 import models.requests.ClientOptionalDataRequest
 import models.responses.InternalServerError as ServerError
 import models.responses.etmp.EtmpEnrolmentResponse
+import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
+import models.audit.{RegistrationAuditModel, SubmissionResult}
 import models.{ClientBusinessName, IntermediaryDetails, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.*
@@ -43,6 +44,8 @@ import repositories.SessionRepository
 import services.{AuditService, RegistrationService}
 import utils.FutureSyntax.FutureOps
 import views.html.clientDeclarationJourney.ClientDeclarationView
+
+import scala.concurrent.Future
 
 class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
@@ -240,10 +243,18 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
             CreateClientDeclaration, expectedAnswers, Success, testViewBody
           )
 
+          val expectedRegistrationAuditEvent = RegistrationAuditModel.build(
+            completeUserAnswers,
+            Some(etmpEnrolmentResponse),
+            SubmissionResult.Success
+          )
+
           doNothing().when(mockAuditService).audit(eqTo(expectedAuditEvent))(any(), any())
+          doNothing().when(mockAuditService).audit(eqTo(expectedRegistrationAuditEvent))(any(), any())
 
           redirectLocation(result).value mustEqual ClientDeclarationPage.navigate(EmptyWaypoints, completeUserAnswers, expectedAnswers).url
           verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
+          verify(mockAuditService, times(1)).audit(eqTo(expectedRegistrationAuditEvent))(any(), any())
           verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
           verify(mockClientDeclarationView, times(1))
             .apply(
@@ -293,11 +304,19 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
             CreateClientDeclaration, completeUserAnswers, Failure, testViewBody
           )
 
+          val expectedRegistrationAuditEvent = RegistrationAuditModel.build(
+            completeUserAnswers,
+            None,
+            SubmissionResult.Failure
+          )
+
           doNothing().when(mockAuditService).audit(eqTo(expectedAuditEvent))(any(), any())
+          doNothing().when(mockAuditService).audit(eqTo(expectedRegistrationAuditEvent))(any(), any())
 
           status(result) mustEqual SEE_OTHER
           redirectLocation(result).value mustEqual ErrorSubmittingRegistrationPage.route(waypoints).url
           verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
+          verify(mockAuditService, times(1)).audit(eqTo(expectedRegistrationAuditEvent))(any(), any())
           verifyNoInteractions(mockSessionRepository)
           verify(mockClientDeclarationView, times(1))
             .apply(
