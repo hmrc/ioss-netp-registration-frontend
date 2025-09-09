@@ -17,7 +17,7 @@
 package connectors
 
 import config.Service
-import connectors.SaveForLaterHttpParser.{DeleteSaveForLaterReads, DeleteSaveForLaterResponse, SaveForLaterHttpReads, SaveForLaterResponse}
+import connectors.SaveForLaterHttpParser.{DeleteSaveForLaterReads, DeleteSaveForLaterResponse, SaveForLaterHttpReads, SaveForLaterResponse, SaveForLaterIntermediaryResponse, SaveForLaterIntermediaryHttpReads}
 import models.SaveForLaterRequest
 import play.api.Configuration
 import play.api.libs.json.Json
@@ -36,11 +36,16 @@ class SaveForLaterConnector @Inject()(
   private val baseUrl: Service = config.get[Service]("microservice.services.ioss-netp-registration")
 
   def submit(saveForLaterRequest: SaveForLaterRequest)(implicit hc: HeaderCarrier): Future[SaveForLaterResponse] = {
+    println(saveForLaterRequest.data)
     httpClientV2.post(url"$baseUrl/save-for-later").withBody(Json.toJson(saveForLaterRequest)).execute[SaveForLaterResponse]
   }
 
-  def get()(implicit hc: HeaderCarrier): Future[SaveForLaterResponse] = {
+  def getClientRegistration()(implicit hc: HeaderCarrier): Future[SaveForLaterResponse] = {
     httpClientV2.get(url"$baseUrl/save-for-later").execute[SaveForLaterResponse]
+  }
+
+  def getAllByIntermediary(intermediaryNumber: String)(implicit hc: HeaderCarrier): Future[SaveForLaterIntermediaryResponse] = {
+    httpClientV2.get(url"$baseUrl/save-for-later-selection/$intermediaryNumber").execute[SaveForLaterIntermediaryResponse]
   }
 
   def delete()(implicit hc: HeaderCarrier): Future[DeleteSaveForLaterResponse] = {

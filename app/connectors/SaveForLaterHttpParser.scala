@@ -26,6 +26,7 @@ import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 object SaveForLaterHttpParser extends Logging {
 
   type SaveForLaterResponse = Either[ErrorResponse, Option[SavedUserAnswers]]
+  type SaveForLaterIntermediaryResponse = Either[ErrorResponse, Seq[SavedUserAnswers]]
   type DeleteSaveForLaterResponse = Either[ErrorResponse, Boolean]
 
   implicit object SaveForLaterHttpReads extends HttpReads[SaveForLaterResponse] {
@@ -42,6 +43,28 @@ object SaveForLaterHttpParser extends Logging {
         case NOT_FOUND =>
           logger.warn(s"Received NotFound for saved user answers.")
           Right(None)
+
+        case CONFLICT =>
+          logger.warn(s"Received ConflictFound from server.")
+          Left(ConflictFound)
+
+        case status =>
+          logger.error(s"Received unexpected error from saved user answers server with status: $status.")
+          Left(UnexpectedResponseStatus(status, s"Unexpected response received with status: $status."))
+      }
+    }
+  }
+
+  implicit object SaveForLaterIntermediaryHttpReads extends HttpReads[SaveForLaterIntermediaryResponse] {
+    override def read(method: String, url: String, response: HttpResponse): SaveForLaterIntermediaryResponse = {
+      response.status match {
+        case OK | CREATED =>
+          response.json.validate[Seq[SavedUserAnswers]] match {
+            case JsSuccess(answers, _) => Right(answers)
+            case JsError(errors) =>
+              logger.error(s"Failed trying to parse JSON with error: $errors. JSON was ${response.json}.", errors)
+              Left(InvalidJson)
+          }
 
         case CONFLICT =>
           logger.warn(s"Received ConflictFound from server.")
