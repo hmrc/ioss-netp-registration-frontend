@@ -519,3 +519,6 @@ updateClientEmailAddress.continue = Send and continue
 updateClientEmailAddress.error.required = Enter your client''s email address
 updateClientEmailAddress.error.length = Email address must be 50 characters or less
 updateClientEmailAddress.error.invalid = Enter an email address in the correct format, like yourname@example.com
+
+clientEmailUpdated.title = clientEmailUpdated
+clientEmailUpdated.heading = clientEmailUpdated
