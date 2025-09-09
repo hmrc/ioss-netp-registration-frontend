@@ -27,6 +27,7 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.UpdateClientEmailAddressView
+import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.ExecutionContext
 
@@ -67,5 +68,38 @@ class UpdateClientEmailAddressController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints, journeyId: String): Action[AnyContent] = ???
+  def onSubmit(waypoints: Waypoints, journeyId: String): Action[AnyContent] = (cc.actionBuilder andThen cc.identify).async {
+    implicit request =>
+
+      registrationConnector.getPendingRegistration(journeyId).flatMap {
+        case Right(savedPendingRegistration) =>
+
+          form.bindFromRequest().fold(
+            formWithErrors =>
+              BadRequest(view(formWithErrors, waypoints, journeyId, clientCompanyName =  "", emailAddress =  "")).toFuture,
+
+            value =>
+              registrationConnector.updateClientEmailAddress(journeyId, value).map {
+                case Right(updatedClient) =>
+                  Redirect(controllers.routes.ClientEmailUpdatedController.onPageLoad(waypoints, journeyId))
+
+                case Left(errors) =>
+                  val message: String =
+                    s"Received an unexpected error when trying to update the email address for the given journeyId: [$journeyId] with error: $errors."
+
+                  val exception: Exception = new Exception(message)
+                  logger.error(exception.getMessage, exception)
+                  throw exception
+              }
+          )
+
+        case Left(errors) =>
+          val message: String =
+            s"Received an unexpected error when trying to retrieve a pending registration for the given journeyId: [$journeyId] with error: $errors."
+
+          val exception: Exception = new Exception(message)
+          logger.error(exception.getMessage, exception)
+          throw exception
+      }
+  }
 }

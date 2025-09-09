@@ -1,139 +1,168 @@
+/*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package controllers
 
 import base.SpecBase
+import connectors.RegistrationConnector
 import forms.UpdateClientEmailAddressFormProvider
-import models.{NormalMode, UserAnswers}
-import org.mockito.ArgumentMatchers.any
+import models.responses.InternalServerError
+import models.{BusinessContactDetails, SavedPendingRegistration, UserAnswers}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.when
 import org.scalatestplus.mockito.MockitoSugar
-import pages.UpdateClientEmailAddressPage
+import pages.BusinessContactDetailsPage
 import play.api.inject.bind
-import play.api.mvc.Call
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import repositories.SessionRepository
+import play.api.test.Helpers.*
 import views.html.UpdateClientEmailAddressView
-
-import scala.concurrent.Future
+import utils.FutureSyntax.FutureOps
 
 class UpdateClientEmailAddressControllerSpec extends SpecBase with MockitoSugar {
 
-  def onwardRoute = Call("GET", "/foo")
+  val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
+
+  val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
+  override val journeyId: String = savedPendingRegistration.journeyId
 
   val formProvider = new UpdateClientEmailAddressFormProvider()
-  val form = formProvider()
+  private val form = formProvider()
 
-  lazy val updateClientEmailAddressRoute = routes.UpdateClientEmailAddressController.onPageLoad(NormalMode).url
+  lazy val updateClientEmailAddressOnPageLoadRoute: String = routes.UpdateClientEmailAddressController.onPageLoad(waypoints, journeyId).url
+  lazy val updateClientEmailAddressOnSubmitRoute: String = routes.UpdateClientEmailAddressController.onSubmit(waypoints, journeyId).url
+
+  val companyName: String = vatCustomerInfo.organisationName.get
 
   "UpdateClientEmailAddress Controller" - {
 
-    "must return OK and the correct view for a GET" in {
+    ".onPageLoad" - {
 
-      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
+      "must return OK and the correct view for a GET" in {
 
-      running(application) {
-        val request = FakeRequest(GET, updateClientEmailAddressRoute)
+        val businessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
 
-        val result = route(application, request).value
+        val emailAddress = businessContactDetails.emailAddress
 
-        val view = application.injector.instanceOf[UpdateClientEmailAddressView]
+        val completeUserAnswers = savedPendingRegistration.userAnswers
+          .set(BusinessContactDetailsPage, businessContactDetails).success.value
+          .copy(vatInfo = Some(vatCustomerInfo))
 
-        status(result) mustEqual OK
-        contentAsString(result) mustEqual view(form, NormalMode)(request, messages(application)).toString
-      }
-    }
+        val completePendingRegistration = savedPendingRegistration.copy(userAnswers = completeUserAnswers)
 
-    "must populate the view correctly on a GET when the question has previously been answered" in {
+        when(mockRegistrationConnector.getPendingRegistration(eqTo(journeyId))(any()))
+          .thenReturn(Right(completePendingRegistration).toFuture)
 
-      val userAnswers = UserAnswers(userAnswersId).set(UpdateClientEmailAddressPage, "answer").success.value
-
-      val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
-
-      running(application) {
-        val request = FakeRequest(GET, updateClientEmailAddressRoute)
-
-        val view = application.injector.instanceOf[UpdateClientEmailAddressView]
-
-        val result = route(application, request).value
-
-        status(result) mustEqual OK
-        contentAsString(result) mustEqual view(form.fill("answer"), NormalMode)(request, messages(application)).toString
-      }
-    }
-
-    "must redirect to the next page when valid data is submitted" in {
-
-      val mockSessionRepository = mock[SessionRepository]
-
-      when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
-
-      val application =
-        applicationBuilder(userAnswers = Some(emptyUserAnswers))
-          .overrides(
-            bind[Navigator].toInstance(new FakeNavigator(onwardRoute)),
-            bind[SessionRepository].toInstance(mockSessionRepository)
-          )
+        val application = applicationBuilder(userAnswers = Some(savedPendingRegistration.userAnswers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
           .build()
 
-      running(application) {
-        val request =
-          FakeRequest(POST, updateClientEmailAddressRoute)
-            .withFormUrlEncodedBody(("value", "answer"))
+        running(application) {
+          val request = FakeRequest(GET, updateClientEmailAddressOnPageLoadRoute)
 
-        val result = route(application, request).value
+          val result = route(application, request).value
 
-        status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual onwardRoute.url
+          val view = application.injector.instanceOf[UpdateClientEmailAddressView]
+
+          status(result) mustEqual OK
+          contentAsString(result) mustEqual view(form, waypoints, journeyId, companyName, emailAddress)(request, messages(application)).toString
+        }
+      }
+
+      "must throw an exception and log the error when the connector fails to return a pending registration" in {
+
+        val application = applicationBuilder(userAnswers = Some(emptyUserAnswers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+        when(mockRegistrationConnector.getPendingRegistration(eqTo(journeyId))(any()))
+          .thenReturn(Left(InternalServerError).toFuture)
+
+        running(application) {
+          val request = FakeRequest(GET, updateClientEmailAddressOnPageLoadRoute)
+
+          val result = route(application, request).value
+
+          intercept[Exception] {
+            status(result)
+          }
+        }
       }
     }
 
-    "must return a Bad Request and errors when invalid data is submitted" in {
+    ".onSubmit" - {
 
-      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
+      "must redirect to the acknowledgement page once the email is successfully updated" in {
 
-      running(application) {
-        val request =
-          FakeRequest(POST, updateClientEmailAddressRoute)
+        val businessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
+
+        val newEmailAddress = "new@email.com"
+
+        val completeUserAnswers = savedPendingRegistration.userAnswers
+          .set(BusinessContactDetailsPage, businessContactDetails).success.value
+          .copy(vatInfo = Some(vatCustomerInfo))
+
+        val completePendingRegistration = savedPendingRegistration.copy(userAnswers = completeUserAnswers)
+
+        when(mockRegistrationConnector.getPendingRegistration(eqTo(journeyId))(any()))
+          .thenReturn(Right(completePendingRegistration).toFuture)
+        when(mockRegistrationConnector.updateClientEmailAddress(eqTo(journeyId), eqTo(newEmailAddress))(any()))
+          .thenReturn(Right(completePendingRegistration).toFuture)
+
+        val application = applicationBuilder(userAnswers = Some(completeUserAnswers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+        running(application) {
+          val request = FakeRequest(POST, updateClientEmailAddressOnSubmitRoute)
+            .withFormUrlEncodedBody(("value" -> newEmailAddress))
+
+          val result = route(application, request).value
+
+          status(result) mustEqual SEE_OTHER
+          redirectLocation(result).value mustBe routes.ClientEmailUpdatedController.onPageLoad(waypoints, journeyId).url
+        }
+      }
+
+      "must return a Bad Request error when invalid data is submitted" in {
+
+        val businessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
+
+        val completeUserAnswers = savedPendingRegistration.userAnswers
+          .set(BusinessContactDetailsPage, businessContactDetails).success.value
+          .copy(vatInfo = Some(vatCustomerInfo))
+
+        val completePendingRegistration = savedPendingRegistration.copy(userAnswers = completeUserAnswers)
+
+        when(mockRegistrationConnector.getPendingRegistration(eqTo(journeyId))(any()))
+          .thenReturn(Right(completePendingRegistration).toFuture)
+        when(mockRegistrationConnector.updateClientEmailAddress(eqTo(journeyId), any())(any()))
+          .thenReturn(Left(BAD_REQUEST).toFuture)
+
+        val application = applicationBuilder(userAnswers = Some(savedPendingRegistration.userAnswers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+        running(application) {
+          val request = FakeRequest(POST, updateClientEmailAddressOnSubmitRoute)
             .withFormUrlEncodedBody(("value", ""))
 
-        val boundForm = form.bind(Map("value" -> ""))
+          val result = route(application, request).value
 
-        val view = application.injector.instanceOf[UpdateClientEmailAddressView]
-
-        val result = route(application, request).value
-
-        status(result) mustEqual BAD_REQUEST
-        contentAsString(result) mustEqual view(boundForm, NormalMode)(request, messages(application)).toString
-      }
-    }
-
-    "must redirect to Journey Recovery for a GET if no existing data is found" in {
-
-      val application = applicationBuilder(userAnswers = None).build()
-
-      running(application) {
-        val request = FakeRequest(GET, updateClientEmailAddressRoute)
-
-        val result = route(application, request).value
-
-        status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
-      }
-    }
-
-    "must redirect to Journey Recovery for a POST if no existing data is found" in {
-
-      val application = applicationBuilder(userAnswers = None).build()
-
-      running(application) {
-        val request =
-          FakeRequest(POST, updateClientEmailAddressRoute)
-            .withFormUrlEncodedBody(("value", "answer"))
-
-        val result = route(application, request).value
-
-        status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+          status(result) mustEqual BAD_REQUEST
+        }
       }
     }
   }
