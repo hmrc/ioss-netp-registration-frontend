@@ -51,40 +51,37 @@ class ClientNotActivatedController @Inject()(
   def onPageLoad(waypoints: Waypoints, journeyId: String): Action[AnyContent] = (cc.actionBuilder andThen cc.identify).async {
     implicit request =>
 
-      registrationConnector.getPendingRegistrationsByIntermediaryNumber(request.intermediaryNumber).map {
-        case Right(savedPendingRegistrations) =>
-          savedPendingRegistrations.find(_.journeyId == journeyId) match {
-            case Some(registration) =>
-              val emailAddress = registration.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
+      registrationConnector.getPendingRegistration(journeyId).map {
+        case Right(pendingRegistration) =>
+          
+            val emailAddress = pendingRegistration.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
 
-              val isBasedInUk = registration.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
-              val hasVatNumber = registration.userAnswers.get(ClientHasVatNumberPage).getOrElse(false)
-              val ukVatNumber = registration.userAnswers.get(ClientVatNumberPage).getOrElse("")
+            val isBasedInUk = pendingRegistration.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
+            val hasVatNumber = pendingRegistration.userAnswers.get(ClientHasVatNumberPage).getOrElse(false)
+            val ukVatNumber = pendingRegistration.userAnswers.get(ClientVatNumberPage).getOrElse("")
 
-              val registrationSummaryList = buildRegistrationSummaryList(waypoints, registration.userAnswers)
-              val clientDetailsSummaryList = buildClientDetailsSummaryList(waypoints, registration.userAnswers)
+            val registrationSummaryList = buildRegistrationSummaryList(waypoints, pendingRegistration.userAnswers)
+            val clientDetailsSummaryList = buildClientDetailsSummaryList(waypoints, pendingRegistration.userAnswers)
 
-              val clientCodeEntryUrl = s"${frontendAppConfig.clientCodeEntryUrl}/${registration.uniqueUrlCode}"
-              val activationExpiryDate = registration.activationExpiryDate
-              val clientCompanyName = getClientCompanyName(registration)
-              val redirectToUpdateClientEmailAddressPage = s"${frontendAppConfig.redirectToUpdateClientEmailAddressPage}/${registration.journeyId}"
+            val clientCodeEntryUrl = s"${frontendAppConfig.clientCodeEntryUrl}/${pendingRegistration.uniqueUrlCode}"
+            val activationExpiryDate = pendingRegistration.activationExpiryDate
+            val clientCompanyName = getClientCompanyName(pendingRegistration)
+            val redirectToUpdateClientEmailAddressPage = s"${frontendAppConfig.redirectToUpdateClientEmailAddressPage}/${pendingRegistration.journeyId}"
 
-              if (isBasedInUk && hasVatNumber) {
-                registration.userAnswers.vatInfo match {
+            if (isBasedInUk && hasVatNumber) {
+              pendingRegistration.userAnswers.vatInfo match {
 
-                  case Some(vatCustomerInfo) =>
-                    val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatCustomerInfo)
+                case Some(vatCustomerInfo) =>
+                  val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatCustomerInfo)
 
-                    Ok(view(waypoints, Some(viewModel), registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage))
+                  Ok(view(waypoints, Some(viewModel), registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage))
 
-                  case None =>
-                    Redirect(JourneyRecoveryPage.route(waypoints).url)
-                }
-              } else {
-                Ok(view(waypoints, None, registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage))
+                case None =>
+                  Redirect(JourneyRecoveryPage.route(waypoints).url)
               }
-            case None => Redirect(JourneyRecoveryPage.route(waypoints).url)
-          }
+            } else {
+              Ok(view(waypoints, None, registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage))
+            }
 
         case Left(errors) =>
           val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given intermediary number: $errors."
