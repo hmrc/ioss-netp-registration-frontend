@@ -25,6 +25,7 @@ import javax.inject.Inject
 import pages.{BusinessContactDetailsPage, UpdateClientEmailAddressPage, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import services.EmailService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.UpdateClientEmailAddressView
 import utils.FutureSyntax.FutureOps
@@ -37,6 +38,7 @@ class UpdateClientEmailAddressController @Inject()(
                                         formProvider: UpdateClientEmailAddressFormProvider,
                                         val controllerComponents: MessagesControllerComponents,
                                         registrationConnector: RegistrationConnector,
+                                        emailService: EmailService,
                                         view: UpdateClientEmailAddressView
                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetOrganisationOrBusinessName with Logging {
 
@@ -81,6 +83,22 @@ class UpdateClientEmailAddressController @Inject()(
             value =>
               registrationConnector.updateClientEmailAddress(journeyId, value).map {
                 case Right(updatedClient) =>
+
+                  val intermediaryName = updatedClient.intermediaryDetails.intermediaryName
+                  val recipientName = getClientCompanyName(updatedClient)
+                  val uniqueUrlCode = updatedClient.uniqueUrlCode
+                  val activationExpiryDate = updatedClient.activationExpiryDate
+                  val emailAddress = updatedClient.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
+
+                  emailService.sendClientActivationEmail(
+                    intermediaryName,
+                    recipientName,
+                    uniqueUrlCode,
+                    activationExpiryDate,
+                    emailAddress,
+                    Some("urgent")
+                  )
+                  
                   Redirect(controllers.routes.ClientEmailUpdatedController.onPageLoad(waypoints, journeyId))
 
                 case Left(errors) =>

@@ -19,21 +19,25 @@ package controllers
 import base.SpecBase
 import connectors.RegistrationConnector
 import forms.UpdateClientEmailAddressFormProvider
+import models.emails.EmailSendingResult
 import models.responses.InternalServerError
 import models.{BusinessContactDetails, SavedPendingRegistration, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{reset, times, verify, when}
+import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import pages.BusinessContactDetailsPage
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import services.EmailService
 import views.html.UpdateClientEmailAddressView
 import utils.FutureSyntax.FutureOps
 
-class UpdateClientEmailAddressControllerSpec extends SpecBase with MockitoSugar {
+class UpdateClientEmailAddressControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
   val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
+  val mockEmailService: EmailService = mock[EmailService]
 
   val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
   override val journeyId: String = savedPendingRegistration.journeyId
@@ -46,6 +50,10 @@ class UpdateClientEmailAddressControllerSpec extends SpecBase with MockitoSugar 
 
   val companyName: String = vatCustomerInfo.organisationName.get
 
+  override def beforeEach(): Unit =
+    reset(mockRegistrationConnector)
+    reset(mockEmailService)
+  
   "UpdateClientEmailAddress Controller" - {
 
     ".onPageLoad" - {
@@ -120,9 +128,14 @@ class UpdateClientEmailAddressControllerSpec extends SpecBase with MockitoSugar 
           .thenReturn(Right(completePendingRegistration).toFuture)
         when(mockRegistrationConnector.updateClientEmailAddress(eqTo(journeyId), eqTo(newEmailAddress))(any()))
           .thenReturn(Right(completePendingRegistration).toFuture)
+        when(mockEmailService.sendClientActivationEmail(any(), any(), any(), any(), any(), any())(any(), any()))
+          .thenReturn(EmailSendingResult.EMAIL_ACCEPTED.toFuture)
 
         val application = applicationBuilder(userAnswers = Some(completeUserAnswers))
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .overrides(
+            bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+            bind[EmailService].toInstance(mockEmailService)
+          )
           .build()
 
         running(application) {
@@ -133,6 +146,9 @@ class UpdateClientEmailAddressControllerSpec extends SpecBase with MockitoSugar 
 
           status(result) mustEqual SEE_OTHER
           redirectLocation(result).value mustBe routes.ClientEmailUpdatedController.onPageLoad(waypoints, journeyId).url
+          verify(mockRegistrationConnector, times(1)).getPendingRegistration(eqTo(journeyId))(any())
+          verify(mockRegistrationConnector, times(1)).updateClientEmailAddress(eqTo(journeyId), eqTo(newEmailAddress))(any())
+          verify(mockEmailService, times(1)).sendClientActivationEmail(any(), any(), any(), any(), any(), any())(any(), any())
         }
       }
 
