@@ -22,45 +22,23 @@
     govukButton: GovukButton
 )
 
-@(form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
+@(things: Seq[RadioItem], form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = title(form, messages("continueRegistration.title"))) {
+@layout(pageTitle = title(form, messages("continueRegistrationSelection.title"))) {
 
-    @formHelper(action = controllers.saveAndComeBack.routes.ContinueRegistrationController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
+    @formHelper(action = controllers.saveAndComeBack.routes.ContinueRegistrationSelectionController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
 
         @if(form.errors.nonEmpty) {
             @govukErrorSummary(ErrorSummaryViewModel(form))
         }
 
         @govukRadios(
-            RadiosViewModel(
-                field  = form("value"),
-                legend = HmrcPageHeadingLegend(
-                    content = messages("continueRegistration.heading")
-                ),
-                items  = ContinueRegistration.options
-            )
-        )
-
-        @govukRadios(
             RadiosViewModel.apply(
                 field = form("value"),
-                items = Seq(
-                RadioItem(
-                    content = Text(messages("content1")),
-                    value   = Some("value1"),
-                    id      = Some("id1")
-                ),
-                RadioItem(
-                    content = Text(messages("content2")),
-                    value   = Some("value2"),
-                    id      = Some("id2")
-                )
-            ),
-            legend = LegendViewModel(
-                HtmlContent(Html("""<h2 class="govuk-fieldset__heading">""" + messages("addWebsite.addAnother") + "</h2>"))
-            )
-            ).withHint(HintViewModel(messages("addWebsite.addAnother.hint")))
+                items = things,
+            legend = HmrcPageHeadingLegend(
+                    content = messages("continueRegistrationSelection.title")
+                ))
         )
 
         @govukButton(
