@@ -59,9 +59,6 @@ class ContinueRegistrationController @Inject()(
           //TODO - SCG - implement the failure of the call
           case Right(value)
           =>
-            println("THIS IS WHAT WE ARE LOOKING AT \n\n")
-            println(clientVatNumber)
-            println(value)
             val updatedAnswers = request.userAnswers.copy(vatInfo = Some(value))
             cc.sessionRepository.set(updatedAnswers)
 
@@ -96,17 +93,9 @@ class ContinueRegistrationController @Inject()(
           BadRequest(view(clientCompanyName, taxNumber, formWithErrors, waypoints)).toFuture,
 
         value1 =>
-
-                println(s" \n\nwill this submit ${request.userAnswers.data}")
-                println(request.userAnswers.data)
-                println(s"\n\n What about this? ")
-                println(request.userAnswers)
                 (value1, request.userAnswers.get(SavedProgressPage)) match {
                   case (ContinueRegistration.Continue, Some(url)) =>
-                    println("calling")
                     val completeUrl = s"http://localhost:10181$url"
-                    println(s"\n$url")
-                    println(s"\n$completeUrl")
                     Redirect(Call(GET, completeUrl)).toFuture
 
                   case (ContinueRegistration.Delete, _) =>
@@ -134,7 +123,6 @@ class ContinueRegistrationController @Inject()(
           (vatCustomerInfo.individualName.get, "VAT", ukVatNumber)
         }
       case _ =>
-          println("are we getting here 10am? ")
         val listOfPages: List[QuestionPage[String]] = List(ClientTaxReferencePage, ClientUtrNumberPage, ClientsNinoNumberPage)
         val companyName: String = userAnswers.get(ClientBusinessNamePage).head.name
 

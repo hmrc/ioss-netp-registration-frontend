@@ -540,6 +540,13 @@ continueRegistration.error.required = Select yes if want to continue this regist
 continueRegistration.continue = Yes
 continueRegistration.delete = No, delete my answers and start again
 
+continueRegistrationSelection.title = Which registration would you like to continue?
+continueRegistrationSelection.heading = Which registration would you like to continue?
+continueRegistrationSelection.info = {0} ({1} reference: {2})
+continueRegistrationSelection.error.required = Select a registration to continue
+continueRegistrationSelection.continue = Yes
+continueRegistrationSelection.delete = No, delete my answers and start again
+
 noRegistrationInProgress.title = We did not find a registration in progress
 noRegistrationInProgress.heading = We did not find a registration in progress
 noRegistrationInProgress.sessionExpired = Your previous session may have expired.

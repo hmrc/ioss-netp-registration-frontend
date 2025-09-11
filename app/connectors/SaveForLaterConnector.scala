@@ -36,7 +36,6 @@ class SaveForLaterConnector @Inject()(
   private val baseUrl: Service = config.get[Service]("microservice.services.ioss-netp-registration")
 
   def submit(saveForLaterRequest: SaveForLaterRequest)(implicit hc: HeaderCarrier): Future[SaveForLaterResponse] = {
-    println(saveForLaterRequest.data)
     httpClientV2.post(url"$baseUrl/save-for-later").withBody(Json.toJson(saveForLaterRequest)).execute[SaveForLaterResponse]
   }
 
