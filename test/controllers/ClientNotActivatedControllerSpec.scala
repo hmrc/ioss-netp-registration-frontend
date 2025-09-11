@@ -74,8 +74,8 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar {
 
         val registration = buildSavedRegistration(withVatInfo = true)
 
-        when(mockRegistrationConnector.getPendingRegistrationsByIntermediaryNumber(any())(any()))
-          .thenReturn(Right(Seq(registration)).toFuture)
+        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
+          .thenReturn(Right(registration).toFuture)
 
         val app = applicationBuilder(userAnswers = None)
           .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
@@ -91,7 +91,7 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar {
           contentAsString(result) must include(vatNumber)
 
           verify(mockRegistrationConnector, times(1))
-            .getPendingRegistrationsByIntermediaryNumber(any())(any())
+            .getPendingRegistration(any())(any())
         }
       }
 
@@ -99,8 +99,8 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar {
 
         val registration = buildSavedRegistration(isBasedInUk = false, hasVat = false)
 
-        when(mockRegistrationConnector.getPendingRegistrationsByIntermediaryNumber(any())(any()))
-          .thenReturn(Right(Seq(registration)).toFuture)
+        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
+          .thenReturn(Right(registration).toFuture)
 
         val app = applicationBuilder(userAnswers = None)
           .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
@@ -119,30 +119,9 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar {
 
     }
 
-    "must redirect to JourneyRecoveryPage when journeyId is not found" in {
-
-      val otherRegistration = buildSavedRegistration().copy(journeyId = "wrongId")
-
-      when(mockRegistrationConnector.getPendingRegistrationsByIntermediaryNumber(any())(any()))
-        .thenReturn(Right(Seq(otherRegistration)).toFuture)
-
-      val app = applicationBuilder(userAnswers = None)
-        .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
-        .build()
-
-      running(app) {
-        val request = FakeRequest(GET, routes.ClientNotActivatedController.onPageLoad(waypoints, journeyId).url)
-
-        val result = route(app, request).value
-
-        status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual JourneyRecoveryPage.route(waypoints).url
-      }
-    }
-
     "must throw an exception when the connector fails to return pending registrations" in {
 
-      when(mockRegistrationConnector.getPendingRegistrationsByIntermediaryNumber(any())(any()))
+      when(mockRegistrationConnector.getPendingRegistration(any())(any()))
         .thenReturn(Left(InternalServerError).toFuture)
 
       val app = applicationBuilder(userAnswers = None)
