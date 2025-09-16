@@ -76,9 +76,12 @@ class UpdateClientEmailAddressController @Inject()(
       registrationConnector.getPendingRegistration(journeyId).flatMap {
         case Right(savedPendingRegistration) =>
 
+          val clientCompanyName = getClientCompanyName(savedPendingRegistration)
+          val emailAddress = savedPendingRegistration.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
+
           form.bindFromRequest().fold(
             formWithErrors =>
-              BadRequest(view(formWithErrors, waypoints, journeyId, clientCompanyName =  "", emailAddress =  "")).toFuture,
+              BadRequest(view(formWithErrors, waypoints, journeyId, clientCompanyName, emailAddress)).toFuture,
 
             value =>
               registrationConnector.updateClientEmailAddress(journeyId, value).map {
@@ -90,14 +93,8 @@ class UpdateClientEmailAddressController @Inject()(
                   val activationExpiryDate = updatedClient.activationExpiryDate
                   val emailAddress = updatedClient.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
 
-                  emailService.sendClientActivationEmail(
-                    intermediaryName,
-                    recipientName,
-                    uniqueUrlCode,
-                    activationExpiryDate,
-                    emailAddress,
-                    Some("urgent")
-                  )
+                  emailService.sendClientActivationEmail(intermediaryName, recipientName, uniqueUrlCode, activationExpiryDate,
+                    emailAddress, alertQueue = Some("urgent"))
                   
                   Redirect(controllers.routes.ClientEmailUpdatedController.onPageLoad(waypoints, journeyId))
 

@@ -508,7 +508,7 @@ clientNotActivated.title = {0} has not activated their account
 clientNotActivated.heading = {0} has not activated their account
 clientNotActivated.p1.link = To activate their account, you must send your client this link: <a class="govuk-link" href="{0}">{0}</a>
 clientNotActivated.p2 = There they can agree to the terms and sign the declaration.
-clientNotActivated.info = If your client has not received an activation code from HMRC, you might need to check the email address you gave us: <span class="govuk-!-font-weight-bold"> {0} </span> <br> <a class="govuk-link" href="{1}">Update email address</a>
+clientNotActivated.info = If your client has not received an activation code from HMRC, you might need to check the email address you gave us: <span class="govuk-!-font-weight-bold"> {0} </span> <br> <br> <a class="govuk-link" href="{1}">Update email address</a>
 clientNotActivated.p3 = Your client must confirm their activation by {0}. If not, you will  need to register them again.
 
 updateClientEmailAddress.title = What is the correct email address for {0}?
