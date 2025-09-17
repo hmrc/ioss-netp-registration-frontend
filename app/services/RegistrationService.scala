@@ -17,10 +17,11 @@
 package services
 
 import connectors.RegistrationConnector
-import connectors.RegistrationHttpParser.RegistrationResultResponse
+import connectors.RegistrationHttpParser.{AmendRegistrationResultResponse, RegistrationResultResponse}
 import logging.Logging
 import models.UserAnswers
 import models.etmp.EtmpRegistrationRequest.buildEtmpRegistrationRequest
+import models.etmp.amend.EtmpAmendRegistrationRequest
 import services.etmp.EtmpEuRegistrations
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -38,4 +39,7 @@ class RegistrationService @Inject()(
     registrationConnector.createRegistration(buildEtmpRegistrationRequest(answers, commencementDate))
   }
 
+  def amendRegistration(amendRegistrationRequest: EtmpAmendRegistrationRequest) (implicit hc: HeaderCarrier): Future[AmendRegistrationResultResponse] = {
+    registrationConnector.amendRegistration(amendRegistrationRequest)
+  }
 }

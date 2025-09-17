@@ -45,8 +45,6 @@ import services.{AuditService, RegistrationService}
 import utils.FutureSyntax.FutureOps
 import views.html.clientDeclarationJourney.ClientDeclarationView
 
-import scala.concurrent.Future
-
 class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
   private val clientBusinessName: ClientBusinessName = arbitraryClientBusinessName.arbitrary.sample.value
