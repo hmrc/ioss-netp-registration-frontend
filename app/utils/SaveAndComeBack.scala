@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-package forms
+package utils
 
-import forms.mappings.Mappings
-import play.api.data.Form
+import models.UserAnswers
+import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, QuestionPage}
 
-import javax.inject.Inject
+trait SaveAndComeBack {
 
-class ContinueRegistrationSelectionFormProvider @Inject() extends Mappings {
 
-  def apply(): Form[String] =
-    Form(
-      "value" -> text("continueRegistrationSelection.error.required")
-    )
+
+
 }

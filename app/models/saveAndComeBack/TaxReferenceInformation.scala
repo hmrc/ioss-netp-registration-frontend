@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package forms
+package models.saveAndComeBack
 
-import forms.mappings.Mappings
-import play.api.data.Form
+import play.api.libs.json.{Json, OFormat}
 
-import javax.inject.Inject
+case class TaxReferenceInformation (
+                                     organisationName: String,
+                                     taxReference: String,
+                                     referenceNumber: String,
+                                     journeyId: String)
 
-class ContinueRegistrationSelectionFormProvider @Inject() extends Mappings {
-
-  def apply(): Form[String] =
-    Form(
-      "value" -> text("continueRegistrationSelection.error.required")
-    )
+object TaxReferenceInformation {
+  implicit lazy val format: OFormat[TaxReferenceInformation] = Json.format[TaxReferenceInformation]
 }

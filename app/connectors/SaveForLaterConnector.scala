@@ -17,7 +17,14 @@
 package connectors
 
 import config.Service
-import connectors.SaveForLaterHttpParser.{DeleteSaveForLaterReads, DeleteSaveForLaterResponse, SaveForLaterHttpReads, SaveForLaterResponse, SaveForLaterIntermediaryResponse, SaveForLaterIntermediaryHttpReads}
+import connectors.SaveForLaterHttpParser.{
+  DeleteSaveForLaterReads,
+  DeleteSaveForLaterResponse,
+  SaveForLaterHttpReads,
+  SaveForLaterIntermediaryHttpReads,
+  SaveForLaterIntermediaryResponse,
+  SaveForLaterResponse
+}
 import models.SaveForLaterRequest
 import play.api.Configuration
 import play.api.libs.json.Json
@@ -39,15 +46,15 @@ class SaveForLaterConnector @Inject()(
     httpClientV2.post(url"$baseUrl/save-for-later").withBody(Json.toJson(saveForLaterRequest)).execute[SaveForLaterResponse]
   }
 
-  def getClientRegistration()(implicit hc: HeaderCarrier): Future[SaveForLaterResponse] = {
-    httpClientV2.get(url"$baseUrl/save-for-later").execute[SaveForLaterResponse]
+  def getClientRegistration(journeyId: String)(implicit hc: HeaderCarrier): Future[SaveForLaterResponse] = {
+    httpClientV2.get(url"$baseUrl/save-for-later/$journeyId").execute[SaveForLaterResponse]
   }
 
   def getAllByIntermediary(intermediaryNumber: String)(implicit hc: HeaderCarrier): Future[SaveForLaterIntermediaryResponse] = {
     httpClientV2.get(url"$baseUrl/save-for-later-selection/$intermediaryNumber").execute[SaveForLaterIntermediaryResponse]
   }
 
-  def delete()(implicit hc: HeaderCarrier): Future[DeleteSaveForLaterResponse] = {
-    httpClientV2.get(url"$baseUrl/save-for-later/delete").execute[DeleteSaveForLaterResponse]
+  def delete(journeyId: String)(implicit hc: HeaderCarrier): Future[DeleteSaveForLaterResponse] = {
+    httpClientV2.get(url"$baseUrl/save-for-later/delete/$journeyId").execute[DeleteSaveForLaterResponse]
   }
 }

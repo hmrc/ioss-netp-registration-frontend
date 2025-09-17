@@ -14,6 +14,9 @@
  * limitations under the License.
  *@
 
+@import models.saveAndComeBack.TaxReferenceInformation
+@import models.saveAndComeBack.ContinueRegistrationSelection
+
 @this(
     layout: templates.Layout,
     formHelper: FormWithCSRF,
@@ -22,7 +25,7 @@
     govukButton: GovukButton
 )
 
-@(things: Seq[RadioItem], form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
+@(things: Seq[TaxReferenceInformation], form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = title(form, messages("continueRegistrationSelection.title"))) {
 
@@ -35,8 +38,8 @@
         @govukRadios(
             RadiosViewModel.apply(
                 field = form("value"),
-                items = things,
-            legend = HmrcPageHeadingLegend(
+                items = ContinueRegistrationSelection.options(things),
+                legend = HmrcPageHeadingLegend(
                     content = messages("continueRegistrationSelection.title")
                 ))
         )

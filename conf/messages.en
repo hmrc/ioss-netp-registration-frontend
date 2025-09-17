@@ -534,8 +534,8 @@ savedProgress.signOut = sign out and come back later
 savedProgress.signIn = If you sign out, you must sign back into your <a href="{0}" class="govuk-link">Government Gateway</a> to continue.
 saveProgress.button = Save and come back later
 
-continueRegistration.title = Do you want to continue the registration for {0} (VAT/tax reference: {1})
-continueRegistration.heading = Do you want to continue the registration for {0} (VAT/tax reference: {1})
+continueRegistration.title = Do you want to continue the registration for {0} ({1}: {2})
+continueRegistration.heading = Do you want to continue the registration for {0} ({1}: {2})
 continueRegistration.error.required = Select yes if want to continue this registration
 continueRegistration.continue = Yes
 continueRegistration.delete = No, delete my answers and start again
