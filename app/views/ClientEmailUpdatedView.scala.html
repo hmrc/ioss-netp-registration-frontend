@@ -21,7 +21,7 @@
 
 @(companyName: String, emailAddress: String, dashboardUrl: String)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = titleNoForm(messages("clientEmailUpdated.title"))) {
+@layout(pageTitle = titleNoForm(messages("clientEmailUpdated.title", companyName))) {
 
     <div class="govuk-panel govuk-panel--confirmation">
        <h1 class="govuk-panel__title">@messages("clientEmailUpdated.heading", companyName)</h1>
