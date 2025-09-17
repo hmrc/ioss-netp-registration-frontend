@@ -24,8 +24,8 @@ import models.domain.VatCustomerInfo
 import models.requests.OptionalDataRequest
 import models.requests.DataRequest
 import models.responses.VatCustomerNotFound
-import models.saveAndComeBack.TaxReferenceInformation
-import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, JourneyRecoveryPage, QuestionPage, UkVatNumberNotFoundPage, VatApiDownPage, Waypoints}
+import models.saveAndComeBack.{ContinueRegistrationSelection, MultipleRegistrations, NoRegistrations, SingleRegistration, TaxReferenceInformation}
+import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, ContinueRegistrationSelectionPage, JourneyRecoveryPage, QuestionPage, UkVatNumberNotFoundPage, VatApiDownPage, Waypoints}
 import play.api.mvc.Call
 import play.api.mvc.Results.Redirect
 import services.core.CoreRegistrationValidationService
@@ -87,11 +87,51 @@ class SaveAndComeBackService @Inject()(
     }
   }
 
-  
+  def getVatTaxInfo(ukVatNumber: String, waypoints: Waypoints)(implicit request: DataRequest[_], hc: HeaderCarrier): Future[Either[Call, VatCustomerInfo]] = {
+    registrationConnector.getVatCustomerInfo(ukVatNumber).map {
+      case Right(value) =>
+        Right(value)
+      case Left(VatCustomerNotFound) =>
+        Left(UkVatNumberNotFoundPage.route(waypoints))
+      case Left(_) =>
+        Left(VatApiDownPage.route(waypoints))
+    }
+  }
+
+  //TODO- SCG rename this
+  def scgSelectTheClassSCG(
+                            userAnswers: UserAnswers,
+                            intermediaryNum: String
+                          )(implicit hc: HeaderCarrier): Future[ContinueRegistrationSelection] = {
+
+    userAnswers.get(ContinueRegistrationSelectionPage) match {
+
+      case Some(registration: String) =>
+        Future.successful(SingleRegistration(registration))
+
+      case None =>
+        saveForLaterConnector.getAllByIntermediary(intermediaryNum).map {
+          case Right(seqSavedUserAnswers) if seqSavedUserAnswers.isEmpty =>
+            NoRegistrations
+
+          case Right(seqSavedUserAnswers) if seqSavedUserAnswers.size == 1 =>
+            SingleRegistration(seqSavedUserAnswers.head.journeyId)
+
+          case Right(seqSavedUserAnswers) =>
+            MultipleRegistrations(seqSavedUserAnswers)
+
+          case Left(error) =>
+            // probably better to log and return a failure type here
+            throw new RuntimeException(s"Error fetching intermediary: $error")
+        }
+    }
+  }
   
   //TODO- SCG rename this
   //TODO - VEI-506
-  def getAndValidateVatTaxInfo(ukVatNumber: String, waypoints: Waypoints)(implicit request: DataRequest[_], hc: HeaderCarrier): Future[Either[Call, VatCustomerInfo]] = {
+  def getAndValidateVatTaxInfo(
+                                ukVatNumber: String, waypoints: Waypoints
+                              )(implicit request: DataRequest[_], hc: HeaderCarrier): Future[Either[Call, VatCustomerInfo]] = {
     val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
 
     coreRegistrationValidationService.searchUkVrn(Vrn(ukVatNumber)).flatMap {
@@ -129,18 +169,6 @@ class SaveAndComeBackService @Inject()(
 
   }
   
-  def getVatTaxInfo(ukVatNumber: String, waypoints: Waypoints)(implicit request: DataRequest[_], hc: HeaderCarrier): Future[Either[Call, VatCustomerInfo]] = {
-        registrationConnector.getVatCustomerInfo(ukVatNumber).map {
-          case Right(value) =>
-              Right(value)
-          case Left(VatCustomerNotFound) =>
-            Left(UkVatNumberNotFoundPage.route(waypoints))
-          case Left(_) =>
-            Left(VatApiDownPage.route(waypoints))
-        }
-    }
-
-
   //TODO- SCG rename this
   def fetchOutcomesFailFast(
                              seqItems: Seq[SavedUserAnswers]
@@ -167,7 +195,10 @@ class SaveAndComeBackService @Inject()(
     Future.sequence(futures)
   }
 
-  def retrieveSingleSavedUserAnswers(journeyId: String, waypoints: Waypoints)(implicit request: OptionalDataRequest[_], hc: HeaderCarrier): Future[Either[Call, UserAnswers]] = {
+  def retrieveSingleSavedUserAnswers(
+                                      journeyId: String,
+                                      waypoints: Waypoints)
+                                    (implicit request: OptionalDataRequest[_], hc: HeaderCarrier): Future[Either[Call, UserAnswers]] = {
     saveForLaterConnector.getClientRegistration(journeyId).flatMap {
       case Right(savedUserAnswers) if savedUserAnswers.isDefined =>
        Right(UserAnswers(
@@ -177,6 +208,7 @@ class SaveAndComeBackService @Inject()(
           vatInfo = None,
           lastUpdated = savedUserAnswers.get.lastUpdated)).toFuture
       //TODO- SCG- Should this be userAnswers
+      
       case Left(error) =>
         logger.warn(s"Failed to get the registration: $error")
         Left(JourneyRecoveryPage.route(waypoints)).toFuture

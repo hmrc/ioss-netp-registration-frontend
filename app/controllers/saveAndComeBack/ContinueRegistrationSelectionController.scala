@@ -16,19 +16,17 @@
 
 package controllers.saveAndComeBack
 
-import connectors.{RegistrationConnector, SaveForLaterConnector}
+import connectors.SaveForLaterConnector
 import controllers.actions.AuthenticatedControllerComponents
 import forms.ContinueRegistrationSelectionFormProvider
 import logging.Logging
-import models.{ClientBusinessName, SavedUserAnswers, UserAnswers}
-import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, ContinueRegistrationSelectionPage, JourneyRecoveryPage, QuestionPage, Waypoints}
+import models.UserAnswers
+import models.saveAndComeBack.{MultipleRegistrations, NoRegistrations, SingleRegistration}
+import pages.{ContinueRegistrationSelectionPage, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.libs.json.JsObject
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import play.api.mvc.{Action, AnyContent, Call, MessagesControllerComponents}
 import services.SaveAndComeBackService
-import uk.gov.hmrc.govukfrontend.views.Aliases.{RadioItem, Text}
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.saveAndComeBack.ContinueRegistrationSelectionView
@@ -41,7 +39,6 @@ class ContinueRegistrationSelectionController @Inject()(
                                                          override val messagesApi: MessagesApi,
                                                          cc: AuthenticatedControllerComponents,
                                                          saveForLaterConnector: SaveForLaterConnector,
-                                                         registrationConnector: RegistrationConnector,
                                                          formProvider: ContinueRegistrationSelectionFormProvider,
                                                          saveAndComeBackService: SaveAndComeBackService,
                                                          view: ContinueRegistrationSelectionView
@@ -54,43 +51,30 @@ class ContinueRegistrationSelectionController @Inject()(
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetOptionalData.async {
     implicit request =>
 
-      request.userAnswers.getOrElse(UserAnswers(request.userId)).get(ContinueRegistrationSelectionPage) match {
-          case Some(journeyId) =>
-            saveAndComeBackService.retrieveSingleSavedUserAnswers(journeyId, waypoints)(request).flatMap {
-              case Right(userAnswers) =>
-                for {
-                  _ <- cc.sessionRepository.set(userAnswers)
-                } yield Redirect(controllers.saveAndComeBack.routes.ContinueRegistrationController.onPageLoad())
-              case Left(call) => Redirect(call).toFuture
+      val userAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
+
+      saveAndComeBackService.scgSelectTheClassSCG(userAnswers, request.intermediaryNumber.get).flatMap {
+        case SingleRegistration(singleJourneyId) =>
+
+          saveAndComeBackService.retrieveSingleSavedUserAnswers(singleJourneyId, waypoints).flatMap {
+
+            case Right(enrichedUserAnswers) => {
+              for {
+                _ <- cc.sessionRepository.set(enrichedUserAnswers)
+              } yield Redirect(controllers.saveAndComeBack.routes.ContinueRegistrationController.onPageLoad())
             }
+            case Left(errorCall) => Redirect(errorCall).toFuture
+          }
 
-          case None =>
-            saveForLaterConnector.getAllByIntermediary(request.intermediaryNumber.get).flatMap { //TODO - SCG- Don't use a .get
+        case MultipleRegistrations(multipleRegistrations) =>
+          saveAndComeBackService.fetchOutcomesFailFast(multipleRegistrations).map { seqTaxReferenceInfo =>
+            Ok(view(seqTaxReferenceInfo, form, waypoints))
+          }
 
-              case Right(seqSavedUserAnswers) if seqSavedUserAnswers.size == 1 => {
-                val savedUserAnswers = seqSavedUserAnswers.head
-                val updatedUserAnswers = UserAnswers(
-                  request.userId,
-                  savedUserAnswers.journeyId,
-                  data = savedUserAnswers.data,
-                  vatInfo = None,
-                  lastUpdated = savedUserAnswers.lastUpdated) //TODO- SCG- Should this be userAnswers
-                for {
-                  _ <- cc.sessionRepository.set(updatedUserAnswers)
-                } yield Redirect(controllers.saveAndComeBack.routes.ContinueRegistrationController.onPageLoad())
-              }
+        case NoRegistrations => ???
 
-              case Right(seqSavedUserAnswers) =>
-                saveAndComeBackService.fetchOutcomesFailFast(seqSavedUserAnswers).map { outcome =>
-
-                  Ok(view(outcome, form, waypoints))
-                }
-
-              case Left(error) =>
-                logger.warn(s"Failed to get the registration: $error")
-                Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture
-            }
-        }
+        case _ => ???
+      }
   }
 
 
@@ -108,4 +92,6 @@ class ContinueRegistrationSelectionController @Inject()(
           } yield Redirect(ContinueRegistrationSelectionPage.route(waypoints).url)
       )
   }
+
 }
+
