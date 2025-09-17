@@ -20,6 +20,7 @@ import base.SpecBase
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import models.{PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
 import models.domain.VatCustomerInfo
+import models.etmp.amend.{AmendRegistrationResponse, EtmpAmendRegistrationRequest}
 import models.etmp.display.RegistrationWrapper
 import models.iossRegistration.IossEtmpDisplayRegistration
 import models.ossRegistration.{OssExcludedTrader, OssRegistration}
@@ -32,9 +33,11 @@ import play.api.http.Status.*
 import play.api.libs.json.{Json, OWrites}
 import play.api.test.Helpers.running
 import testutils.RegistrationData.etmpRegistrationRequest
-import testutils.WireMockHelper
+import testutils.{RegistrationData, WireMockHelper}
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
+
+import java.time.LocalDateTime
 
 class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
@@ -46,6 +49,9 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
     intermediaryDetails = intermediaryDetails
   )
   private val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
+
+  private val amendRegistrationResponse = RegistrationData.amendRegistrationResponse
+  private val amendRegistrationRequest = RegistrationData.etmpAmendRegistrationRequest
 
   private val otherErrorStatuses: Seq[Int] = Seq(BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE, UNPROCESSABLE_ENTITY)
   private val vatNumber = "123456789"
@@ -187,6 +193,86 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
           val result = connector.getIntermediaryVatCustomerInfo().futureValue
 
           result `mustBe` Left(UnexpectedResponseStatus(status, s"Received unexpected response code $status"))
+        }
+      }
+    }
+
+    ".amendRegistration" - {
+
+      val url: String = "/ioss-netp-registration/amend"
+
+      "must return Right(AmendRegistrationResponse) when backend returns OK with valid response" in {
+
+        running(application) {
+          val connector = application.injector.instanceOf[RegistrationConnector]
+
+          val responseBody = Json.toJson(amendRegistrationResponse).toString
+
+          server.stubFor(
+            post(urlEqualTo(url))
+              .withRequestBody(equalTo(Json.toJson(amendRegistrationRequest).toString))
+              .willReturn(ok().withBody(responseBody))
+          )
+
+          val result = connector.amendRegistration(amendRegistrationRequest).futureValue
+
+          result mustBe Right(amendRegistrationResponse)
+        }
+      }
+
+      "must return Left(InvalidJson) when backend returns OK with invalid JSON" in {
+
+        running(application) {
+          val connector = application.injector.instanceOf[RegistrationConnector]
+
+          val malformedJson = Json.obj("invalid" -> "response").toString
+
+          server.stubFor(
+            post(urlEqualTo(url))
+              .withRequestBody(equalTo(Json.toJson(amendRegistrationRequest).toString))
+              .willReturn(ok().withBody(malformedJson))
+          )
+
+          val result = connector.amendRegistration(amendRegistrationRequest).futureValue
+
+          result mustBe Left(InvalidJson)
+        }
+      }
+
+      "must return Left(UnexpectedResponseStatus) when backend returns error status" in {
+        val status = INTERNAL_SERVER_ERROR
+
+        running(application) {
+          val connector = application.injector.instanceOf[RegistrationConnector]
+
+          server.stubFor(
+            post(urlEqualTo(url))
+              .withRequestBody(equalTo(Json.toJson(amendRegistrationRequest).toString))
+              .willReturn(aResponse().withStatus(status))
+          )
+
+          val result = connector.amendRegistration(amendRegistrationRequest).futureValue
+
+          result mustBe Left(UnexpectedResponseStatus(status, s"Unexpected amend registration response, status $status returned"))
+        }
+      }
+
+      otherErrorStatuses.foreach { status =>
+        s"must return Left(UnexpectedResponseStatus) when backend returns status $status" in {
+
+          running(application) {
+            val connector = application.injector.instanceOf[RegistrationConnector]
+
+            server.stubFor(
+              post(urlEqualTo(url))
+                .withRequestBody(equalTo(Json.toJson(amendRegistrationRequest).toString))
+                .willReturn(aResponse().withStatus(status))
+            )
+
+            val result = connector.amendRegistration(amendRegistrationRequest).futureValue
+
+            result mustBe Left(UnexpectedResponseStatus(status, s"Unexpected amend registration response, status $status returned"))
+          }
         }
       }
     }
