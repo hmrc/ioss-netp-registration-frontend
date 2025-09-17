@@ -20,6 +20,7 @@ import connectors.{RegistrationConnector, SaveForLaterConnector}
 import controllers.actions.*
 import forms.ContinueRegistrationFormProvider
 import models.ContinueRegistration
+import models.saveAndComeBack.TaxReferenceInformation
 import pages.{ClientVatNumberPage, JourneyRecoveryPage, SavedProgressPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -30,7 +31,6 @@ import uk.gov.hmrc.http.HttpVerbs.GET
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.saveAndComeBack.ContinueRegistrationView
-import models.saveAndComeBack.TaxReferenceInformation
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -41,7 +41,6 @@ class ContinueRegistrationController @Inject()(
                                                 formProvider: ContinueRegistrationFormProvider,
                                                 saveForLaterConnector: SaveForLaterConnector,
                                                 view: ContinueRegistrationView,
-                                                registrationConnector: RegistrationConnector,
                                                 saveAndComeBackService: SaveAndComeBackService
                                               )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
@@ -87,7 +86,7 @@ class ContinueRegistrationController @Inject()(
     implicit request =>
 
       val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(request.userAnswers)
-      
+
       form.bindFromRequest().fold(
         formWithErrors =>
           BadRequest(view(taxReferenceInformation, formWithErrors, waypoints)).toFuture,
