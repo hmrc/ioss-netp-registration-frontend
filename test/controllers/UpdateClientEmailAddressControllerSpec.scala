@@ -60,8 +60,6 @@ class UpdateClientEmailAddressControllerSpec extends SpecBase with MockitoSugar 
 
       "must return OK and the correct view for a GET" in {
 
-        val businessContactDetails = arbitraryBusinessContactDetails.arbitrary.sample.value
-
         val emailAddress = businessContactDetails.emailAddress
 
         val completeUserAnswers = savedPendingRegistration.userAnswers

@@ -42,11 +42,10 @@ class ClientEmailUpdatedControllerSpec extends SpecBase with MockitoSugar {
 
     "must return OK and the correct view for a GET" in {
 
-      val businessContactDetails =
-        BusinessContactDetails(fullName = "", telephoneNumber = "", emailAddress = newEmailAddress)
+      val updatedBusinessContactDetails = businessContactDetails.copy(emailAddress = newEmailAddress)
 
       val updatedUserAnswers = savedPendingRegistration.userAnswers
-        .set(BusinessContactDetailsPage, businessContactDetails).success.value
+        .set(BusinessContactDetailsPage, updatedBusinessContactDetails).success.value
 
       val updatedPendingReg = savedPendingRegistration.copy(userAnswers = updatedUserAnswers)
 
