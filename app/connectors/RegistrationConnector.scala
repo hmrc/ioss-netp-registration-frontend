@@ -87,4 +87,7 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
 
   def createRegistration(registrationRequest: EtmpRegistrationRequest)(implicit hc: HeaderCarrier): Future[RegistrationResultResponse] =
     httpClientV2.post(url"$baseUrl/create-registration").withBody(Json.toJson(registrationRequest)).execute[RegistrationResultResponse]
+    
+  def updateClientEmailAddress(journeyId: String, newEmailAddress: String)(implicit hc: HeaderCarrier): Future[SavedPendingRegistrationResponse] =
+    httpClientV2.put(url"$baseUrl/pending-registrations/$journeyId/$newEmailAddress").execute[SavedPendingRegistrationResponse]
 }
