@@ -32,6 +32,7 @@ object SavedPendingRegistrationHttpParser extends Logging {
     def operation(action: String) = action.toUpperCase match {
       case "POST" => "create"
       case "GET" => "retrieve"
+      case "PUT" => "update"
       case other => other.toLowerCase
     }
 

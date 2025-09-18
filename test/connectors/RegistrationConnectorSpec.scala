@@ -655,5 +655,97 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
         }
       }
     }
+
+    ".updateClientEmailAddress" - {
+
+      val journeyId = savedPendingRegistration.journeyId
+      val oldEmail = "old@email.com"
+      val newEmail = "new@email.com"
+
+      val savedPendingRegistrationWithOldEmail: SavedPendingRegistration =
+        savedPendingRegistration.copy(
+          userAnswers = savedPendingRegistration.userAnswers.copy(
+            data = Json.obj(
+              "businessContactDetails" -> Json.obj(
+                "emailAddress" -> oldEmail
+              )
+            )
+          )
+        )
+
+      val url: String = s"/ioss-netp-registration/pending-registrations/$journeyId/$newEmail"
+
+      "must return an updated SavedPendingRegistration response" in {
+
+        val updatedPendingRegistration =
+          savedPendingRegistrationWithOldEmail.copy(
+            userAnswers = savedPendingRegistrationWithOldEmail.userAnswers.copy(
+              data = Json.obj(
+                "businessContactDetails" -> Json.obj(
+                  "emailAddress" -> newEmail
+                )
+              )
+            )
+          )
+
+        running(application) {
+
+          val responseBody = Json.toJson(updatedPendingRegistration).toString
+
+          server.stubFor(
+            put(urlEqualTo(url))
+              .willReturn(aResponse()
+                .withStatus(OK)
+                .withBody(responseBody))
+          )
+
+          val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
+
+          val result = connector.updateClientEmailAddress(journeyId, newEmail).futureValue
+
+          result mustBe Right(updatedPendingRegistration)
+        }
+      }
+
+      "must return InvalidJson error when the response body is not valid" in {
+
+        running(application) {
+
+          server.stubFor(
+            put(urlEqualTo(url))
+              .willReturn(aResponse()
+                .withBody(Json.toJson("test").toString()))
+          )
+
+          val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
+
+          val result = connector.updateClientEmailAddress(journeyId, newEmail).futureValue
+
+          result mustBe Left(InvalidJson)
+        }
+      }
+
+      otherErrorStatuses.foreach { status =>
+
+        s"must return UnexpectedResponseStatus when the server returns status: $status" in {
+
+          val response = UnexpectedResponseStatus(status, s"Unexpected response when trying to update the pending registration, status $status returned")
+
+          running(application) {
+
+            server.stubFor(
+              put(urlEqualTo(url))
+                .willReturn(aResponse().withStatus(status))
+            )
+
+            val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
+
+            val result = connector.updateClientEmailAddress(journeyId, newEmail).futureValue
+
+            result mustBe Left(response)
+          }
+        }
+      }
+    }
   }
 }
