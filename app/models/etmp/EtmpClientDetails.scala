@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package config
+package models.etmp
 
-object Constants {
+import play.api.libs.json.{Json, OFormat}
 
-  val maxTradingNames: Int = 10
-  val maxWebsites: Int = 10
-  val intermediaryEnrolmentKey: String = "IntNumber"
-  val pendingRegistrationTTL: Int = 28
+case class EtmpClientDetails(
+                              clientName: String,
+                              clientIossID: String,
+                              clientExcluded: Boolean
+                            )
 
-  val clientDeclarationEmailTemplateId: String = "ioss_netp_email_declaration_code"
-
-  val maxSchemes: Int = 3
-  val maxOssSchemes: Int = 2
-  val maxIossSchemes: Int = 1
-  val lastSchemeForCountry: Int = 1
-
-  val ukCountryCodeAreaPrefix: String = "GB"
+object EtmpClientDetails {
+  
+  implicit val format: OFormat[EtmpClientDetails] = Json.format[EtmpClientDetails]
 }
