@@ -21,16 +21,17 @@ import connectors.RegistrationConnector
 import models.responses.InternalServerError
 import models.{BusinessContactDetails, IntermediaryDetails, SavedPendingRegistration, UserAnswers}
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito.{reset, times, verify, when}
+import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
-import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientHasVatNumberPage, ClientVatNumberPage, JourneyRecoveryPage}
+import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientHasVatNumberPage, ClientVatNumberPage}
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import utils.FutureSyntax.FutureOps
 
 
-class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar {
+class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
   private val mockRegistrationConnector = mock[RegistrationConnector]
 
@@ -65,6 +66,9 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar {
     )
   }
 
+  override def beforeEach(): Unit = {
+    reset(mockRegistrationConnector)
+  }
 
   "ClientNotActivated Controller" - {
 
@@ -72,7 +76,7 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar {
 
       "when journeyId is found, user is UK based, has VAT, and vatInfo exists" in {
 
-        val registration = buildSavedRegistration(withVatInfo = true)
+        val registration = buildSavedRegistration()
 
         when(mockRegistrationConnector.getPendingRegistration(any())(any()))
           .thenReturn(Right(registration).toFuture)
@@ -90,8 +94,29 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar {
           contentAsString(result) must include(vatCustomerInfo.organisationName.get)
           contentAsString(result) must include(vatNumber)
 
-          verify(mockRegistrationConnector, times(1))
-            .getPendingRegistration(any())(any())
+          verify(mockRegistrationConnector, times(1)).getPendingRegistration(any())(any())
+        }
+      }
+
+      "when journeyId is found, user is UK based but does not have a VAT number" in {
+
+        val registration = buildSavedRegistration(hasVat = false)
+
+        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
+          .thenReturn(Right(registration).toFuture)
+
+        val app = applicationBuilder(userAnswers = None)
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+        running(app) {
+          val request = FakeRequest(GET, routes.ClientNotActivatedController.onPageLoad(waypoints, journeyId).url)
+
+          val result = route(app, request).value
+
+          status(result) mustEqual OK
+
+          verify(mockRegistrationConnector, times(1)).getPendingRegistration(any())(any())
         }
       }
 
