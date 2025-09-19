@@ -25,7 +25,7 @@ sealed abstract class GenericRequest[+A](request: Request[A], val userId: String
 case class OptionalDataRequest[A](request: Request[A], userId: String, userAnswers: Option[UserAnswers] = None, intermediaryNumber: Option[String] = None)
   extends WrappedRequest[A](request)
 
-case class DataRequest[A](request: Request[A], override val userId: String, override val userAnswers: UserAnswers, intermediaryNumber: String)
+case class DataRequest[A](request: Request[A], override val userId: String, override val userAnswers: UserAnswers, intermediaryNumber: String, registrationWrapper: Option[RegistrationWrapper] = None)
   extends GenericRequest[A](request, userId, userAnswers)
 
 case class ClientOptionalDataRequest[A](request: Request[A], override val userId: String, override val userAnswers: UserAnswers)

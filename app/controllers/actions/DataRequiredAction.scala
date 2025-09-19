@@ -16,6 +16,7 @@
 
 package controllers.actions
 
+import connectors.RegistrationConnector
 import controllers.routes
 import logging.Logging
 import models.requests.{DataRequest, OptionalDataRequest}
@@ -25,7 +26,8 @@ import play.api.mvc.{ActionRefiner, Result}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class DataRequiredActionImpl @Inject()(implicit val executionContext: ExecutionContext) extends DataRequiredAction with Logging {
+class DataRequiredActionImpl @Inject()(registrationConnector: RegistrationConnector,
+                                       isInAmendMode: Boolean)(implicit val executionContext: ExecutionContext) extends DataRequiredAction with Logging {
 
   override protected def refine[A](request: OptionalDataRequest[A]): Future[Either[Result, DataRequest[A]]] = {
 
@@ -39,8 +41,40 @@ class DataRequiredActionImpl @Inject()(implicit val executionContext: ExecutionC
         Future.successful(Left(Redirect(routes.JourneyRecoveryController.onPageLoad())))
 
       case Some(data) =>
-        Future.successful(Right(DataRequest(request.request, request.userId, data, intermediaryNumber)))
+        val eventualMaybeRegistrationWrapper = {
+          if (isInAmendMode) {
+            //needs connecting to the registrationConnector.getRegistration method
+            Future.successful(Right(DataRequest(request.request, request.userId, data, intermediaryNumber)))
+            //needs the ib30 implementation to finish with registration wrapper
+            // implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request.request, request.session)
+            // registrationConnector.displayRegistration(intermediaryNumber)(hc).flatMap {
+            //   case Left(error) => Future.failed(new RuntimeException(s"Failed to retrieve registration: ${error.body}"))
+            //   case Right(registrationWrapper) => Future.successful(Some(registrationWrapper))
+            // }
+          } else {
+            Future.successful(None)
+          }
+        }
+
+        eventualMaybeRegistrationWrapper.map { maybeWrapper =>
+          Right(DataRequest(
+            request.request,
+            request.userId,
+            data,
+            intermediaryNumber,
+            maybeWrapper
+          ))
+        }
     }
+  }
+}
+
+class DataRequiredActionProvider @Inject()(
+                                            registrationConnector: RegistrationConnector
+                                          )(implicit ec: ExecutionContext) extends DataRequiredAction {
+
+  def apply(isInAmendMode: Boolean = false): ActionRefiner[OptionalDataRequest, DataRequest] = {
+    new DataRequiredActionImpl(registrationConnector, isInAmendMode)
   }
 }
 
