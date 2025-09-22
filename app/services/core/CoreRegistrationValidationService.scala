@@ -58,6 +58,13 @@ class CoreRegistrationValidationService @Inject()(
     getValidateCoreRegistrationResponse(coreRegistrationRequest)
   }
 
+  def searchForeignTaxReference(foreignTaxReference: String, country: String)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Match]] = {
+
+    val coreRegistrationRequest = CoreRegistrationRequest(SourceType.TraderId.toString, None, foreignTaxReference, None, country)
+
+    getValidateCoreRegistrationResponse(coreRegistrationRequest)
+  }
+
   def searchEuTaxId(euTaxReference: String, countryCode: String)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Match]] = {
 
     val coreRegistrationRequest = CoreRegistrationRequest(SourceType.EUTraderId.toString, None, euTaxReference, None, countryCode)

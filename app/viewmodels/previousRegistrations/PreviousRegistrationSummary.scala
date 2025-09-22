@@ -97,6 +97,7 @@ object PreviousRegistrationSummary {
         }.mkString("<br/>")
 
 
+        // TODO -> Required?
         val currentAnswerCountries = previousRegistrations.map(_.previousEuCountry)
         val existingCountries = existingPreviousRegistrations.map(previousRegistration => previousRegistration.country)
         val sameListOfCountries: Boolean = currentAnswerCountries.sortBy(_.code) == existingCountries.sortBy(_.code)

@@ -28,7 +28,8 @@ import models.{BankDetails, Bic, Country, Iban, PreviousScheme}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.*
-import org.scalacheck.Gen
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
@@ -71,7 +72,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
         genericMatch
       ))
 
-  private val connector = mock[ValidateCoreRegistrationConnector]
+  private val mockValidateCoreRegistrationConnector: ValidateCoreRegistrationConnector = mock[ValidateCoreRegistrationConnector]
   private val iossRegistrationService = mock[IossRegistrationService]
   private val ossRegistrationService = mock[OssRegistrationService]
   private val mockAuditService: AuditService = mock[AuditService]
@@ -115,11 +116,11 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       "and return match data for any matchType" in {
 
-        when(connector.validateCoreRegistration(any())(any())) thenReturn Right(coreValidationResponses).toFuture
+        when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(coreValidationResponses).toFuture
         doNothing().when(mockAuditService).audit(any())(any(), any())
 
         val coreRegistrationValidationService = new CoreRegistrationValidationService(
-          connector,
+          mockValidateCoreRegistrationConnector,
           iossRegistrationService,
           ossRegistrationService,
           mockAuditService,
@@ -139,11 +140,11 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
       "and return None when no active match found" in {
 
         val expectedResponse = coreValidationResponses.copy(matches = Seq[Match]())
-        when(connector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
+        when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
         doNothing().when(mockAuditService).audit(any())(any(), any())
 
         val coreRegistrationValidationService = new CoreRegistrationValidationService(
-          connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+          mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
         )
 
         val value = coreRegistrationValidationService.searchUkVrn(vrn).futureValue
@@ -161,10 +162,10 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       val errorCode = Gen.oneOf(BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR).sample.value
 
-      when(connector.validateCoreRegistration(any())(any())) thenReturn Left(UnexpectedResponseStatus(errorCode, "error")).toFuture
+      when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Left(UnexpectedResponseStatus(errorCode, "error")).toFuture
 
       val coreRegistrationValidationService = new CoreRegistrationValidationService(
-        connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+        mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
       )
 
       val response = intercept[Exception](coreRegistrationValidationService.searchUkVrn(vrn).futureValue)
@@ -188,11 +189,11 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       "and return match data for the a Tax reference number" in {
 
-        when(connector.validateCoreRegistration(any())(any())) thenReturn Right(coreValidationResponses).toFuture
+        when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(coreValidationResponses).toFuture
         doNothing().when(mockAuditService).audit(any())(any(), any())
 
         val coreRegistrationValidationService = new CoreRegistrationValidationService(
-          connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+          mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
         )
 
         val value = coreRegistrationValidationService.searchEuTaxId(taxRefNo, countryCode).futureValue.get
@@ -208,11 +209,11 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
       "and return None when no match found" in {
 
         val expectedResponse = coreValidationResponses.copy(matches = Seq[Match]())
-        when(connector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
+        when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
         doNothing().when(mockAuditService).audit(any())(any(), any())
 
         val coreRegistrationValidationService = new CoreRegistrationValidationService(
-          connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+          mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
         )
 
         val value = coreRegistrationValidationService.searchEuTaxId(taxRefNo, countryCode).futureValue
@@ -230,10 +231,10 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       val errorCode = Gen.oneOf(BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR).sample.value
 
-      when(connector.validateCoreRegistration(any())(any())) thenReturn Left(UnexpectedResponseStatus(errorCode, "error")).toFuture
+      when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Left(UnexpectedResponseStatus(errorCode, "error")).toFuture
 
       val coreRegistrationValidationService = new CoreRegistrationValidationService(
-        connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+        mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
       )
 
       val response = intercept[Exception](coreRegistrationValidationService.searchEuTaxId(taxRefNo, countryCode).futureValue)
@@ -257,11 +258,11 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       "and return match data for a EU VRN" in {
 
-        when(connector.validateCoreRegistration(any())(any())) thenReturn Right(coreValidationResponses).toFuture
+        when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(coreValidationResponses).toFuture
         doNothing().when(mockAuditService).audit(any())(any(), any())
 
         val coreRegistrationValidationService = new CoreRegistrationValidationService(
-          connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+          mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
         )
 
         val value = coreRegistrationValidationService.searchEuVrn(euVrn, countryCode).futureValue.get
@@ -277,11 +278,11 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
       "and return None when no match found" in {
 
         val expectedResponse = coreValidationResponses.copy(matches = Seq[Match]())
-        when(connector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
+        when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
         doNothing().when(mockAuditService).audit(any())(any(), any())
 
         val coreRegistrationValidationService = new CoreRegistrationValidationService(
-          connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+          mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
         )
 
         val value = coreRegistrationValidationService.searchEuVrn(euVrn, countryCode).futureValue
@@ -299,10 +300,10 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       val errorCode = Gen.oneOf(BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR).sample.value
 
-      when(connector.validateCoreRegistration(any())(any())) thenReturn Left(UnexpectedResponseStatus(errorCode, "error")).toFuture
+      when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Left(UnexpectedResponseStatus(errorCode, "error")).toFuture
 
       val coreRegistrationValidationService = new CoreRegistrationValidationService(
-        connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+        mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
       )
 
       val response = intercept[Exception](coreRegistrationValidationService.searchEuVrn(euVrn, countryCode).futureValue)
@@ -329,11 +330,11 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
         val previousScheme: PreviousScheme = PreviousScheme.OSSU
 
-        when(connector.validateCoreRegistration(any())(any())) thenReturn Right(coreValidationResponses).toFuture
+        when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(coreValidationResponses).toFuture
         doNothing().when(mockAuditService).audit(any())(any(), any())
 
         val coreRegistrationValidationService = new CoreRegistrationValidationService(
-          connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+          mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
         )
 
         val value = coreRegistrationValidationService.searchScheme(iossNumber, previousScheme, None, countryCode).futureValue.get
@@ -360,11 +361,11 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
           searchIdIssuedBy = countryCode
         )
 
-        when(connector.validateCoreRegistration(any())(any())) thenReturn Right(coreValidationResponses).toFuture
+        when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(coreValidationResponses).toFuture
         doNothing().when(mockAuditService).audit(any())(any(), any())
 
         val coreRegistrationValidationService = new CoreRegistrationValidationService(
-          connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+          mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
         )
 
         val value = coreRegistrationValidationService.searchScheme(iossNumber, previousScheme, Some(intermediaryNumber), countryCode).futureValue.get
@@ -382,11 +383,11 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
         val previousScheme: PreviousScheme = PreviousScheme.OSSU
 
         val expectedResponse = coreValidationResponses.copy(matches = Seq[Match]())
-        when(connector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
+        when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
         doNothing().when(mockAuditService).audit(any())(any(), any())
 
         val coreRegistrationValidationService = new CoreRegistrationValidationService(
-          connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+          mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
         )
 
         val value = coreRegistrationValidationService.searchScheme(iossNumber, previousScheme, None, countryCode).futureValue
@@ -435,7 +436,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
       )
 
       when(iossRegistrationService.getIossRegistration(iossNumber)) thenReturn iossDisplayRegistration.toFuture
-      when(connector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
+      when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
 
       val expectedMatch = Match(
         matchType = MatchType.TraderIdQuarantinedNETP,
@@ -450,7 +451,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
       )
 
       val service = new CoreRegistrationValidationService(
-        connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+        mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
       )
 
       val result = service.searchScheme(iossNumber, previousScheme, None, countryCode).futureValue
@@ -502,7 +503,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
       )
 
       when(ossRegistrationService.getLatestOssRegistration(Vrn(vrn))) thenReturn ossDisplayRegistration.toFuture
-      when(connector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
+      when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
 
       val expectedMatch = Match(
         matchType = MatchType.TraderIdQuarantinedNETP,
@@ -517,7 +518,7 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
       )
 
       val service = new CoreRegistrationValidationService(
-        connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+        mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
       )
 
       val result = service.searchScheme(vrn, previousScheme, None, countryCode).futureValue
@@ -532,16 +533,64 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
       val errorCode = Gen.oneOf(BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR).sample.value
 
-      when(connector.validateCoreRegistration(any())(any())) thenReturn Left(UnexpectedResponseStatus(errorCode, "error")).toFuture
+      when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Left(UnexpectedResponseStatus(errorCode, "error")).toFuture
 
       val coreRegistrationValidationService = new CoreRegistrationValidationService(
-        connector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+        mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
       )
 
       val response = intercept[Exception](coreRegistrationValidationService.searchScheme(iossNumber, previousScheme, None, countryCode).futureValue)
 
       response.getMessage must include("Error while validating core registration")
       verifyNoInteractions(mockAuditService)
+    }
+  }
+
+  ".searchTraderIdGlobal" - {
+
+    "must return a match for a foreign tax reference number" in {
+
+      val country: Country = Gen.oneOf(Country.allCountries).sample.value
+      val foreignTaxReference: String = arbitrary[String].sample.value
+
+      val foreignMatch: Match = genericMatch
+        .copy(memberState = country.code)
+
+      val foreignCoreValidationResponses: CoreRegistrationValidationResult = coreValidationResponses
+        .copy(searchIdIssuedBy = country.code)
+        .copy(matches = Seq(foreignMatch))
+
+      when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(foreignCoreValidationResponses).toFuture
+      doNothing().when(mockAuditService).audit(any())(any(), any())
+
+      val service = new CoreRegistrationValidationService(
+        mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+      )
+
+      val result = service.searchForeignTaxReference(foreignTaxReference, country.code).futureValue
+
+      result `mustBe` Some(foreignMatch)
+    }
+
+    "must return None when no matches are found" in {
+
+      val country: Country = Country("AL", "Albania")
+      val foreignTaxReference: String = arbitrary[String].sample.value
+
+      val foreignCoreValidationResponses: CoreRegistrationValidationResult = coreValidationResponses
+        .copy(searchIdIssuedBy = country.code)
+        .copy(matches = Seq.empty)
+
+      when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(foreignCoreValidationResponses).toFuture
+      doNothing().when(mockAuditService).audit(any())(any(), any())
+
+      val service = new CoreRegistrationValidationService(
+        mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+      )
+
+      val result = service.searchForeignTaxReference(foreignTaxReference, country.code).futureValue
+
+      result `mustBe` None
     }
   }
 }

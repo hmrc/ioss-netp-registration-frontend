@@ -50,18 +50,18 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
   val formProvider = new ClientTaxReferenceFormProvider()
   val form: Form[String] = formProvider(country)
 
-  lazy val clientTaxRefrenceRoute: String = routes.ClientTaxReferenceController.onPageLoad(waypoints).url
+  lazy val clientTaxReferenceRoute: String = routes.ClientTaxReferenceController.onPageLoad(waypoints).url
 
-  private val mockCoreRegistrationValidationService = mock[CoreRegistrationValidationService]
+  private val mockCoreRegistrationValidationService: CoreRegistrationValidationService = mock[CoreRegistrationValidationService]
 
-  "ClientTaxRefrence Controller" - {
+  "ClientTaxReference Controller" - {
 
     "must return OK and the correct view for a GET" in {
 
       val application = applicationBuilder(userAnswers = Some(updatedAnswers)).build()
 
       running(application) {
-        val request = FakeRequest(GET, clientTaxRefrenceRoute)
+        val request = FakeRequest(GET, clientTaxReferenceRoute)
 
         val result = route(application, request).value
 
@@ -79,7 +79,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
       val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
 
       running(application) {
-        val request = FakeRequest(GET, clientTaxRefrenceRoute)
+        val request = FakeRequest(GET, clientTaxReferenceRoute)
 
         val view = application.injector.instanceOf[ClientTaxReferenceView]
 
@@ -106,11 +106,11 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
 
-        when(mockCoreRegistrationValidationService.searchTraderId(any[String])(any(), any())) thenReturn
+        when(mockCoreRegistrationValidationService.searchForeignTaxReference(any(), any())(any(), any())) thenReturn
           None.toFuture
         
         val request =
-          FakeRequest(POST, clientTaxRefrenceRoute)
+          FakeRequest(POST, clientTaxReferenceRoute)
             .withFormUrlEncodedBody(("value", taxReference))
 
         val result = route(application, request).value
@@ -129,7 +129,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val request =
-          FakeRequest(POST, clientTaxRefrenceRoute)
+          FakeRequest(POST, clientTaxReferenceRoute)
             .withFormUrlEncodedBody(("value", ""))
 
         val boundForm = form.bind(Map("value" -> ""))
@@ -148,7 +148,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
       val application = applicationBuilder(userAnswers = None).build()
 
       running(application) {
-        val request = FakeRequest(GET, clientTaxRefrenceRoute)
+        val request = FakeRequest(GET, clientTaxReferenceRoute)
 
         val result = route(application, request).value
 
@@ -163,7 +163,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val request =
-          FakeRequest(POST, clientTaxRefrenceRoute)
+          FakeRequest(POST, clientTaxReferenceRoute)
             .withFormUrlEncodedBody(("value", "answer"))
 
         val result = route(application, request).value

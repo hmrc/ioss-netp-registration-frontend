@@ -17,7 +17,7 @@
 package models.audit
 
 import base.SpecBase
-import models.requests.{ClientOptionalDataRequest, DataRequest}
+import models.requests.ClientOptionalDataRequest
 import models.responses.etmp.EtmpEnrolmentResponse
 import play.api.libs.json.Json
 import play.api.mvc.AnyContent
@@ -28,7 +28,6 @@ class RegistrationAuditModelSpec extends SpecBase {
   private val submissionResult: SubmissionResult = SubmissionResult.Success
   private val etmpEnrolmentResponse: EtmpEnrolmentResponse = EtmpEnrolmentResponse(iossReference = "123456789")
   private val testUserId = "test-user-id-12345"
-  private val testIntermediaryNumber = "IM123456789"
 
   "RegistrationAuditModelSpec" - {
 
