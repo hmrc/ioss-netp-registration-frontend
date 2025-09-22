@@ -74,7 +74,7 @@ class ClientTaxReferenceController @Inject()(
             BadRequest(view(formWithErrors, waypoints, country)).toFuture,
 
           value =>
-            coreRegistrationValidationService.searchTraderId(value).flatMap {
+            coreRegistrationValidationService.searchForeignTaxReference(value, country.code).flatMap {
 
               case Some(activeMatch) if activeMatch.matchType.isActiveTrader && !activeMatch.traderId.isAnIntermediary =>
                 Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
