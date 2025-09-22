@@ -16,12 +16,13 @@
 
 package controllers.saveAndComeBack
 
-import connectors.{RegistrationConnector, SaveForLaterConnector}
+import connectors.SaveForLaterConnector
 import controllers.actions.*
-import forms.ContinueRegistrationFormProvider
-import models.ContinueRegistration
+import forms.saveAndComeBack.ContinueRegistrationFormProvider
+import logging.Logging
+import models.saveAndComeBack.ContinueRegistration
 import models.saveAndComeBack.TaxReferenceInformation
-import pages.{ClientVatNumberPage, JourneyRecoveryPage, SavedProgressPage, Waypoints}
+import pages.{ClientVatNumberPage, SavedProgressPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.Format.GenericFormat
@@ -42,7 +43,7 @@ class ContinueRegistrationController @Inject()(
                                                 saveForLaterConnector: SaveForLaterConnector,
                                                 view: ContinueRegistrationView,
                                                 saveAndComeBackService: SaveAndComeBackService
-                                              )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+                                              )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -58,7 +59,9 @@ class ContinueRegistrationController @Inject()(
           request.userAnswers.get(SavedProgressPage).map { _ =>
             Ok(view(taxReferenceInformation, form, waypoints)).toFuture
           }.getOrElse {
-            Redirect(controllers.routes.IndexController.onPageLoad()).toFuture // TODO- SCG- Change the index
+            val exception = new IllegalStateException("Must have a saved page url to return to the saved journey")
+            logger.error(exception.getMessage, exception)
+            throw exception //TODO- SCG2
           }
         }
 
@@ -75,7 +78,9 @@ class ContinueRegistrationController @Inject()(
               request.userAnswers.get(SavedProgressPage).map { _ =>
                 Ok(view(taxReferenceInformation, form, waypoints))
               }.getOrElse {
-                Redirect(controllers.routes.IndexController.onPageLoad()) // TODO- SCG- Change the index
+                val exception = new IllegalStateException("Must have a saved page url to return to the saved journey")
+                logger.error(exception.getMessage, exception)
+                throw exception //TODO- SCG2
               }
           }
       }
@@ -100,10 +105,12 @@ class ContinueRegistrationController @Inject()(
               for {
                 _ <- cc.sessionRepository.clear(request.userId)
                 _ <- saveForLaterConnector.delete(taxReferenceInformation.journeyId)
-              } yield Redirect(controllers.routes.IndexController.onPageLoad())
+              } yield Redirect(controllers.routes.IndexController.onPageLoad()) // TODO - SCG3 -> should redirect to dashboard
 
             case _ =>
-              Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture
+              val exception = new IllegalStateException("Illegal value submitted and/or must have a saved page url to return to the saved journey")
+              logger.error(exception.getMessage, exception)
+              throw exception
           }
       )
 

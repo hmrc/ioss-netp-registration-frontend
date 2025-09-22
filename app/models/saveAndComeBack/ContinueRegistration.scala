@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package models
+package models.saveAndComeBack
 
+import models.{Enumerable, WithName}
 import play.api.i18n.Messages
 import uk.gov.hmrc.govukfrontend.views.Aliases.Text
 import uk.gov.hmrc.govukfrontend.views.viewmodels.radios.RadioItem
@@ -25,6 +26,7 @@ sealed trait ContinueRegistration
 object ContinueRegistration extends Enumerable.Implicits {
 
   case object Continue extends WithName("continue") with ContinueRegistration
+
   case object Delete extends WithName("delete") with ContinueRegistration
 
   val values: Seq[ContinueRegistration] = Seq(
@@ -35,8 +37,8 @@ object ContinueRegistration extends Enumerable.Implicits {
     case (value, index) =>
       RadioItem(
         content = Text(messages(s"continueRegistration.${value.toString}")),
-        value   = Some(value.toString),
-        id      = Some(s"${value}Progress")
+        value = Some(value.toString),
+        id = Some(s"${value}Progress")
       )
   }
 

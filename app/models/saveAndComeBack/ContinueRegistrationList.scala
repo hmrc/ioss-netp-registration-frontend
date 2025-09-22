@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package forms
+package models.saveAndComeBack
 
-import forms.mappings.Mappings
-import models.ContinueRegistration
-import play.api.data.Form
 
-import javax.inject.Inject
+import play.api.libs.json.JsPath
+import queries.{Gettable, Settable}
 
-class ContinueRegistrationFormProvider @Inject() extends Mappings {
+case object ContinueRegistrationList extends Gettable[Seq[TaxReferenceInformation]] with Settable[Seq[TaxReferenceInformation]] {
 
-  def apply(): Form[ContinueRegistration] =
-    Form(
-      "value" -> enumerable[ContinueRegistration]("continueRegistration.error.required")
-    )
+  override def path: JsPath = JsPath \ "registrations"
+
 }

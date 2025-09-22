@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package controllers
+package controllers.saveAndComeBack
 
 import base.SpecBase
 import config.FrontendAppConfig
 import connectors.SaveForLaterConnector
+import controllers.saveAndComeBack
 import formats.Format.saveForLaterDateFormatter
 import models.responses.InternalServerError
 import models.{SavedUserAnswers, UserAnswers}
@@ -29,6 +30,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{JourneyRecoveryPage, SavedProgressPage}
 import play.api.inject.bind
+import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.{AuthenticatedUserAnswersRepository, SessionRepository}
@@ -37,6 +39,7 @@ import uk.gov.hmrc.play.bootstrap.binders.{OnlyRelative, RedirectUrl}
 import utils.FutureSyntax.FutureOps
 import views.html.SavedProgressView
 
+import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 class SavedProgressControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
@@ -47,7 +50,7 @@ class SavedProgressControllerSpec extends SpecBase with MockitoSugar with Before
   private val continueUrl: RedirectUrl = RedirectUrl("/continueUrl")
   private val s4lTtl: Int = 28
 
-  private lazy val saveForLaterRoute: String = routes.SavedProgressController.onPageLoad(waypoints, continueUrl).url
+  private lazy val saveForLaterRoute: String = saveAndComeBack.routes.SavedProgressController.onPageLoad(waypoints, continueUrl).url
 
   private val answersExpiryDate: String = emptyUserAnswers.lastUpdated.plus(s4lTtl, ChronoUnit.DAYS)
     .atZone(stubClockAtArbitraryDate.getZone).toLocalDate.format(saveForLaterDateFormatter)

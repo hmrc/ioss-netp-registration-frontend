@@ -25,7 +25,7 @@ import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 object SaveForLaterHttpParser extends Logging {
 
-  type SaveForLaterResponse = Either[ErrorResponse, Option[SavedUserAnswers]]
+  type SaveForLaterResponse = Either[ErrorResponse, SavedUserAnswers]
   type SaveForLaterIntermediaryResponse = Either[ErrorResponse, Seq[SavedUserAnswers]]
   type DeleteSaveForLaterResponse = Either[ErrorResponse, Boolean]
 
@@ -34,7 +34,7 @@ object SaveForLaterHttpParser extends Logging {
       response.status match {
         case OK | CREATED =>
           response.json.validate[SavedUserAnswers] match {
-            case JsSuccess(answers, _) => Right(Some(answers))
+            case JsSuccess(answers, _) => Right(answers)
             case JsError(errors) =>
               logger.error(s"Failed trying to parse JSON with error: $errors. JSON was ${response.json}.", errors)
               Left(InvalidJson)
@@ -42,7 +42,7 @@ object SaveForLaterHttpParser extends Logging {
 
         case NOT_FOUND =>
           logger.warn(s"Received NotFound for saved user answers.")
-          Right(None)
+          Left(NotFound)
 
         case CONFLICT =>
           logger.warn(s"Received ConflictFound from server.")
