@@ -106,9 +106,11 @@ class SaveForLaterConnectorSpec extends SpecBase with WireMockHelper {
       }
     }
 
-    ".get" - {
+    ".getClientRegistration" - {
 
-      "must return Right(Some(SavedUserAnswers)) when the server responds with OK" in {
+      val getClientRegistrationUrl: String = s"/ioss-netp-registration/save-for-later/${expectedSavedUserAnswers.journeyId}"
+
+      "must return Right(expectedSavedUserAnswers) when the server responds with OK" in {
 
         running(application) {
 
@@ -117,15 +119,15 @@ class SaveForLaterConnectorSpec extends SpecBase with WireMockHelper {
           val responseJson: JsValue = Json.toJson(expectedSavedUserAnswers)
 
           server.stubFor(
-            get(urlEqualTo(url))
+            get(urlEqualTo(getClientRegistrationUrl))
               .willReturn(aResponse()
                 .withStatus(OK)
                 .withBody(responseJson.toString()))
           )
 
-          val result = connector.get().futureValue
+          val result = connector.getClientRegistration(expectedSavedUserAnswers.journeyId).futureValue
 
-          result `mustBe` Right(Some(expectedSavedUserAnswers))
+          result `mustBe` Right(expectedSavedUserAnswers)
         }
       }
 
@@ -136,33 +138,33 @@ class SaveForLaterConnectorSpec extends SpecBase with WireMockHelper {
           val connector = application.injector.instanceOf[SaveForLaterConnector]
 
           server.stubFor(
-            get(urlEqualTo(url))
+            get(urlEqualTo(getClientRegistrationUrl))
               .willReturn(aResponse()
                 .withStatus(OK)
                 .withBody(Json.toJson("invalidJson").toString))
           )
 
-          val result = connector.get().futureValue
+          val result = connector.getClientRegistration(expectedSavedUserAnswers.journeyId).futureValue
 
           result `mustBe` Left(InvalidJson)
         }
       }
 
-      "must return Right(None) when the server responds with NotFound" in {
+      "must return Left(NotFound) when the server responds with NotFound" in {
 
         running(application) {
 
           val connector = application.injector.instanceOf[SaveForLaterConnector]
 
           server.stubFor(
-            get(urlEqualTo(url))
+            get(urlEqualTo(getClientRegistrationUrl))
               .willReturn(aResponse()
                 .withStatus(NOT_FOUND))
           )
 
-          val result = connector.get().futureValue
+          val result = connector.getClientRegistration(expectedSavedUserAnswers.journeyId).futureValue
 
-          result `mustBe` Right(None)
+          result `mustBe` Left(NotFound)
         }
       }
 
@@ -173,12 +175,12 @@ class SaveForLaterConnectorSpec extends SpecBase with WireMockHelper {
           val connector = application.injector.instanceOf[SaveForLaterConnector]
 
           server.stubFor(
-            get(urlEqualTo(url))
+            get(urlEqualTo(getClientRegistrationUrl))
               .willReturn(aResponse()
                 .withStatus(CONFLICT))
           )
 
-          val result = connector.get().futureValue
+          val result = connector.getClientRegistration(expectedSavedUserAnswers.journeyId).futureValue
 
           result `mustBe` Left(ConflictFound)
         }
@@ -195,12 +197,118 @@ class SaveForLaterConnectorSpec extends SpecBase with WireMockHelper {
           val connector = application.injector.instanceOf[SaveForLaterConnector]
 
           server.stubFor(
-            get(urlEqualTo(url))
+            get(urlEqualTo(getClientRegistrationUrl))
               .willReturn(aResponse()
                 .withStatus(status))
           )
 
-          val result = connector.get().futureValue
+          val result = connector.getClientRegistration(expectedSavedUserAnswers.journeyId).futureValue
+
+          result `mustBe` Left(UnexpectedStatusResponse)
+        }
+      }
+    }
+
+    ".getAllByIntermediary" - {
+
+      val getAllByIntermediaryUrl: String = s"/ioss-netp-registration/save-for-later-selection/${expectedSavedUserAnswers.intermediaryNumber}"
+
+      "must return Right(Seq(SavedUserAnswers)) when the server responds with OK" in {
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[SaveForLaterConnector]
+
+          val responseJson: JsValue = Json.toJson(Seq(expectedSavedUserAnswers, expectedSavedUserAnswers, expectedSavedUserAnswers))
+
+          server.stubFor(
+            get(urlEqualTo(getAllByIntermediaryUrl))
+              .willReturn(aResponse()
+                .withStatus(OK)
+                .withBody(responseJson.toString()))
+          )
+
+          val result = connector.getAllByIntermediary(expectedSavedUserAnswers.intermediaryNumber).futureValue
+
+          result `mustBe` Right(Seq(expectedSavedUserAnswers, expectedSavedUserAnswers, expectedSavedUserAnswers))
+        }
+      }
+
+      "must return Left(InvalidJson) when JSON cannot be parsed correctly" in {
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[SaveForLaterConnector]
+
+          server.stubFor(
+            get(urlEqualTo(getAllByIntermediaryUrl))
+              .willReturn(aResponse()
+                .withStatus(OK)
+                .withBody(Json.toJson("invalidJson").toString))
+          )
+
+          val result = connector.getAllByIntermediary(expectedSavedUserAnswers.intermediaryNumber).futureValue
+
+          result `mustBe` Left(InvalidJson)
+        }
+      }
+
+      "must return Right(Seq(empty)) when the server responds with NotFound" in {
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[SaveForLaterConnector]
+
+          val responseJson: JsValue = Json.toJson(Seq.empty[String])
+
+          server.stubFor(
+            get(urlEqualTo(getAllByIntermediaryUrl))
+              .willReturn(aResponse()
+              .withStatus(OK)
+              .withBody(responseJson.toString()))
+          )
+
+          val result = connector.getAllByIntermediary(expectedSavedUserAnswers.intermediaryNumber).futureValue
+
+          result `mustBe` Right(Seq.empty)
+        }
+      }
+
+      "must return Left(ConflictFound) with server responds with CONFLICT" in {
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[SaveForLaterConnector]
+
+          server.stubFor(
+            get(urlEqualTo(getAllByIntermediaryUrl))
+              .willReturn(aResponse()
+                .withStatus(CONFLICT))
+          )
+
+          val result = connector.getAllByIntermediary(expectedSavedUserAnswers.intermediaryNumber).futureValue
+
+          result `mustBe` Left(ConflictFound)
+        }
+      }
+
+      "must return Left(UnexpectedResponseStatus) with server responds with any other error" in {
+
+        val status: Int = INTERNAL_SERVER_ERROR
+        val UnexpectedStatusResponseMessage: String = s"Unexpected response received with status: $status."
+        val UnexpectedStatusResponse: UnexpectedResponseStatus = UnexpectedResponseStatus(status, UnexpectedStatusResponseMessage)
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[SaveForLaterConnector]
+
+          server.stubFor(
+            get(urlEqualTo(getAllByIntermediaryUrl))
+              .willReturn(aResponse()
+                .withStatus(status))
+          )
+
+          val result = connector.getAllByIntermediary(expectedSavedUserAnswers.intermediaryNumber).futureValue
 
           result `mustBe` Left(UnexpectedStatusResponse)
         }
@@ -209,21 +317,21 @@ class SaveForLaterConnectorSpec extends SpecBase with WireMockHelper {
 
     ".delete" - {
 
-      val url: String = "/ioss-netp-registration/save-for-later/delete"
+      val deleteUrl: String = s"/ioss-netp-registration/save-for-later/delete/${expectedSavedUserAnswers.journeyId}"
 
       "must return Right(true) when server responds with OK" in {
 
         val connector = application.injector.instanceOf[SaveForLaterConnector]
 
         server.stubFor(
-          get(urlEqualTo(url))
+          get(urlEqualTo(deleteUrl))
             .willReturn(aResponse()
               .withStatus(OK)
               .withBody(Json.toJson(true).toString)
             )
         )
 
-        val result = connector.delete().futureValue
+        val result = connector.delete(expectedSavedUserAnswers.journeyId).futureValue
 
         result `mustBe` Right(true)
       }
@@ -233,14 +341,14 @@ class SaveForLaterConnectorSpec extends SpecBase with WireMockHelper {
         val connector = application.injector.instanceOf[SaveForLaterConnector]
 
         server.stubFor(
-          get(urlEqualTo(url))
+          get(urlEqualTo(deleteUrl))
             .willReturn(aResponse()
               .withStatus(OK)
               .withBody(Json.toJson("invalidJson").toString)
             )
         )
 
-        val result = connector.delete().futureValue
+        val result = connector.delete(expectedSavedUserAnswers.journeyId).futureValue
 
         result `mustBe` Left(InvalidJson)
       }
@@ -250,13 +358,13 @@ class SaveForLaterConnectorSpec extends SpecBase with WireMockHelper {
         val connector = application.injector.instanceOf[SaveForLaterConnector]
 
         server.stubFor(
-          get(urlEqualTo(url))
+          get(urlEqualTo(deleteUrl))
             .willReturn(aResponse()
               .withStatus(NOT_FOUND)
             )
         )
 
-        val result = connector.delete().futureValue
+        val result = connector.delete(expectedSavedUserAnswers.journeyId).futureValue
 
         result `mustBe` Left(NotFound)
       }
@@ -266,13 +374,13 @@ class SaveForLaterConnectorSpec extends SpecBase with WireMockHelper {
         val connector = application.injector.instanceOf[SaveForLaterConnector]
 
         server.stubFor(
-          get(urlEqualTo(url))
+          get(urlEqualTo(deleteUrl))
             .willReturn(aResponse()
               .withStatus(CONFLICT)
             )
         )
 
-        val result = connector.delete().futureValue
+        val result = connector.delete(expectedSavedUserAnswers.journeyId).futureValue
 
         result `mustBe` Left(ConflictFound)
       }
@@ -286,13 +394,13 @@ class SaveForLaterConnectorSpec extends SpecBase with WireMockHelper {
         val connector = application.injector.instanceOf[SaveForLaterConnector]
 
         server.stubFor(
-          get(urlEqualTo(url))
+          get(urlEqualTo(deleteUrl))
             .willReturn(aResponse()
               .withStatus(status)
             )
         )
 
-        val result = connector.delete().futureValue
+        val result = connector.delete(expectedSavedUserAnswers.journeyId).futureValue
 
         result `mustBe` Left(UnexpectedStatusResponse)
       }

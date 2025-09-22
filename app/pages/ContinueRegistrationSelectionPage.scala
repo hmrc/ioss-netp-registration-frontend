@@ -18,7 +18,6 @@ package pages
 
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
-import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
 
 case object ContinueRegistrationSelectionPage extends QuestionPage[String] {
 

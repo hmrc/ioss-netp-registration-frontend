@@ -60,16 +60,13 @@ class SavedProgressController @Inject()(
         } yield {
           saveForLaterResult
         }).flatMap {
-          case Right(Some(userAnswers: SavedUserAnswers)) =>
+          case Right(userAnswers: SavedUserAnswers) =>
             for {
               _ <- cc.sessionRepository.set(savedProgressAnswers)
             } yield {
               Ok(view(answersExpiry, continueUrl.get(OnlyRelative).url, frontendAppConfig.loginUrl))
             }
-
-          case Right(None) =>
-            logger.warn("Unexpected result when trying to submit saved user answers")
-            Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture
+            
           case Left(error) =>
             logger.error(s"An unexpected error occurred when trying to submit saved user answers with error: ${error.body}")
             Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture

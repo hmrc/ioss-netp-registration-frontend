@@ -17,17 +17,14 @@
 package services
 
 import connectors.{RegistrationConnector, SaveForLaterConnector}
-import controllers.actions.AuthenticatedControllerComponents
 import logging.Logging
-import models.{SavedUserAnswers, UserAnswers}
 import models.domain.VatCustomerInfo
-import models.requests.OptionalDataRequest
-import models.requests.DataRequest
+import models.requests.{DataRequest, OptionalDataRequest}
 import models.responses.VatCustomerNotFound
-import models.saveAndComeBack.{ContinueRegistrationSelection, MultipleRegistrations, NoRegistrations, SingleRegistration, TaxReferenceInformation}
-import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, ContinueRegistrationSelectionPage, JourneyRecoveryPage, QuestionPage, UkVatNumberNotFoundPage, VatApiDownPage, Waypoints}
+import models.saveAndComeBack.*
+import models.{SavedUserAnswers, UserAnswers}
+import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, ContinueRegistrationSelectionPage, QuestionPage, UkVatNumberNotFoundPage, VatApiDownPage, Waypoints}
 import play.api.mvc.Call
-import play.api.mvc.Results.Redirect
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
@@ -39,7 +36,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 class SaveAndComeBackService @Inject()(
-                                        cc: AuthenticatedControllerComponents,
                                         clock: Clock,
                                         registrationConnector: RegistrationConnector,
                                         coreRegistrationValidationService: CoreRegistrationValidationService,
@@ -47,7 +43,7 @@ class SaveAndComeBackService @Inject()(
                                       )(implicit ec: ExecutionContext) extends Logging {
 
   def determineTaxReference(userAnswers: UserAnswers): TaxReferenceInformation = {
-    
+
     userAnswers.vatInfo match {
       case Some(vatCustomerInfo) =>
 
@@ -65,8 +61,8 @@ class SaveAndComeBackService @Inject()(
         }
       case _ =>
         val listOfPages: List[QuestionPage[String]] = List(ClientTaxReferencePage, ClientUtrNumberPage, ClientsNinoNumberPage)
-        
-        val companyName: String = userAnswers.get(ClientBusinessNamePage).map(_.name).getOrElse{
+
+        val companyName: String = userAnswers.get(ClientBusinessNamePage).map(_.name).getOrElse {
           val exception = new IllegalStateException("User answers must include company name if Vat Customer Info was not provided")
           logger.error(exception.getMessage, exception)
           throw exception
@@ -92,17 +88,17 @@ class SaveAndComeBackService @Inject()(
       case Right(value) =>
         Right(value)
       case Left(VatCustomerNotFound) =>
-        Left(UkVatNumberNotFoundPage.route(waypoints))
+        Left(UkVatNumberNotFoundPage.route(waypoints)) //TODO- SCG1
       case Left(_) =>
-        Left(VatApiDownPage.route(waypoints))
+        Left(VatApiDownPage.route(waypoints)) //TODO- SCG1
     }
   }
 
-  //TODO- SCG rename this
-  def scgSelectTheClassSCG(
-                            userAnswers: UserAnswers,
-                            intermediaryNum: String
-                          )(implicit hc: HeaderCarrier): Future[ContinueRegistrationSelection] = {
+
+  def getSavedContinueRegistrationJourneys(
+                                            userAnswers: UserAnswers,
+                                            intermediaryNum: String
+                                          )(implicit hc: HeaderCarrier): Future[ContinueRegistrationSelection] = {
 
     userAnswers.get(ContinueRegistrationSelectionPage) match {
 
@@ -121,14 +117,17 @@ class SaveAndComeBackService @Inject()(
             MultipleRegistrations(seqSavedUserAnswers)
 
           case Left(error) =>
-            // probably better to log and return a failure type here
-            throw new RuntimeException(s"Error fetching intermediary: $error")
+            val message: String = s"Received an unexpected error when trying to retrieve uncompleted " +
+              s"registrations for the intermediary ID: $intermediaryNum, \nWith Errors: $error."
+            val exception: Exception = new Exception(message)
+            logger.error(exception.getMessage, exception)
+            throw exception
         }
     }
   }
-  
-  //TODO- SCG rename this
-  //TODO - VEI-506
+
+
+  //TODO - VEI-506 -> Implement validation and refactor
   def getAndValidateVatTaxInfo(
                                 ukVatNumber: String, waypoints: Waypoints
                               )(implicit request: DataRequest[_], hc: HeaderCarrier): Future[Either[Call, VatCustomerInfo]] = {
@@ -168,11 +167,11 @@ class SaveAndComeBackService @Inject()(
     }
 
   }
-  
-  //TODO- SCG rename this
-  def fetchOutcomesFailFast(
-                             seqItems: Seq[SavedUserAnswers]
-                           )(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Seq[TaxReferenceInformation]] = {
+
+
+  def createTaxReferenceInfoForSavedUserAnswers(
+                                                 seqItems: Seq[SavedUserAnswers]
+                                               )(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Seq[TaxReferenceInformation]] = {
 
     val futures: Seq[Future[TaxReferenceInformation]] = seqItems.map { savedUserAnswers =>
       val tempUserAnswers = UserAnswers(savedUserAnswers.journeyId, savedUserAnswers.journeyId, savedUserAnswers.data)
@@ -198,24 +197,22 @@ class SaveAndComeBackService @Inject()(
   def retrieveSingleSavedUserAnswers(
                                       journeyId: String,
                                       waypoints: Waypoints)
-                                    (implicit request: OptionalDataRequest[_], hc: HeaderCarrier): Future[Either[Call, UserAnswers]] = {
+                                    (implicit request: OptionalDataRequest[_], hc: HeaderCarrier): Future[UserAnswers] = {
     saveForLaterConnector.getClientRegistration(journeyId).flatMap {
-      case Right(savedUserAnswers) if savedUserAnswers.isDefined =>
-       Right(UserAnswers(
+      case Right(savedUserAnswers) =>
+        UserAnswers(
           request.userId,
-          savedUserAnswers.get.journeyId,
-          data = savedUserAnswers.get.data,
+          savedUserAnswers.journeyId,
+          data = savedUserAnswers.data,
           vatInfo = None,
-          lastUpdated = savedUserAnswers.get.lastUpdated)).toFuture
-      //TODO- SCG- Should this be userAnswers
-      
+          lastUpdated = savedUserAnswers.lastUpdated).toFuture
+
       case Left(error) =>
-        logger.warn(s"Failed to get the registration: $error")
-        Left(JourneyRecoveryPage.route(waypoints)).toFuture
-        
-      case _ =>
-        logger.warn(s"Failed to get the registration")
-        Left(JourneyRecoveryPage.route(waypoints)).toFuture
+        val message: String = s"Received an unexpected error when trying to retrieve Saved User Answers " +
+          s"for the journey ID: $journeyId, \nWith Errors: $error."
+        val exception: Exception = new Exception(message)
+        logger.error(exception.getMessage, exception)
+        throw exception
     }
   }
 

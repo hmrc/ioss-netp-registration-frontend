@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-package utils
+package forms.saveAndComeBack
 
-import models.UserAnswers
-import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, QuestionPage}
+import forms.mappings.Mappings
+import models.saveAndComeBack.ContinueRegistration
+import play.api.data.Form
 
-trait SaveAndComeBack {
+import javax.inject.Inject
 
+class ContinueRegistrationFormProvider @Inject() extends Mappings {
 
-
-
+  def apply(): Form[ContinueRegistration] =
+    Form(
+      "value" -> enumerable[ContinueRegistration]("continueRegistration.error.required")
+    )
 }

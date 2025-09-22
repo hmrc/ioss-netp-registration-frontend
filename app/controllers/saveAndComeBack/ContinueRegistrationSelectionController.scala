@@ -16,16 +16,15 @@
 
 package controllers.saveAndComeBack
 
-import connectors.SaveForLaterConnector
 import controllers.actions.AuthenticatedControllerComponents
-import forms.ContinueRegistrationSelectionFormProvider
+import forms.saveAndComeBack.ContinueRegistrationSelectionFormProvider
 import logging.Logging
 import models.UserAnswers
-import models.saveAndComeBack.{MultipleRegistrations, NoRegistrations, SingleRegistration}
+import models.saveAndComeBack.{ContinueRegistrationList, MultipleRegistrations, NoRegistrations, SingleRegistration}
 import pages.{ContinueRegistrationSelectionPage, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent, Call, MessagesControllerComponents}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.SaveAndComeBackService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
@@ -38,7 +37,6 @@ import scala.language.postfixOps
 class ContinueRegistrationSelectionController @Inject()(
                                                          override val messagesApi: MessagesApi,
                                                          cc: AuthenticatedControllerComponents,
-                                                         saveForLaterConnector: SaveForLaterConnector,
                                                          formProvider: ContinueRegistrationSelectionFormProvider,
                                                          saveAndComeBackService: SaveAndComeBackService,
                                                          view: ContinueRegistrationSelectionView
@@ -53,45 +51,56 @@ class ContinueRegistrationSelectionController @Inject()(
 
       val userAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
 
-      saveAndComeBackService.scgSelectTheClassSCG(userAnswers, request.intermediaryNumber.get).flatMap {
+      saveAndComeBackService.getSavedContinueRegistrationJourneys(userAnswers, request.intermediaryNumber.get).flatMap {
         case SingleRegistration(singleJourneyId) =>
 
-          saveAndComeBackService.retrieveSingleSavedUserAnswers(singleJourneyId, waypoints).flatMap {
+          saveAndComeBackService.retrieveSingleSavedUserAnswers(singleJourneyId, waypoints).flatMap { enrichedUserAnswers =>
 
-            case Right(enrichedUserAnswers) => {
-              for {
-                _ <- cc.sessionRepository.set(enrichedUserAnswers)
-              } yield Redirect(controllers.saveAndComeBack.routes.ContinueRegistrationController.onPageLoad())
-            }
-            case Left(errorCall) => Redirect(errorCall).toFuture
+            for {
+              _ <- cc.sessionRepository.set(enrichedUserAnswers)
+            } yield Redirect(controllers.saveAndComeBack.routes.ContinueRegistrationController.onPageLoad())
+
           }
 
         case MultipleRegistrations(multipleRegistrations) =>
-          saveAndComeBackService.fetchOutcomesFailFast(multipleRegistrations).map { seqTaxReferenceInfo =>
-            Ok(view(seqTaxReferenceInfo, form, waypoints))
+          saveAndComeBackService.createTaxReferenceInfoForSavedUserAnswers(multipleRegistrations).flatMap { seqTaxReferenceInfo =>
+            for {
+              updatedAnswers <- Future.fromTry(userAnswers.set(ContinueRegistrationList, seqTaxReferenceInfo))
+              _ <- cc.sessionRepository.set(updatedAnswers)
+            } yield Ok(view(seqTaxReferenceInfo, form, waypoints))
           }
 
-        case NoRegistrations => ???
+        case NoRegistrations =>
+          logger.error("TODO - SCG4 -> should redirect to dashboard")
+          Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture // TODO - SCG4 -> should redirect to dashboard
 
-        case _ => ???
       }
   }
 
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetOptionalData.async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
+
 
       form.bindFromRequest().fold(
         formWithErrors =>
-          Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture,
+          request.userAnswers.get(ContinueRegistrationList) match
+            case Some(seqTaxRefInfo) =>
+              BadRequest(view(seqTaxRefInfo, formWithErrors, waypoints)).toFuture
+            case None =>
+              val message: String = s"Received an unexpected error as no registration list found"
+              val exception: IllegalStateException = new IllegalStateException(message)
+              logger.error(exception.getMessage, exception)
+              throw exception, //TODO SCG5 - Route back to the Dashboard??
 
         value =>
           for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.getOrElse(UserAnswers(request.userId)).set(ContinueRegistrationSelectionPage, value))
+            updatedAnswers <- Future.fromTry(request.userAnswers.set(ContinueRegistrationSelectionPage, value))
             _ <- cc.sessionRepository.set(updatedAnswers)
-          } yield Redirect(ContinueRegistrationSelectionPage.route(waypoints).url)
+          } yield {
+            Redirect(ContinueRegistrationSelectionPage.route(waypoints).url)
+          }
       )
   }
-
 }
 
