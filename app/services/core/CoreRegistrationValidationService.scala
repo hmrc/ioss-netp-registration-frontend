@@ -51,16 +51,16 @@ class CoreRegistrationValidationService @Inject()(
     getValidateCoreRegistrationResponse(coreRegistrationRequest)
   }
 
-  def searchTraderId(ukVatNumber: String)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Match]] = {
+  def searchTraderId(ukReferenceNumber: String)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Match]] = {
 
-    val coreRegistrationRequest = CoreRegistrationRequest(SourceType.TraderId.toString, None, ukVatNumber, None, "GB")
+    val coreRegistrationRequest = CoreRegistrationRequest(SourceType.TraderId.toString, Some("IOSS"), ukReferenceNumber, None, "GB")
 
     getValidateCoreRegistrationResponse(coreRegistrationRequest)
   }
 
   def searchForeignTaxReference(foreignTaxReference: String, country: String)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Match]] = {
 
-    val coreRegistrationRequest = CoreRegistrationRequest(SourceType.TraderId.toString, None, foreignTaxReference, None, country)
+    val coreRegistrationRequest = CoreRegistrationRequest(SourceType.TraderId.toString, Some("IOSS"), foreignTaxReference, None, country)
 
     getValidateCoreRegistrationResponse(coreRegistrationRequest)
   }
