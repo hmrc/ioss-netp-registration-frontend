@@ -82,6 +82,9 @@ object Country {
     Country("XI", "Northern Ireland")
   }
 
+  val unitedKingdomCountry: Country =
+    Country("GB", "United Kingdom")
+
   val euCountriesWithNI: Seq[Country] = {
     val positionOfNI = 20
     euCountries.take(positionOfNI) ++ Seq(northernIreland) ++ euCountries.drop(positionOfNI)

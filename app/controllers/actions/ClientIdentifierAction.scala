@@ -64,7 +64,6 @@ class ClientIdentifierActionImpl @Inject()(
         Redirect(
           config.loginUrl,
           Map("continue" -> Seq(clientJourneyStartUrl)))
-
     }
   }
 }

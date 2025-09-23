@@ -110,7 +110,7 @@ object EtmpRegistrationRequest extends EtmpEuRegistrations with EtmpPreviousRegi
             basedInUK <- answers.get(BusinessBasedInUKPage)
             clientCountryBased <- idType match {
               case EtmpIdType.UTR | EtmpIdType.NINO =>
-                Some(Country.northernIreland)
+                Some(Country.unitedKingdomCountry)
               case _ =>
                 answers.get(ClientCountryBasedPage)
             }
