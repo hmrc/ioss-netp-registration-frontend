@@ -73,8 +73,8 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
       ))
 
   private val mockValidateCoreRegistrationConnector: ValidateCoreRegistrationConnector = mock[ValidateCoreRegistrationConnector]
-  private val iossRegistrationService = mock[IossRegistrationService]
-  private val ossRegistrationService = mock[OssRegistrationService]
+  private val iossRegistrationService: IossRegistrationService = mock[IossRegistrationService]
+  private val ossRegistrationService: OssRegistrationService = mock[OssRegistrationService]
   private val mockAuditService: AuditService = mock[AuditService]
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -99,7 +99,10 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
   )
 
   override def beforeEach(): Unit = {
-    Mockito.reset(mockAuditService)
+    Mockito.reset(
+      mockValidateCoreRegistrationConnector,
+      mockAuditService
+    )
   }
 
   "coreRegistrationValidationService.searchUkVrn" - {
@@ -546,51 +549,153 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
     }
   }
 
-  ".searchTraderIdGlobal" - {
+  ".searchTraderId" - {
 
-    "must return a match for a foreign tax reference number" in {
+    "must audit the event" - {
+
+      val countryCode: String = "GB"
+      val ukReferenceNumber: String = arbitrary[String].sample.value
+
+      val coreRegistrationRequest = baseCoreRegistrationRequest(
+        source = "TraderId",
+        searchIdIssuedBy = countryCode,
+        scheme = Some("IOSS"),
+        searchId = ukReferenceNumber
+      )
+
+      "must return a match for a UTR or NINO" in {
+
+        val aMatch: Match = genericMatch
+          .copy(memberState = countryCode)
+
+        val ukCoreValidationResponses: CoreRegistrationValidationResult = coreValidationResponses
+          .copy(searchIdIssuedBy = countryCode)
+          .copy(matches = Seq(aMatch))
+
+        when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(ukCoreValidationResponses).toFuture
+        doNothing().when(mockAuditService).audit(any())(any(), any())
+
+        val service = new CoreRegistrationValidationService(
+          mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+        )
+
+        val expectedAuditEvent: CoreRegistrationAuditModel = CoreRegistrationAuditModel.build(
+          coreRegistrationRequest, ukCoreValidationResponses
+        )
+
+        val result = service.searchTraderId(ukReferenceNumber).futureValue
+
+        result `mustBe` Some(aMatch)
+        verify(mockValidateCoreRegistrationConnector, times(1)).validateCoreRegistration(eqTo(coreRegistrationRequest))(any())
+        verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
+      }
+
+      "must return None when no matches are found" in {
+
+        val coreRegistrationRequest = baseCoreRegistrationRequest(
+          source = "TraderId",
+          searchIdIssuedBy = countryCode,
+          scheme = Some("IOSS"),
+          searchId = ukReferenceNumber
+        )
+
+        val ukCoreValidationResponses: CoreRegistrationValidationResult = coreValidationResponses
+          .copy(searchIdIssuedBy = countryCode)
+          .copy(matches = Seq.empty)
+
+        when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(ukCoreValidationResponses).toFuture
+        doNothing().when(mockAuditService).audit(any())(any(), any())
+
+        val service = new CoreRegistrationValidationService(
+          mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+        )
+
+        val expectedAuditEvent: CoreRegistrationAuditModel = CoreRegistrationAuditModel.build(
+          coreRegistrationRequest, ukCoreValidationResponses
+        )
+
+        val result = service.searchTraderId(ukReferenceNumber).futureValue
+
+        result `mustBe` None
+        verify(mockValidateCoreRegistrationConnector, times(1)).validateCoreRegistration(eqTo(coreRegistrationRequest))(any())
+        verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
+      }
+    }
+  }
+
+  ".searchForeignTaxReference" - {
+
+    "must audit the event" - {
 
       val country: Country = Gen.oneOf(Country.allCountries).sample.value
       val foreignTaxReference: String = arbitrary[String].sample.value
 
-      val foreignMatch: Match = genericMatch
-        .copy(memberState = country.code)
-
-      val foreignCoreValidationResponses: CoreRegistrationValidationResult = coreValidationResponses
-        .copy(searchIdIssuedBy = country.code)
-        .copy(matches = Seq(foreignMatch))
-
-      when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(foreignCoreValidationResponses).toFuture
-      doNothing().when(mockAuditService).audit(any())(any(), any())
-
-      val service = new CoreRegistrationValidationService(
-        mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+      val coreRegistrationRequest = baseCoreRegistrationRequest(
+        source = "TraderId",
+        searchIdIssuedBy = country.code,
+        scheme = Some("IOSS"),
+        searchId = foreignTaxReference
       )
 
-      val result = service.searchForeignTaxReference(foreignTaxReference, country.code).futureValue
+      "must return a match for a foreign tax reference number" in {
 
-      result `mustBe` Some(foreignMatch)
-    }
+        val foreignMatch: Match = genericMatch
+          .copy(memberState = country.code)
 
-    "must return None when no matches are found" in {
+        val foreignCoreValidationResponses: CoreRegistrationValidationResult = coreValidationResponses
+          .copy(searchIdIssuedBy = country.code)
+          .copy(matches = Seq(foreignMatch))
 
-      val country: Country = Country("AL", "Albania")
-      val foreignTaxReference: String = arbitrary[String].sample.value
+        when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(foreignCoreValidationResponses).toFuture
+        doNothing().when(mockAuditService).audit(any())(any(), any())
 
-      val foreignCoreValidationResponses: CoreRegistrationValidationResult = coreValidationResponses
-        .copy(searchIdIssuedBy = country.code)
-        .copy(matches = Seq.empty)
+        val service = new CoreRegistrationValidationService(
+          mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+        )
 
-      when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(foreignCoreValidationResponses).toFuture
-      doNothing().when(mockAuditService).audit(any())(any(), any())
+        val expectedAuditEvent: CoreRegistrationAuditModel = CoreRegistrationAuditModel.build(
+          coreRegistrationRequest, foreignCoreValidationResponses
+        )
 
-      val service = new CoreRegistrationValidationService(
-        mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
-      )
+        val result = service.searchForeignTaxReference(foreignTaxReference, country.code).futureValue
 
-      val result = service.searchForeignTaxReference(foreignTaxReference, country.code).futureValue
+        result `mustBe` Some(foreignMatch)
+        verify(mockValidateCoreRegistrationConnector, times(1)).validateCoreRegistration(eqTo(coreRegistrationRequest))(any())
+        verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
+      }
 
-      result `mustBe` None
+      "must return None when no matches are found" in {
+
+        val country: Country = Country("AL", "Albania")
+
+        val coreRegistrationRequest = baseCoreRegistrationRequest(
+          source = "TraderId",
+          searchIdIssuedBy = country.code,
+          scheme = Some("IOSS"),
+          searchId = foreignTaxReference
+        )
+
+        val foreignCoreValidationResponses: CoreRegistrationValidationResult = coreValidationResponses
+          .copy(searchIdIssuedBy = country.code)
+          .copy(matches = Seq.empty)
+
+        when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(foreignCoreValidationResponses).toFuture
+        doNothing().when(mockAuditService).audit(any())(any(), any())
+
+        val service = new CoreRegistrationValidationService(
+          mockValidateCoreRegistrationConnector, iossRegistrationService, ossRegistrationService, mockAuditService, stubClockAtArbitraryDate
+        )
+
+        val expectedAuditEvent: CoreRegistrationAuditModel = CoreRegistrationAuditModel.build(
+          coreRegistrationRequest, foreignCoreValidationResponses
+        )
+
+        val result = service.searchForeignTaxReference(foreignTaxReference, country.code).futureValue
+
+        result `mustBe` None
+        verify(mockValidateCoreRegistrationConnector, times(1)).validateCoreRegistration(eqTo(coreRegistrationRequest))(any())
+        verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
+      }
     }
   }
 }
