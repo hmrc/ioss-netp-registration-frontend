@@ -88,9 +88,9 @@ class SaveAndComeBackService @Inject()(
       case Right(value) =>
         Right(value)
       case Left(VatCustomerNotFound) =>
-        Left(UkVatNumberNotFoundPage.route(waypoints)) //TODO- SCG1
+        Left(UkVatNumberNotFoundPage.route(waypoints)) //TODO- VEI-506
       case Left(_) =>
-        Left(VatApiDownPage.route(waypoints)) //TODO- SCG1
+        Left(VatApiDownPage.route(waypoints)) //TODO- VEI-506
     }
   }
 
@@ -118,7 +118,7 @@ class SaveAndComeBackService @Inject()(
 
           case Left(error) =>
             val message: String = s"Received an unexpected error when trying to retrieve uncompleted " +
-              s"registrations for the intermediary ID: $intermediaryNum, \nWith Errors: $error."
+              s"registrations for the intermediary ID: $intermediaryNum. \nWith Errors: $error"
             val exception: Exception = new Exception(message)
             logger.error(exception.getMessage, exception)
             throw exception
@@ -186,9 +186,13 @@ class SaveAndComeBackService @Inject()(
               val updatedTempUserAnswers = tempUserAnswers.copy(vatInfo = Some(vatInfo))
               Future.successful(determineTaxReference(updatedTempUserAnswers))
             case Left(err) =>
-              Future.failed(new RuntimeException(s"Connector returned error: $err"))
+              val message: String = s"Error returned from registration connector. Page to be implemented in VEI-506" //TODO-VEI-506
+              val exception: Exception = new Exception(message)
+              logger.error(exception.getMessage, exception)
+              throw exception
+
           }
-      }
+      }printl
     }
 
     Future.sequence(futures)
@@ -209,7 +213,7 @@ class SaveAndComeBackService @Inject()(
 
       case Left(error) =>
         val message: String = s"Received an unexpected error when trying to retrieve Saved User Answers " +
-          s"for the journey ID: $journeyId, \nWith Errors: $error."
+          s"for the journey ID: $journeyId,\nWith Errors: $error"
         val exception: Exception = new Exception(message)
         logger.error(exception.getMessage, exception)
         throw exception
