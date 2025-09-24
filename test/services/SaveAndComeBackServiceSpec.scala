@@ -18,17 +18,16 @@ package services
 
 import base.SpecBase
 import connectors.{RegistrationConnector, SaveForLaterConnector}
-import models.{ClientBusinessName, SavedUserAnswers}
 import models.domain.VatCustomerInfo
 import models.requests.{DataRequest, OptionalDataRequest}
 import models.responses.NotFound
 import models.saveAndComeBack.{MultipleRegistrations, NoRegistrations, SingleRegistration, TaxReferenceInformation}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{doReturn, spy, when}
+import models.{ClientBusinessName, SavedUserAnswers}
+import org.mockito.Mockito.when
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, ContinueRegistrationSelectionPage, EmptyWaypoints}
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.JsObject
 import services.core.CoreRegistrationValidationService
 import testutils.RegistrationData.stubClockAtArbitraryDate
 import uk.gov.hmrc.http.HeaderCarrier
@@ -331,27 +330,27 @@ class SaveAndComeBackServiceSpec extends AnyFreeSpec with MockitoSugar with Spec
         }
       }
 
-        "Should return an exception when there is an error with getting the vat information" - {
+      "Should return an exception when there is an error with getting the vat information" - {
 
-          val vatSavedUserAnswers = SavedUserAnswers(
-            journeyId = journeyId,
-            data = vatUserAnswers.data,
-            intermediaryNumber = "IM1234",
-            lastUpdated = Instant.now())
+        val vatSavedUserAnswers = SavedUserAnswers(
+          journeyId = journeyId,
+          data = vatUserAnswers.data,
+          intermediaryNumber = "IM1234",
+          lastUpdated = Instant.now())
 
-          val seqVatSavedUserAnswers = Seq(vatSavedUserAnswers)
+        val seqVatSavedUserAnswers = Seq(vatSavedUserAnswers)
 
-          when(mockRegistrationConnector.getVatCustomerInfo(vatNumber)).thenReturn(Left(NotFound).toFuture)
+        when(mockRegistrationConnector.getVatCustomerInfo(vatNumber)).thenReturn(Left(NotFound).toFuture)
 
-          val ex = intercept[Exception] {
-            testSaveAndComeBackService.createTaxReferenceInfoForSavedUserAnswers(seqVatSavedUserAnswers).futureValue
-          }
-
-          val expectedMessage = s"The future returned an exception of type: java.lang.Exception, with message: " +
-            s"Error returned from registration connector. Page to be implemented in VEI-506."
-
-          ex.getMessage mustEqual expectedMessage
+        val ex = intercept[Exception] {
+          testSaveAndComeBackService.createTaxReferenceInfoForSavedUserAnswers(seqVatSavedUserAnswers).futureValue
         }
+
+        val expectedMessage = s"The future returned an exception of type: java.lang.Exception, with message: " +
+          s"Error returned from registration connector. Page to be implemented in VEI-506."
+
+        ex.getMessage mustEqual expectedMessage
+      }
     }
 
     ".retrieveSingleSavedUserAnswers" - {

@@ -61,7 +61,7 @@ class SaveForLaterConnectorSpec extends SpecBase with WireMockHelper {
 
           val result = connector.submit(saveForLaterRequest).futureValue
 
-          result `mustBe` Right(Some(expectedSavedUserAnswers))
+          result `mustBe` Right(expectedSavedUserAnswers)
         }
       }
 

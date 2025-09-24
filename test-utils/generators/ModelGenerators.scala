@@ -23,7 +23,6 @@ import models.domain.VatCustomerInfo
 import models.etmp.SchemeType
 import models.iossRegistration.*
 import models.ossRegistration.*
-import models.saveAndComeBack.TaxReferenceInformation
 import models.vatEuDetails.{EuDetails, RegistrationType, TradingNameAndBusinessAddress}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.{choose, listOfN}
