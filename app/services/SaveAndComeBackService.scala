@@ -192,7 +192,7 @@ class SaveAndComeBackService @Inject()(
               throw exception
 
           }
-      }printl
+      }
     }
 
     Future.sequence(futures)
