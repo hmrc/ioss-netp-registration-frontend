@@ -145,7 +145,7 @@ class ContinueRegistrationSelectionControllerSpec extends SpecBase with MockitoS
           val result = route(application, request).value
 
           status(result) `mustBe` SEE_OTHER
-          redirectLocation(result).value `mustBe` JourneyRecoveryPage.route(waypoints).url // TODO - SCG4 -> should redirect to dashboard
+          redirectLocation(result).value `mustBe` JourneyRecoveryPage.route(waypoints).url // TODO - VEI-515 -> should redirect to dashboard
           verify(mockSaveAndComeBackService, times(1)).getSavedContinueRegistrationJourneys(any(), any())(any())
         }
       }
@@ -205,7 +205,6 @@ class ContinueRegistrationSelectionControllerSpec extends SpecBase with MockitoS
         }
 
         "and an unexpected error has occurred storing the list of registrations should throw an exception [Edge Case]" in {
-          // TODO SCG5
           val answers: UserAnswers = emptyUserAnswers
 
           val application = applicationBuilder(userAnswers = Some(answers))

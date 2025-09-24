@@ -71,8 +71,8 @@ class ContinueRegistrationSelectionController @Inject()(
           }
 
         case NoRegistrations =>
-          logger.error("TODO - SCG4 -> should redirect to dashboard")
-          Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture // TODO - SCG4 -> should redirect to dashboard
+          logger.error("TODO - VEI-515 -> should redirect to dashboard")
+          Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture // TODO - VEI-515 -> should redirect to dashboard
 
       }
   }
@@ -91,7 +91,7 @@ class ContinueRegistrationSelectionController @Inject()(
               val message: String = s"Received an unexpected error as no registration list found"
               val exception: IllegalStateException = new IllegalStateException(message)
               logger.error(exception.getMessage, exception)
-              throw exception, //TODO SCG5 - Route back to the Dashboard??
+              throw exception,
 
         value =>
           for {

@@ -61,7 +61,7 @@ class ContinueRegistrationController @Inject()(
           }.getOrElse {
             val exception = new IllegalStateException("Must have a saved page url to return to the saved journey")
             logger.error(exception.getMessage, exception)
-            throw exception //TODO- SCG2
+            throw exception
           }
         }
 
@@ -80,7 +80,7 @@ class ContinueRegistrationController @Inject()(
               }.getOrElse {
                 val exception = new IllegalStateException("Must have a saved page url to return to the saved journey")
                 logger.error(exception.getMessage, exception)
-                throw exception //TODO- SCG2
+                throw exception
               }
           }
       }
@@ -105,7 +105,7 @@ class ContinueRegistrationController @Inject()(
               for {
                 _ <- cc.sessionRepository.clear(request.userId)
                 _ <- saveForLaterConnector.delete(taxReferenceInformation.journeyId)
-              } yield Redirect(controllers.routes.IndexController.onPageLoad()) // TODO - SCG3 -> should redirect to dashboard
+              } yield Redirect(controllers.routes.IndexController.onPageLoad()) // TODO - VEI-515 -> should redirect to dashboard
 
             case _ =>
               val exception = new IllegalStateException("Illegal value submitted and/or must have a saved page url to return to the saved journey")

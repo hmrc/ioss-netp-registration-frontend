@@ -117,7 +117,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
         }
 
         "and retrieving the vat reference fails should display the relevant error view" in {
-          //TODO- SCG1
+          //TODO- VEI-506
           val answers: UserAnswers = emptyUserAnswers
             .set(ClientVatNumberPage, "SomeVatNum").success.value
             .set(SavedProgressPage, continueUrl.get(OnlyRelative).url).success.value
@@ -144,7 +144,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
         }
 
         "but saved progress page was not saved properly should throw an exception" in {
-          //TODO- SCG2
+          
           val answers: UserAnswers = emptyUserAnswers
             .set(ClientVatNumberPage, "SomeVatNum").success.value
 
@@ -199,7 +199,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
         }
 
         "but saved progress page was not saved properly should throw an exception" in {
-          //TODO- SCG2
+          
           val answers: UserAnswers = emptyUserAnswers
 
           when(mockSaveAndComeBackService.determineTaxReference(any())) thenReturn genericTaxReference
@@ -250,7 +250,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
         }
 
         "and the value is delete, should clear the userAnswers, call connector to delete saved journey, and redirect to the dashboard" in {
-          // TODO - SCG3
+          // TODO - VEI-515
           val answers: UserAnswers = emptyUserAnswers
             .set(SavedProgressPage, continueUrl.get(OnlyRelative).url).success.value
 
@@ -273,7 +273,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
 
             status(result) `mustBe` SEE_OTHER
             redirectLocation(result).value mustEqual controllers.routes.IndexController.onPageLoad().url
-            // TODO - SCG3 -> should redirect to dashboard
+            // TODO - VEI-515 -> should redirect to dashboard
             verify(mockSaveAndComeBackService, times(1)).determineTaxReference(any())
             verify(mockSessionRepository, times(1)).clear(any())
             verify(mockSaveForLaterConnector, times(1)).delete(any())(any())
