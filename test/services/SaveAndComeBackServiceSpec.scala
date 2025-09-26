@@ -384,5 +384,11 @@ class SaveAndComeBackServiceSpec extends AnyFreeSpec with MockitoSugar with Spec
         ex.getMessage mustEqual expectedMessage
       }
     }
+    
+    "deleteSavedUserAnswers" - {
+      "Need to test" in {
+        pending
+      }
+    }
   }
 }

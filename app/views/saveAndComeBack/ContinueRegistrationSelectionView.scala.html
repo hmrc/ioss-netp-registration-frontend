@@ -39,9 +39,8 @@
             RadiosViewModel.apply(
                 field = form("value"),
                 items = ContinueRegistrationSelection.options(things),
-                legend = HmrcPageHeadingLegend(
-                    content = messages("continueRegistrationSelection.title")
-                ))
+                legend = LegendViewModel(messages("continueRegistrationSelection.title")).asPageHeading()
+            )
         )
 
         @govukButton(

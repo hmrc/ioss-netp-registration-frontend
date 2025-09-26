@@ -39,9 +39,7 @@
         @govukRadios(
             RadiosViewModel(
                 field  = form("value"),
-                legend = HmrcPageHeadingLegend(
-                    content = messages("continueRegistration.heading", taxReferenceInfo.organisationName, taxReferenceInfo.taxReference, taxReferenceInfo.referenceNumber)
-                ),
+                legend = LegendViewModel(messages("continueRegistration.heading", taxReferenceInfo.organisationName, taxReferenceInfo.taxReference, taxReferenceInfo.referenceNumber)).asPageHeading(),
                 items  = ContinueRegistration.options
             )
         )
