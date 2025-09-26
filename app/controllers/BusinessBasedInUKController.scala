@@ -60,7 +60,6 @@ class BusinessBasedInUKController @Inject()(
 
         value =>
           val originalAnswers: UserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
-          println("\n\n" + originalAnswers.journeyId)
           for {
             updatedAnswers <- Future.fromTry(originalAnswers.set(BusinessBasedInUKPage, value))
             _ <- cc.sessionRepository.set(updatedAnswers)
