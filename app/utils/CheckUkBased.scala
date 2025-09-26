@@ -14,21 +14,14 @@
  * limitations under the License.
  */
 
-package config
+package utils
 
-object Constants {
+import config.Constants.ukCountryCodeAreaPrefix
+import models.domain.VatCustomerInfo
 
-  val maxTradingNames: Int = 10
-  val maxWebsites: Int = 10
-  val intermediaryEnrolmentKey: String = "IntNumber"
-  val pendingRegistrationTTL: Int = 28
+object CheckUkBased {
 
-  val clientDeclarationEmailTemplateId: String = "ioss_netp_email_declaration_code"
-
-  val maxSchemes: Int = 3
-  val maxOssSchemes: Int = 2
-  val maxIossSchemes: Int = 1
-  val lastSchemeForCountry: Int = 1
-
-  val ukCountryCodeAreaPrefix: String = "GB"
+  def isUkBasedIntermediary(vatCustomerInfo: VatCustomerInfo): Boolean = {
+    vatCustomerInfo.desAddress.countryCode.startsWith(ukCountryCodeAreaPrefix)
+  }
 }

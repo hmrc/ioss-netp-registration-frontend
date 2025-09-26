@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,14 @@
  * limitations under the License.
  */
 
-package config
+package models.etmp.display
 
-object Constants {
+import models.etmp.EtmpIdType
+import play.api.libs.json.{Json, OFormat}
 
-  val maxTradingNames: Int = 10
-  val maxWebsites: Int = 10
-  val intermediaryEnrolmentKey: String = "IntNumber"
-  val pendingRegistrationTTL: Int = 28
+case class EtmpDisplayCustomerIdentification(idType: EtmpIdType, idValue: String)
 
-  val clientDeclarationEmailTemplateId: String = "ioss_netp_email_declaration_code"
+object EtmpDisplayCustomerIdentification {
 
-  val maxSchemes: Int = 3
-  val maxOssSchemes: Int = 2
-  val maxIossSchemes: Int = 1
-  val lastSchemeForCountry: Int = 1
-
-  val ukCountryCodeAreaPrefix: String = "GB"
+  implicit val format: OFormat[EtmpDisplayCustomerIdentification] = Json.format[EtmpDisplayCustomerIdentification]
 }

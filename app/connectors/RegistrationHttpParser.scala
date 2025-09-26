@@ -17,6 +17,7 @@
 package connectors
 
 import logging.Logging
+import models.etmp.display.RegistrationWrapper
 import models.iossRegistration.IossEtmpDisplayRegistration
 import models.ossRegistration.OssRegistration
 import models.responses.*
@@ -30,6 +31,7 @@ object RegistrationHttpParser extends Logging {
   type RegistrationResultResponse = Either[ErrorResponse, EtmpEnrolmentResponse]
   type IossEtmpDisplayRegistrationResultResponse = Either[ErrorResponse, IossEtmpDisplayRegistration]
   type OssRegistrationResponse = Either[ErrorResponse, OssRegistration]
+  type EtmpDisplayRegistrationResponse = Either[ErrorResponse, RegistrationWrapper]
 
   implicit object RegistrationResponseReads extends HttpReads[RegistrationResultResponse] {
 
@@ -87,6 +89,27 @@ object RegistrationHttpParser extends Logging {
           logger.error(s"Unknown error happened on display registration $status with body ${response.body}")
           Left(InternalServerError)
       }
+  }
+
+  implicit object EtmpDisplayRegistrationResponseReads extends HttpReads[EtmpDisplayRegistrationResponse] {
+
+    override def read(method: String, url: String, response: HttpResponse): EtmpDisplayRegistrationResponse = {
+      response.status match {
+        case OK =>
+          response.json.validate[RegistrationWrapper] match {
+            case JsSuccess(registrationWrapper, _) => Right(registrationWrapper)
+            case JsError(errors) =>
+              logger.error(s"Failed trying to parse Registration Wrapper JSON with status: ${response.status} " +
+                s"and response body: ${response.body} with errors: $errors.")
+              Left(InvalidJson)
+          }
+
+        case status =>
+          logger.error(s"An unknown error occurred when trying to retrieve Registration Wrapper with status: $status " +
+            s"and response body: ${response.body}")
+          Left(InternalServerError)
+      }
+    }
   }
 }
 

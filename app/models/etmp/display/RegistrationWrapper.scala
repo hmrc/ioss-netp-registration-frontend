@@ -14,21 +14,14 @@
  * limitations under the License.
  */
 
-package config
+package models.etmp.display
 
-object Constants {
+import models.domain.VatCustomerInfo
+import play.api.libs.json.{Json, OFormat}
 
-  val maxTradingNames: Int = 10
-  val maxWebsites: Int = 10
-  val intermediaryEnrolmentKey: String = "IntNumber"
-  val pendingRegistrationTTL: Int = 28
+case class RegistrationWrapper(vatInfo: VatCustomerInfo, etmpDisplayRegistration: EtmpDisplayRegistration)
 
-  val clientDeclarationEmailTemplateId: String = "ioss_netp_email_declaration_code"
+object RegistrationWrapper {
 
-  val maxSchemes: Int = 3
-  val maxOssSchemes: Int = 2
-  val maxIossSchemes: Int = 1
-  val lastSchemeForCountry: Int = 1
-
-  val ukCountryCodeAreaPrefix: String = "GB"
+  implicit val format: OFormat[RegistrationWrapper] = Json.format[RegistrationWrapper]
 }
