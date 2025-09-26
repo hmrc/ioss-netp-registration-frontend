@@ -525,3 +525,27 @@ clientEmailUpdated.heading = Email address for {0} updated
 clientEmailUpdated.p1 = We have sent the activation code to <span class="govuk-!-font-weight-bold">{0}</span>. They must use that to confirm their registration to your account.
 clientEmailUpdated.link = <a class="govuk-link" href="{0}">Return to your account</a>
 
+savedProgress.title = We have saved your progress
+savedProgress.subtitle =We will keep the registration details until {0}
+savedProgress.nextSteps = What happens next
+savedProgress.listStart = You can:
+savedProgress.continueRegistration = continue this registration
+savedProgress.signOut = sign out and come back later
+saveProgress.button = Save and come back later
+
+continueRegistration.title = Do you want to continue the registration for {0} ({1}: {2})
+continueRegistration.heading = Do you want to continue the registration for {0} ({1}: {2})
+continueRegistration.error.required = Select yes if want to continue this registration
+continueRegistration.continue = Yes
+continueRegistration.delete = No, delete my answers and start again
+
+continueRegistrationSelection.title = Which registration would you like to continue?
+continueRegistrationSelection.heading = Which registration would you like to continue?
+continueRegistrationSelection.info = {0} ({1} reference: {2})
+continueRegistrationSelection.error.required = Select a registration to continue
+continueRegistrationSelection.continue = Yes
+continueRegistrationSelection.delete = No, delete my answers and start again
+
+noRegistrationInProgress.title = We did not find a registration in progress
+noRegistrationInProgress.heading = We did not find a registration in progress
+noRegistrationInProgress.sessionExpired = Your previous session may have expired.

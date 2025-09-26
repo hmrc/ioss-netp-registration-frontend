@@ -50,7 +50,7 @@ class CheckVatDetailsController @Inject()(
       val ukVatNumber = request.userAnswers.get(ClientVatNumberPage).getOrElse("")
 
       getClientCompanyName(waypoints) { clientCompanyName =>
-
+        
         if (isBasedInUk && hasVatNumber) {
           request.userAnswers.vatInfo match {
             case Some(vatCustomerInfo) =>

@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package formats
+package models.saveAndComeBack
 
-import java.time.format.DateTimeFormatter
+import play.api.libs.json.{Json, OFormat}
 
-object Format {
+case class TaxReferenceInformation (
+                                     organisationName: String,
+                                     taxReference: String,
+                                     referenceNumber: String,
+                                     journeyId: String)
 
-  val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
-  val dateMonthYearFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM yyyy")
-  val dateHintFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d M yyyy")
-  val eisDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-  val saveForLaterDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
+object TaxReferenceInformation {
+  implicit lazy val format: OFormat[TaxReferenceInformation] = Json.format[TaxReferenceInformation]
 }

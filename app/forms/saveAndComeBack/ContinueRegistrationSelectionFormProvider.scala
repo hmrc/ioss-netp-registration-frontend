@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package formats
+package forms.saveAndComeBack
 
-import java.time.format.DateTimeFormatter
+import forms.mappings.Mappings
+import play.api.data.Form
 
-object Format {
+import javax.inject.Inject
 
-  val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
-  val dateMonthYearFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM yyyy")
-  val dateHintFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d M yyyy")
-  val eisDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-  val saveForLaterDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
+class ContinueRegistrationSelectionFormProvider @Inject() extends Mappings {
+
+  def apply(): Form[String] =
+    Form(
+      "value" -> text("continueRegistrationSelection.error.required")
+    )
 }

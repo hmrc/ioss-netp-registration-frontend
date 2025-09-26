@@ -14,36 +14,37 @@
  * limitations under the License.
  *@
 
-@import controllers.tradingNames.routes
-@import pages.Waypoints
-@import pages.tradingNames.HasTradingNamePage
-@import views.html.components.ButtonGroup
+@import models.saveAndComeBack.TaxReferenceInformation
+@import models.saveAndComeBack.ContinueRegistrationSelection
 
 @this(
     layout: templates.Layout,
     formHelper: FormWithCSRF,
     govukErrorSummary: GovukErrorSummary,
     govukRadios: GovukRadios,
-    button: ButtonGroup
+    govukButton: GovukButton
 )
 
-@(form: Form[_], waypoints: Waypoints, companyName: String)(implicit request: Request[_], messages: Messages)
+@(things: Seq[TaxReferenceInformation], form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = title(form, messages("hasTradingName.title", companyName))) {
+@layout(pageTitle = title(form, messages("continueRegistrationSelection.title"))) {
 
-    @formHelper(action = routes.HasTradingNameController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
+    @formHelper(action = controllers.saveAndComeBack.routes.ContinueRegistrationSelectionController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
 
         @if(form.errors.nonEmpty) {
             @govukErrorSummary(ErrorSummaryViewModel(form))
         }
 
         @govukRadios(
-            RadiosViewModel.yesNo(
+            RadiosViewModel.apply(
                 field = form("value"),
-                legend = LegendViewModel(messages("hasTradingName.heading", companyName)).asPageHeading()
+                items = ContinueRegistrationSelection.options(things),
+                legend = LegendViewModel(messages("continueRegistrationSelection.title")).asPageHeading()
             )
         )
 
-        @button("site.continue", HasTradingNamePage.route(waypoints).url, waypoints)
+        @govukButton(
+            ButtonViewModel(messages("site.continue")).withAttribute(("id", "continue"))
+        )
     }
 }

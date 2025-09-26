@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package formats
+package pages
 
-import java.time.format.DateTimeFormatter
+import play.api.libs.json.JsPath
+import play.api.mvc.Call
 
-object Format {
+case object ContinueRegistrationSelectionPage extends QuestionPage[String] {
 
-  val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
-  val dateMonthYearFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM yyyy")
-  val dateHintFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d M yyyy")
-  val eisDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-  val saveForLaterDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
+  override def path: JsPath = JsPath \ toString
+
+  override def toString: String = "continueRegistrationSelection"
+
+  override def route(waypoints: Waypoints): Call = {
+    controllers.saveAndComeBack.routes.ContinueRegistrationSelectionController.onPageLoad(waypoints)
+  }
 }
