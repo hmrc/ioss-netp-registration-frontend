@@ -42,6 +42,7 @@ class FrontendAppConfig @Inject()(configuration: Configuration) {
 
   val intermediaryYourAccountUrl: String = configuration.get[String]("urls.yourAccountUrl")
   val clientCodeEntryUrl: String = configuration.get[String]("urls.clientCodeEntryUrl")
+  val clientCodeEntryHost: String = configuration.get[String]("urls.clientCodeEntryHost")
   val redirectToUpdateClientEmailAddressPage: String = configuration.get[String]("urls.redirectToUpdateClientEmailAddressPage")
 
   private val exitSurveyBaseUrl: String = configuration.get[String]("microservice.services.feedback-frontend.host") +
