@@ -16,12 +16,10 @@
 
 package controllers.saveAndComeBack
 
-import connectors.SaveForLaterConnector
 import controllers.actions.*
 import forms.saveAndComeBack.ContinueRegistrationFormProvider
 import logging.Logging
-import models.saveAndComeBack.ContinueRegistration
-import models.saveAndComeBack.TaxReferenceInformation
+import models.saveAndComeBack.{ContinueRegistration, TaxReferenceInformation}
 import pages.{ClientVatNumberPage, SavedProgressPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -40,7 +38,6 @@ class ContinueRegistrationController @Inject()(
                                                 override val messagesApi: MessagesApi,
                                                 cc: AuthenticatedControllerComponents,
                                                 formProvider: ContinueRegistrationFormProvider,
-                                                saveForLaterConnector: SaveForLaterConnector,
                                                 view: ContinueRegistrationView,
                                                 saveAndComeBackService: SaveAndComeBackService
                                               )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
@@ -104,7 +101,7 @@ class ContinueRegistrationController @Inject()(
             case (ContinueRegistration.Delete, _) =>
               for {
                 _ <- cc.sessionRepository.clear(request.userId)
-                _ <- saveForLaterConnector.delete(taxReferenceInformation.journeyId)
+                _ <- saveAndComeBackService.deleteSavedUserAnswers(taxReferenceInformation.journeyId)
               } yield Redirect(controllers.routes.IndexController.onPageLoad()) // TODO - VEI-515 -> should redirect to dashboard
 
             case _ =>

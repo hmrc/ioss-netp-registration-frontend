@@ -526,12 +526,11 @@ clientEmailUpdated.p1 = We have sent the activation code to <span class="govuk-!
 clientEmailUpdated.link = <a class="govuk-link" href="{0}">Return to your account</a>
 
 savedProgress.title = We have saved your progress
-savedProgress.subtitle = We''ll keep your information until <br>{0}
+savedProgress.subtitle =We will keep the registration details until {0}
 savedProgress.nextSteps = What happens next
 savedProgress.listStart = You can:
-savedProgress.continueRegistration = continue to complete your registration
+savedProgress.continueRegistration = continue this registration
 savedProgress.signOut = sign out and come back later
-savedProgress.signIn = If you sign out, you must sign back into your <a href="{0}" class="govuk-link">Government Gateway</a> to continue.
 saveProgress.button = Save and come back later
 
 continueRegistration.title = Do you want to continue the registration for {0} ({1}: {2})

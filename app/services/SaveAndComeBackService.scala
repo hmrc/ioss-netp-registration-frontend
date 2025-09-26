@@ -219,5 +219,19 @@ class SaveAndComeBackService @Inject()(
         throw exception
     }
   }
-
+  
+  def deleteSavedUserAnswers(journeyId: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Unit] = {
+    saveForLaterConnector.delete(journeyId).map {
+      _.fold(
+        error => {
+          val message = s"Received an unexpected error when trying to retrieve Saved User Answers " +
+            s"for the journey ID: $journeyId,\nWith Errors: $error"
+          val exception = new Exception(message)
+          logger.error(exception.getMessage, exception)
+          throw exception
+        },
+        _ => ()
+      )
+    }
+  }
 }

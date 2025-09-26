@@ -25,7 +25,7 @@ import models.domain.VatCustomerInfo
 import models.saveAndComeBack.TaxReferenceInformation
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito.{doNothing, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures.*
 import org.scalatest.freespec.AnyFreeSpec
@@ -43,13 +43,14 @@ import uk.gov.hmrc.play.bootstrap.binders.{OnlyRelative, RedirectUrl}
 import utils.FutureSyntax.FutureOps
 import views.html.saveAndComeBack.ContinueRegistrationView
 
+import scala.concurrent.Future
+
 class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
   private val continueUrl: RedirectUrl = RedirectUrl("/continueUrl")
 
   private val mockSaveAndComeBackService = mock[SaveAndComeBackService]
   private val mockSessionRepository = mock[SessionRepository]
-  private val mockSaveForLaterConnector = mock[SaveForLaterConnector]
 
   private lazy val continueOnPageLoadRoute: String = routes.ContinueRegistrationController.onPageLoad(waypoints).url
   private lazy val continueOnSubmitRoute: String = routes.ContinueRegistrationController.onSubmit(waypoints).url
@@ -78,7 +79,6 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
   override def beforeEach(): Unit = {
     Mockito.reset(mockSaveAndComeBackService)
     Mockito.reset(mockSessionRepository)
-    Mockito.reset(mockSaveForLaterConnector)
   }
 
   "ContinueRegistrationController" - {
@@ -256,12 +256,11 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
 
           when(mockSaveAndComeBackService.determineTaxReference(any())) thenReturn genericTaxReference
           when(mockSessionRepository.clear(any())) thenReturn true.toFuture
-          when(mockSaveForLaterConnector.delete(any())(any())) thenReturn Right(true).toFuture
-
+          when(mockSaveAndComeBackService.deleteSavedUserAnswers(any())(any(),any())).thenReturn(Future.successful(()))
+          
           val application = applicationBuilder(userAnswers = Some(answers))
             .overrides(bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService))
             .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
-            .overrides(bind[SaveForLaterConnector].toInstance(mockSaveForLaterConnector))
             .build()
 
           running(application) {
@@ -276,7 +275,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
             // TODO - VEI-515 -> should redirect to dashboard
             verify(mockSaveAndComeBackService, times(1)).determineTaxReference(any())
             verify(mockSessionRepository, times(1)).clear(any())
-            verify(mockSaveForLaterConnector, times(1)).delete(any())(any())
+            verify(mockSaveAndComeBackService, times(1)).deleteSavedUserAnswers(any())(any(),any())
           }
         }
 
