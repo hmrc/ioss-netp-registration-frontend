@@ -89,6 +89,7 @@ trait SpecBase
 
   val vatNumber = "GB123456789"
   val intermediaryNumber = "IN9001234567"
+  val iossNumber = "IN9001234568"
   val intermediaryName = "Intermediary Company Name"
   val vrn: Vrn = Vrn("123456789")
   val utr: String = "1234567890"

@@ -91,7 +91,7 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
   def updateClientEmailAddress(journeyId: String, newEmailAddress: String)(implicit hc: HeaderCarrier): Future[SavedPendingRegistrationResponse] =
     httpClientV2.put(url"$baseUrl/pending-registrations/$journeyId/$newEmailAddress").execute[SavedPendingRegistrationResponse]
 
-  def displayRegistration(intermediaryNumber: String)(implicit hc: HeaderCarrier): Future[EtmpDisplayRegistrationResponse] =
-    httpClientV2.get(url"$baseUrl/registrations/$intermediaryNumber").execute[EtmpDisplayRegistrationResponse]
+  def displayRegistration(iossNumber: String)(implicit hc: HeaderCarrier): Future[EtmpDisplayRegistrationResponse] =
+    httpClientV2.get(url"$baseUrl/registrations/$iossNumber").execute[EtmpDisplayRegistrationResponse]
 
 }
