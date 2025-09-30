@@ -202,3 +202,7 @@ GET        /update-client-email-address/:journeyId                         contr
 POST       /update-client-email-address/:journeyId                         controllers.UpdateClientEmailAddressController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
 
 GET        /client-email-updated/:journeyId                                controllers.ClientEmailUpdatedController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
+
+# Amend Registration
+
+GET        /start-amend-journey/:iossNumber                                controllers.amend.StartAmendJourneyController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, iossNumber: String)
