@@ -35,58 +35,5 @@ case class EtmpDisplaySchemeDetails(
 
 object EtmpDisplaySchemeDetails {
 
-  private def fromDisplayRegistrationPayload(
-                                              commencementDate: String,
-                                              euRegistrationDetails: Option[Seq[EtmpDisplayEuRegistrationDetails]],
-                                              contactNameOrBusinessAddress: String,
-                                              businessTelephoneNumber: String,
-                                              businessEmailAddress: String,
-                                              unusableStatus: Boolean,
-                                              nonCompliantReturns: Option[String],
-                                              nonCompliantPayments: Option[String],
-                                              previousEURegistrationDetails: Seq[EtmpPreviousEuRegistrationDetails],
-                                              websites: Seq[EtmpWebsite]
-                                            ): EtmpDisplaySchemeDetails =
-    EtmpDisplaySchemeDetails(
-      commencementDate = commencementDate,
-      euRegistrationDetails = euRegistrationDetails.fold(Seq.empty[EtmpDisplayEuRegistrationDetails])(a => a),
-      contactName = contactNameOrBusinessAddress,
-      businessTelephoneNumber = businessTelephoneNumber,
-      businessEmailId = businessEmailAddress,
-      unusableStatus = unusableStatus,
-      nonCompliantReturns = nonCompliantReturns,
-      nonCompliantPayments = nonCompliantPayments,
-      previousEURegistrationDetails = previousEURegistrationDetails,
-      websites = websites
-    )
-
-  implicit val displaySchemeDetailsReads: Reads[EtmpDisplaySchemeDetails] = {
-    (
-      (__ \ "commencementDate").read[String] and
-        (__ \ "euRegistrationDetails").readNullable[Seq[EtmpDisplayEuRegistrationDetails]] and
-        (__ \ "contactDetails" \ "contactNameOrBusinessAddress").read[String] and
-        (__ \ "contactDetails" \ "businessTelephoneNumber").read[String] and
-        (__ \ "contactDetails" \ "businessEmailAddress").read[String] and
-        (__ \ "contactDetails" \ "unusableStatus").read[Boolean] and
-        (__ \ "nonCompliantReturns").readNullable[String] and
-        (__ \ "nonCompliantPayments").readNullable[String] and
-        (__ \ "previousEURegistrationDetails").readNullable[Seq[EtmpPreviousEuRegistrationDetails]].map(_.getOrElse(List.empty)) and
-        (__ \ "websites").readNullable[Seq[EtmpWebsite]].map(_.getOrElse(List.empty))
-      )(EtmpDisplaySchemeDetails.fromDisplayRegistrationPayload _)
-  }
-
-  implicit val etmpDisplaySchemeDetailsWrites: Writes[EtmpDisplaySchemeDetails] = {
-    (
-      (__ \ "commencementDate").write[String] and
-        (__ \ "euRegistrationDetails").write[Seq[EtmpDisplayEuRegistrationDetails]] and
-        (__ \ "contactDetails" \ "contactNameOrBusinessAddress").write[String] and
-        (__ \ "contactDetails" \ "businessTelephoneNumber").write[String] and
-        (__ \ "contactDetails" \ "businessEmailAddress").write[String] and
-        (__ \ "contactDetails" \ "unusableStatus").write[Boolean] and
-        (__ \ "nonCompliantReturns").writeNullable[String] and
-        (__ \ "nonCompliantPayments").writeNullable[String] and
-        (__ \ "previousEURegistrationDetails").write[Seq[EtmpPreviousEuRegistrationDetails]] and
-        (__ \ "websites").write[Seq[EtmpWebsite]]
-      )(etmpDisplaySchemeDetails => Tuple.fromProductTyped(etmpDisplaySchemeDetails))
-  }
+  implicit val format: OFormat[EtmpDisplaySchemeDetails] = Json.format[EtmpDisplaySchemeDetails]
 }

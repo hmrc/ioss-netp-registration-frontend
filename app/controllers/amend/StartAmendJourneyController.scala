@@ -39,7 +39,7 @@ class StartAmendJourneyController @Inject()(
                                            )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with Logging {
 
-  def onPageLoad(waypoints: Waypoints, iossNumber: String): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onPageLoad(waypoints: Waypoints, iossNumber: String): Action[AnyContent] = cc.identifyAndGetOptionalData.async {
     implicit request =>
 
       (for {
@@ -49,7 +49,7 @@ class StartAmendJourneyController @Inject()(
         displayRegistrationResponse match {
           case Right(registrationWrapper) =>
             for {
-              userAnswers <- registrationService.toUserAnswers(request.userId, request.userAnswers.journeyId, registrationWrapper)
+              userAnswers <- registrationService.toUserAnswers(request.userId, registrationWrapper)
               originalAnswers <- Future.fromTry(
                 userAnswers.set(OriginalRegistrationQuery(iossNumber), registrationWrapper.etmpDisplayRegistration))
               _ <- cc.sessionRepository.set(userAnswers)

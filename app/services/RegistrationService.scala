@@ -52,7 +52,7 @@ class RegistrationService @Inject()(
     registrationConnector.createRegistration(buildEtmpRegistrationRequest(answers, commencementDate))
   }
 
-  def toUserAnswers(userId: String, journeyId: String, registrationWrapper: RegistrationWrapper): Future[UserAnswers] = {
+  def toUserAnswers(userId: String, registrationWrapper: RegistrationWrapper): Future[UserAnswers] = {
 
     val etmpTradingNames: Seq[EtmpTradingName] = registrationWrapper.etmpDisplayRegistration.tradingNames
     val maybeOtherAddress: Option[EtmpOtherAddress] = registrationWrapper.etmpDisplayRegistration.otherAddress
@@ -65,7 +65,6 @@ class RegistrationService @Inject()(
     val userAnswers = for {
       businessBasedInUk <- UserAnswers(
         id = userId,
-        journeyId = journeyId,
         vatInfo = Some(registrationWrapper.vatInfo)
       ).set(BusinessBasedInUKPage, hasUkBasedAddress)
 

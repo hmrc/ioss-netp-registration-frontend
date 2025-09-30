@@ -53,7 +53,7 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
     "must return OK" in {
 
       when(mockRegistrationConnector.displayRegistration(any())(any())) thenReturn Right(registrationWrapper).toFuture
-      when(mockRegistrationService.toUserAnswers(any(), any(), any())) thenReturn basicUserAnswersWithVatInfo.toFuture
+      when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn basicUserAnswersWithVatInfo.toFuture
 
       val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
         .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
@@ -67,7 +67,7 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
 
         status(result) mustBe OK
         verify(mockRegistrationConnector, times(1)).displayRegistration(eqTo(iossNumber))(any())
-        verify(mockRegistrationService, times(1)).toUserAnswers(eqTo(userAnswersId), eqTo(journeyId), eqTo(registrationWrapper))
+        verify(mockRegistrationService, times(1)).toUserAnswers(eqTo(userAnswersId), eqTo(registrationWrapper))
       }
     }
 
@@ -98,7 +98,7 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
       val errorMessage: String = "ERROR"
 
       when(mockRegistrationConnector.displayRegistration(any())(any())) thenReturn Right(registrationWrapper).toFuture
-      when(mockRegistrationService.toUserAnswers(any(), any(), any())) thenReturn Future.failed(Exception(errorMessage))
+      when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn Future.failed(Exception(errorMessage))
 
       val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
         .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
@@ -115,7 +115,7 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
           exp.getMessage `mustBe` errorMessage
         }
         verify(mockRegistrationConnector, times(1)).displayRegistration(eqTo(iossNumber))(any())
-        verify(mockRegistrationService, times(1)).toUserAnswers(eqTo(userAnswersId), eqTo(journeyId), eqTo(registrationWrapper))
+        verify(mockRegistrationService, times(1)).toUserAnswers(eqTo(userAnswersId), eqTo(registrationWrapper))
       }
     }
   }

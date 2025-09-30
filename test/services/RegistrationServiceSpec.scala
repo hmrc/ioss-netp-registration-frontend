@@ -78,7 +78,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
 
   ".toUserAnswers" - {
 
-    "must covert from RegistrationWrapper to UserAnswers" - {
+    "must convert from RegistrationWrapper to UserAnswers" - {
 
       "when user is a UK based" in {
 
@@ -95,9 +95,9 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
 
         val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector)
 
-        val result = service.toUserAnswers(userAnswersId, journeyId, ukRegistrationWrapper).futureValue
+        val result = service.toUserAnswers(userAnswersId, ukRegistrationWrapper).futureValue
 
-        result `mustBe` convertedUserAnswers(ukRegistrationWrapper).copy(lastUpdated = result.lastUpdated)
+        result `mustBe` convertedUserAnswers(ukRegistrationWrapper).copy(lastUpdated = result.lastUpdated, journeyId = result.journeyId)
       }
 
       "when user is NOT based in UK" in {
@@ -115,9 +115,9 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
 
         val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector)
 
-        val result = service.toUserAnswers(userAnswersId, journeyId, nonUkRegistrationWrapper).futureValue
+        val result = service.toUserAnswers(userAnswersId, nonUkRegistrationWrapper).futureValue
 
-        result `mustBe` convertedUserAnswers(nonUkRegistrationWrapper).copy(lastUpdated = result.lastUpdated)
+        result `mustBe` convertedUserAnswers(nonUkRegistrationWrapper).copy(lastUpdated = result.lastUpdated, journeyId = result.journeyId)
       }
     }
 
@@ -136,7 +136,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
 
       val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector)
 
-      val result = service.toUserAnswers(userAnswersId, journeyId, nonUkRegistrationWrapper).failed
+      val result = service.toUserAnswers(userAnswersId, nonUkRegistrationWrapper).failed
 
       whenReady(result) { exp =>
         exp mustBe a[IllegalStateException]
@@ -160,7 +160,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
 
       val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector)
 
-      val result = service.toUserAnswers(userAnswersId, journeyId, nonUkRegistrationWrapper).failed
+      val result = service.toUserAnswers(userAnswersId, nonUkRegistrationWrapper).failed
 
       whenReady(result) { exp =>
         exp mustBe a[IllegalStateException]
