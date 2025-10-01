@@ -20,6 +20,7 @@ import base.SpecBase
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import models.{PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
 import models.domain.VatCustomerInfo
+import models.etmp.display.RegistrationWrapper
 import models.iossRegistration.IossEtmpDisplayRegistration
 import models.ossRegistration.{OssExcludedTrader, OssRegistration}
 import models.responses.*
@@ -744,6 +745,75 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
             result mustBe Left(response)
           }
+        }
+      }
+    }
+
+    ".displayRegistration" - {
+
+      val displayRegistrationUrl: String = s"/ioss-netp-registration/registrations/$iossNumber"
+
+      val displayRegistrationWrapper: RegistrationWrapper = arbitraryRegistrationWrapper.arbitrary.sample.value
+
+      "must return Right(RegistrationWrapper) when the server returns a successful response and JSON is parsed correctly" in {
+
+        val responseJson = Json.toJson(displayRegistrationWrapper).toString
+
+        server.stubFor(
+          get(urlEqualTo(displayRegistrationUrl))
+            .willReturn(aResponse()
+            .withStatus(OK)
+            .withBody(responseJson))
+        )
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[RegistrationConnector]
+
+          val result = connector.displayRegistration(iossNumber).futureValue
+
+          result `mustBe` Right(displayRegistrationWrapper)
+        }
+
+      }
+
+      "must return Left(InvalidJson) when when JSON is not parsed correctly" in {
+
+        val responseJson = Json.toJson("JSON" -> "Invalid").toString
+
+        server.stubFor(
+          get(urlEqualTo(displayRegistrationUrl))
+            .willReturn(aResponse()
+              .withStatus(OK)
+              .withBody(responseJson))
+        )
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[RegistrationConnector]
+
+          val result = connector.displayRegistration(iossNumber).futureValue
+
+          result `mustBe` Left(InvalidJson)
+        }
+      }
+
+      "must return Left(InternalServerError) when server responds with an error" in {
+
+        server.stubFor(
+          get(urlEqualTo(displayRegistrationUrl))
+            .willReturn(aResponse()
+              .withStatus(INTERNAL_SERVER_ERROR)
+            )
+        )
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[RegistrationConnector]
+
+          val result = connector.displayRegistration(iossNumber).futureValue
+
+          result `mustBe` Left(InternalServerError)
         }
       }
     }
