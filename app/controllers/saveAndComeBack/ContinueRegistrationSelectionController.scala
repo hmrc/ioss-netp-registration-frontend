@@ -29,6 +29,7 @@ import services.SaveAndComeBackService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.saveAndComeBack.ContinueRegistrationSelectionView
+import config.FrontendAppConfig
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,6 +40,7 @@ class ContinueRegistrationSelectionController @Inject()(
                                                          cc: AuthenticatedControllerComponents,
                                                          formProvider: ContinueRegistrationSelectionFormProvider,
                                                          saveAndComeBackService: SaveAndComeBackService,
+                                                         frontendAppConfig: FrontendAppConfig,
                                                          view: ContinueRegistrationSelectionView
                                                        )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
 
@@ -48,8 +50,11 @@ class ContinueRegistrationSelectionController @Inject()(
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetOptionalData.async {
     implicit request =>
-
+      
       val userAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
+      
+      println(userAnswers.journeyId)
+      val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
 
       saveAndComeBackService.getSavedContinueRegistrationJourneys(userAnswers, request.intermediaryNumber.get).flatMap {
         case SingleRegistration(singleJourneyId) =>
@@ -71,9 +76,7 @@ class ContinueRegistrationSelectionController @Inject()(
           }
 
         case NoRegistrations =>
-          logger.error("TODO - VEI-515 -> should redirect to dashboard")
-          Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture // TODO - VEI-515 -> should redirect to dashboard
-
+          Redirect(dashboardUrl).toFuture
       }
   }
 

@@ -16,17 +16,24 @@
 
 package controllers
 
+import controllers.actions.AuthenticatedControllerComponents
+import models.requests.OptionalDataRequest
+
 import javax.inject.Inject
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import scala.concurrent.ExecutionContext
 
 class IndexController @Inject()(
                                  val controllerComponents: MessagesControllerComponents,
-                               ) extends FrontendBaseController with I18nSupport {
+                                 cc: AuthenticatedControllerComponents
+                               )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
-  def onPageLoad(): Action[AnyContent] = Action {
-    _ =>
-      Redirect(routes.BusinessBasedInUKController.onPageLoad())
+  def onPageLoad(): Action[AnyContent] =  cc.identifyAndGetOptionalData.async {
+    implicit request =>
+      for {
+      _ <- cc.sessionRepository.clear(request.userId)
+      } yield Redirect(routes.BusinessBasedInUKController.onPageLoad())
   }
 }

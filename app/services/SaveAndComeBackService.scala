@@ -87,10 +87,12 @@ class SaveAndComeBackService @Inject()(
     registrationConnector.getVatCustomerInfo(ukVatNumber).map {
       case Right(value) =>
         Right(value)
-      case Left(VatCustomerNotFound) =>
-        Left(UkVatNumberNotFoundPage.route(waypoints)) //TODO- VEI-506
-      case Left(_) =>
-        Left(VatApiDownPage.route(waypoints)) //TODO- VEI-506
+      case Left(error) =>
+        val message: String = s"Received an unexpected error when trying to retrieve Tax information" +
+          s"for the Vat Number: $ukVatNumber,\nWith Errors: $error"
+        val exception: Exception = new Exception(message)
+        logger.error(exception.getMessage, exception)
+        throw exception
     }
   }
 
@@ -125,49 +127,7 @@ class SaveAndComeBackService @Inject()(
         }
     }
   }
-
-
-  //TODO - VEI-506 -> Implement validation and refactor
-  def getAndValidateVatTaxInfo(
-                                ukVatNumber: String, waypoints: Waypoints
-                              )(implicit request: DataRequest[_], hc: HeaderCarrier): Future[Either[Call, VatCustomerInfo]] = {
-    val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
-
-    coreRegistrationValidationService.searchUkVrn(Vrn(ukVatNumber)).flatMap {
-
-      case Some(activeMatch) if activeMatch.matchType.isActiveTrader && !activeMatch.traderId.isAnIntermediary =>
-        Left(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
-
-      case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader &&
-        LocalDate.parse(activeMatch.getEffectiveDate).isAfter(quarantineCutOffDate) &&
-        !activeMatch.traderId.isAnIntermediary =>
-        Left(
-          controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-            activeMatch.memberState,
-            activeMatch.getEffectiveDate)
-        ).toFuture
-
-      case _ =>
-        registrationConnector.getVatCustomerInfo(ukVatNumber).map {
-          case Right(value) =>
-            val today = LocalDate.now(clock)
-            val isExpired = value.deregistrationDecisionDate.exists(!_.isAfter(today))
-
-            if (isExpired) {
-              logger.info(s"VAT number $ukVatNumber is expired (deregistration date: ${value.deregistrationDecisionDate})")
-              Left(controllers.routes.ExpiredVrnDateController.onPageLoad(waypoints))
-            } else {
-              Right(value)
-            }
-          case Left(VatCustomerNotFound) =>
-            Left(UkVatNumberNotFoundPage.route(waypoints))
-          case Left(_) =>
-            Left(VatApiDownPage.route(waypoints))
-        }
-    }
-
-  }
-
+  
 
   def createTaxReferenceInfoForSavedUserAnswers(
                                                  seqItems: Seq[SavedUserAnswers]
@@ -186,11 +146,11 @@ class SaveAndComeBackService @Inject()(
               val updatedTempUserAnswers = tempUserAnswers.copy(vatInfo = Some(vatInfo))
               Future.successful(determineTaxReference(updatedTempUserAnswers))
             case Left(err) =>
-              val message: String = s"Error returned from registration connector. Page to be implemented in VEI-506" //TODO-VEI-506
+              val message: String = s"Received an unexpected error when trying to retrieve Tax information" +
+                s"for the Vat Number: $vatNum,\nWith Errors: $err"
               val exception: Exception = new Exception(message)
               logger.error(exception.getMessage, exception)
               throw exception
-
           }
       }
     }
