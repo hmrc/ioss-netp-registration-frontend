@@ -33,7 +33,7 @@ class UseOtherAccountController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
   
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData() {
     implicit request =>
 
       val ukVatNumber = request.userAnswers.get(ClientVatNumberPage).getOrElse("")

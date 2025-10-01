@@ -40,7 +40,7 @@ class PreviouslyRegisteredController @Inject()(
   
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData() {
     implicit request =>
       val userAnswers = request.userAnswers
 
@@ -52,7 +52,7 @@ class PreviouslyRegisteredController @Inject()(
       Ok(view(preparedForm, waypoints))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       form.bindFromRequest().fold(

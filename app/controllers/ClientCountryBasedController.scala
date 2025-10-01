@@ -41,7 +41,7 @@ class ClientCountryBasedController @Inject()(
   val form: Form[Country] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData() {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(ClientCountryBasedPage) match {
@@ -52,7 +52,7 @@ class ClientCountryBasedController @Inject()(
       Ok(view(preparedForm, waypoints))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       form.bindFromRequest().fold(

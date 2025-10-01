@@ -21,13 +21,15 @@ import controllers.routes
 import logging.Logging
 import models.requests.{DataRequest, OptionalDataRequest}
 import play.api.mvc.Results.Redirect
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import play.api.mvc.{ActionRefiner, Result}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class DataRequiredActionImpl @Inject()(registrationConnector: RegistrationConnector,
-                                       isInAmendMode: Boolean)(implicit val executionContext: ExecutionContext) extends DataRequiredAction with Logging {
+                                       isInAmendMode: Boolean)(implicit val executionContext: ExecutionContext) extends ActionRefiner[OptionalDataRequest, DataRequest] with Logging {
 
   override protected def refine[A](request: OptionalDataRequest[A]): Future[Either[Result, DataRequest[A]]] = {
 
@@ -43,14 +45,11 @@ class DataRequiredActionImpl @Inject()(registrationConnector: RegistrationConnec
       case Some(data) =>
         val eventualMaybeRegistrationWrapper = {
           if (isInAmendMode) {
-            //needs connecting to the registrationConnector.getRegistration method
-            Future.successful(Right(DataRequest(request.request, request.userId, data, intermediaryNumber)))
-            //needs the ib30 implementation to finish with registration wrapper
-            // implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request.request, request.session)
-            // registrationConnector.displayRegistration(intermediaryNumber)(hc).flatMap {
-            //   case Left(error) => Future.failed(new RuntimeException(s"Failed to retrieve registration: ${error.body}"))
-            //   case Right(registrationWrapper) => Future.successful(Some(registrationWrapper))
-            // }
+             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request.request, request.session)
+             registrationConnector.getIossRegistration(intermediaryNumber)(hc).flatMap {
+               case Left(error) => Future.failed(new RuntimeException(s"Failed to retrieve registration: ${error.body}"))
+               case Right(registrationWrapper) => Future.successful(Some(registrationWrapper))
+             }
           } else {
             Future.successful(None)
           }
@@ -69,13 +68,11 @@ class DataRequiredActionImpl @Inject()(registrationConnector: RegistrationConnec
   }
 }
 
-class DataRequiredActionProvider @Inject()(
+class DataRequiredAction @Inject()(
                                             registrationConnector: RegistrationConnector
-                                          )(implicit ec: ExecutionContext) extends DataRequiredAction {
+                                          )(implicit ec: ExecutionContext){
 
   def apply(isInAmendMode: Boolean = false): ActionRefiner[OptionalDataRequest, DataRequest] = {
     new DataRequiredActionImpl(registrationConnector, isInAmendMode)
   }
 }
-
-trait DataRequiredAction extends ActionRefiner[OptionalDataRequest, DataRequest]

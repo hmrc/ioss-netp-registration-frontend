@@ -30,6 +30,6 @@ case class EtmpDisplayRegistration(
                                   )
 
 object EtmpDisplayRegistration {
-  
+
   implicit val format: OFormat[EtmpDisplayRegistration] = Json.format[EtmpDisplayRegistration]
 }

@@ -18,6 +18,7 @@ package models.requests
 
 import models.UserAnswers
 import play.api.mvc.{Request, WrappedRequest}
+import models.etmp.display.RegistrationWrapper
 
 sealed abstract class GenericRequest[+A](request: Request[A], val userId: String, val userAnswers: UserAnswers)
   extends WrappedRequest[A](request)
@@ -27,6 +28,8 @@ case class OptionalDataRequest[A](request: Request[A], userId: String, userAnswe
 
 case class DataRequest[A](request: Request[A], override val userId: String, override val userAnswers: UserAnswers, intermediaryNumber: String, registrationWrapper: Option[RegistrationWrapper] = None)
   extends GenericRequest[A](request, userId, userAnswers)
+
+case class IntermediaryDataRequest[A](request: Request[A], override val userId: String, override val userAnswers: UserAnswers, intermediaryNumber: String, registrationWrapper: RegistrationWrapper) extends GenericRequest[A](request, userId, userAnswers)
 
 case class ClientOptionalDataRequest[A](request: Request[A], override val userId: String, override val userAnswers: UserAnswers)
   extends GenericRequest[A](request, userId, userAnswers)

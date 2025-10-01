@@ -50,7 +50,7 @@ class ClientVatNumberController @Inject()(
 
   private val form: Form[String] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData() {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(ClientVatNumberPage) match {
@@ -61,7 +61,7 @@ class ClientVatNumberController @Inject()(
       Ok(view(preparedForm, waypoints))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)

@@ -43,7 +43,7 @@ class CheckPreviousSchemeAnswersController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
       getPreviousCountry(waypoints, index) {
         country =>
@@ -60,7 +60,7 @@ class CheckPreviousSchemeAnswersController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
       getPreviousCountry(waypoints, index) {
         country =>

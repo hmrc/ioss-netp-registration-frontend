@@ -53,7 +53,7 @@ class TradingNameController @Inject()(
       andThen
       getData
       andThen
-      requireData
+      requireData()
       andThen
       maxIndexFilter(index)) {
 
