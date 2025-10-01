@@ -534,6 +534,38 @@ trait ModelGenerators extends EitherValues with EtmpModelGenerators {
     }
   }
 
+  implicit val arbitrarySaveForLaterRequest: Arbitrary[SaveForLaterRequest] = {
+    Arbitrary {
+      for {
+        intermediaryNumber <- Gen.alphaNumStr
+        journeyId = UUID.randomUUID().toString
+        data = JsObject(Seq("savedUserAnswers" -> Json.toJson("userAnswers")))
+      } yield {
+        SaveForLaterRequest(
+          journeyId = journeyId,
+          data = data,
+          intermediaryNumber = intermediaryNumber
+        )
+      }
+    }
+  }
+
+  implicit val arbitrarySavedUserAnswers: Arbitrary[SavedUserAnswers] = {
+    Arbitrary {
+      val intermediaryNumber = arbitrarySaveForLaterRequest.arbitrary.sample.get.intermediaryNumber
+      val journeyId = arbitrarySaveForLaterRequest.arbitrary.sample.get.journeyId
+      val data = JsObject(Seq("savedUserAnswers" -> Json.toJson("userAnswers")))
+      val now = Instant.now
+
+      SavedUserAnswers(
+        journeyId = journeyId,
+        data = data,
+        intermediaryNumber = intermediaryNumber,
+        lastUpdated = now
+      )
+    }
+  }
+
   implicit val arbitraryCoreRegistrationRequest: Arbitrary[CoreRegistrationRequest] = {
     Arbitrary {
       for {

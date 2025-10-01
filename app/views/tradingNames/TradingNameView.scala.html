@@ -16,13 +16,15 @@
 
 @import controllers.tradingNames.routes
 @import viewmodels.InputWidth._
+@import views.html.components.ButtonGroup
+@import pages.tradingNames.TradingNamePage
 
 @this(
     layout: templates.Layout,
     formHelper: FormWithCSRF,
     govukErrorSummary: GovukErrorSummary,
     govukInput: GovukInput,
-    govukButton: GovukButton
+    button: ButtonGroup
 )
 
 @(form: Form[_], waypoints: Waypoints, index: Index)(implicit request: Request[_], messages: Messages)
@@ -42,8 +44,6 @@
             ).withWidth(Full)
         )
 
-        @govukButton(
-            ButtonViewModel(messages("site.continue")).withAttribute("id", "continue")
-        )
+        @button("site.continue", TradingNamePage(index).route(waypoints).url, waypoints)    
     }
 }

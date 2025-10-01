@@ -30,7 +30,7 @@ import pages.{DeclarationPage, ErrorSubmittingPendingRegistrationPage, Waypoints
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import services.{AuditService, EmailService}
+import services.{AuditService, EmailService, SaveAndComeBackService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
@@ -47,7 +47,8 @@ class DeclarationController @Inject()(
                                        registrationConnector: RegistrationConnector,
                                        auditService: AuditService,
                                        emailService: EmailService,
-                                       view: DeclarationView
+                                       view: DeclarationView,
+                                       saveAndComeBackService: SaveAndComeBackService
                                      )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with GetClientCompanyName with Logging with GetClientEmail {
 
@@ -82,7 +83,7 @@ class DeclarationController @Inject()(
 
           registrationConnector.submitPendingRegistration(pendingRegistrationRequest).flatMap {
             case Right(submittedRegistration) =>
-
+              
               getClientEmail(waypoints, submittedRegistration.userAnswers) { clientEmail =>
                 sendEmail(submittedRegistration, clientEmail, clientCompanyName, intermediaryName)
 
@@ -91,6 +92,7 @@ class DeclarationController @Inject()(
                     BadRequest(view(formWithErrors, waypoints, intermediaryName, clientCompanyName)).toFuture,
 
                   value =>
+                    saveAndComeBackService.deleteSavedUserAnswers(submittedRegistration.journeyId)
                     for {
                       updatedAnswers <- Future.fromTry(request.userAnswers.set(DeclarationPage, value))
                       _ <- cc.sessionRepository.set(updatedAnswers)

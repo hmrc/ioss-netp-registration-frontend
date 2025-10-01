@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package formats
+package models.saveAndComeBack
 
-import java.time.format.DateTimeFormatter
 
-object Format {
+import play.api.libs.json.JsPath
+import queries.{Gettable, Settable}
 
-  val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
-  val dateMonthYearFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM yyyy")
-  val dateHintFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d M yyyy")
-  val eisDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-  val saveForLaterDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
+case object ContinueRegistrationList extends Gettable[Seq[TaxReferenceInformation]] with Settable[Seq[TaxReferenceInformation]] {
+
+  override def path: JsPath = JsPath \ "registrations"
+
 }

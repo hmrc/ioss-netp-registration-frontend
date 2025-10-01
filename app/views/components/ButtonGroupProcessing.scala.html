@@ -22,4 +22,11 @@
     @govukButton(
         ButtonViewModel(messages(continueMessage)).withAttribute(("id", "submit")).withAttribute("onclick", "showTheSpinner()")
     )
+
+   @if(waypoints.currentMode == CheckMode) {
+     <a id="saveProgress" role="button" href="@controllers.saveAndComeBack.routes.SavedProgressController.onPageLoad(waypoints, RedirectUrl(continueUrl))" class="govuk-button govuk-button--secondary" data-module="govuk-button">
+         @messages("saveProgress.button")
+     </a>
+   }
+
 </div>

@@ -37,7 +37,7 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
-import services.{AuditService, EmailService}
+import services.{AuditService, EmailService, SaveAndComeBackService}
 import utils.FutureSyntax.FutureOps
 import views.html.DeclarationView
 
@@ -60,6 +60,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
   private val mockAuditService: AuditService = mock[AuditService]
+  private val mockSaveAndComeBackService: SaveAndComeBackService = mock[SaveAndComeBackService]
 
   val formProvider = new DeclarationFormProvider()
   val form: Form[Boolean] = formProvider()
@@ -69,6 +70,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
   override def beforeEach(): Unit = {
     Mockito.reset(mockRegistrationConnector)
     Mockito.reset(mockAuditService)
+    Mockito.reset(mockSaveAndComeBackService)
   }
 
   "Declaration Controller" - {
@@ -136,7 +138,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
     ".onSubmit" - {
 
-      "must submit client registration, send client email, audit event and redirect to next page when valid data and true declaration is submitted" in {
+      "must submit client registration, delete any previously saved journey, send client email, audit event and redirect to next page when valid data and true declaration is submitted" in {
 
         val mockSessionRepository = mock[SessionRepository]
         val mockEmailService = mock[EmailService]
@@ -155,6 +157,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             .overrides(
               bind[SessionRepository].toInstance(mockSessionRepository),
               bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+              bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
               bind[DeclarationView].toInstance(mockDeclarationView),
               bind[EmailService].toInstance(mockEmailService),
               bind[AuditService].toInstance(mockAuditService)
@@ -167,6 +170,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
         when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any())) thenReturn Right(intermediaryVatCustomerInfo).toFuture
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
         when(mockEmailService.sendClientActivationEmail(any, any, any, any, any, any)(any, any)) thenReturn Future.successful(())
+        when(mockSaveAndComeBackService.deleteSavedUserAnswers(any)(any, any)) thenReturn Future.successful(())
 
         running(application) {
           val request =
@@ -200,10 +204,11 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             any,
             any
           )(any, any)
+          verify(mockSaveAndComeBackService, times(1)).deleteSavedUserAnswers(any)(any, any)
         }
       }
 
-      "must submit client registration, audit event and redirect to next page with valid data even when client email fails to send" in {
+      "must submit client registration, delete any previously saved journey, audit event and redirect to next page with valid data even when client email fails to send" in {
 
         val mockSessionRepository = mock[SessionRepository]
         val mockEmailService = mock[EmailService]
@@ -222,6 +227,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             .overrides(
               bind[SessionRepository].toInstance(mockSessionRepository),
               bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+              bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
               bind[DeclarationView].toInstance(mockDeclarationView),
               bind[EmailService].toInstance(mockEmailService),
               bind[AuditService].toInstance(mockAuditService)
@@ -234,6 +240,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
         when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any())) thenReturn Right(intermediaryVatCustomerInfo).toFuture
         when(mockRegistrationConnector.submitPendingRegistration(any())(any())) thenReturn Right(savedPendingRegWithUserAnswers).toFuture
         when(mockEmailService.sendClientActivationEmail(any, any, any, any, any, any)(any, any)) thenReturn Future.successful(EMAIL_NOT_SENT)
+        when(mockSaveAndComeBackService.deleteSavedUserAnswers(any)(any, any)) thenReturn Future.successful(())
 
         running(application) {
           val request =
@@ -267,6 +274,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
             any,
             any
           )(any, any)
+          verify(mockSaveAndComeBackService, times(1)).deleteSavedUserAnswers(any)(any, any)
         }
       }
 
