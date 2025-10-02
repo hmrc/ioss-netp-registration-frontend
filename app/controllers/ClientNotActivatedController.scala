@@ -63,10 +63,10 @@ class ClientNotActivatedController @Inject()(
             val registrationSummaryList = buildRegistrationSummaryList(waypoints, pendingRegistration.userAnswers)
             val clientDetailsSummaryList = buildClientDetailsSummaryList(waypoints, pendingRegistration.userAnswers)
 
-            val clientCodeEntryUrl = s"${frontendAppConfig.clientCodeEntryUrl}/${pendingRegistration.uniqueUrlCode}"
+            val clientCodeEntryUrl = s"${frontendAppConfig.clientCodeEntryHost}${frontendAppConfig.clientCodeEntryUrl}/${pendingRegistration.uniqueUrlCode}"
             val activationExpiryDate = pendingRegistration.activationExpiryDate
             val clientCompanyName = getClientCompanyName(pendingRegistration)
-            val redirectToUpdateClientEmailAddressPage = s"${frontendAppConfig.redirectToUpdateClientEmailAddressPage}/${pendingRegistration.journeyId}"
+            val redirectToUpdateClientEmailAddressPage = s"${frontendAppConfig.clientCodeEntryHost}${frontendAppConfig.redirectToUpdateClientEmailAddressPage}/${pendingRegistration.journeyId}"
 
             if (isBasedInUk && hasVatNumber) {
               pendingRegistration.userAnswers.vatInfo match {
