@@ -26,7 +26,7 @@ import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.mockito.MockitoSugar
-import pages.{ContinueRegistrationSelectionPage, JourneyRecoveryPage}
+import pages.ContinueRegistrationSelectionPage
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
@@ -135,6 +135,7 @@ class ContinueRegistrationSelectionControllerSpec extends SpecBase with MockitoS
         when(mockSaveAndComeBackService.getSavedContinueRegistrationJourneys(any(), any())(any())) thenReturn noRegistrations.toFuture
 
         val application = applicationBuilder(userAnswers = Some(answers))
+          .configure("urls.yourAccountUrl" -> "/dashboardUrl")
           .overrides(bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService))
           .build()
 
@@ -145,7 +146,7 @@ class ContinueRegistrationSelectionControllerSpec extends SpecBase with MockitoS
           val result = route(application, request).value
 
           status(result) `mustBe` SEE_OTHER
-          redirectLocation(result).value `mustBe` JourneyRecoveryPage.route(waypoints).url // TODO - VEI-515 -> should redirect to dashboard
+          redirectLocation(result).value `mustBe` "/dashboardUrl"
           verify(mockSaveAndComeBackService, times(1)).getSavedContinueRegistrationJourneys(any(), any())(any())
         }
       }

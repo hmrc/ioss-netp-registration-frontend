@@ -20,7 +20,7 @@ import base.SpecBase
 import connectors.{RegistrationConnector, SaveForLaterConnector}
 import models.domain.VatCustomerInfo
 import models.requests.{DataRequest, OptionalDataRequest}
-import models.responses.NotFound
+import models.responses.{NotFound, VatCustomerNotFound}
 import models.saveAndComeBack.{MultipleRegistrations, NoRegistrations, SingleRegistration, TaxReferenceInformation}
 import models.{ClientBusinessName, SavedUserAnswers}
 import org.mockito.Mockito.when
@@ -28,8 +28,6 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, ContinueRegistrationSelectionPage, EmptyWaypoints}
 import play.api.libs.json.JsObject
-import services.core.CoreRegistrationValidationService
-import testutils.RegistrationData.stubClockAtArbitraryDate
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.FutureSyntax.FutureOps
 
@@ -44,13 +42,10 @@ class SaveAndComeBackServiceSpec extends AnyFreeSpec with MockitoSugar with Spec
   private implicit val hc: HeaderCarrier = new HeaderCarrier()
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
-  private val mockCoreRegistrationValidationService: CoreRegistrationValidationService = mock[CoreRegistrationValidationService]
   private val mockSaveForLaterConnector: SaveForLaterConnector = mock[SaveForLaterConnector]
 
   val testSaveAndComeBackService: SaveAndComeBackService = SaveAndComeBackService(
-    clock = stubClockAtArbitraryDate,
     registrationConnector = mockRegistrationConnector,
-    coreRegistrationValidationService = mockCoreRegistrationValidationService,
     saveForLaterConnector = mockSaveForLaterConnector)(ec)
 
   "SaveAndComeBackService" - {
@@ -148,23 +143,29 @@ class SaveAndComeBackServiceSpec extends AnyFreeSpec with MockitoSugar with Spec
     }
 
     ".getVatTaxInfo" - {
-      "should return Right(VatCustomerInfo) when the connector returns the data" in {
+      "should return VatCustomerInfo when the connector returns the data" in {
         val vatCustomerInfo = arbitraryVatCustomerInfo.arbitrary.sample.value
 
         when(mockRegistrationConnector.getVatCustomerInfo("VatNum1")).thenReturn(Right(vatCustomerInfo).toFuture)
 
         val result = testSaveAndComeBackService.getVatTaxInfo("VatNum1", EmptyWaypoints).futureValue
 
-        val expectedResult = Right(vatCustomerInfo)
+        val expectedResult = vatCustomerInfo
         result mustBe expectedResult
       }
-      "should return Left(???) when the connector returns an error" in {
-        //TODO- VEI-506
-        pending
-      }
-      "should return Left(???) when the connector returns a different error" in {
-        //TODO- VEI-506
-        pending
+      "should return an exception when the connector returns an error" in {
+
+        when(mockRegistrationConnector.getVatCustomerInfo("VatNum1")).thenReturn(Left(VatCustomerNotFound).toFuture)
+
+        val ex = intercept[Exception] {
+          testSaveAndComeBackService.getVatTaxInfo("VatNum1", EmptyWaypoints).futureValue
+        }
+
+        val expectedMessage = s"The future returned an exception of type: java.lang.Exception, with message: " +
+          s"Received an unexpected error when trying to retrieve Tax information for the Vat Number: VatNum1," +
+          s"\nWith Errors: VatCustomerNotFound."
+
+        ex.getMessage mustEqual expectedMessage
       }
     }
 
@@ -224,12 +225,6 @@ class SaveAndComeBackServiceSpec extends AnyFreeSpec with MockitoSugar with Spec
           s"\nWith Errors: NotFound."
 
         ex.getMessage mustEqual expectedMessage
-      }
-    }
-
-    ".getAndValidateVatTaxInfo" - {
-      "Implement testing as part of VEI-506" in {
-        pending
       }
     }
 
@@ -330,7 +325,7 @@ class SaveAndComeBackServiceSpec extends AnyFreeSpec with MockitoSugar with Spec
         }
       }
 
-      "Should return an exception when there is an error with getting the vat information" - {
+      "Should return an exception when there is an error with getting the vat information" in {
 
         val vatSavedUserAnswers = SavedUserAnswers(
           journeyId = journeyId,
@@ -347,7 +342,8 @@ class SaveAndComeBackServiceSpec extends AnyFreeSpec with MockitoSugar with Spec
         }
 
         val expectedMessage = s"The future returned an exception of type: java.lang.Exception, with message: " +
-          s"Error returned from registration connector. Page to be implemented in VEI-506."
+          s"Received an unexpected error when trying to retrieve Tax information for the Vat Number: $vatNumber," +
+          s"\nWith Errors: NotFound."
 
         ex.getMessage mustEqual expectedMessage
       }
@@ -384,10 +380,28 @@ class SaveAndComeBackServiceSpec extends AnyFreeSpec with MockitoSugar with Spec
         ex.getMessage mustEqual expectedMessage
       }
     }
-    
-    "deleteSavedUserAnswers" - {
-      "Need to test" in {
-        pending
+
+    ".deleteSavedUserAnswers" - {
+      "should be successful when the connector returns a Right(boolean)" in {
+        when(mockSaveForLaterConnector.delete(journeyId)).thenReturn(Right(true).toFuture)
+
+        val result: Unit = testSaveAndComeBackService.deleteSavedUserAnswers(journeyId).futureValue
+
+        result mustBe a[Unit]
+      }
+      "should throw an error when the connector returns a Left(error)" in {
+        when(mockSaveForLaterConnector.delete(journeyId)).thenReturn(Left(NotFound).toFuture)
+
+        val ex = intercept[Exception] {
+          testSaveAndComeBackService.deleteSavedUserAnswers(journeyId).futureValue
+        }
+
+        val expectedMessage = s"The future returned an exception of type: java.lang.Exception, with message: " +
+          s"Received an unexpected error when trying to retrieve Saved User Answers for the journey ID: $journeyId," +
+          "\nWith Errors: NotFound."
+
+        ex.getMessage mustEqual expectedMessage
+
       }
     }
   }

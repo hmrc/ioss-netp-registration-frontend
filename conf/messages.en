@@ -529,15 +529,15 @@ savedProgress.title = We have saved your progress
 savedProgress.subtitle =We will keep the registration details until {0}
 savedProgress.nextSteps = What happens next
 savedProgress.listStart = You can:
-savedProgress.continueRegistration = continue this registration
-savedProgress.signOut = sign out and come back later
+savedProgress.continueRegistration = Continue this registration
+savedProgress.returnToDashboard = Return to your account
 saveProgress.button = Save and come back later
 
 continueRegistration.title = Do you want to continue the registration for {0} ({1}: {2})
 continueRegistration.heading = Do you want to continue the registration for {0} ({1}: {2})
 continueRegistration.error.required = Select yes if want to continue this registration
 continueRegistration.continue = Yes
-continueRegistration.delete = No, delete my answers and start again
+continueRegistration.delete = No, delete this registration
 
 continueRegistrationSelection.title = Which registration would you like to continue?
 continueRegistrationSelection.heading = Which registration would you like to continue?

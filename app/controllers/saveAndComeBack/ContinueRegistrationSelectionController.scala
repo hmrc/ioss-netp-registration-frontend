@@ -16,12 +16,13 @@
 
 package controllers.saveAndComeBack
 
+import config.FrontendAppConfig
 import controllers.actions.AuthenticatedControllerComponents
 import forms.saveAndComeBack.ContinueRegistrationSelectionFormProvider
 import logging.Logging
 import models.UserAnswers
 import models.saveAndComeBack.{ContinueRegistrationList, MultipleRegistrations, NoRegistrations, SingleRegistration}
-import pages.{ContinueRegistrationSelectionPage, JourneyRecoveryPage, Waypoints}
+import pages.{ContinueRegistrationSelectionPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -39,6 +40,7 @@ class ContinueRegistrationSelectionController @Inject()(
                                                          cc: AuthenticatedControllerComponents,
                                                          formProvider: ContinueRegistrationSelectionFormProvider,
                                                          saveAndComeBackService: SaveAndComeBackService,
+                                                         frontendAppConfig: FrontendAppConfig,
                                                          view: ContinueRegistrationSelectionView
                                                        )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
 
@@ -50,6 +52,8 @@ class ContinueRegistrationSelectionController @Inject()(
     implicit request =>
 
       val userAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
+
+      val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
 
       saveAndComeBackService.getSavedContinueRegistrationJourneys(userAnswers, request.intermediaryNumber.get).flatMap {
         case SingleRegistration(singleJourneyId) =>
@@ -71,9 +75,7 @@ class ContinueRegistrationSelectionController @Inject()(
           }
 
         case NoRegistrations =>
-          logger.error("TODO - VEI-515 -> should redirect to dashboard")
-          Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture // TODO - VEI-515 -> should redirect to dashboard
-
+          Redirect(dashboardUrl).toFuture
       }
   }
 
