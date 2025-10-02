@@ -20,25 +20,18 @@ import connectors.{RegistrationConnector, SaveForLaterConnector}
 import logging.Logging
 import models.domain.VatCustomerInfo
 import models.requests.{DataRequest, OptionalDataRequest}
-import models.responses.VatCustomerNotFound
 import models.saveAndComeBack.*
 import models.{SavedUserAnswers, UserAnswers}
-import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, ContinueRegistrationSelectionPage, QuestionPage, UkVatNumberNotFoundPage, VatApiDownPage, Waypoints}
-import play.api.mvc.Call
-import services.core.CoreRegistrationValidationService
-import uk.gov.hmrc.domain.Vrn
+import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, ContinueRegistrationSelectionPage, QuestionPage, Waypoints}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.FutureSyntax.FutureOps
 
-import java.time.{Clock, LocalDate}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 
 class SaveAndComeBackService @Inject()(
-                                        clock: Clock,
                                         registrationConnector: RegistrationConnector,
-                                        coreRegistrationValidationService: CoreRegistrationValidationService,
                                         saveForLaterConnector: SaveForLaterConnector
                                       )(implicit ec: ExecutionContext) extends Logging {
 
@@ -83,13 +76,13 @@ class SaveAndComeBackService @Inject()(
     }
   }
 
-  def getVatTaxInfo(ukVatNumber: String, waypoints: Waypoints)(implicit request: DataRequest[_], hc: HeaderCarrier): Future[Either[Call, VatCustomerInfo]] = {
+  def getVatTaxInfo(ukVatNumber: String, waypoints: Waypoints)(implicit request: DataRequest[_], hc: HeaderCarrier): Future[VatCustomerInfo] = {
     registrationConnector.getVatCustomerInfo(ukVatNumber).map {
-      case Right(value) =>
-        Right(value)
+      case Right(vatCustomerInfo) =>
+        vatCustomerInfo
       case Left(error) =>
         val message: String = s"Received an unexpected error when trying to retrieve Tax information" +
-          s"for the Vat Number: $ukVatNumber,\nWith Errors: $error"
+          s" for the Vat Number: $ukVatNumber,\nWith Errors: $error"
         val exception: Exception = new Exception(message)
         logger.error(exception.getMessage, exception)
         throw exception
@@ -127,7 +120,7 @@ class SaveAndComeBackService @Inject()(
         }
     }
   }
-  
+
 
   def createTaxReferenceInfoForSavedUserAnswers(
                                                  seqItems: Seq[SavedUserAnswers]
@@ -146,7 +139,7 @@ class SaveAndComeBackService @Inject()(
               val updatedTempUserAnswers = tempUserAnswers.copy(vatInfo = Some(vatInfo))
               Future.successful(determineTaxReference(updatedTempUserAnswers))
             case Left(err) =>
-              val message: String = s"Received an unexpected error when trying to retrieve Tax information" +
+              val message: String = s"Received an unexpected error when trying to retrieve Tax information " +
                 s"for the Vat Number: $vatNum,\nWith Errors: $err"
               val exception: Exception = new Exception(message)
               logger.error(exception.getMessage, exception)
@@ -179,7 +172,7 @@ class SaveAndComeBackService @Inject()(
         throw exception
     }
   }
-  
+
   def deleteSavedUserAnswers(journeyId: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Unit] = {
     saveForLaterConnector.delete(journeyId).map {
       _.fold(

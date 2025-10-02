@@ -66,10 +66,8 @@ class ContinueRegistrationController @Inject()(
 
         case Some(clientVatNumber) =>
 
-          saveAndComeBackService.getVatTaxInfo(clientVatNumber, waypoints).map {
-            case Left(call) => Redirect(call)
-            case Right(vatInfo) =>
-              val updatedAnswers = request.userAnswers.copy(vatInfo = Some(vatInfo))
+          saveAndComeBackService.getVatTaxInfo(clientVatNumber, waypoints).map { vatCustomerInfo =>
+              val updatedAnswers = request.userAnswers.copy(vatInfo = Some(vatCustomerInfo))
               cc.sessionRepository.set(updatedAnswers)
 
               val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(updatedAnswers)

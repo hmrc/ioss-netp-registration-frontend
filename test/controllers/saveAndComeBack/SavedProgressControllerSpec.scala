@@ -84,7 +84,7 @@ class SavedProgressControllerSpec extends SpecBase with MockitoSugar with Before
         val view = application.injector.instanceOf[SavedProgressView]
 
         status(result) `mustBe` OK
-        contentAsString(result) `mustBe` view(answersExpiryDate, continueUrl.get(OnlyRelative).url, config.loginUrl)(request, messages(application)).toString
+        contentAsString(result) `mustBe` view(answersExpiryDate, continueUrl.get(OnlyRelative).url, config.intermediaryYourAccountUrl)(request, messages(application)).toString
         verify(mockSaveForLaterConnector, times(1)).submit(any())(any())
         verify(mockSessionRepository, times(1)).set(any())
       }

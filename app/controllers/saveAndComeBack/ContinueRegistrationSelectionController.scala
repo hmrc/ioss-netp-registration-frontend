@@ -16,12 +16,13 @@
 
 package controllers.saveAndComeBack
 
+import config.FrontendAppConfig
 import controllers.actions.AuthenticatedControllerComponents
 import forms.saveAndComeBack.ContinueRegistrationSelectionFormProvider
 import logging.Logging
 import models.UserAnswers
 import models.saveAndComeBack.{ContinueRegistrationList, MultipleRegistrations, NoRegistrations, SingleRegistration}
-import pages.{ContinueRegistrationSelectionPage, JourneyRecoveryPage, Waypoints}
+import pages.{ContinueRegistrationSelectionPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -29,7 +30,6 @@ import services.SaveAndComeBackService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.saveAndComeBack.ContinueRegistrationSelectionView
-import config.FrontendAppConfig
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -50,10 +50,9 @@ class ContinueRegistrationSelectionController @Inject()(
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetOptionalData.async {
     implicit request =>
-      
+
       val userAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
-      
-      println(userAnswers.journeyId)
+
       val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
 
       saveAndComeBackService.getSavedContinueRegistrationJourneys(userAnswers, request.intermediaryNumber.get).flatMap {
