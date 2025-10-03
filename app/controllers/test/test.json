@@ -1,0 +1,71 @@
+{
+  "approvedInformation": {
+    "customerDetails": {
+      "nameIsReadOnly": false,
+      "organisationName": "FICKEY FOOSE",
+      "dataOrigin": "0001",
+      "mandationStatus": "1",
+      "registrationReason": "0001",
+      "effectiveRegistrationDate": "2000-08-13",
+      "businessStartDate": "2000-08-13",
+      "customerMigratedToETMPDate": "2021-06-30",
+      "welshIndicator": false,
+      "partyType": "50",
+      "optionToTax": false,
+      "isPartialMigration": false,
+      "isInsolvent": false,
+      "continueToTrade": false,
+      "overseasIndicator": false,
+      "singleMarketIndicator": true
+    },
+    "PPOB": {
+      "address": {
+        "line1": "Address Line1",
+        "line2": "Address Line2",
+        "line3": "Address Line3",
+        "postCode": "AL1 2CD",
+        "countryCode": "GB"
+      },
+      "contactDetails": {
+        "primaryPhoneNumber": "012345678901",
+        "mobileNumber": "012345678901",
+        "faxNumber": "012345678901",
+        "emailAddress": "anEmailaddress@aCompany.com",
+        "emailVerified": false
+      },
+      "websiteAddress": "a.webaddress.com",
+      "commsPreference": "P01"
+    },
+    "businessActivities": {
+      "primaryMainCode": "08920"
+    },
+    "returnPeriod": {
+      "stdReturnPeriod": "MB"
+    }
+  },
+  "inFlightInformation": {
+    "changeIndicators": {
+      "organisationDetails": false,
+      "PPOBDetails": false,
+      "correspondenceContactDetails": false,
+      "bankDetails": false,
+      "returnPeriod": false,
+      "flatRateScheme": false,
+      "businessActivities": false,
+      "deregister": false,
+      "effectiveDateOfRegistration": true,
+      "mandationStatus": false,
+      "annualAccounting": false,
+      "commsPreference": false
+    },
+    "inFlightChanges": {
+      "effectiveDateOfRegistration": {
+        "formInformation": {
+          "formBundle": "092000008162",
+          "dateReceived": "2022-11-16"
+        },
+        "requestedNewEDR": "2015-01-01"
+      }
+    }
+  }
+}
