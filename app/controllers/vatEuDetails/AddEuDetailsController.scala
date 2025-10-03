@@ -50,7 +50,7 @@ class AddEuDetailsController @Inject()(
   private val euCountriesSize: Int = Country.euCountries.size
   private val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       getDerivedItems(waypoints, DeriveNumberOfEuRegistrations) { numberOfEuRegistrations =>
@@ -69,7 +69,7 @@ class AddEuDetailsController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints, incompletePromptShown: Boolean): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints, incompletePromptShown: Boolean): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       withCompleteDataAsync[EuDetails](

@@ -47,7 +47,7 @@ class SavedProgressController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints, continueUrl: RedirectUrl): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onPageLoad(waypoints: Waypoints, continueUrl: RedirectUrl): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       val answersExpiry: String = request.userAnswers.lastUpdated.plus(frontendAppConfig.saveForLaterTtl, ChronoUnit.DAYS)

@@ -17,6 +17,7 @@
 package connectors
 
 import logging.Logging
+import models.etmp.amend.AmendRegistrationResponse
 import models.etmp.display.RegistrationWrapper
 import models.iossRegistration.IossEtmpDisplayRegistration
 import models.ossRegistration.OssRegistration
@@ -31,6 +32,7 @@ object RegistrationHttpParser extends Logging {
   type RegistrationResultResponse = Either[ErrorResponse, EtmpEnrolmentResponse]
   type IossEtmpDisplayRegistrationResultResponse = Either[ErrorResponse, IossEtmpDisplayRegistration]
   type OssRegistrationResponse = Either[ErrorResponse, OssRegistration]
+  type AmendRegistrationResultResponse = Either[ErrorResponse, AmendRegistrationResponse]
   type EtmpDisplayRegistrationResponse = Either[ErrorResponse, RegistrationWrapper]
 
   implicit object RegistrationResponseReads extends HttpReads[RegistrationResultResponse] {
@@ -88,6 +90,23 @@ object RegistrationHttpParser extends Logging {
         case status =>
           logger.error(s"Unknown error happened on display registration $status with body ${response.body}")
           Left(InternalServerError)
+      }
+  }
+
+  implicit object AmendAmendRegistrationResultResponseReads extends HttpReads[AmendRegistrationResultResponse] {
+
+    override def read(method: String, url: String, response: HttpResponse): AmendRegistrationResultResponse =
+      response.status match {
+        case OK => response.json.validate[AmendRegistrationResponse] match {
+          case JsSuccess(amendResponse, _) => Right(amendResponse)
+          case JsError(errors) =>
+            logger.error(s"Failed trying to parse amend registration response JSON with body ${response.body}" +
+              s" and status ${response.status} with errors: $errors")
+            Left(InvalidJson)
+        }
+        case status =>
+          logger.error(s"Unknown error occurred on amend registration $status with body ${response.body}")
+          Left(UnexpectedResponseStatus(response.status, s"Unexpected amend registration response, status $status returned"))
       }
   }
 

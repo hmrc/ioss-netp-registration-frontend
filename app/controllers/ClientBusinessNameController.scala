@@ -39,7 +39,7 @@ class ClientBusinessNameController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
   
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
       
       val isUKBased = request.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
@@ -71,7 +71,7 @@ class ClientBusinessNameController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       val isUKBased = request.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)

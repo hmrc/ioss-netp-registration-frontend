@@ -38,7 +38,7 @@ class ClientHasVatNumberController @Inject()(
 
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData() {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(ClientHasVatNumberPage) match {
@@ -49,7 +49,7 @@ class ClientHasVatNumberController @Inject()(
       Ok(view(preparedForm, waypoints))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       form.bindFromRequest().fold(

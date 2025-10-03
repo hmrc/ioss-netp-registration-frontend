@@ -44,7 +44,7 @@ class EuTaxReferenceController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
     
           getCountryWithIndex(waypoints, countryIndex) { country =>
@@ -60,7 +60,7 @@ class EuTaxReferenceController @Inject()(
           }
   }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)

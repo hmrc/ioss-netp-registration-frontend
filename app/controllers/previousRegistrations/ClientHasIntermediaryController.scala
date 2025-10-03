@@ -42,7 +42,7 @@ class ClientHasIntermediaryController @Inject()(
 
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData() {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(ClientHasIntermediaryPage(countryIndex, schemeIndex)) match {
@@ -53,7 +53,7 @@ class ClientHasIntermediaryController @Inject()(
       Ok(view(preparedForm, waypoints, countryIndex, schemeIndex))
   }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       form.bindFromRequest().fold(

@@ -47,7 +47,7 @@ class ClientsNinoNumberController @Inject()(
   val form: Form[String] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData() {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(ClientsNinoNumberPage) match {
@@ -58,7 +58,7 @@ class ClientsNinoNumberController @Inject()(
       Ok(view(preparedForm, waypoints))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
