@@ -218,4 +218,5 @@ class RegistrationService @Inject()(
       emailAddress = schemeDetails.businessEmailId
     )
   }
+
 }
