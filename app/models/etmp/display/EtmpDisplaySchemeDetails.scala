@@ -17,7 +17,6 @@
 package models.etmp.display
 
 import models.etmp.{EtmpPreviousEuRegistrationDetails, EtmpWebsite}
-import play.api.libs.functional.syntax.*
 import play.api.libs.json.*
 import play.api.libs.json.{Json, OFormat}
 

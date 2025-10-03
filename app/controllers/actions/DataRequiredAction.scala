@@ -19,7 +19,9 @@ package controllers.actions
 import connectors.RegistrationConnector
 import controllers.routes
 import logging.Logging
+import models.etmp.display.RegistrationWrapper
 import models.requests.{DataRequest, OptionalDataRequest}
+import models.responses.ErrorResponse
 import play.api.mvc.Results.Redirect
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
@@ -43,12 +45,12 @@ class DataRequiredActionImpl @Inject()(registrationConnector: RegistrationConnec
         Future.successful(Left(Redirect(routes.JourneyRecoveryController.onPageLoad())))
 
       case Some(data) =>
-        val eventualMaybeRegistrationWrapper = {
+        val eventualMaybeRegistrationWrapper: Future[Option[RegistrationWrapper]] = {
           if (isInAmendMode) {
              implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request.request, request.session)
-             registrationConnector.getIossRegistration(intermediaryNumber)(hc).flatMap {
-               case Left(error) => Future.failed(new RuntimeException(s"Failed to retrieve registration: ${error.body}"))
-               case Right(registrationWrapper) => Future.successful(Some(registrationWrapper))
+             registrationConnector.displayRegistration(intermediaryNumber)(hc).flatMap {
+               case Left(error: ErrorResponse) => Future.failed(new RuntimeException(s"Failed to retrieve registration whilst in amend mode: ${error.body}"))
+               case Right(registrationWrapper: RegistrationWrapper) => Future.successful(Some(registrationWrapper))
              }
           } else {
             Future.successful(None)
@@ -57,11 +59,11 @@ class DataRequiredActionImpl @Inject()(registrationConnector: RegistrationConnec
 
         eventualMaybeRegistrationWrapper.map { maybeWrapper =>
           Right(DataRequest(
-            request.request,
-            request.userId,
-            data,
-            intermediaryNumber,
-            maybeWrapper
+            request = request.request,
+            userId = request.userId,
+            userAnswers = data,
+            intermediaryNumber = intermediaryNumber,
+            registrationWrapper = maybeWrapper
           ))
         }
     }

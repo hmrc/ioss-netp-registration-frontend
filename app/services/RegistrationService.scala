@@ -21,7 +21,9 @@ import connectors.RegistrationHttpParser.{AmendRegistrationResultResponse, Regis
 import logging.Logging
 import models.domain.PreviousSchemeDetails
 import models.{BusinessContactDetails, Country, InternationalAddress, TradingName, UserAnswers}
+import models.etmp.amend.EtmpAmendRegistrationRequest._
 import models.etmp.EtmpRegistrationRequest.buildEtmpRegistrationRequest
+import models.etmp.display.EtmpDisplayRegistration
 import models.etmp.{EtmpOtherAddress, EtmpPreviousEuRegistrationDetails, EtmpTradingName}
 import models.etmp.display.{EtmpDisplayEuRegistrationDetails, EtmpDisplaySchemeDetails, RegistrationWrapper}
 import models.previousRegistrations.PreviousRegistrationDetails
@@ -53,9 +55,22 @@ class RegistrationService @Inject()(
     registrationConnector.createRegistration(buildEtmpRegistrationRequest(answers, commencementDate))
   }
 
-  def amendRegistration(amendRegistrationRequest: EtmpAmendRegistrationRequest) (implicit hc: HeaderCarrier): Future[AmendRegistrationResultResponse] = {
-    registrationConnector.amendRegistration(amendRegistrationRequest)
+  def amendRegistration(answers: UserAnswers,
+                        registration: EtmpDisplayRegistration,
+                        commencementDate: LocalDate,
+                        intermediaryNumber: String,
+                        rejoin: Boolean = false) (implicit hc: HeaderCarrier): Future[AmendRegistrationResultResponse] = {
+    registrationConnector.amendRegistration(
+      buildEtmpAmendRegistrationRequest(
+        answers = answers,
+        registration = registration,
+        commencementDate = commencementDate,
+        intermediaryNumber = intermediaryNumber,
+        rejoin = rejoin
+      )
+    )
   }
+  
   def toUserAnswers(userId: String, registrationWrapper: RegistrationWrapper): Future[UserAnswers] = {
 
     val etmpTradingNames: Seq[EtmpTradingName] = registrationWrapper.etmpDisplayRegistration.tradingNames

@@ -17,7 +17,6 @@
 package controllers.saveAndComeBack
 
 import base.SpecBase
-import connectors.SaveForLaterConnector
 import forms.saveAndComeBack.ContinueRegistrationFormProvider
 import models.saveAndComeBack.ContinueRegistration.{Continue, Delete}
 import models.UserAnswers
@@ -25,7 +24,7 @@ import models.domain.VatCustomerInfo
 import models.saveAndComeBack.TaxReferenceInformation
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
-import org.mockito.Mockito.{doNothing, times, verify, when}
+import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures.*
 import org.scalatest.freespec.AnyFreeSpec

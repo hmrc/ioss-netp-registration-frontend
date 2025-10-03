@@ -18,6 +18,7 @@ package generators
 
 import models.domain.PreviousSchemeNumbers
 import models.etmp.*
+import models.etmp.amend.EtmpAmendRegistrationChangeLog
 import models.etmp.display.{EtmpDisplayCustomerIdentification, EtmpDisplayEuRegistrationDetails, EtmpDisplayRegistration, EtmpDisplaySchemeDetails, RegistrationWrapper}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
@@ -206,6 +207,28 @@ trait EtmpModelGenerators {
     }
   }
 
+  implicit lazy val arbitraryEtmpAmendRegistrationChangeLog: Arbitrary[EtmpAmendRegistrationChangeLog] = {
+    Arbitrary {
+      for {
+        tradingNames <- arbitrary[Boolean]
+        fixedEstablishments <- arbitrary[Boolean]
+        contactDetails <- arbitrary[Boolean]
+        bankDetails <- arbitrary[Boolean]
+        reRegistration <- arbitrary[Boolean]
+        otherAddress <- arbitrary[Boolean]
+      } yield {
+        EtmpAmendRegistrationChangeLog(
+          tradingNames = tradingNames,
+          fixedEstablishments = fixedEstablishments,
+          contactDetails = contactDetails,
+          bankDetails = bankDetails,
+          reRegistration = reRegistration,
+          otherAddress = otherAddress
+        )
+      }
+    }
+  }
+
   implicit lazy val arbitraryEtmpDisplaySchemeDetails: Arbitrary[EtmpDisplaySchemeDetails] = {
     Arbitrary {
       for {
@@ -248,6 +271,60 @@ trait EtmpModelGenerators {
           effectiveDate = effectiveDate,
           decisionDate = decisionDate,
           quarantine = quarantine
+        )
+      }
+    }
+  }
+
+  implicit lazy val arbitraryEtmpEuRegistrationDetails: Arbitrary[EtmpEuRegistrationDetails] = {
+    Arbitrary {
+      for {
+        countryOfRegistration <- arbitraryCountry.arbitrary.map(_.code)
+        traderId <- Gen.oneOf(arbitraryVatNumberTraderId.arbitrary, arbitraryTaxRefTraderID.arbitrary)
+        tradingName <- Gen.alphaStr
+        fixedEstablishmentAddressLine1 <- Gen.alphaStr
+        fixedEstablishmentAddressLine2 <- Gen.option(Gen.alphaStr)
+        townOrCity <- Gen.alphaStr
+        regionOrState <- Gen.option(Gen.alphaStr)
+        postcode <- Gen.option(Gen.alphaStr)
+      } yield {
+        EtmpEuRegistrationDetails(
+          countryOfRegistration = countryOfRegistration,
+          traderId = traderId,
+          tradingName = tradingName,
+          fixedEstablishmentAddressLine1 = fixedEstablishmentAddressLine1,
+          fixedEstablishmentAddressLine2 = fixedEstablishmentAddressLine2,
+          townOrCity = townOrCity,
+          regionOrState = regionOrState,
+          postcode = postcode
+        )
+      }
+    }
+  }
+
+  implicit lazy val arbitraryEtmpSchemeDetails: Arbitrary[EtmpSchemeDetails] = {
+    Arbitrary {
+      for {
+        commencementDate <- arbitrary[LocalDate].map(_.toString)
+        euRegistrationDetails <- Gen.listOfN(2, arbitraryEtmpEuRegistrationDetails.arbitrary)
+        previousEURegistrationDetails <- Gen.listOfN(2, arbitraryEtmpPreviousEuRegistrationDetails.arbitrary)
+        websites <- Gen.option(Gen.listOfN(2, arbitraryEtmpWebsite.arbitrary))
+        contactName <- Gen.alphaStr
+        businessTelephoneNumber <- Gen.numStr
+        businessEmailId <- Gen.alphaStr
+        nonCompliantReturns <- Gen.option(Gen.oneOf("1", "2"))
+        nonCompliantPayments <- Gen.option(Gen.oneOf("1", "2"))
+      } yield {
+        EtmpSchemeDetails(
+          commencementDate = commencementDate,
+          euRegistrationDetails = euRegistrationDetails,
+          previousEURegistrationDetails = previousEURegistrationDetails,
+          websites = websites,
+          contactName = contactName,
+          businessTelephoneNumber = businessTelephoneNumber,
+          businessEmailId = businessEmailId,
+          nonCompliantReturns = nonCompliantReturns,
+          nonCompliantPayments = nonCompliantPayments
         )
       }
     }

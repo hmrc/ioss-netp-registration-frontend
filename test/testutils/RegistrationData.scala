@@ -78,8 +78,7 @@ object RegistrationData extends SpecBase {
   )
 
   val etmpAmendCustomerIdentification: EtmpAmendCustomerIdentification = EtmpAmendCustomerIdentification(
-    iossNumber = "IN900123456",
-    foreignTaxReference = None
+    iossNumber = "IN900123456"
   )
 
   val amendRegistrationResponse: AmendRegistrationResponse = AmendRegistrationResponse(
@@ -107,7 +106,7 @@ object RegistrationData extends SpecBase {
     intermediaryDetails = Some(arbitrary[EtmpIntermediaryDetails].sample.value),
     otherAddress = Some(arbitrary[EtmpOtherAddress].sample.value),
     schemeDetails = etmpSchemeDetails,
-    bankDetails = etmpBankDetails
+    bankDetails = None
   )
   
 }

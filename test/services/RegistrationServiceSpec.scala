@@ -36,7 +36,7 @@ import pages.tradingNames.HasTradingNamePage
 import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage}
 import play.api.test.Helpers.running
-import testutils.{RegistrationData, WireMockHelper}
+import testutils.RegistrationData
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
@@ -44,6 +44,8 @@ import testutils.WireMockHelper
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CheckUkBased.isUkBasedIntermediary
 import utils.FutureSyntax.FutureOps
+
+import java.time.LocalDate
 
 class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAndAfterEach {
 
@@ -83,7 +85,8 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
     "must return a successful AmendRegistrationResponse when connector succeeds" in {
 
       val amendResponse = RegistrationData.amendRegistrationResponse
-      val amendRequest = RegistrationData.etmpAmendRegistrationRequest
+      val registration = arbitraryEtmpDisplayRegistration.arbitrary.sample.value
+      val commencementDate = LocalDate.now(stubClockAtArbitraryDate)
 
       when(mockRegistrationConnector.amendRegistration(any())(any())) thenReturn Right(amendResponse).toFuture
 
@@ -92,21 +95,34 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
 
       running(app) {
 
-        registrationService.amendRegistration(amendRequest).futureValue mustBe Right(amendResponse)
+        registrationService.amendRegistration(
+          answers = basicUserAnswersWithVatInfo,
+          registration = registration,
+          commencementDate = commencementDate,
+          intermediaryNumber = intermediaryNumber,
+          rejoin = false
+        ).futureValue mustBe Right(amendResponse)
+
         verify(mockRegistrationConnector, times(1)).amendRegistration(any())(any())
       }
     }
 
     "must return error when connector fails" in {
-      val amendRequest = RegistrationData.etmpAmendRegistrationRequest
+      val registration = arbitraryEtmpDisplayRegistration.arbitrary.sample.value
+      val commencementDate = LocalDate.now(stubClockAtArbitraryDate)
       val error = UnexpectedResponseStatus(500, "Server error")
 
-      when(mockRegistrationConnector.amendRegistration(any())(any())) thenReturn Left (error).toFuture
+      when(mockRegistrationConnector.amendRegistration(any())(any())) thenReturn Left(error).toFuture
 
-      val app = applicationBuilder().build()
+      val app = applicationBuilder(Some(basicUserAnswersWithVatInfo)).build()
 
       running(app) {
-        registrationService.amendRegistration(amendRequest).futureValue mustBe Left(error)
+        registrationService.amendRegistration(
+          answers = basicUserAnswersWithVatInfo,
+          registration = registration,
+          commencementDate = commencementDate,
+          intermediaryNumber = intermediaryNumber
+        ).futureValue mustBe Left(error)
       }
     }
   }

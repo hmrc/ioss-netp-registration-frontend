@@ -24,13 +24,11 @@ class EtmpAmendCustomerIdentificationSpec extends SpecBase {
 
     "must serialize to JSON correctly when foreignTaxReference is present" in {
       val etmpAmendCustomerIdentification = EtmpAmendCustomerIdentification(
-        iossNumber = "IN9001234567",
-        foreignTaxReference = Some("TAX123456")
+        iossNumber = "IN9001234567"
       )
 
       val expectedJson = Json.obj(
-        "iossNumber" -> "IN9001234567",
-        "foreignTaxReference" -> "TAX123456"
+        "iossNumber" -> "IN9001234567"
       )
 
       Json.toJson(etmpAmendCustomerIdentification) mustBe expectedJson
@@ -38,9 +36,7 @@ class EtmpAmendCustomerIdentificationSpec extends SpecBase {
 
     "must serialize to JSON correctly when foreignTaxReference is absent" in {
       val etmpAmendCustomerIdentification = EtmpAmendCustomerIdentification(
-        iossNumber = "IN9001234567",
-        foreignTaxReference = None
-      )
+        iossNumber = "IN9001234567")
 
       val expectedJson = Json.obj(
         "iossNumber" -> "IN9001234567"
@@ -51,26 +47,11 @@ class EtmpAmendCustomerIdentificationSpec extends SpecBase {
 
     "must deserialize from JSON correctly with foreignTaxReference" in {
       val json = Json.obj(
-        "iossNumber" -> "IN9001234567",
-        "foreignTaxReference" -> "TAX123456"
-      )
-
-      val expectedResult = EtmpAmendCustomerIdentification(
-        iossNumber = "IN9001234567",
-        foreignTaxReference = Some("TAX123456")
-      )
-
-      json.validate[EtmpAmendCustomerIdentification] mustBe JsSuccess(expectedResult)
-    }
-
-    "must deserialize from JSON correctly without foreignTaxReference" in {
-      val json = Json.obj(
         "iossNumber" -> "IN9001234567"
       )
 
       val expectedResult = EtmpAmendCustomerIdentification(
-        iossNumber = "IN9001234567",
-        foreignTaxReference = None
+        iossNumber = "IN9001234567"
       )
 
       json.validate[EtmpAmendCustomerIdentification] mustBe JsSuccess(expectedResult)

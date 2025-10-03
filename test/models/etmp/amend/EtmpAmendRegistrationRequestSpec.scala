@@ -16,4 +16,70 @@
 
 package models.etmp.amend
 
-class EtmpAmendRegistrationRequestSpec
+import base.SpecBase
+import models.etmp.*
+import org.scalacheck.Arbitrary.arbitrary
+import play.api.libs.json.{JsError, JsSuccess, Json}
+
+class EtmpAmendRegistrationRequestSpec extends SpecBase {
+
+  private val administration = EtmpAdministration(EtmpMessageType.IOSSIntAmend)
+  private val customerIdentification = EtmpAmendCustomerIdentification(intermediaryNumber)
+  private val tradingNames = Seq(EtmpTradingName("Test Trading Name"))
+  private val changeLog = arbitrary[EtmpAmendRegistrationChangeLog].sample.value
+
+  private val schemeDetails = arbitraryEtmpSchemeDetails.arbitrary.sample.value
+  private val bankDetails = arbitraryEtmpBankDetails.arbitrary.sample.value
+  private val otherAddress = Some(arbitraryEtmpOtherAddress.arbitrary.sample.value)
+
+  "EtmpAmendRegistrationRequest" - {
+
+    "must deserialise/serialise to and from EtmpAmendRegistrationRequest" in {
+
+      val json = Json.obj(
+        "administration" -> administration,
+        "changeLog" -> changeLog,
+        "customerIdentification" -> customerIdentification,
+        "tradingNames" -> tradingNames,
+        "otherAddress" -> otherAddress,
+        "schemeDetails" -> schemeDetails,
+        "bankDetails" -> Some(bankDetails)
+      )
+
+      val expectedResult = EtmpAmendRegistrationRequest(
+        administration = administration,
+        changeLog = changeLog,
+        customerIdentification = customerIdentification,
+        tradingNames = tradingNames,
+        intermediaryDetails = None,
+        otherAddress = otherAddress,
+        schemeDetails = schemeDetails,
+        bankDetails = Some(bankDetails)
+      )
+
+      Json.toJson(expectedResult) mustBe json
+      json.validate[EtmpAmendRegistrationRequest] mustBe JsSuccess(expectedResult)
+    }
+
+    "must handle missing fields during deserialization" in {
+      val json = Json.obj()
+
+      json.validate[EtmpAmendRegistrationRequest] mustBe a[JsError]
+    }
+
+    "must handle invalid data during deserialization" in {
+
+      val json = Json.obj(
+        "administration" -> administration,
+        "changeLog" -> changeLog,
+        "customerIdentification" -> customerIdentification,
+        "tradingNames" -> 12345,
+        "otherAddress" -> otherAddress,
+        "schemeDetails" -> schemeDetails,
+        "bankDetails" -> bankDetails
+      )
+
+      json.validate[EtmpAmendRegistrationRequest] mustBe a[JsError]
+    }
+  }
+}

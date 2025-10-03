@@ -37,7 +37,6 @@ import testutils.{RegistrationData, WireMockHelper}
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
 
-import java.time.LocalDateTime
 
 class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 

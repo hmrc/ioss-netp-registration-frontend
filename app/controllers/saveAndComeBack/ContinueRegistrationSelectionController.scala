@@ -78,7 +78,7 @@ class ContinueRegistrationSelectionController @Inject()(
   }
 
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
 
