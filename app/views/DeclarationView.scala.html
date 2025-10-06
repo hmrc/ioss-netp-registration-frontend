@@ -45,9 +45,15 @@
 
         <h1 class="govuk-heading-l govuk-!-margin-bottom-3">@messages("declaration.heading")</h1>
 
-        <p class="govuk-body govuk-!-margin-bottom-4">@messages("declaration.p1", intermediaryName, companyName)</p>
+        <p class="govuk-body govuk-!-margin-bottom-4">@messages("declaration.subheading")</p>
 
-        <p class="govuk-body govuk-!-margin-bottom-4">@messages("declaration.p2")</p>
+        <ul class="govuk-list govuk-list--bullet">
+            <li class="govuk-body govuk-!-margin-bottom-4">@messages("declaration.li1", intermediaryName, companyName)</li>
+
+            <li class="govuk-body govuk-!-margin-bottom-4">@messages("declaration.li2")</li>
+
+            <li class="govuk-body govuk-!-margin-bottom-4">@messages("declaration.li3")</li>
+        </ul>
 
         @govukCheckboxes(
             Checkboxes(
@@ -67,6 +73,6 @@
             )
         )
 
-        @button("site.continue", DeclarationPage.route(waypoints).url, waypoints)
+        @button("declaration.confirm", DeclarationPage.route(waypoints).url, waypoints)
     }
 }
