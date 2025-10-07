@@ -32,8 +32,8 @@ final case class AddTradingNamePage(override val index: Option[Index] = None) ex
     case _ => false
   }
 
-  override val normalModeUrlFragment: String = "add-uk-trading-name"
-  override val checkModeUrlFragment: String = "change-add-uk-trading-name"
+  override val normalModeUrlFragment: String = "add-trading-name"
+  override val checkModeUrlFragment: String = "change-add-trading-name"
 
   override def path: JsPath = JsPath \ toString
 

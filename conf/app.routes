@@ -65,8 +65,8 @@ POST        /client-utr-number                                              cont
 GET         /clients-nino-number                                            controllers.ClientsNinoNumberController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST        /clients-nino-number                                            controllers.ClientsNinoNumberController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET         /confirm-vat-details                                            controllers.CheckVatDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-POST        /confirm-vat-details                                            controllers.CheckVatDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+GET         /confirm-tax-details                                            controllers.CheckVatDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /confirm-tax-details                                            controllers.CheckVatDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
 GET         /register-different-business                                    controllers.UseOtherAccountController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 
@@ -77,17 +77,17 @@ GET         /vat-number-not-found                                           cont
 GET         /cannot-use-this-service                                        controllers.CannotUseNotAnIntermediaryController.onPageLoad()
 
 # Trading name section
-GET         /have-uk-trading-name                                           controllers.tradingNames.HasTradingNameController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-POST        /have-uk-trading-name                                           controllers.tradingNames.HasTradingNameController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+GET         /have-trading-name                                              controllers.tradingNames.HasTradingNameController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /have-trading-name                                              controllers.tradingNames.HasTradingNameController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET         /uk-trading-name/:index                                         controllers.tradingNames.TradingNameController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints,  index: Index)
-POST        /uk-trading-name/:index                                         controllers.tradingNames.TradingNameController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints,  index: Index)
+GET         /trading-name/:index                                            controllers.tradingNames.TradingNameController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints,  index: Index)
+POST        /trading-name/:index                                            controllers.tradingNames.TradingNameController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints,  index: Index)
 
-GET         /add-uk-trading-name                                            controllers.tradingNames.AddTradingNameController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-POST        /add-uk-trading-name                                            controllers.tradingNames.AddTradingNameController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+GET         /add-trading-name                                               controllers.tradingNames.AddTradingNameController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /add-trading-name                                               controllers.tradingNames.AddTradingNameController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET         /remove-uk-trading-name/:index                                  controllers.tradingNames.DeleteTradingNameController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
-POST        /remove-uk-trading-name/:index                                  controllers.tradingNames.DeleteTradingNameController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
+GET         /remove-trading-name/:index                                     controllers.tradingNames.DeleteTradingNameController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
+POST        /remove-trading-name/:index                                     controllers.tradingNames.DeleteTradingNameController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, index: Index)
 
 GET         /remove-all-trading-names                                       controllers.tradingNames.DeleteAllTradingNamesController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST        /remove-all-trading-names                                       controllers.tradingNames.DeleteAllTradingNamesController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)

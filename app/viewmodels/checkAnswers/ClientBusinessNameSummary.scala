@@ -17,7 +17,7 @@
 package viewmodels.checkAnswers
 
 import models.UserAnswers
-import pages.{CheckAnswersPage, ClientBusinessNamePage, Waypoints}
+import pages.{CheckAnswersPage, ClientBusinessNamePage, ClientCountryBasedPage, Waypoints}
 import play.api.i18n.Messages
 import play.twirl.api.HtmlFormat
 import uk.gov.hmrc.govukfrontend.views.Aliases.HtmlContent
@@ -34,10 +34,18 @@ object ClientBusinessNameSummary {
          )(implicit messages: Messages): Option[SummaryListRow] = {
     answers.get(ClientBusinessNamePage).map { answer =>
 
+      val messageKey: String = answers.get(ClientCountryBasedPage) match {
+        case Some(country) =>
+          messages("clientBusinessName.checkYourAnswersLabel.withCountry", country.name)
+
+        case None =>
+          messages("clientBusinessName.checkYourAnswersLabel")
+      }
+
       val value = HtmlFormat.escape(answer.name).toString
 
       SummaryListRowViewModel(
-        key = "clientBusinessName.checkYourAnswersLabel",
+        key = messageKey,
         value = ValueViewModel(HtmlContent(value)),
         actions = Seq(
           ActionItemViewModel("site.change", ClientBusinessNamePage.changeLink(waypoints, sourcePage).url)
@@ -48,9 +56,9 @@ object ClientBusinessNameSummary {
   }
 
   def rowWithoutAction(
-           waypoints: Waypoints,
-           answers: UserAnswers
-         )(implicit messages: Messages): Option[SummaryListRow] = {
+                        waypoints: Waypoints,
+                        answers: UserAnswers
+                      )(implicit messages: Messages): Option[SummaryListRow] = {
     answers.get(ClientBusinessNamePage).map { answer =>
 
       val value = HtmlFormat.escape(answer.name).toString
