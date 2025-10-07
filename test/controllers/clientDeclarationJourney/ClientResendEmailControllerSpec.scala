@@ -17,6 +17,7 @@
 package controllers.clientDeclarationJourney
 
 import base.SpecBase
+import config.Constants.emailAlertQueuePriority
 import connectors.RegistrationConnector
 import controllers.{clientDeclarationJourney, routes}
 import models.domain.VatCustomerInfo
@@ -113,7 +114,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
             eqTo(testActivationCode),
             eqTo(testSavedPendingRegistration.activationExpiryDate),
             eqTo(testClientEmail),
-            eqTo(Some("PRIORITY"))
+            eqTo(Some(emailAlertQueuePriority))
           )(any(), any())
         }
       }
@@ -177,7 +178,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
             eqTo(testActivationCode),
             eqTo(testSavedPendingRegistration.activationExpiryDate),
             eqTo(testClientEmail),
-            eqTo(Some("PRIORITY"))
+            eqTo(Some(emailAlertQueuePriority))
           )(any(), any())
         }
       }
