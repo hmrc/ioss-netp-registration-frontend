@@ -16,20 +16,20 @@
 
 package controllers
 
+import config.Constants.emailAlertQueuePriority
 import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.UpdateClientEmailAddressFormProvider
 import logging.Logging
-
-import javax.inject.Inject
 import pages.{BusinessContactDetailsPage, UpdateClientEmailAddressPage, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.EmailService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.UpdateClientEmailAddressView
 import utils.FutureSyntax.FutureOps
+import views.html.UpdateClientEmailAddressView
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class UpdateClientEmailAddressController @Inject()(
@@ -89,12 +89,12 @@ class UpdateClientEmailAddressController @Inject()(
 
                   val intermediaryName = updatedClient.intermediaryDetails.intermediaryName
                   val recipientName = getClientCompanyName(updatedClient)
-                  val uniqueUrlCode = updatedClient.uniqueUrlCode
+                  val uniqueActivationCode = updatedClient.uniqueActivationCode
                   val activationExpiryDate = updatedClient.activationExpiryDate
                   val emailAddress = updatedClient.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
 
-                  emailService.sendClientActivationEmail(intermediaryName, recipientName, uniqueUrlCode, activationExpiryDate,
-                    emailAddress, alertQueue = Some("PRIORITY"))
+                  emailService.sendClientActivationEmail(intermediaryName, recipientName, uniqueActivationCode, activationExpiryDate,
+                    emailAddress, alertQueue = Some(emailAlertQueuePriority))
                   
                   Redirect(controllers.routes.ClientEmailUpdatedController.onPageLoad(waypoints, journeyId))
 

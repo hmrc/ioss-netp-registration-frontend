@@ -31,4 +31,6 @@ object Constants {
   val lastSchemeForCountry: Int = 1
 
   val ukCountryCodeAreaPrefix: String = "GB"
+  
+  val emailAlertQueuePriority: String = "PRIORITY"
 }

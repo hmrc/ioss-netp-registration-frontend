@@ -16,23 +16,23 @@
 
 package controllers.clientDeclarationJourney
 
+import config.Constants.emailAlertQueuePriority
 import connectors.RegistrationConnector
 import controllers.actions.{ClientDataRetrievalAction, ClientIdentifierAction}
-import pages.Waypoints
 import logging.Logging
-import models.{SavedPendingRegistration, UserAnswers}
+import models.emails.EmailSendingResult
 import models.responses.ErrorResponse
-import pages.{ClientBusinessNamePage, JourneyRecoveryPage}
+import models.{SavedPendingRegistration, UserAnswers}
+import pages.{ClientBusinessNamePage, JourneyRecoveryPage, Waypoints}
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
-import queries.{IntermediaryDetailsQuery, EmailWasSentQuery}
+import queries.{EmailWasSentQuery, IntermediaryDetailsQuery}
 import repositories.SessionRepository
 import services.EmailService
-import utils.FutureSyntax.FutureOps
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.FutureSyntax.FutureOps
 import utils.GetClientEmail
-import models.emails.EmailSendingResult
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -104,7 +104,7 @@ class ClientResendEmailController @Inject()(
       activation_code_expiry_date = submittedRegistration.activationExpiryDate,
       activation_code = submittedRegistration.uniqueActivationCode,
       emailAddress = clientEmail,
-      alertQueue = Some("PRIORITY")
+      alertQueue = Some(emailAlertQueuePriority)
     )
   }
   
