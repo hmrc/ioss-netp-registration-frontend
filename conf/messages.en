@@ -258,10 +258,13 @@ businessContactDetails.change.emailAddress.hidden = your email address
 
 declaration.title = Declaration
 declaration.heading = Declaration
-declaration.p1 = I, {0}, agree to act as an intermediary on behalf of {1} for the VAT Import One Stop Shop scheme.
-declaration.p2 = I understand that we are joint and severally liable for any debts that we may incur on this registration.
-declaration.checkbox.text = I declare that the information I''ve provided is correct and complete to the best of my knowledge.
+declaration.subheading = You must agree to these statements to register your client:
+declaration.li1 = I, {0}, will act as an intermediary on behalf of {1} for the VAT Import One Stop Shop scheme.
+declaration.li2 = I understand that we are joint and severally liable for any VAT debts incurred on this registration.
+declaration.li3 = The information I''ve provided is correct and complete to the best of my knowledge.
+declaration.checkbox.text = I agree to the statements
 declaration.error.required = Agree to the declaration to continue
+declaration.confirm = Confirm and register
 
 applicationComplete.title = Request pending
 applicationComplete.heading = Request pending
