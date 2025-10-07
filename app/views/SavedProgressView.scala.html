@@ -19,7 +19,7 @@
         govukPanel: GovukPanel
 )
 
-@(answersExpiry: String, continueUrl: String, ggwLoginUrl: String)(implicit request: Request[_], messages: Messages)
+@(answersExpiry: String, continueUrl: String, dashboardUrl: String)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("savedProgress.title")), showBackLink = false) {
 
@@ -34,7 +34,7 @@
 
     <ul class="govuk-list govuk-list--bullet">
         <li><a class="govuk-link" id="continueToYourRegistration" href="@continueUrl">@messages("savedProgress.continueRegistration")</a></li>
-        <li><a class="govuk-link" id="signOut" href="@controllers.auth.routes.AuthController.signOut().url">@messages("savedProgress.signOut")</a></li>
+        <li><a class="govuk-link" id="signOut" href="@dashboardUrl">@messages("savedProgress.returnToDashboard")</a></li>
     </ul>
 
 }

@@ -30,6 +30,7 @@ import uk.gov.hmrc.http.HttpVerbs.GET
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.saveAndComeBack.ContinueRegistrationView
+import config.FrontendAppConfig
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -39,6 +40,7 @@ class ContinueRegistrationController @Inject()(
                                                 cc: AuthenticatedControllerComponents,
                                                 formProvider: ContinueRegistrationFormProvider,
                                                 view: ContinueRegistrationView,
+                                                frontendAppConfig: FrontendAppConfig,
                                                 saveAndComeBackService: SaveAndComeBackService
                                               )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
 
@@ -64,10 +66,8 @@ class ContinueRegistrationController @Inject()(
 
         case Some(clientVatNumber) =>
 
-          saveAndComeBackService.getVatTaxInfo(clientVatNumber, waypoints).map {
-            case Left(call) => Redirect(call)
-            case Right(vatInfo) =>
-              val updatedAnswers = request.userAnswers.copy(vatInfo = Some(vatInfo))
+          saveAndComeBackService.getVatTaxInfo(clientVatNumber, waypoints).map { vatCustomerInfo =>
+              val updatedAnswers = request.userAnswers.copy(vatInfo = Some(vatCustomerInfo))
               cc.sessionRepository.set(updatedAnswers)
 
               val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(updatedAnswers)
@@ -89,6 +89,8 @@ class ContinueRegistrationController @Inject()(
 
       val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(request.userAnswers)
 
+      val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
+      
       form.bindFromRequest().fold(
         formWithErrors =>
           BadRequest(view(taxReferenceInformation, formWithErrors, waypoints)).toFuture,
@@ -102,7 +104,7 @@ class ContinueRegistrationController @Inject()(
               for {
                 _ <- cc.sessionRepository.clear(request.userId)
                 _ <- saveAndComeBackService.deleteSavedUserAnswers(taxReferenceInformation.journeyId)
-              } yield Redirect(controllers.routes.IndexController.onPageLoad()) // TODO - VEI-515 -> should redirect to dashboard
+              } yield Redirect(dashboardUrl)
 
             case _ =>
               val exception = new IllegalStateException("Illegal value submitted and/or must have a saved page url to return to the saved journey")

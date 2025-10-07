@@ -64,7 +64,7 @@ class SavedProgressController @Inject()(
             for {
               _ <- cc.sessionRepository.set(savedProgressAnswers)
             } yield {
-              Ok(view(answersExpiry, continueUrl.get(OnlyRelative).url, frontendAppConfig.loginUrl))
+              Ok(view(answersExpiry, continueUrl.get(OnlyRelative).url, frontendAppConfig.intermediaryYourAccountUrl))
             }
             
           case Left(error) =>

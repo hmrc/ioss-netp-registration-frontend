@@ -17,23 +17,21 @@
 package controllers.saveAndComeBack
 
 import base.SpecBase
-import connectors.SaveForLaterConnector
 import forms.saveAndComeBack.ContinueRegistrationFormProvider
-import models.saveAndComeBack.ContinueRegistration.{Continue, Delete}
 import models.UserAnswers
 import models.domain.VatCustomerInfo
+import models.saveAndComeBack.ContinueRegistration.{Continue, Delete}
 import models.saveAndComeBack.TaxReferenceInformation
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
-import org.mockito.Mockito.{doNothing, times, verify, when}
+import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures.*
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers.*
 import org.scalatestplus.mockito.MockitoSugar
-import pages.{ClientVatNumberPage, SavedProgressPage, UkVatNumberNotFoundPage}
+import pages.{ClientVatNumberPage, SavedProgressPage}
 import play.api.inject.bind
-import play.api.mvc.Call
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
@@ -91,7 +89,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
             .set(ClientVatNumberPage, "SomeVatNum").success.value
             .set(SavedProgressPage, continueUrl.get(OnlyRelative).url).success.value
 
-          when(mockSaveAndComeBackService.getVatTaxInfo(any(), any())(any(), any())) thenReturn Right(genericVatInfo).toFuture
+          when(mockSaveAndComeBackService.getVatTaxInfo(any(), any())(any(), any())) thenReturn genericVatInfo.toFuture
           when(mockSessionRepository.set(any())) thenReturn true.toFuture
           when(mockSaveAndComeBackService.determineTaxReference(any())) thenReturn vatTaxReference
 
@@ -117,15 +115,11 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
         }
 
         "and retrieving the vat reference fails should display the relevant error view" in {
-          //TODO- VEI-506
           val answers: UserAnswers = emptyUserAnswers
             .set(ClientVatNumberPage, "SomeVatNum").success.value
             .set(SavedProgressPage, continueUrl.get(OnlyRelative).url).success.value
 
-          val expectedRedirectUrl = UkVatNumberNotFoundPage.route(waypoints).url
-          val expectedRedirectCall = Call(GET, expectedRedirectUrl)
-
-          when(mockSaveAndComeBackService.getVatTaxInfo(any(), any())(any(), any())) thenReturn Left(expectedRedirectCall).toFuture
+          when(mockSaveAndComeBackService.getVatTaxInfo(any(), any())(any(), any())) thenReturn Future.failed(IllegalStateException("UnexpectedError"))
 
           val application = applicationBuilder(userAnswers = Some(answers))
             .overrides(bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService))
@@ -137,19 +131,20 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
 
             val result = route(application, request).value
 
-            status(result) `mustBe` SEE_OTHER
-            redirectLocation(result).value `mustBe` expectedRedirectUrl
-            verify(mockSaveAndComeBackService, times(1)).getVatTaxInfo(any(), any())(any(), any())
+            whenReady(result.failed) { exp =>
+              exp `mustBe` a[IllegalStateException]
+              exp.getMessage `mustBe` "UnexpectedError"
+            }
           }
         }
 
         "but saved progress page was not saved properly should throw an exception" in {
-          
+
           val answers: UserAnswers = emptyUserAnswers
             .set(ClientVatNumberPage, "SomeVatNum").success.value
 
 
-          when(mockSaveAndComeBackService.getVatTaxInfo(any(), any())(any(), any())) thenReturn Right(genericVatInfo).toFuture
+          when(mockSaveAndComeBackService.getVatTaxInfo(any(), any())(any(), any())) thenReturn genericVatInfo.toFuture
           when(mockSessionRepository.set(any())) thenReturn true.toFuture
           when(mockSaveAndComeBackService.determineTaxReference(any())) thenReturn vatTaxReference
 
@@ -199,7 +194,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
         }
 
         "but saved progress page was not saved properly should throw an exception" in {
-          
+
           val answers: UserAnswers = emptyUserAnswers
 
           when(mockSaveAndComeBackService.determineTaxReference(any())) thenReturn genericTaxReference
@@ -250,15 +245,15 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
         }
 
         "and the value is delete, should clear the userAnswers, call connector to delete saved journey, and redirect to the dashboard" in {
-          // TODO - VEI-515
           val answers: UserAnswers = emptyUserAnswers
             .set(SavedProgressPage, continueUrl.get(OnlyRelative).url).success.value
 
           when(mockSaveAndComeBackService.determineTaxReference(any())) thenReturn genericTaxReference
           when(mockSessionRepository.clear(any())) thenReturn true.toFuture
-          when(mockSaveAndComeBackService.deleteSavedUserAnswers(any())(any(),any())).thenReturn(Future.successful(()))
-          
+          when(mockSaveAndComeBackService.deleteSavedUserAnswers(any())(any(), any())).thenReturn(Future.successful(()))
+
           val application = applicationBuilder(userAnswers = Some(answers))
+            .configure("urls.yourAccountUrl" -> "/dashboardUrl")
             .overrides(bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService))
             .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
             .build()
@@ -271,11 +266,10 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
             val result = route(application, request).value
 
             status(result) `mustBe` SEE_OTHER
-            redirectLocation(result).value mustEqual controllers.routes.IndexController.onPageLoad().url
-            // TODO - VEI-515 -> should redirect to dashboard
+            redirectLocation(result).value mustEqual "/dashboardUrl"
             verify(mockSaveAndComeBackService, times(1)).determineTaxReference(any())
             verify(mockSessionRepository, times(1)).clear(any())
-            verify(mockSaveAndComeBackService, times(1)).deleteSavedUserAnswers(any())(any(),any())
+            verify(mockSaveAndComeBackService, times(1)).deleteSavedUserAnswers(any())(any(), any())
           }
         }
 
