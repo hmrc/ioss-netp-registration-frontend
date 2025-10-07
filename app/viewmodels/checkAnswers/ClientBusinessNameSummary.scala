@@ -32,27 +32,33 @@ object ClientBusinessNameSummary {
            answers: UserAnswers,
            sourcePage: CheckAnswersPage
          )(implicit messages: Messages): Option[SummaryListRow] = {
-    answers.get(ClientCountryBasedPage).flatMap { country =>
-      answers.get(ClientBusinessNamePage).map { answer =>
+    answers.get(ClientBusinessNamePage).map { answer =>
 
-        val value = HtmlFormat.escape(answer.name).toString
+      val messageKey: String = answers.get(ClientCountryBasedPage) match {
+        case Some(country) =>
+          messages("clientBusinessName.checkYourAnswersLabel.withCountry", country.name)
 
-        SummaryListRowViewModel(
-          key = messages("clientBusinessName.checkYourAnswersLabel", country.name),
-          value = ValueViewModel(HtmlContent(value)),
-          actions = Seq(
-            ActionItemViewModel("site.change", ClientBusinessNamePage.changeLink(waypoints, sourcePage).url)
-              .withVisuallyHiddenText(messages("clientBusinessName.change.hidden"))
-          )
-        )
+        case None =>
+          messages("clientBusinessName.checkYourAnswersLabel")
       }
+
+      val value = HtmlFormat.escape(answer.name).toString
+
+      SummaryListRowViewModel(
+        key = messageKey,
+        value = ValueViewModel(HtmlContent(value)),
+        actions = Seq(
+          ActionItemViewModel("site.change", ClientBusinessNamePage.changeLink(waypoints, sourcePage).url)
+            .withVisuallyHiddenText(messages("clientBusinessName.change.hidden"))
+        )
+      )
     }
   }
 
   def rowWithoutAction(
-           waypoints: Waypoints,
-           answers: UserAnswers
-         )(implicit messages: Messages): Option[SummaryListRow] = {
+                        waypoints: Waypoints,
+                        answers: UserAnswers
+                      )(implicit messages: Messages): Option[SummaryListRow] = {
     answers.get(ClientBusinessNamePage).map { answer =>
 
       val value = HtmlFormat.escape(answer.name).toString
