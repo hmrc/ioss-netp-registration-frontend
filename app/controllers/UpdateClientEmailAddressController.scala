@@ -94,7 +94,7 @@ class UpdateClientEmailAddressController @Inject()(
                   val emailAddress = updatedClient.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
 
                   emailService.sendClientActivationEmail(intermediaryName, recipientName, uniqueUrlCode, activationExpiryDate,
-                    emailAddress, alertQueue = Some("urgent"))
+                    emailAddress, alertQueue = Some("PRIORITY"))
                   
                   Redirect(controllers.routes.ClientEmailUpdatedController.onPageLoad(waypoints, journeyId))
 

@@ -24,7 +24,7 @@ import models.emails.EmailSendingResult
 import models.responses.{RegistrationNotFound, UnexpectedResponseStatus}
 import models.{BusinessContactDetails, ClientBusinessName, IntermediaryDetails, SavedPendingRegistration, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.{never, reset, times, verify, when}
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{BusinessContactDetailsPage, ClientBusinessNamePage, JourneyRecoveryPage}
@@ -113,7 +113,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
             eqTo(testActivationCode),
             eqTo(testSavedPendingRegistration.activationExpiryDate),
             eqTo(testClientEmail),
-            eqTo(Some("priority"))
+            eqTo(Some("PRIORITY"))
           )(any(), any())
         }
       }
@@ -177,7 +177,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
             eqTo(testActivationCode),
             eqTo(testSavedPendingRegistration.activationExpiryDate),
             eqTo(testClientEmail),
-            eqTo(Some("priority"))
+            eqTo(Some("PRIORITY"))
           )(any(), any())
         }
       }

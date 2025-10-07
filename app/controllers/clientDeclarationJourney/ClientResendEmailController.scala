@@ -104,7 +104,7 @@ class ClientResendEmailController @Inject()(
       activation_code_expiry_date = submittedRegistration.activationExpiryDate,
       activation_code = submittedRegistration.uniqueActivationCode,
       emailAddress = clientEmail,
-      alertQueue = Some("priority")
+      alertQueue = Some("PRIORITY")
     )
   }
   
