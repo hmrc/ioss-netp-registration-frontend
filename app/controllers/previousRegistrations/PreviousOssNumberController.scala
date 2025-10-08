@@ -47,7 +47,7 @@ class PreviousOssNumberController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
   
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
       getPreviousCountry(waypoints, countryIndex) {
         country =>
@@ -122,7 +122,7 @@ class PreviousOssNumberController @Inject()(
     }
   }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
       getPreviousCountry(waypoints, countryIndex) {
         country =>

@@ -36,7 +36,7 @@ class ClientAlreadyRegisteredController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
   
-  def onPageLoad: Action[AnyContent] = cc.identifyAndGetData {
+  def onPageLoad: Action[AnyContent] = cc.identifyAndGetData() {
     implicit request: DataRequest[_] =>
 
       getOrganisationName(request.userAnswers) match {

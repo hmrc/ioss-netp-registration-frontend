@@ -45,7 +45,7 @@ class CheckYourAnswersController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(): Action[AnyContent] = cc.identifyAndGetData {
+  def onPageLoad(): Action[AnyContent] = cc.identifyAndGetData() {
     implicit request =>
 
       val thisPage = CheckYourAnswersPage
@@ -120,7 +120,7 @@ class CheckYourAnswersController @Inject()(
       Ok(view(waypoints, vatRegistrationDetailsList, list, isValid))
   }
 
-  def onSubmit(waypoints: Waypoints, incompletePrompt: Boolean): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints, incompletePrompt: Boolean): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       getFirstValidationErrorRedirect(waypoints) match {

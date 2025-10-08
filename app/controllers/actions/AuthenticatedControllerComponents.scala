@@ -41,11 +41,11 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
 
   def requireData: DataRequiredAction
 
-  def identifyAndGetData: ActionBuilder[DataRequest, AnyContent] =
+  def identifyAndGetData(inAmend: Boolean = false): ActionBuilder[DataRequest, AnyContent] =
     actionBuilder andThen
       identify andThen
       getData andThen
-      requireData
+      requireData(inAmend)
 
   def identifyAndGetOptionalData: ActionBuilder[OptionalDataRequest, AnyContent] =
     actionBuilder andThen

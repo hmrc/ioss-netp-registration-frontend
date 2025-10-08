@@ -46,7 +46,7 @@ class HasTradingNameController @Inject()(
 
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData()).async {
     implicit request =>
 
       getClientCompanyName(waypoints) {
@@ -60,7 +60,7 @@ class HasTradingNameController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData()).async {
     implicit request =>
 
       getClientCompanyName(waypoints) {

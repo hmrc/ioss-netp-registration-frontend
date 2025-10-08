@@ -48,7 +48,7 @@ class ContinueRegistrationController @Inject()(
 
   val form: Form[ContinueRegistration] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       request.userAnswers.get(ClientVatNumberPage) match {
@@ -84,7 +84,7 @@ class ContinueRegistrationController @Inject()(
 
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(request.userAnswers)

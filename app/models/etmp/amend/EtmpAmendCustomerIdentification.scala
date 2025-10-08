@@ -14,21 +14,12 @@
  * limitations under the License.
  */
 
-package models.etmp
+package models.etmp.amend
 
-import models.{Enumerable, WithName}
+import play.api.libs.json.{Json, OFormat}
 
-sealed trait EtmpMessageType
+case class EtmpAmendCustomerIdentification(iossNumber: String)
 
-object EtmpMessageType extends Enumerable.Implicits {
-
-  case object IOSSIntAddClient extends WithName("IOSSIntAddClient") with EtmpMessageType
-  case object IOSSIntAmend extends WithName("IOSSIntAmend") with EtmpMessageType
-
-  val values: Seq[EtmpMessageType] = Seq(
-    IOSSIntAddClient, IOSSIntAmend
-  )
-
-  implicit val enumerable: Enumerable[EtmpMessageType] =
-    Enumerable(values.map(v => v.toString -> v): _*)
+object EtmpAmendCustomerIdentification {
+  implicit val format: OFormat[EtmpAmendCustomerIdentification] = Json.format[EtmpAmendCustomerIdentification]
 }

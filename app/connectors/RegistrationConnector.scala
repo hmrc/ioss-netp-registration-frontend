@@ -19,12 +19,13 @@ package connectors
 import config.Service
 import connectors.RegistrationHttpParser.*
 import connectors.SavedPendingRegistrationHttpParser.{SavedPendingRegistrationResponse, SavedPendingRegistrationResultResponseReads}
-import connectors.ValidateClientCodeHttpParser.{validateClientCodeResponse, ValidateClientCodeReads}
-import connectors.SavedPendingRegistrationsHttpParser._
+import connectors.ValidateClientCodeHttpParser.{ValidateClientCodeReads, validateClientCodeResponse}
+import connectors.SavedPendingRegistrationsHttpParser.*
 import connectors.VatCustomerInfoHttpParser.{VatCustomerInfoResponse, VatCustomerInfoResponseReads}
 import logging.Logging
 import models.PendingRegistrationRequest
 import models.etmp.EtmpRegistrationRequest
+import models.etmp.amend.EtmpAmendRegistrationRequest
 import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue
@@ -50,6 +51,9 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
   def getIntermediaryVatCustomerInfo()(implicit hc: HeaderCarrier): Future[VatCustomerInfoResponse] = {
     httpClientV2.get(url"$intermediaryUrl/vat-information").execute[VatCustomerInfoResponse]
   }
+
+  def amendRegistration(amendRegistrationRequest: EtmpAmendRegistrationRequest)(implicit hc: HeaderCarrier): Future[AmendRegistrationResultResponse] =
+    httpClientV2.post(url"$baseUrl/amend").withBody(Json.toJson(amendRegistrationRequest)).execute[AmendRegistrationResultResponse]
 
   def submitPendingRegistration(pendingRegistrationRequest: PendingRegistrationRequest)(implicit hc: HeaderCarrier)
   : Future[SavedPendingRegistrationResponse] = {

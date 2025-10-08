@@ -20,10 +20,11 @@ import base.SpecBase
 import formats.Format.eisDateFormatter
 import models.Country
 import models.etmp.*
+import models.etmp.amend.*
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 
-import java.time.LocalDate
+import java.time.{LocalDate, LocalDateTime}
 
 object RegistrationData extends SpecBase {
 
@@ -60,6 +61,46 @@ object RegistrationData extends SpecBase {
   val etmpRegistrationRequest: EtmpRegistrationRequest = EtmpRegistrationRequest(
     administration = arbitrary[EtmpAdministration].sample.value,
     customerIdentification = arbitrary[EtmpCustomerIdentification].sample.value,
+    tradingNames = Seq(arbitrary[EtmpTradingName].sample.value),
+    intermediaryDetails = Some(arbitrary[EtmpIntermediaryDetails].sample.value),
+    otherAddress = Some(arbitrary[EtmpOtherAddress].sample.value),
+    schemeDetails = etmpSchemeDetails,
+    bankDetails = None
+  )
+
+  val etmpAmendRegistrationChangeLog: EtmpAmendRegistrationChangeLog = EtmpAmendRegistrationChangeLog(
+    tradingNames = true,
+    fixedEstablishments = false,
+    contactDetails = true,
+    bankDetails = false,
+    reRegistration = false,
+    otherAddress = false
+  )
+
+  val etmpAmendCustomerIdentification: EtmpAmendCustomerIdentification = EtmpAmendCustomerIdentification(
+    iossNumber = "IN900123456"
+  )
+
+  val amendRegistrationResponse: AmendRegistrationResponse = AmendRegistrationResponse(
+    processingDateTime = LocalDateTime.now(),
+    formBundleNumber = "123456789",
+    intermediary = "IN900123456",
+    businessPartner = "Test Business Partner"
+  )
+
+  val etmpBankDetails: EtmpBankDetails = {
+    val bankDetails = arbitraryBankDetails.arbitrary.sample.value
+    EtmpBankDetails(
+      accountName = bankDetails.accountName,
+      bic = bankDetails.bic,
+      iban = bankDetails.iban
+    )
+  }
+
+  val etmpAmendRegistrationRequest: EtmpAmendRegistrationRequest = EtmpAmendRegistrationRequest(
+    administration = arbitrary[EtmpAdministration].sample.value,
+    changeLog = etmpAmendRegistrationChangeLog,
+    customerIdentification = etmpAmendCustomerIdentification,
     tradingNames = Seq(arbitrary[EtmpTradingName].sample.value),
     intermediaryDetails = Some(arbitrary[EtmpIntermediaryDetails].sample.value),
     otherAddress = Some(arbitrary[EtmpOtherAddress].sample.value),
