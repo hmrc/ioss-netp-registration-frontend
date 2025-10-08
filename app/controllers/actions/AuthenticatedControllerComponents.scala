@@ -46,7 +46,6 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
       identify andThen
       getData andThen
       requireData(inAmend)
-    //might need some more implementation after ib30
 
   def identifyAndGetOptionalData: ActionBuilder[OptionalDataRequest, AnyContent] =
     actionBuilder andThen

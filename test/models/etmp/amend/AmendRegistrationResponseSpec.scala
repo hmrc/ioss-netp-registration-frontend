@@ -28,7 +28,6 @@ class AmendRegistrationResponseSpec extends SpecBase {
       val amendRegistrationResponse = AmendRegistrationResponse(
         processingDateTime = fixedDateTime,
         formBundleNumber = "12345",
-        vrn = "123456789",
         intermediary = "IN900100000001",
         businessPartner = "businessPartner"
       )
@@ -36,7 +35,6 @@ class AmendRegistrationResponseSpec extends SpecBase {
       val expectedJson = Json.obj(
         "processingDateTime" -> s"2025-01-17T14:32:10.686099",
         "formBundleNumber" -> "12345",
-        "vrn" -> "123456789",
         "intermediary" -> "IN900100000001",
         "businessPartner" -> "businessPartner"
       )
@@ -48,7 +46,6 @@ class AmendRegistrationResponseSpec extends SpecBase {
       val json = Json.obj(
         "processingDateTime" -> s"2025-01-17T14:32:10.686099",
         "formBundleNumber" -> "12345",
-        "vrn" -> "123456789",
         "intermediary" -> "IN900100000001",
         "businessPartner" -> "businessPartner"
       )
@@ -57,7 +54,6 @@ class AmendRegistrationResponseSpec extends SpecBase {
       val amendRegistrationResponse = AmendRegistrationResponse(
         processingDateTime = fixedDateTime,
         formBundleNumber = "12345",
-        vrn = "123456789",
         intermediary = "IN900100000001",
         businessPartner = "businessPartner"
       )
@@ -73,7 +69,6 @@ class AmendRegistrationResponseSpec extends SpecBase {
       val json = Json.obj(
         "processingDateTime" -> s"2025-01-17T14:32:10.686099",
         "formBundleNumber" -> "12345",
-        "vrn" -> "123456789",
         "intermediary" -> "IN900100000001",
         "businessPartner" -> 12345
       )

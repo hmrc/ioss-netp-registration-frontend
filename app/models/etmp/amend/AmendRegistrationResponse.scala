@@ -22,7 +22,6 @@ import java.time.LocalDateTime
 
 case class AmendRegistrationResponse(processingDateTime: LocalDateTime,
                                      formBundleNumber: String,
-                                     vrn: String,
                                      intermediary: String,
                                      businessPartner: String)
 
