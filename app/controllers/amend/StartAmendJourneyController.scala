@@ -48,13 +48,22 @@ class StartAmendJourneyController @Inject()(
 
         displayRegistrationResponse match {
           case Right(registrationWrapper) =>
+            println("\n\nregistrationWrapper:")
+            println(registrationWrapper)
             for {
               userAnswers <- registrationService.toUserAnswers(request.userId, registrationWrapper)
               originalAnswers <- Future.fromTry(
                 userAnswers.set(OriginalRegistrationQuery(iossNumber), registrationWrapper.etmpDisplayRegistration))
               _ <- cc.sessionRepository.set(userAnswers)
               _ <- cc.sessionRepository.set(originalAnswers)
-            } yield Ok(Json.toJson(originalAnswers)) // TODO VEI-199: Implement a redirect logic
+            } yield {
+              println("\n\nStartAmendJourneyController:\n")
+              println("userAnswers:")
+              println(userAnswers)
+              println("originalAnswers:")
+              println(originalAnswers)
+              Redirect(routes.ChangeRegistrationController.onPageLoad(waypoints, iossNumber).url)
+            } // TODO VEI-199: Implement a redirect logic
           
           case Left(error) =>
             val exception = new Exception(error.body)

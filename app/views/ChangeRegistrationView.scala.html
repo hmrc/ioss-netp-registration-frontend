@@ -1,0 +1,59 @@
+@*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import viewmodels.InputWidth._
+@import components.CancelAmendRegistrationButton
+
+@this(
+        layout: templates.Layout,
+        formHelper: FormWithCSRF,
+        govukSummaryList: GovukSummaryList,
+        govukErrorSummary: GovukErrorSummary,
+        govukInput: GovukInput,
+        button: CancelAmendRegistrationButton
+)
+
+@(waypoints: Waypoints, companyName: String, iossNum: String, list: SummaryList, ilist: SummaryList)(implicit request: Request[_], messages: Messages)
+
+@layout(pageTitle = titleNoForm(messages("changeRegistration.title",companyName )), showBackLink = false) {
+
+    <h1 class="govuk-heading-xl govuk-!-margin-0">@messages("changeRegistration.heading", companyName)</h1>
+
+    <p class="govuk-caption-l govuk-!-margin-bottom-6">@messages("changeRegistration.intermediaryNumber", iossNum)</p>
+
+    <h2 class="govuk-heading-m">@messages("changeRegistration.registrationDetails.heading")</h2>
+
+    @govukSummaryList(list)
+
+    <h2 class="govuk-heading-m">@messages("changeRegistration.iossDetails.heading")</h2>
+
+    @govukSummaryList(ilist)
+
+    <p class="govuk-body">@messages("changeRegistration.info.p1")</p>
+
+    @formHelper(action = controllers.amend.routes.ChangeRegistrationController.onSubmit(waypoints, iossNum)) {
+        @button("site.confirm")
+    }
+    
+    <div id="processing-wheel" hidden>
+        <div id="processing" aria-live="polite" class="govuk-!-margin-bottom-9">
+            <h2 class="govuk-heading-m">
+            @messages("site.processing")
+            </h2>
+            <div class="processing-wheel-loader"></div>
+        </div>
+    </div>
+}

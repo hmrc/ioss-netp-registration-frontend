@@ -12,6 +12,7 @@ site.signIn = Sign in
 site.govuk = GOV.UK
 site.agree = Agree and confirm
 site.processing = We are processing your registration.
+site.confirm = Confirm
 
 date.day = Day
 date.month = Month
@@ -527,6 +528,16 @@ clientEmailUpdated.title = Email address for {0} updated
 clientEmailUpdated.heading = Email address for {0} updated
 clientEmailUpdated.p1 = We have sent the activation code to <span class="govuk-!-font-weight-bold">{0}</span>. They must use that to confirm their registration to your account.
 clientEmailUpdated.link = <a class="govuk-link" href="{0}">Return to your account</a>
+
+changeRegistration.title = Change {0} registration
+changeRegistration.heading = Change {0} registration
+changeRegistration.reference = IOSS number: {0}
+changeRegistration.intermediaryNumber = IOSS number: {0}
+changeRegistration.registrationDetails.heading = Registration details
+changeRegistration.iossDetails.heading = Import One Stop Shop details
+changeRegistration.info.p1 = Confirm these changes to save them to your account.
+
+cancelAmendRegistration.link = Cancel
 
 savedProgress.title = We have saved your progress
 savedProgress.subtitle =We will keep the registration details until {0}

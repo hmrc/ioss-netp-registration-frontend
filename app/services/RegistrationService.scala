@@ -23,12 +23,14 @@ import models.domain.PreviousSchemeDetails
 import models.{BusinessContactDetails, Country, InternationalAddress, TradingName, UserAnswers}
 import models.etmp.amend.EtmpAmendRegistrationRequest._
 import models.etmp.EtmpRegistrationRequest.buildEtmpRegistrationRequest
+import models.etmp.{EtmpIdType, EtmpOtherAddress, EtmpPreviousEuRegistrationDetails, EtmpTradingName}
+import models.etmp.display.{EtmpDisplayCustomerIdentification, EtmpDisplayEuRegistrationDetails, EtmpDisplaySchemeDetails, RegistrationWrapper}
 import models.etmp.display.EtmpDisplayRegistration
 import models.etmp.{EtmpOtherAddress, EtmpPreviousEuRegistrationDetails, EtmpTradingName}
 import models.etmp.display.{EtmpDisplayEuRegistrationDetails, EtmpDisplaySchemeDetails, RegistrationWrapper}
 import models.previousRegistrations.PreviousRegistrationDetails
 import models.vatEuDetails.{EuDetails, RegistrationType, TradingNameAndBusinessAddress}
-import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage}
+import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage, ClientHasVatNumberPage, ClientVatNumberPage}
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.HasTradingNamePage
 import pages.vatEuDetails.HasFixedEstablishmentPage
@@ -70,7 +72,7 @@ class RegistrationService @Inject()(
       )
     )
   }
-  
+
   def toUserAnswers(userId: String, registrationWrapper: RegistrationWrapper): Future[UserAnswers] = {
 
     val etmpTradingNames: Seq[EtmpTradingName] = registrationWrapper.etmpDisplayRegistration.tradingNames
@@ -116,9 +118,21 @@ class RegistrationService @Inject()(
 
       contactDetailsUA <- euFixedEstablishmentUA.set(BusinessContactDetailsPage, getContactDetails(schemeDetails))
 
-    } yield contactDetailsUA
+      hasUkVatNumUA <- identifyUKVatNum(contactDetailsUA, registrationWrapper.etmpDisplayRegistration.customerIdentification)
+
+    } yield hasUkVatNumUA
 
     Future.fromTry(userAnswers)
+  }
+
+  private def identifyUKVatNum(userAnswers: UserAnswers, customerInfo: EtmpDisplayCustomerIdentification): Try[UserAnswers] = {
+    customerInfo.idType match
+      case EtmpIdType.VRN => for {
+        answers <- userAnswers.set(ClientHasVatNumberPage, true)
+        answers2 <- answers.set(ClientVatNumberPage, customerInfo.idValue)
+      } yield answers2
+
+      case _ => userAnswers.set(ClientHasVatNumberPage, false)
   }
 
   private def convertNonUkAddress(maybeOtherAddress: Option[EtmpOtherAddress]): InternationalAddress = {

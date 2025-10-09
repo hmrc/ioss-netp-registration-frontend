@@ -17,7 +17,7 @@
 package viewmodels.checkAnswers
 
 import models.UserAnswers
-import pages.{CheckAnswersPage, ClientHasVatNumberPage, Waypoints}
+import pages.{CheckAnswersPage, ClientHasVatNumberPage, Page, Waypoints}
 import play.api.i18n.Messages
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.govuk.summarylist.*
@@ -31,7 +31,7 @@ object ClientHasVatNumberSummary {
            sourcePage: CheckAnswersPage
          )(implicit messages: Messages): Option[SummaryListRow] = {
     answers.get(ClientHasVatNumberPage).map { answer =>
-
+      
       val value = if (answer) "site.yes" else "site.no"
 
       SummaryListRowViewModel(
