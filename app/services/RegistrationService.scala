@@ -20,15 +20,11 @@ import connectors.RegistrationConnector
 import connectors.RegistrationHttpParser.{AmendRegistrationResultResponse, RegistrationResultResponse}
 import logging.Logging
 import models.domain.PreviousSchemeDetails
-import models.{BusinessContactDetails, Country, InternationalAddress, TradingName, UserAnswers}
-import models.etmp.amend.EtmpAmendRegistrationRequest._
 import models.etmp.EtmpRegistrationRequest.buildEtmpRegistrationRequest
+import models.etmp.amend.EtmpAmendRegistrationRequest
+import models.etmp.amend.EtmpAmendRegistrationRequest.*
 import models.etmp.display.*
 import models.etmp.{EtmpIdType, EtmpOtherAddress, EtmpPreviousEuRegistrationDetails, EtmpTradingName}
-import models.etmp.display.{EtmpDisplayCustomerIdentification, EtmpDisplayEuRegistrationDetails, EtmpDisplaySchemeDetails, RegistrationWrapper}
-import models.etmp.display.EtmpDisplayRegistration
-import models.etmp.{EtmpOtherAddress, EtmpPreviousEuRegistrationDetails, EtmpTradingName}
-import models.etmp.display.{EtmpDisplayEuRegistrationDetails, EtmpDisplaySchemeDetails, RegistrationWrapper}
 import models.previousRegistrations.PreviousRegistrationDetails
 import models.vatEuDetails.{EuDetails, RegistrationType, TradingNameAndBusinessAddress}
 import models.{BusinessContactDetails, ClientBusinessName, Country, InternationalAddress, TradingName, UserAnswers, Website}
@@ -40,7 +36,6 @@ import queries.AllWebsites
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
-import models.etmp.amend.EtmpAmendRegistrationRequest
 import services.etmp.EtmpEuRegistrations
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CheckUkBased.isUkBasedIntermediary

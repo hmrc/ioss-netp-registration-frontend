@@ -21,14 +21,13 @@ import connectors.RegistrationConnector
 import models.etmp.display.RegistrationWrapper
 import models.responses.NotFound
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.{reset, times, verify, verifyNoInteractions, when}
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.http.Status.{OK, SEE_OTHER}
+import play.api.http.Status.SEE_OTHER
 import play.api.inject.bind
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{GET, defaultAwaitTimeout, route, running, status}
-import play.api.test.Helpers.writeableOf_AnyContentAsEmpty
+import play.api.test.Helpers.{GET, defaultAwaitTimeout, route, running, status, writeableOf_AnyContentAsEmpty}
 import services.RegistrationService
 import utils.FutureSyntax.FutureOps
 
