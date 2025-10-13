@@ -205,7 +205,6 @@ cannotUseNotAnIntermediary.heading = You cannot use this service
 hasTradingName.title = Does your client''s business trade using a name that is different from {0}?
 hasTradingName.heading = Does your client''s business trade using a name that is different from {0}?
 hasTradingName.checkYourAnswersLabel = Have a different trading name
-hasTradingName.checkYourAnswersChangeRegLabel = Have a different UK trading name
 hasTradingName.error.required = Select yes if they use a different trading name
 hasTradingName.change.hidden = if they have a different trading name
 

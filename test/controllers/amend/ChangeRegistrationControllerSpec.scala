@@ -146,7 +146,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
   }
 
   private def getImportOneStopShopDetailsSummaryList(answers: UserAnswers)(implicit msgs: Messages): Seq[SummaryListRow] = {
-    val maybeHasTradingNameSummaryRow = HasTradingNameSummary.changeRegRow(answers, waypoints, amendYourAnswersPage)
+    val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(answers, waypoints, amendYourAnswersPage)
     val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, answers, amendYourAnswersPage)
     val formattedHasTradingNameSummary = maybeHasTradingNameSummaryRow.map { nonOptHasTradingNameSummaryRow =>
       if (tradingNameSummaryRow.nonEmpty) {

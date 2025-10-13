@@ -62,7 +62,7 @@ class ChangeRegistrationController @Inject()(
 
 
         //TradingNameSummary
-        val maybeHasTradingNameSummaryRow = HasTradingNameSummary.changeRegRow(request.userAnswers, waypoints, thisPage)
+        val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(request.userAnswers, waypoints, thisPage)
         val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, userAnswers, thisPage)
 
         val formattedHasTradingNameSummary = maybeHasTradingNameSummaryRow.map { nonOptHasTradingNameSummaryRow =>
