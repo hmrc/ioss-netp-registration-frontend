@@ -19,7 +19,8 @@ package controllers.amend
 import controllers.GetClientCompanyName
 import controllers.actions.AuthenticatedControllerComponents
 import logging.Logging
-import pages.{CheckYourAnswersPage, EmptyWaypoints, Waypoints}
+import pages.{EmptyWaypoints,Waypoints}
+import pages.amend.ChangeRegistrationPage
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -43,12 +44,11 @@ class ChangeRegistrationController @Inject()(
                                               view: ChangeRegistrationView
                                             ) extends FrontendBaseController with I18nSupport with Logging with GetClientCompanyName {
 
-  def onPageLoad(waypoints: Waypoints, iossNumber: String): Action[AnyContent] = cc.identifyAndGetData.async {
+  def onPageLoad(waypoints: Waypoints = EmptyWaypoints, iossNumber: String): Action[AnyContent] = cc.identifyAndGetData.async {
     implicit request =>
 
-      val waypoints = EmptyWaypoints
       val userAnswers = request.userAnswers
-      val thisPage = CheckYourAnswersPage
+      val thisPage = ChangeRegistrationPage(iossNumber)
 
       getClientCompanyName(waypoints) { companyName =>
         val registrationDetailsList = SummaryListViewModel(
@@ -56,13 +56,13 @@ class ChangeRegistrationController @Inject()(
             BusinessBasedInUKSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientHasVatNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientVatNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
-            VatRegistrationDetailsSummary.rowBusinessAddress(waypoints, request.userAnswers, CheckYourAnswersPage)
+            VatRegistrationDetailsSummary.rowBusinessAddress(waypoints, request.userAnswers, thisPage)
           ).flatten
         )
 
 
         //TradingNameSummary
-        val maybeHasTradingNameSummaryRow = HasTradingNameSummary.changeRegRow(request.userAnswers, waypoints, CheckYourAnswersPage)
+        val maybeHasTradingNameSummaryRow = HasTradingNameSummary.changeRegRow(request.userAnswers, waypoints, thisPage)
         val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, userAnswers, thisPage)
 
         val formattedHasTradingNameSummary = maybeHasTradingNameSummaryRow.map { nonOptHasTradingNameSummaryRow =>
@@ -129,4 +129,5 @@ class ChangeRegistrationController @Inject()(
   def onSubmit(waypoints: Waypoints, iossNumber: String): Action[AnyContent] = cc.identifyAndGetData {
     Ok(Json.toJson("done"))
   }
+  
 }
