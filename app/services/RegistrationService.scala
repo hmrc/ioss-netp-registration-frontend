@@ -23,6 +23,7 @@ import models.domain.PreviousSchemeDetails
 import models.{BusinessContactDetails, Country, InternationalAddress, TradingName, UserAnswers}
 import models.etmp.amend.EtmpAmendRegistrationRequest._
 import models.etmp.EtmpRegistrationRequest.buildEtmpRegistrationRequest
+import models.etmp.display.*
 import models.etmp.{EtmpIdType, EtmpOtherAddress, EtmpPreviousEuRegistrationDetails, EtmpTradingName}
 import models.etmp.display.{EtmpDisplayCustomerIdentification, EtmpDisplayEuRegistrationDetails, EtmpDisplaySchemeDetails, RegistrationWrapper}
 import models.etmp.display.EtmpDisplayRegistration
@@ -30,10 +31,12 @@ import models.etmp.{EtmpOtherAddress, EtmpPreviousEuRegistrationDetails, EtmpTra
 import models.etmp.display.{EtmpDisplayEuRegistrationDetails, EtmpDisplaySchemeDetails, RegistrationWrapper}
 import models.previousRegistrations.PreviousRegistrationDetails
 import models.vatEuDetails.{EuDetails, RegistrationType, TradingNameAndBusinessAddress}
-import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage, ClientHasVatNumberPage, ClientVatNumberPage}
+import models.{BusinessContactDetails, ClientBusinessName, Country, InternationalAddress, TradingName, UserAnswers, Website}
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.HasTradingNamePage
 import pages.vatEuDetails.HasFixedEstablishmentPage
+import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage, ClientBusinessNamePage, ClientHasVatNumberPage, ClientVatNumberPage}
+import queries.AllWebsites
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
@@ -89,7 +92,7 @@ class RegistrationService @Inject()(
         vatInfo = Some(registrationWrapper.vatInfo)
       ).set(BusinessBasedInUKPage, hasUkBasedAddress)
 
-      hasUkAddress <- if(!hasUkBasedAddress) {
+      hasUkAddress <- if (!hasUkBasedAddress) {
         businessBasedInUk.set(ClientBusinessAddressPage, convertNonUkAddress(maybeOtherAddress))
       } else {
         Try(businessBasedInUk)
@@ -120,7 +123,11 @@ class RegistrationService @Inject()(
 
       hasUkVatNumUA <- identifyUKVatNum(contactDetailsUA, registrationWrapper.etmpDisplayRegistration.customerIdentification)
 
-    } yield hasUkVatNumUA
+      websiteUA <- implementWebsiteUserAnswers(hasUkVatNumUA, registrationWrapper.etmpDisplayRegistration)
+
+      dummyCompanyNameUA <- websiteUA.set(ClientBusinessNamePage, ClientBusinessName("Chartoff Winkler Ltd")) //TODO: VEI-199 -> To be conditionally rendered.
+
+    } yield dummyCompanyNameUA
 
     Future.fromTry(userAnswers)
   }
@@ -133,6 +140,17 @@ class RegistrationService @Inject()(
       } yield answers2
 
       case _ => userAnswers.set(ClientHasVatNumberPage, false)
+  }
+
+  private def implementWebsiteUserAnswers(userAnswers: UserAnswers, customerInfo: EtmpDisplayRegistration): Try[UserAnswers] = {
+
+    val websiteList: List[Website] = customerInfo.schemeDetails.websites.map { etmpWebsite =>
+      Website(etmpWebsite.websiteAddress)
+    }.toList
+
+    for {
+      websiteUserUA <- userAnswers.set(AllWebsites, websiteList)
+    } yield websiteUserUA
   }
 
   private def convertNonUkAddress(maybeOtherAddress: Option[EtmpOtherAddress]): InternationalAddress = {

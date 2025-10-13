@@ -205,6 +205,7 @@ cannotUseNotAnIntermediary.heading = You cannot use this service
 hasTradingName.title = Does your client''s business trade using a name that is different from {0}?
 hasTradingName.heading = Does your client''s business trade using a name that is different from {0}?
 hasTradingName.checkYourAnswersLabel = Have a different trading name
+hasTradingName.checkYourAnswersChangeRegLabel = Have a different UK trading name
 hasTradingName.error.required = Select yes if they use a different trading name
 hasTradingName.change.hidden = if they have a different trading name
 
@@ -535,7 +536,9 @@ changeRegistration.reference = IOSS number: {0}
 changeRegistration.intermediaryNumber = IOSS number: {0}
 changeRegistration.registrationDetails.heading = Registration details
 changeRegistration.iossDetails.heading = Import One Stop Shop details
-changeRegistration.info.p1 = Confirm these changes to save them to your account.
+changeRegistration.info.p1 = Confirm these changes to save them to your client''s account.
+
+
 
 cancelAmendRegistration.link = Cancel
 

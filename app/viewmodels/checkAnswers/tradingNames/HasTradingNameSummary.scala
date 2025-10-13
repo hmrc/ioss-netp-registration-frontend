@@ -42,6 +42,23 @@ object HasTradingNameSummary  {
         )
     }
 
+  def changeRegRow(answers: UserAnswers, waypoints: Waypoints, sourcePage: CheckAnswersPage)(implicit messages: Messages): Option[SummaryListRow] =
+    answers.get(HasTradingNamePage).map {
+      answer =>
+
+        val value = if (answer) "site.yes" else "site.no"
+
+        SummaryListRowViewModel(
+          key = "hasTradingName.checkYourAnswersChangeRegLabel",
+          value = ValueViewModel(value),
+          actions = Seq(
+            ActionItemViewModel("site.change", HasTradingNamePage.changeLink(waypoints, sourcePage).url)
+              .withVisuallyHiddenText(messages("hasTradingName.change.hidden"))
+          )
+        )
+    }
+
+  
   def rowWithoutAction(answers: UserAnswers, waypoints: Waypoints)(implicit messages: Messages): Option[SummaryListRow] =
     answers.get(HasTradingNamePage).map {
       answer =>
