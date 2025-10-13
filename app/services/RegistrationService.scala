@@ -121,13 +121,13 @@ class RegistrationService @Inject()(
 
       contactDetailsUA <- euFixedEstablishmentUA.set(BusinessContactDetailsPage, getContactDetails(schemeDetails))
 
-      hasUkVatNumUA <- identifyUKVatNum(contactDetailsUA, registrationWrapper.etmpDisplayRegistration.customerIdentification)
-
-      websiteUA <- implementWebsiteUserAnswers(hasUkVatNumUA, registrationWrapper.etmpDisplayRegistration)
+      websiteUA <- implementWebsiteUserAnswers(contactDetailsUA, registrationWrapper.etmpDisplayRegistration)
 
       dummyCompanyNameUA <- websiteUA.set(ClientBusinessNamePage, ClientBusinessName("Chartoff Winkler Ltd")) //TODO: VEI-199 -> To be conditionally rendered.
 
-    } yield dummyCompanyNameUA
+      ukVatUA <- identifyUKVatNum(dummyCompanyNameUA, registrationWrapper.etmpDisplayRegistration.customerIdentification)
+
+    } yield ukVatUA
 
     Future.fromTry(userAnswers)
   }
@@ -250,5 +250,4 @@ class RegistrationService @Inject()(
       emailAddress = schemeDetails.businessEmailId
     )
   }
-
 }

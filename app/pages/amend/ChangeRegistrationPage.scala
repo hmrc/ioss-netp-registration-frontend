@@ -16,7 +16,7 @@
 
 package pages.amend
 
-import pages.{CheckAnswersPage, Page, Waypoints, EmptyWaypoints}
+import pages.{CheckAnswersPage, Page, Waypoints}
 import play.api.mvc.Call
 
 case class ChangeRegistrationPage(iossNum: String) extends CheckAnswersPage {

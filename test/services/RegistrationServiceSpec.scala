@@ -19,13 +19,15 @@ package services
 import base.SpecBase
 import connectors.RegistrationConnector
 import models.domain.PreviousSchemeDetails
-import models.{BusinessContactDetails, Country, InternationalAddress, TradingName, UserAnswers}
 import models.etmp.*
+import models.etmp.EtmpIdType.VRN
+import models.etmp.display.*
 import models.responses.UnexpectedResponseStatus
 import models.etmp.display.{EtmpDisplayEuRegistrationDetails, EtmpDisplayRegistration, EtmpDisplaySchemeDetails, RegistrationWrapper}
 import models.previousRegistrations.PreviousRegistrationDetails
 import models.responses.etmp.EtmpEnrolmentResponse
 import models.vatEuDetails.{EuDetails, RegistrationType, TradingNameAndBusinessAddress}
+import models.{BusinessContactDetails, ClientBusinessName, Country, InternationalAddress, TradingName, UserAnswers, Website}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
@@ -34,8 +36,9 @@ import org.scalatestplus.mockito.MockitoSugar.mock
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.HasTradingNamePage
 import pages.vatEuDetails.HasFixedEstablishmentPage
-import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage}
+import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage, ClientBusinessNamePage, ClientHasVatNumberPage, ClientVatNumberPage}
 import play.api.test.Helpers.running
+import queries.AllWebsites
 import testutils.RegistrationData
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
@@ -141,7 +144,10 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
               .copy(countryCode = ukCountryCode)
             ),
             etmpDisplayRegistration = registrationWrapper.etmpDisplayRegistration
-              .copy(otherAddress = registrationWrapper.etmpDisplayRegistration.otherAddress.map(_.copy(issuedBy = "DE")))
+              .copy(
+                customerIdentification = EtmpDisplayCustomerIdentification(VRN, registrationWrapper.etmpDisplayRegistration.customerIdentification.idValue),
+                otherAddress = registrationWrapper.etmpDisplayRegistration.otherAddress.map(_.copy(issuedBy = "DE"))
+              )
           )
 
         val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector)
@@ -161,7 +167,10 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
               .copy(countryCode = nonUkCountryCode)
             ),
           etmpDisplayRegistration = registrationWrapper.etmpDisplayRegistration
-            .copy(otherAddress = registrationWrapper.etmpDisplayRegistration.otherAddress.map(_.copy(issuedBy = nonUkCountryCode)))
+            .copy(
+              customerIdentification = EtmpDisplayCustomerIdentification(VRN, registrationWrapper.etmpDisplayRegistration.customerIdentification.idValue),
+              otherAddress = registrationWrapper.etmpDisplayRegistration.otherAddress.map(_.copy(issuedBy = nonUkCountryCode))
+            )
         )
 
         val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector)
@@ -230,8 +239,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
       convertEuFixedEstablishmentDetails(displayRegistration.schemeDetails.euRegistrationDetails)
     val contactDetails: BusinessContactDetails = getContactDetails(displayRegistration.schemeDetails)
 
-    val userAnswers = emptyUserAnswersWithVatInfo
-      .copy(vatInfo = Some(registrationWrapper.vatInfo))
+    val userAnswersPreVatOpt: UserAnswers = emptyUserAnswers
       .set(BusinessBasedInUKPage, isUkBasedIntermediary(registrationWrapper.vatInfo)).success.value
       .set(ClientBusinessAddressPage, convertNonUkAddress(displayRegistration.otherAddress)).success.value
       .set(HasTradingNamePage, convertedTradingNamesUA.nonEmpty).success.value
@@ -241,6 +249,14 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
       .set(HasFixedEstablishmentPage, convertedEuFixedEstablishmentDetails.nonEmpty).success.value
       .set(AllEuDetailsQuery, convertedEuFixedEstablishmentDetails.toList).success.value
       .set(BusinessContactDetailsPage, contactDetails).success.value
+      .set(ClientBusinessNamePage, ClientBusinessName("Chartoff Winkler Ltd")).success.value //TODO: VEI-199 -> To be conditionally rendered.
+      .set(AllWebsites, convertWebsite(registrationWrapper.etmpDisplayRegistration.schemeDetails.websites)).success.value
+
+
+    val userAnswers: UserAnswers = userAnswersPreVatOpt
+      .copy(vatInfo = Some(registrationWrapper.vatInfo))
+      .set(ClientHasVatNumberPage, true).success.value
+      .set(ClientVatNumberPage, registrationWrapper.etmpDisplayRegistration.customerIdentification.idValue).success.value
 
     if (isUkBasedIntermediary(registrationWrapper.vatInfo)) {
       userAnswers.remove(ClientBusinessAddressPage).success.value
@@ -253,6 +269,10 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
     for {
       etmpTradingName <- etmpTradingNames
     } yield TradingName(name = etmpTradingName.tradingName)
+  }
+
+  private def convertWebsite(etmpWebsites: Seq[EtmpWebsite]): List[Website] = {
+    etmpWebsites.map(etmpWebsite => Website(etmpWebsite.websiteAddress)).toList
   }
 
   private def convertEtmpPreviousEuRegistrations(allEtmpPreviousEuRegistrationDetails: Seq[EtmpPreviousEuRegistrationDetails]): List[PreviousRegistrationDetails] = {
