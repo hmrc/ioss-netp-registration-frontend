@@ -25,6 +25,7 @@ import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
 import models.audit.SubmissionResult.{Failure, Success}
 import models.audit.{DeclarationSigningAuditModel, RegistrationAuditModel, SubmissionResult}
 import models.requests.ClientOptionalDataRequest
+import models.responses.etmp.EtmpEnrolmentResponse
 import pages.clientDeclarationJourney.ClientDeclarationPage
 import pages.{ClientBusinessNamePage, ErrorSubmittingRegistrationPage, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
@@ -92,19 +93,19 @@ class ClientDeclarationController @Inject()(
                     _ <- registrationConnector.deletePendingRegistration(request.userAnswers.journeyId).recover {
                       case e =>
                         logger.error(s"Error occurred while deleting pending registration ${e.getMessage}", e)
-                        sendAudits(waypoints, clientCompanyName, intermediaryName, value, SubmissionResult.Failure)
+                        sendAudits(waypoints, clientCompanyName, intermediaryName, value, request.userAnswers, None, SubmissionResult.Failure)
                         throw e
                     }
                     updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientDeclarationPage, value))
                     updatedAnswers2 <- Future.fromTry(updatedAnswers.set(EtmpEnrolmentResponseQuery, response))
                     _ <- sessionRepository.set(updatedAnswers2)
                   } yield {
-                    sendAudits(waypoints, clientCompanyName, intermediaryName, value, SubmissionResult.Success)
+                    sendAudits(waypoints, clientCompanyName, intermediaryName, value, updatedAnswers2, Some(response), SubmissionResult.Success)
                     Redirect(routes.ClientSuccessfulRegistrationController.onPageLoad())
                   }
 
                 case Left(error) =>
-                  sendAudits(waypoints, clientCompanyName, intermediaryName, value, SubmissionResult.Failure)
+                  sendAudits(waypoints, clientCompanyName, intermediaryName, value, request.userAnswers, None, SubmissionResult.Failure)
                   logger.error(s"Unexpected result on registration creation submission: ${error.body}")
                   Redirect(ErrorSubmittingRegistrationPage.route(waypoints)).toFuture
               }
@@ -118,18 +119,20 @@ class ClientDeclarationController @Inject()(
                           clientCompanyName: String,
                           intermediaryName: String,
                           value: Boolean,
+                          userAnswers: UserAnswers,
+                          etmpEnrolmentResponse: Option[EtmpEnrolmentResponse],
                           submissionResult: SubmissionResult
                         )(implicit request: ClientOptionalDataRequest[_]): Unit = {
     auditService.audit(RegistrationAuditModel.build(
-      request.userAnswers,
-      None,
-      submissionResult
+      userAnswers = request.userAnswers,
+      etmpEnrolmentResponse = etmpEnrolmentResponse,
+      submissionResult = submissionResult
     ))
 
     auditService.audit(
       DeclarationSigningAuditModel.build(
         declarationSigningAuditType = CreateClientDeclaration,
-        userAnswers = request.userAnswers,
+        userAnswers = userAnswers,
         submissionResult = submissionResult,
         submittedDeclarationPageBody = view(form.fill(value), waypoints, clientCompanyName, intermediaryName).body
       )
