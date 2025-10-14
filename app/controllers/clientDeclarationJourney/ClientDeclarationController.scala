@@ -21,17 +21,16 @@ import controllers.actions.*
 import forms.clientDeclarationJourney.ClientDeclarationFormProvider
 import logging.Logging
 import models.UserAnswers
-import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
-import models.audit.SubmissionResult.{Failure, Success}
 import models.audit.{DeclarationSigningAuditModel, RegistrationAuditModel, SubmissionResult}
+import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
 import models.requests.ClientOptionalDataRequest
 import models.responses.etmp.EtmpEnrolmentResponse
-import pages.clientDeclarationJourney.ClientDeclarationPage
 import pages.{ClientBusinessNamePage, ErrorSubmittingRegistrationPage, JourneyRecoveryPage, Waypoints}
+import pages.clientDeclarationJourney.ClientDeclarationPage
 import play.api.data.Form
 import play.api.i18n.I18nSupport
-import play.api.mvc.Results.Redirect
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
+import play.api.mvc.Results.Redirect
 import queries.IntermediaryDetailsQuery
 import queries.etmp.EtmpEnrolmentResponseQuery
 import repositories.SessionRepository
