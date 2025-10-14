@@ -21,7 +21,6 @@ import controllers.actions.AuthenticatedControllerComponents
 import logging.Logging
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.OriginalRegistrationQuery
 import services.RegistrationService
@@ -31,11 +30,11 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class StartAmendJourneyController @Inject()(
-                                           override val messagesApi: MessagesApi,
-                                           cc: AuthenticatedControllerComponents,
-                                           registrationConnector: RegistrationConnector,
-                                           registrationService: RegistrationService,
-                                           val controllerComponents: MessagesControllerComponents
+                                             override val messagesApi: MessagesApi,
+                                             cc: AuthenticatedControllerComponents,
+                                             registrationConnector: RegistrationConnector,
+                                             registrationService: RegistrationService,
+                                             val controllerComponents: MessagesControllerComponents
                                            )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with Logging {
 
@@ -54,8 +53,8 @@ class StartAmendJourneyController @Inject()(
                 userAnswers.set(OriginalRegistrationQuery(iossNumber), registrationWrapper.etmpDisplayRegistration))
               _ <- cc.sessionRepository.set(userAnswers)
               _ <- cc.sessionRepository.set(originalAnswers)
-            } yield Ok(Json.toJson(originalAnswers)) // TODO VEI-199: Implement a redirect logic
-          
+            } yield Redirect(routes.ChangeRegistrationController.onPageLoad(waypoints, iossNumber).url)
+
           case Left(error) =>
             val exception = new Exception(error.body)
             logger.error(exception.getMessage, exception)

@@ -21,14 +21,13 @@ import connectors.RegistrationConnector
 import models.etmp.display.RegistrationWrapper
 import models.responses.NotFound
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.{reset, times, verify, verifyNoInteractions, when}
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.http.Status.OK
+import play.api.http.Status.SEE_OTHER
 import play.api.inject.bind
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{GET, defaultAwaitTimeout, route, running, status}
-import play.api.test.Helpers.writeableOf_AnyContentAsEmpty
+import play.api.test.Helpers.{GET, defaultAwaitTimeout, route, running, status, writeableOf_AnyContentAsEmpty}
 import services.RegistrationService
 import utils.FutureSyntax.FutureOps
 
@@ -49,7 +48,6 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
   
   "StartAmendJourneyController" - {
 
-    // TODO VEI-199: update this test scenario to redirect to the correct page and render stubbed user answers
     "must return OK" in {
 
       when(mockRegistrationConnector.displayRegistration(any())(any())) thenReturn Right(registrationWrapper).toFuture
@@ -65,7 +63,7 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
 
         val result = route(application, request).value
 
-        status(result) mustBe OK
+        status(result) mustBe SEE_OTHER
         verify(mockRegistrationConnector, times(1)).displayRegistration(eqTo(iossNumber))(any())
         verify(mockRegistrationService, times(1)).toUserAnswers(eqTo(userAnswersId), eqTo(registrationWrapper))
       }

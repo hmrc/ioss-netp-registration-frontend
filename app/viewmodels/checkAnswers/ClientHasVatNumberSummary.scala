@@ -31,7 +31,7 @@ object ClientHasVatNumberSummary {
            sourcePage: CheckAnswersPage
          )(implicit messages: Messages): Option[SummaryListRow] = {
     answers.get(ClientHasVatNumberPage).map { answer =>
-
+      
       val value = if (answer) "site.yes" else "site.no"
 
       SummaryListRowViewModel(

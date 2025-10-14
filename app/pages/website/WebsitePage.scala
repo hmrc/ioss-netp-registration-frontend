@@ -24,6 +24,7 @@ import queries.AllWebsites
 
 import scala.util.Try
 
+
 case class WebsitePage(index: Index) extends QuestionPage[Website] with AddToListQuestionPage {
 
   override val section: AddToListSection = WebsiteSection

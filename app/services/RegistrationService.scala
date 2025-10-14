@@ -20,22 +20,22 @@ import connectors.RegistrationConnector
 import connectors.RegistrationHttpParser.{AmendRegistrationResultResponse, RegistrationResultResponse}
 import logging.Logging
 import models.domain.PreviousSchemeDetails
-import models.{BusinessContactDetails, Country, InternationalAddress, TradingName, UserAnswers}
-import models.etmp.amend.EtmpAmendRegistrationRequest._
 import models.etmp.EtmpRegistrationRequest.buildEtmpRegistrationRequest
-import models.etmp.display.EtmpDisplayRegistration
-import models.etmp.{EtmpOtherAddress, EtmpPreviousEuRegistrationDetails, EtmpTradingName}
-import models.etmp.display.{EtmpDisplayEuRegistrationDetails, EtmpDisplaySchemeDetails, RegistrationWrapper}
+import models.etmp.amend.EtmpAmendRegistrationRequest
+import models.etmp.amend.EtmpAmendRegistrationRequest.*
+import models.etmp.display.*
+import models.etmp.{EtmpIdType, EtmpOtherAddress, EtmpPreviousEuRegistrationDetails, EtmpTradingName}
 import models.previousRegistrations.PreviousRegistrationDetails
 import models.vatEuDetails.{EuDetails, RegistrationType, TradingNameAndBusinessAddress}
-import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage}
+import models.{BusinessContactDetails, ClientBusinessName, Country, InternationalAddress, TradingName, UserAnswers, Website}
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.HasTradingNamePage
 import pages.vatEuDetails.HasFixedEstablishmentPage
+import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage, ClientBusinessNamePage, ClientHasVatNumberPage, ClientVatNumberPage}
+import queries.AllWebsites
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
-import models.etmp.amend.EtmpAmendRegistrationRequest
 import services.etmp.EtmpEuRegistrations
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CheckUkBased.isUkBasedIntermediary
@@ -70,7 +70,7 @@ class RegistrationService @Inject()(
       )
     )
   }
-  
+
   def toUserAnswers(userId: String, registrationWrapper: RegistrationWrapper): Future[UserAnswers] = {
 
     val etmpTradingNames: Seq[EtmpTradingName] = registrationWrapper.etmpDisplayRegistration.tradingNames
@@ -87,7 +87,7 @@ class RegistrationService @Inject()(
         vatInfo = Some(registrationWrapper.vatInfo)
       ).set(BusinessBasedInUKPage, hasUkBasedAddress)
 
-      hasUkAddress <- if(!hasUkBasedAddress) {
+      hasUkAddress <- if (!hasUkBasedAddress) {
         businessBasedInUk.set(ClientBusinessAddressPage, convertNonUkAddress(maybeOtherAddress))
       } else {
         Try(businessBasedInUk)
@@ -116,9 +116,36 @@ class RegistrationService @Inject()(
 
       contactDetailsUA <- euFixedEstablishmentUA.set(BusinessContactDetailsPage, getContactDetails(schemeDetails))
 
-    } yield contactDetailsUA
+      websiteUA <- implementWebsiteUserAnswers(contactDetailsUA, registrationWrapper.etmpDisplayRegistration)
+
+      dummyCompanyNameUA <- websiteUA.set(ClientBusinessNamePage, ClientBusinessName("Chartoff Winkler Ltd")) //TODO: VEI-199 -> To be conditionally rendered.
+
+      ukVatUA <- identifyUKVatNum(dummyCompanyNameUA, registrationWrapper.etmpDisplayRegistration.customerIdentification)
+
+    } yield ukVatUA
 
     Future.fromTry(userAnswers)
+  }
+
+  private def identifyUKVatNum(userAnswers: UserAnswers, customerInfo: EtmpDisplayCustomerIdentification): Try[UserAnswers] = {
+    customerInfo.idType match
+      case EtmpIdType.VRN => for {
+        answers <- userAnswers.set(ClientHasVatNumberPage, true)
+        answers2 <- answers.set(ClientVatNumberPage, customerInfo.idValue)
+      } yield answers2
+
+      case _ => userAnswers.set(ClientHasVatNumberPage, false)
+  }
+
+  private def implementWebsiteUserAnswers(userAnswers: UserAnswers, customerInfo: EtmpDisplayRegistration): Try[UserAnswers] = {
+
+    val websiteList: List[Website] = customerInfo.schemeDetails.websites.map { etmpWebsite =>
+      Website(etmpWebsite.websiteAddress)
+    }.toList
+
+    for {
+      websiteUserUA <- userAnswers.set(AllWebsites, websiteList)
+    } yield websiteUserUA
   }
 
   private def convertNonUkAddress(maybeOtherAddress: Option[EtmpOtherAddress]): InternationalAddress = {
@@ -218,5 +245,4 @@ class RegistrationService @Inject()(
       emailAddress = schemeDetails.businessEmailId
     )
   }
-
 }

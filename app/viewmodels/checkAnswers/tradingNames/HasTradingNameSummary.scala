@@ -41,7 +41,8 @@ object HasTradingNameSummary  {
           )
         )
     }
-
+  
+  
   def rowWithoutAction(answers: UserAnswers, waypoints: Waypoints)(implicit messages: Messages): Option[SummaryListRow] =
     answers.get(HasTradingNamePage).map {
       answer =>

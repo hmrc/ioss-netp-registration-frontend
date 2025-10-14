@@ -26,9 +26,9 @@ import queries.previousRegistrations.*
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content.HtmlContent
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import utils.CheckExistingRegistrations
-import viewmodels.{ListItemWrapper, ListItem}
 import viewmodels.govuk.summarylist.*
 import viewmodels.implicits.*
+import viewmodels.{ListItem, ListItemWrapper}
 
 object PreviousRegistrationSummary {
 
