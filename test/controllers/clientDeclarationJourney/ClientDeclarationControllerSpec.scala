@@ -200,6 +200,7 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
         val mockSessionRepository = mock[SessionRepository]
         val mockRegistrationService = mock[RegistrationService]
+        val mockRegistrationConnector = mock[RegistrationConnector]
         val mockClientDeclarationView = mock[ClientDeclarationView]
         val viewMock = mock[play.twirl.api.HtmlFormat.Appendable]
         val testViewBody = "test-view-body"
@@ -208,6 +209,7 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
 
         when(mockSessionRepository.set(any())) thenReturn true.toFuture
         when(mockRegistrationService.createRegistration(any())(any())) thenReturn Right(etmpEnrolmentResponse).toFuture
+        when(mockRegistrationConnector.deletePendingRegistration(any())(any())) thenReturn true.toFuture
         when(mockClientDeclarationView.apply(any(), any(), any(), any())(any(), any())) thenReturn viewMock
         when(viewMock.body) thenReturn testViewBody
 
@@ -216,6 +218,7 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
             .overrides(
               bind[SessionRepository].toInstance(mockSessionRepository),
               bind[RegistrationService].toInstance(mockRegistrationService),
+              bind[RegistrationConnector].toInstance(mockRegistrationConnector),
               bind[AuditService].toInstance(mockAuditService),
               bind[ClientDeclarationView].toInstance(mockClientDeclarationView),
             )
