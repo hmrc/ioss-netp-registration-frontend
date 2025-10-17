@@ -27,6 +27,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import queries.IossNumberQuery
 import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -66,6 +67,7 @@ class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAf
           userId = userAnswersId,
           userAnswers = emptyUserAnswersWithVatInfo,
           intermediaryNumber = intermediaryNumber,
+          iossNumber = None,
           registrationWrapper = None
         ))
 
@@ -111,16 +113,19 @@ class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAf
 
     "when isInAmendMode is true" - {
 
-      "must fetch registration and populate registrationWrapper" in {
+      "must fetch NETP registration when IossNumberQuery is present" in {
 
-        when(mockRegistrationConnector.displayRegistration(eqTo(intermediaryNumber))(any()))
+        val userAnswersWithIossNumber = emptyUserAnswersWithVatInfo
+          .set(IossNumberQuery, iossNumber).success.value
+
+        when(mockRegistrationConnector.displayRegistrationNetp(eqTo(iossNumber))(any()))
           .thenReturn(Right(registrationWrapper).toFuture)
 
         val action = new Harness(isInAmendMode = true)
         val request = OptionalDataRequest(
           FakeRequest(),
           userAnswersId,
-          Some(emptyUserAnswersWithVatInfo),
+          Some(userAnswersWithIossNumber),
           Some(intermediaryNumber)
         )
 
@@ -129,25 +134,85 @@ class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAf
         result mustBe Right(DataRequest(
           request = request.request,
           userId = userAnswersId,
-          userAnswers = emptyUserAnswersWithVatInfo,
+          userAnswers = userAnswersWithIossNumber,
           intermediaryNumber = intermediaryNumber,
+          iossNumber = Some(iossNumber),
           registrationWrapper = Some(registrationWrapper)
         ))
 
         verify(mockRegistrationConnector, times(1))
-          .displayRegistration(eqTo(intermediaryNumber))(any())
+          .displayRegistrationNetp(eqTo(iossNumber))(any())
+        verify(mockRegistrationConnector, times(0))
+          .displayRegistrationIntermediary(any())(any())
       }
 
-      "must throw RuntimeException when displayRegistration fails" in {
+      "must fetch intermediary registration when IossNumberQuery is NOT present" in {
 
-        when(mockRegistrationConnector.displayRegistration(eqTo(intermediaryNumber))(any()))
+        val userAnswersWithoutIossNumber = emptyUserAnswersWithVatInfo
+
+        when(mockRegistrationConnector.displayRegistrationIntermediary(eqTo(intermediaryNumber))(any()))
+          .thenReturn(Right(registrationWrapper).toFuture)
+
+        val action = new Harness(isInAmendMode = true)
+        val request = OptionalDataRequest(
+          FakeRequest(),
+          userAnswersId,
+          Some(userAnswersWithoutIossNumber),
+          Some(intermediaryNumber)
+        )
+
+        val result = action.callRefine(request).futureValue
+
+        result mustBe Right(DataRequest(
+          request = request.request,
+          userId = userAnswersId,
+          userAnswers = userAnswersWithoutIossNumber,
+          intermediaryNumber = intermediaryNumber,
+          iossNumber = None,
+          registrationWrapper = Some(registrationWrapper)
+        ))
+
+        verify(mockRegistrationConnector, times(1))
+          .displayRegistrationIntermediary(eqTo(intermediaryNumber))(any())
+        verify(mockRegistrationConnector, times(0))
+          .displayRegistrationNetp(any())(any())
+      }
+
+      "must throw RuntimeException when displayRegistrationNetp fails" in {
+
+        val userAnswersWithIossNumber = emptyUserAnswersWithVatInfo
+          .set(IossNumberQuery, iossNumber).success.value
+
+        when(mockRegistrationConnector.displayRegistrationNetp(eqTo(iossNumber))(any()))
           .thenReturn(Left(NotFound).toFuture)
 
         val action = new Harness(isInAmendMode = true)
         val request = OptionalDataRequest(
           FakeRequest(),
           userAnswersId,
-          Some(emptyUserAnswersWithVatInfo),
+          Some(userAnswersWithIossNumber),
+          Some(intermediaryNumber)
+        )
+
+        val exception = intercept[RuntimeException] {
+          action.callRefine(request).futureValue
+        }
+
+        exception.getMessage must include("Failed to retrieve registration whilst in amend mode")
+      }
+
+      "must throw RuntimeException when displayRegistrationIntermediary fails" in {
+
+        val userAnswersWithoutIossNumber = emptyUserAnswersWithVatInfo
+
+        when(mockRegistrationConnector.displayRegistrationIntermediary(eqTo(intermediaryNumber))(any()))
+          .thenReturn(Left(NotFound).toFuture)
+
+        val action = new Harness(isInAmendMode = true)
+        val request = OptionalDataRequest(
+          FakeRequest(),
+          userAnswersId,
+          Some(userAnswersWithoutIossNumber),
           Some(intermediaryNumber)
         )
 

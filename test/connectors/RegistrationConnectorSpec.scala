@@ -834,7 +834,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
       }
     }
 
-    ".displayRegistration" - {
+    ".displayRegistrationNetp" - {
 
       val displayRegistrationUrl: String = s"/ioss-netp-registration/registrations/$iossNumber"
 
@@ -855,7 +855,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
           val connector = application.injector.instanceOf[RegistrationConnector]
 
-          val result = connector.displayRegistration(iossNumber).futureValue
+          val result = connector.displayRegistrationNetp(iossNumber).futureValue
 
           result `mustBe` Right(displayRegistrationWrapper)
         }
@@ -877,7 +877,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
           val connector = application.injector.instanceOf[RegistrationConnector]
 
-          val result = connector.displayRegistration(iossNumber).futureValue
+          val result = connector.displayRegistrationNetp(iossNumber).futureValue
 
           result `mustBe` Left(InvalidJson)
         }
@@ -896,7 +896,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
           val connector = application.injector.instanceOf[RegistrationConnector]
 
-          val result = connector.displayRegistration(iossNumber).futureValue
+          val result = connector.displayRegistrationNetp(iossNumber).futureValue
 
           result `mustBe` Left(InternalServerError)
         }

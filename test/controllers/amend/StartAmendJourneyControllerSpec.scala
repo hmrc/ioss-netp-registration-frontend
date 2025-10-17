@@ -50,7 +50,7 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
 
     "must return OK" in {
 
-      when(mockRegistrationConnector.displayRegistration(any())(any())) thenReturn Right(registrationWrapper).toFuture
+      when(mockRegistrationConnector.displayRegistrationNetp(any())(any())) thenReturn Right(registrationWrapper).toFuture
       when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn basicUserAnswersWithVatInfo.toFuture
 
       val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
@@ -64,14 +64,14 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
         val result = route(application, request).value
 
         status(result) mustBe SEE_OTHER
-        verify(mockRegistrationConnector, times(1)).displayRegistration(eqTo(iossNumber))(any())
+        verify(mockRegistrationConnector, times(1)).displayRegistrationNetp(eqTo(iossNumber))(any())
         verify(mockRegistrationService, times(1)).toUserAnswers(eqTo(userAnswersId), eqTo(registrationWrapper))
       }
     }
 
     "must throw an Exception when the RegistrationConnector throws an error" in {
 
-      when(mockRegistrationConnector.displayRegistration(any())(any())) thenReturn Left(NotFound).toFuture
+      when(mockRegistrationConnector.displayRegistrationNetp(any())(any())) thenReturn Left(NotFound).toFuture
 
       val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
         .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
@@ -86,7 +86,7 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
           exp `mustBe` a[Exception]
           exp.getMessage `mustBe` NotFound.body
         }
-        verify(mockRegistrationConnector, times(1)).displayRegistration(eqTo(iossNumber))(any())
+        verify(mockRegistrationConnector, times(1)).displayRegistrationNetp(eqTo(iossNumber))(any())
         verifyNoInteractions(mockRegistrationService)
       }
     }
@@ -95,7 +95,7 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
 
       val errorMessage: String = "ERROR"
 
-      when(mockRegistrationConnector.displayRegistration(any())(any())) thenReturn Right(registrationWrapper).toFuture
+      when(mockRegistrationConnector.displayRegistrationNetp(any())(any())) thenReturn Right(registrationWrapper).toFuture
       when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn Future.failed(Exception(errorMessage))
 
       val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
@@ -112,7 +112,7 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
           exp `mustBe` a[Exception]
           exp.getMessage `mustBe` errorMessage
         }
-        verify(mockRegistrationConnector, times(1)).displayRegistration(eqTo(iossNumber))(any())
+        verify(mockRegistrationConnector, times(1)).displayRegistrationNetp(eqTo(iossNumber))(any())
         verify(mockRegistrationService, times(1)).toUserAnswers(eqTo(userAnswersId), eqTo(registrationWrapper))
       }
     }

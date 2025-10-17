@@ -180,7 +180,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           val result = route(application, request).value
 
           implicit val dataRequest: DataRequest[_] = {
-            DataRequest(request, userAnswersId, userAnswers, intermediaryDetails.intermediaryNumber)
+            DataRequest(request, userAnswersId, userAnswers, intermediaryDetails.intermediaryNumber, None)
           }
 
           val expectedAnswers = userAnswers
@@ -250,7 +250,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           val result = route(application, request).value
 
           implicit val dataRequest: DataRequest[_] = {
-            DataRequest(request, userAnswersId, userAnswers, intermediaryDetails.intermediaryNumber)
+            DataRequest(request, userAnswersId, userAnswers, intermediaryDetails.intermediaryNumber, None)
           }
 
           val expectedAnswers = userAnswers
@@ -358,7 +358,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
           val result = route(application, request).value
 
           implicit val dataRequest: DataRequest[_] = {
-            DataRequest(request, userAnswersId, userAnswers, intermediaryDetails.intermediaryNumber)
+            DataRequest(request, userAnswersId, userAnswers, intermediaryDetails.intermediaryNumber, None)
           }
 
           val expectedAuditEvent: DeclarationSigningAuditModel = DeclarationSigningAuditModel.build(

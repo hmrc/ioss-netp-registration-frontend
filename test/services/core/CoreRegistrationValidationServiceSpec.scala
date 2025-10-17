@@ -79,10 +79,10 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  private val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, emptyUserAnswers, intermediaryDetails.intermediaryNumber)
+  private val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, emptyUserAnswers, intermediaryDetails.intermediaryNumber, None)
 
   implicit private val dataRequest: DataRequest[AnyContent] =
-    DataRequest(request, vrn.vrn, emptyUserAnswers, intermediaryDetails.intermediaryNumber)
+    DataRequest(request, vrn.vrn, emptyUserAnswers, intermediaryDetails.intermediaryNumber, None)
 
   private def baseCoreRegistrationRequest(
                                            source: String,

@@ -77,6 +77,7 @@ class DataRequiredActionImpl @Inject()(registrationConnector: RegistrationConnec
             userId = request.userId,
             userAnswers = data,
             intermediaryNumber = intermediaryNumber,
+            iossNumber = data.get(IossNumberQuery),
             registrationWrapper = maybeWrapper
           ))
         }

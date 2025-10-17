@@ -56,7 +56,8 @@ class AuditServiceSpec extends AnyFreeSpec with MockitoSugar with ScalaFutures w
         FakeRequest("POST", "/test-path"),
         userAnswersId,
         emptyUserAnswers,
-        intermediaryDetails.intermediaryNumber
+        intermediaryDetails.intermediaryNumber,
+        None
       )
 
       service.audit(
