@@ -16,7 +16,7 @@
 
 package viewmodels.checkAnswers
 
-import models.UserAnswers
+import models.{Country, UserAnswers}
 import pages.{CheckAnswersPage, Waypoints}
 import play.api.i18n.Messages
 import play.twirl.api.HtmlFormat
@@ -43,6 +43,32 @@ object VatRegistrationDetailsSummary {
           answer.desAddress.line5.map(HtmlFormat.escape),
           answer.desAddress.postCode.map(HtmlFormat.escape),
           Some(HtmlFormat.escape(answer.desAddress.countryCode).toString)
+        ).flatten.mkString("<br/>")
+
+        SummaryListRowViewModel(
+          key = "clientBusinessAddress.checkYourAnswersLabel",
+          value = ValueViewModel(HtmlContent(value))
+        )
+    }
+  }
+  
+  def changeRegBusinessAddressRow(
+                          waypoints: Waypoints,
+                          answers: UserAnswers,
+                          sourcePage: CheckAnswersPage)(implicit messages: Messages): Option[SummaryListRow] = {
+    answers.vatInfo.map {
+      answer =>
+        
+        val country = Country.fromCountryCodeAllCountries(answer.desAddress.countryCode).map(_.name)
+
+        val value = Seq(
+          Some(HtmlFormat.escape(answer.desAddress.line1).toString),
+          answer.desAddress.line2.map(HtmlFormat.escape),
+          answer.desAddress.line3.map(HtmlFormat.escape),
+          answer.desAddress.line4.map(HtmlFormat.escape),
+          answer.desAddress.line5.map(HtmlFormat.escape),
+          answer.desAddress.postCode.map(HtmlFormat.escape),
+          country.map(HtmlFormat.escape)
         ).flatten.mkString("<br/>")
 
         SummaryListRowViewModel(

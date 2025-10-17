@@ -52,6 +52,34 @@ object ClientBusinessAddressSummary {
       )
     }
   }
+  
+  def changeRegRow(
+           waypoints: Waypoints,
+           answers: UserAnswers,
+           sourcePage: CheckAnswersPage
+         )(implicit messages: Messages): Option[SummaryListRow] = {
+    answers.get(ClientBusinessAddressPage).map { answer =>
+
+      val country = answer.country.map(_.name)
+      val value = Seq(
+        Some(HtmlFormat.escape(answer.line1).toString),
+        answer.line2.map(HtmlFormat.escape),
+        Some(HtmlFormat.escape(answer.townOrCity).toString),
+        answer.stateOrRegion.map(HtmlFormat.escape),
+        answer.postCode.map(HtmlFormat.escape),
+        country.map(HtmlFormat.escape)
+      ).flatten.mkString("<br/>")
+
+      SummaryListRowViewModel(
+        key = "clientBusinessAddress.checkYourAnswersLabel",
+        value = ValueViewModel(HtmlContent(value)),
+        actions = Seq(
+          ActionItemViewModel("site.change", ClientBusinessAddressPage.changeLink(waypoints, sourcePage).url)
+            .withVisuallyHiddenText(messages("clientBusinessAddress.change.hidden"))
+        )
+      )
+    }
+  }
 
   def rowWithoutAction(
            waypoints: Waypoints,

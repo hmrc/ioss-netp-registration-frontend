@@ -30,6 +30,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
 import viewmodels.checkAnswers.*
+import pages.*
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
 import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
 import viewmodels.govuk.summarylist.*
@@ -51,21 +52,32 @@ class ChangeRegistrationController @Inject()(
       val userAnswers = request.userAnswers
       val thisPage = ChangeRegistrationPage(iossNumber)
 
+      val clientBasedInUk = userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
+
       getClientCompanyName(waypoints) { companyName =>
+
         val registrationDetailsList = SummaryListViewModel(
           rows = Seq(
-            BusinessBasedInUKSummary.rowWithoutAction(waypoints, request.userAnswers),
-            ClientHasVatNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
-            ClientVatNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
-            VatRegistrationDetailsSummary.rowBusinessAddress(waypoints, request.userAnswers, thisPage)
+            BusinessBasedInUKSummary.rowWithoutAction(waypoints, userAnswers),
+            ClientHasVatNumberSummary.rowWithoutAction(waypoints, userAnswers),
+            if(!clientBasedInUk) ClientCountryBasedSummary.row(waypoints, userAnswers, thisPage) else None,
+            ClientVatNumberSummary.rowWithoutAction(waypoints, userAnswers),
+            // Trading name
+            ClientBusinessNameSummary.row(waypoints, userAnswers, thisPage),
+            ClientHasUtrNumberSummary.rowWithoutAction(waypoints, userAnswers),
+            ClientUtrNumberSummary.rowWithoutAction(waypoints, userAnswers),
+            ClientsNinoNumberSummary.row(waypoints, userAnswers, thisPage),
+            VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, userAnswers, thisPage),
+            ClientBusinessAddressSummary.changeRegRow(waypoints, userAnswers, thisPage)
+            //Business Address
           ).flatten
         )
 
-        val(hasTradingNameRow, tradingNameRow) = getTradingNameRows(request.userAnswers, waypoints, thisPage)
+        val(hasTradingNameRow, tradingNameRow) = getTradingNameRows(userAnswers, waypoints, thisPage)
 
-        val(previouslyRegisteredRow, previousRegSummaryRow) = getPreviousRegRows(request.userAnswers, waypoints)
+        val(previouslyRegisteredRow, previousRegSummaryRow) = getPreviousRegRows(userAnswers, waypoints)
 
-        val(hasFixedEstablishmentRow, euDetailsSummaryRow) = getFixedEstablishmentRows(waypoints, request.userAnswers, thisPage)
+        val(hasFixedEstablishmentRow, euDetailsSummaryRow) = getFixedEstablishmentRows(waypoints, userAnswers, thisPage)
 
         val(contactNameRow, telephoneNumRow, emailRow) = getBusinessContactRows(waypoints, userAnswers, thisPage)
 
@@ -85,7 +97,6 @@ class ChangeRegistrationController @Inject()(
         )
 
         Ok(view(waypoints, companyName, iossNumber, registrationDetailsList, importOneStopShopDetailsList)).toFuture
-
       }
 
   }

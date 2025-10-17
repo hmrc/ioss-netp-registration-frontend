@@ -31,7 +31,7 @@ object ClientHasVatNumberSummary {
            sourcePage: CheckAnswersPage
          )(implicit messages: Messages): Option[SummaryListRow] = {
     answers.get(ClientHasVatNumberPage).map { answer =>
-      
+
       val value = if (answer) "site.yes" else "site.no"
 
       SummaryListRowViewModel(
@@ -46,17 +46,28 @@ object ClientHasVatNumberSummary {
   }
 
   def rowWithoutAction(
-           waypoints: Waypoints,
-           answers: UserAnswers
-         )(implicit messages: Messages): Option[SummaryListRow] = {
-    answers.get(ClientHasVatNumberPage).map { answer =>
+                        waypoints: Waypoints,
+                        answers: UserAnswers
+                      )(implicit messages: Messages): Option[SummaryListRow] = {
 
-      val value = if (answer) "site.yes" else "site.no"
+    val maybeClientVatNumPage: Option[Boolean] = answers.get(ClientHasVatNumberPage)
+    if (maybeClientVatNumPage.isDefined) {
+      maybeClientVatNumPage.map { answer =>
 
-      SummaryListRowViewModel(
+        val value = if (answer) "site.yes" else "site.no"
+
+        SummaryListRowViewModel(
+          key = "clientHasVatNumber.checkYourAnswersLabel",
+          value = ValueViewModel(value)
+        )
+
+      }
+    } else {
+
+      Some(SummaryListRowViewModel(
         key = "clientHasVatNumber.checkYourAnswersLabel",
-        value = ValueViewModel(value)
-      )
+        value = ValueViewModel("site.no")
+      ))
     }
   }
 }

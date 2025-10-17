@@ -47,13 +47,22 @@ class StartAmendJourneyController @Inject()(
 
         displayRegistrationResponse match {
           case Right(registrationWrapper) =>
+
             for {
               userAnswers <- registrationService.toUserAnswers(request.userId, registrationWrapper)
               originalAnswers <- Future.fromTry(
                 userAnswers.set(OriginalRegistrationQuery(iossNumber), registrationWrapper.etmpDisplayRegistration))
               _ <- cc.sessionRepository.set(userAnswers)
               _ <- cc.sessionRepository.set(originalAnswers)
-            } yield Redirect(routes.ChangeRegistrationController.onPageLoad(waypoints, iossNumber).url)
+            } yield {
+              println("\n\nuserAnswers:")
+              println(userAnswers)
+              println("\n\noriginalAnswers:")
+              println(originalAnswers)
+              println("\n\nregistrationWrapper:")
+              println(registrationWrapper)
+              Redirect(routes.ChangeRegistrationController.onPageLoad(waypoints, iossNumber).url)
+            }
 
           case Left(error) =>
             val exception = new Exception(error.body)
