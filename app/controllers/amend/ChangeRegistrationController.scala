@@ -30,6 +30,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
 import viewmodels.checkAnswers.*
+import pages.*
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
 import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
 import viewmodels.govuk.summarylist.*
@@ -50,21 +51,32 @@ class ChangeRegistrationController @Inject()(
 
       val thisPage = ChangeRegistrationPage(iossNumber)
 
+      val clientBasedInUk = userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
+
       getClientCompanyName(waypoints) { companyName =>
+
         val registrationDetailsList = SummaryListViewModel(
           rows = Seq(
             BusinessBasedInUKSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientHasVatNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
+            if(!clientBasedInUk) ClientCountryBasedSummary.row(waypoints, request.userAnswers, thisPage) else None,
             ClientVatNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
-            VatRegistrationDetailsSummary.rowBusinessAddress(waypoints, request.userAnswers, thisPage)
+            // Trading name
+            ClientBusinessNameSummary.row(waypoints, request.userAnswers, thisPage),
+            ClientHasUtrNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
+            ClientUtrNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
+            ClientsNinoNumberSummary.row(waypoints, request.userAnswers, thisPage),
+            VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, request.userAnswers, thisPage),
+            ClientBusinessAddressSummary.changeRegRow(waypoints, request.userAnswers, thisPage)
+            //Business Address
           ).flatten
         )
 
-        val (hasTradingNameRow, tradingNameRow) = getTradingNameRows(request.userAnswers, waypoints, thisPage)
+        val(hasTradingNameRow, tradingNameRow) = getTradingNameRows(request.userAnswers, waypoints, thisPage)
 
-        val (previouslyRegisteredRow, previousRegSummaryRow) = getPreviousRegRows(request.userAnswers, waypoints)
+        val(previouslyRegisteredRow, previousRegSummaryRow) = getPreviousRegRows(request.userAnswers, waypoints)
 
-        val (hasFixedEstablishmentRow, euDetailsSummaryRow) = getFixedEstablishmentRows(waypoints, request.userAnswers, thisPage)
+        val(hasFixedEstablishmentRow, euDetailsSummaryRow) = getFixedEstablishmentRows(waypoints, request.userAnswers, thisPage)
 
         val (contactNameRow, telephoneNumRow, emailRow) = getBusinessContactRows(waypoints, request.userAnswers, thisPage)
 

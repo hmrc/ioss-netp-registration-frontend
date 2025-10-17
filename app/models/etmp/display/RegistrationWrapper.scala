@@ -19,7 +19,7 @@ package models.etmp.display
 import models.domain.VatCustomerInfo
 import play.api.libs.json.{Json, OFormat}
 
-case class RegistrationWrapper(vatInfo: VatCustomerInfo, etmpDisplayRegistration: EtmpDisplayRegistration)
+case class RegistrationWrapper(vatInfo: Option[VatCustomerInfo], etmpDisplayRegistration: EtmpDisplayRegistration)
 
 object RegistrationWrapper {
 

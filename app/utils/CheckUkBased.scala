@@ -18,10 +18,20 @@ package utils
 
 import config.Constants.ukCountryCodeAreaPrefix
 import models.domain.VatCustomerInfo
+import models.etmp.EtmpOtherAddress
 
 object CheckUkBased {
 
-  def isUkBasedIntermediary(vatCustomerInfo: VatCustomerInfo): Boolean = {
-    vatCustomerInfo.desAddress.countryCode.startsWith(ukCountryCodeAreaPrefix)
+  def isUkBasedNetp(vatCustomerInfo: Option[VatCustomerInfo], otherAddress: Option[EtmpOtherAddress]): Boolean = {
+
+    (vatCustomerInfo, otherAddress) match {
+      case (Some(vatInfo), Some(address)) =>
+        vatInfo.desAddress.countryCode.startsWith(ukCountryCodeAreaPrefix) &&
+          address.issuedBy.startsWith(ukCountryCodeAreaPrefix) //TODO- VEI-199, talk to Andrew RE- requirements, can someone be VAT in UK, Address not in UK
+      case (Some(vatInfo), None) =>
+        vatInfo.desAddress.countryCode.startsWith(ukCountryCodeAreaPrefix)
+      case (None, Some(address)) =>
+        address.issuedBy.startsWith(ukCountryCodeAreaPrefix)
+    }
   }
 }

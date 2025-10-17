@@ -45,7 +45,7 @@ import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
 import testutils.WireMockHelper
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.CheckUkBased.isUkBasedIntermediary
+import utils.CheckUkBased.isUkBasedNetp
 import utils.FutureSyntax.FutureOps
 
 import java.time.LocalDate
@@ -240,7 +240,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
     val contactDetails: BusinessContactDetails = getContactDetails(displayRegistration.schemeDetails)
 
     val userAnswersPreVatOpt: UserAnswers = emptyUserAnswers
-      .set(BusinessBasedInUKPage, isUkBasedIntermediary(registrationWrapper.vatInfo)).success.value
+      .set(BusinessBasedInUKPage, isUkBasedNetp(registrationWrapper.vatInfo)).success.value
       .set(ClientBusinessAddressPage, convertNonUkAddress(displayRegistration.otherAddress)).success.value
       .set(HasTradingNamePage, convertedTradingNamesUA.nonEmpty).success.value
       .set(AllTradingNamesQuery, convertedTradingNamesUA.toList).success.value
@@ -258,7 +258,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
       .set(ClientHasVatNumberPage, true).success.value
       .set(ClientVatNumberPage, registrationWrapper.etmpDisplayRegistration.customerIdentification.idValue).success.value
 
-    if (isUkBasedIntermediary(registrationWrapper.vatInfo)) {
+    if (isUkBasedNetp(registrationWrapper.vatInfo)) {
       userAnswers.remove(ClientBusinessAddressPage).success.value
     } else {
       userAnswers
