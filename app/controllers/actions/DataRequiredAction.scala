@@ -17,12 +17,14 @@
 package controllers.actions
 
 import connectors.RegistrationConnector
+import connectors.RegistrationHttpParser.EtmpDisplayRegistrationResponse
 import controllers.routes
 import logging.Logging
 import models.etmp.display.RegistrationWrapper
 import models.requests.{DataRequest, OptionalDataRequest}
 import models.responses.ErrorResponse
 import play.api.mvc.Results.Redirect
+import queries.IossNumberQuery
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import play.api.mvc.{ActionRefiner, Result}
@@ -48,10 +50,22 @@ class DataRequiredActionImpl @Inject()(registrationConnector: RegistrationConnec
         val eventualMaybeRegistrationWrapper: Future[Option[RegistrationWrapper]] = {
           if (isInAmendMode) {
              implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request.request, request.session)
-             registrationConnector.displayRegistration(intermediaryNumber)(hc).flatMap {
-               case Left(error: ErrorResponse) => Future.failed(new RuntimeException(s"Failed to retrieve registration whilst in amend mode: ${error.body}"))
-               case Right(registrationWrapper: RegistrationWrapper) => Future.successful(Some(registrationWrapper))
+              val registrationFuture: Future[EtmpDisplayRegistrationResponse] = data.get(IossNumberQuery) match {
+              case Some(iossNumber) =>
+                logger.info(s"Fetching NETP client registration: $iossNumber")
+                registrationConnector.displayRegistrationNetp(iossNumber)(hc)
+
+              case None =>
+                logger.info(s"Fetching intermediary registration: $intermediaryNumber")
+                registrationConnector.displayRegistrationIntermediary(intermediaryNumber)(hc)
              }
+
+              registrationFuture.flatMap {
+              case Left(error: ErrorResponse) =>
+                Future.failed(new RuntimeException(s"Failed to retrieve registration whilst in amend mode: ${error.body}"))
+              case Right(registrationWrapper: RegistrationWrapper) =>
+                Future.successful(Some(registrationWrapper))
+            }
           } else {
             Future.successful(None)
           }

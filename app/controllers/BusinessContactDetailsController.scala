@@ -25,6 +25,7 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
+import utils.AmendWaypoints.AmendWaypointsOps
 import views.html.BusinessContactDetailsView
 
 import javax.inject.Inject
@@ -41,7 +42,7 @@ class BusinessContactDetailsController @Inject()(
   private val form: Form[BusinessContactDetails] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
     implicit request =>
 
       getClientCompanyName(waypoints) { clientCompanyName =>
@@ -55,7 +56,7 @@ class BusinessContactDetailsController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
     implicit request =>
 
       getClientCompanyName(waypoints) { clientCompanyName =>

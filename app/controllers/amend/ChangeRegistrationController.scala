@@ -25,6 +25,7 @@ import pages.amend.ChangeRegistrationPage
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.IossNumberQuery
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
@@ -37,112 +38,118 @@ import viewmodels.previousRegistrations.{PreviousRegistrationSummary, Previously
 import views.html.ChangeRegistrationView
 
 import javax.inject.Inject
+import scala.concurrent.{ExecutionContext, Future}
 
 class ChangeRegistrationController @Inject()(
                                               override val messagesApi: MessagesApi,
                                               cc: AuthenticatedControllerComponents,
                                               val controllerComponents: MessagesControllerComponents,
                                               view: ChangeRegistrationView
-                                            ) extends FrontendBaseController with I18nSupport with Logging with GetClientCompanyName {
+                                            ) (implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientCompanyName {
 
   def onPageLoad(waypoints: Waypoints = EmptyWaypoints, iossNumber: String): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
-      val userAnswers = request.userAnswers
-      val thisPage = ChangeRegistrationPage(iossNumber)
+      val storeResult = for {
+        updatedAnswers <- Future.fromTry(request.userAnswers.set(IossNumberQuery, iossNumber))
+        _ <- cc.sessionRepository.set(updatedAnswers)
+      } yield updatedAnswers
 
-      getClientCompanyName(waypoints) { companyName =>
-        val registrationDetailsList = SummaryListViewModel(
-          rows = Seq(
-            BusinessBasedInUKSummary.rowWithoutAction(waypoints, request.userAnswers),
-            ClientHasVatNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
-            ClientVatNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
-            VatRegistrationDetailsSummary.rowBusinessAddress(waypoints, request.userAnswers, thisPage)
-          ).flatten
-        )
+      storeResult.flatMap { userAnswers =>
+        val thisPage = ChangeRegistrationPage(iossNumber)
 
-        val(hasTradingNameRow, tradingNameRow) = getTradingNameRows(request.userAnswers, waypoints, thisPage)
+        getClientCompanyName(waypoints) { companyName =>
+          val registrationDetailsList = SummaryListViewModel(
+            rows = Seq(
+              BusinessBasedInUKSummary.rowWithoutAction(waypoints, userAnswers),
+              ClientHasVatNumberSummary.rowWithoutAction(waypoints, userAnswers),
+              ClientVatNumberSummary.rowWithoutAction(waypoints, userAnswers),
+              VatRegistrationDetailsSummary.rowBusinessAddress(waypoints, userAnswers, thisPage)
+            ).flatten
+          )
 
-        val(previouslyRegisteredRow, previousRegSummaryRow) = getPreviousRegRows(request.userAnswers, waypoints)
+          val (hasTradingNameRow, tradingNameRow) = getTradingNameRows(userAnswers, waypoints, thisPage)
 
-        val(hasFixedEstablishmentRow, euDetailsSummaryRow) = getFixedEstablishmentRows(waypoints, request.userAnswers, thisPage)
+          val (previouslyRegisteredRow, previousRegSummaryRow) = getPreviousRegRows(userAnswers, waypoints)
 
-        val(contactNameRow, telephoneNumRow, emailRow) = getBusinessContactRows(waypoints, userAnswers, thisPage)
+          val (hasFixedEstablishmentRow, euDetailsSummaryRow) = getFixedEstablishmentRows(waypoints, userAnswers, thisPage)
 
-        val importOneStopShopDetailsList = SummaryListViewModel(
-          rows = Seq(
-            hasTradingNameRow,
-            tradingNameRow,
-            previouslyRegisteredRow,
-            previousRegSummaryRow,
-            hasFixedEstablishmentRow,
-            euDetailsSummaryRow,
-            WebsiteSummary.checkAnswersRow(waypoints, userAnswers, thisPage),
-            contactNameRow,
-            telephoneNumRow,
-            emailRow
-          ).flatten
-        )
+          val (contactNameRow, telephoneNumRow, emailRow) = getBusinessContactRows(waypoints, userAnswers, thisPage)
 
-        Ok(view(waypoints, companyName, iossNumber, registrationDetailsList, importOneStopShopDetailsList)).toFuture
+          val importOneStopShopDetailsList = SummaryListViewModel(
+            rows = Seq(
+              hasTradingNameRow,
+              tradingNameRow,
+              previouslyRegisteredRow,
+              previousRegSummaryRow,
+              hasFixedEstablishmentRow,
+              euDetailsSummaryRow,
+              WebsiteSummary.checkAnswersRow(waypoints, userAnswers, thisPage),
+              contactNameRow,
+              telephoneNumRow,
+              emailRow
+            ).flatten
+          )
 
+          Ok(view(waypoints, companyName, iossNumber, registrationDetailsList, importOneStopShopDetailsList)).toFuture
+
+        }
       }
-
   }
 
   def onSubmit(waypoints: Waypoints, iossNumber: String): Action[AnyContent] = cc.identifyAndGetData() {
     Ok(Json.toJson(iossNumber)) //TODO VEI-199 - implement submit amend reg.
   }
+}
 
-  private def getTradingNameRows(answers: UserAnswers, waypoints: Waypoints, changePage: ChangeRegistrationPage)(implicit messages: Messages) = {
-    val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(answers, waypoints, changePage)
-    val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, answers, changePage)
+private def getTradingNameRows(answers: UserAnswers, waypoints: Waypoints, changePage: ChangeRegistrationPage)(implicit messages: Messages) = {
+  val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(answers, waypoints, changePage)
+  val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, answers, changePage)
 
-    val formattedHasTradingNameSummary = maybeHasTradingNameSummaryRow.map { nonOptHasTradingNameSummaryRow =>
-      if (tradingNameSummaryRow.nonEmpty) {
-        nonOptHasTradingNameSummaryRow.withCssClass("govuk-summary-list__row--no-border")
-      } else {
-        nonOptHasTradingNameSummaryRow
-      }
+  val formattedHasTradingNameSummary = maybeHasTradingNameSummaryRow.map { nonOptHasTradingNameSummaryRow =>
+    if (tradingNameSummaryRow.nonEmpty) {
+      nonOptHasTradingNameSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+    } else {
+      nonOptHasTradingNameSummaryRow
     }
-    (formattedHasTradingNameSummary, tradingNameSummaryRow)
   }
+  (formattedHasTradingNameSummary, tradingNameSummaryRow)
+}
 
-  private def getPreviousRegRows(answers: UserAnswers, waypoints: Waypoints)(implicit messages: Messages) = {
-    val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.rowWithoutAction(answers, waypoints)
-    val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRowWithoutAction(answers, Seq.empty, waypoints)
+private def getPreviousRegRows(answers: UserAnswers, waypoints: Waypoints)(implicit messages: Messages) = {
+  val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.rowWithoutAction(answers, waypoints)
+  val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRowWithoutAction(answers, Seq.empty, waypoints)
 
-    val formattedPreviouslyRegisteredSummaryRow = previouslyRegisteredSummaryRow.map { nonOptPreviouslyRegisteredSummaryRow =>
-      if (previousRegistrationSummaryRow.isDefined) {
-        nonOptPreviouslyRegisteredSummaryRow.withCssClass("govuk-summary-list__row--no-border")
-      } else {
-        nonOptPreviouslyRegisteredSummaryRow
-      }
+  val formattedPreviouslyRegisteredSummaryRow = previouslyRegisteredSummaryRow.map { nonOptPreviouslyRegisteredSummaryRow =>
+    if (previousRegistrationSummaryRow.isDefined) {
+      nonOptPreviouslyRegisteredSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+    } else {
+      nonOptPreviouslyRegisteredSummaryRow
     }
-
-    (formattedPreviouslyRegisteredSummaryRow, previousRegistrationSummaryRow)
   }
 
-  private def getFixedEstablishmentRows(waypoints: Waypoints, answers: UserAnswers, page: ChangeRegistrationPage)(implicit messages: Messages) = {
-    val hasFixedEstablishmentSummaryRow = HasFixedEstablishmentSummary.row(waypoints, answers, page)
-    val euDetailsSummaryRow = EuDetailsSummary.checkAnswersRow(waypoints, answers, page)
+  (formattedPreviouslyRegisteredSummaryRow, previousRegistrationSummaryRow)
+}
 
-    val formattedHasFixedEstablishmentSummaryRow = hasFixedEstablishmentSummaryRow.map { nonOptHasFixedEstablishmentSummaryRow =>
-      if (euDetailsSummaryRow.nonEmpty) {
-        nonOptHasFixedEstablishmentSummaryRow.withCssClass("govuk-summary-list__row--no-border")
-      } else {
-        nonOptHasFixedEstablishmentSummaryRow.withCssClass("govuk-summary-list")
-      }
+private def getFixedEstablishmentRows(waypoints: Waypoints, answers: UserAnswers, page: ChangeRegistrationPage)(implicit messages: Messages) = {
+  val hasFixedEstablishmentSummaryRow = HasFixedEstablishmentSummary.row(waypoints, answers, page)
+  val euDetailsSummaryRow = EuDetailsSummary.checkAnswersRow(waypoints, answers, page)
+
+  val formattedHasFixedEstablishmentSummaryRow = hasFixedEstablishmentSummaryRow.map { nonOptHasFixedEstablishmentSummaryRow =>
+    if (euDetailsSummaryRow.nonEmpty) {
+      nonOptHasFixedEstablishmentSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+    } else {
+      nonOptHasFixedEstablishmentSummaryRow.withCssClass("govuk-summary-list")
     }
-    (formattedHasFixedEstablishmentSummaryRow, euDetailsSummaryRow)
   }
+  (formattedHasFixedEstablishmentSummaryRow, euDetailsSummaryRow)
+}
 
-  private def getBusinessContactRows(waypoints: Waypoints, answers: UserAnswers, page: ChangeRegistrationPage)(implicit messages: Messages) = {
+private def getBusinessContactRows(waypoints: Waypoints, answers: UserAnswers, page: ChangeRegistrationPage)(implicit messages: Messages) = {
 
-    val formattedContactName = BusinessContactDetailsSummary.rowFullName(waypoints, answers, page).map(_.withCssClass("govuk-summary-list__row--no-border"))
-    val formattedTelephoneNumber = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, answers, page).map(_.withCssClass("govuk-summary-list__row--no-border"))
-    val formattedEmailAddress = BusinessContactDetailsSummary.rowEmailAddress(waypoints, answers, page)
+  val formattedContactName = BusinessContactDetailsSummary.rowFullName(waypoints, answers, page).map(_.withCssClass("govuk-summary-list__row--no-border"))
+  val formattedTelephoneNumber = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, answers, page).map(_.withCssClass("govuk-summary-list__row--no-border"))
+  val formattedEmailAddress = BusinessContactDetailsSummary.rowEmailAddress(waypoints, answers, page)
 
-    (formattedContactName, formattedTelephoneNumber, formattedEmailAddress)
-  }
+  (formattedContactName, formattedTelephoneNumber, formattedEmailAddress)
 }

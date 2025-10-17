@@ -42,7 +42,7 @@ class StartAmendJourneyController @Inject()(
     implicit request =>
 
       (for {
-        displayRegistrationResponse <- registrationConnector.displayRegistration(iossNumber)
+        displayRegistrationResponse <- registrationConnector.displayRegistrationNetp(iossNumber)
       } yield {
 
         displayRegistrationResponse match {

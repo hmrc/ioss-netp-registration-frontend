@@ -16,7 +16,7 @@
 
 package pages.amend
 
-import pages.{CheckAnswersPage, Page, Waypoints}
+import pages.{CheckAnswersPage, Page, Waypoint, Waypoints}
 import play.api.mvc.Call
 
 case class ChangeRegistrationPage(iossNum: String) extends CheckAnswersPage {
@@ -26,9 +26,21 @@ case class ChangeRegistrationPage(iossNum: String) extends CheckAnswersPage {
     case _ => false
   }
 
-  override val urlFragment: String = "change-your-registration"
+  override val urlFragment: String = "change-your-registration-$iossNum"
 
   override def route(waypoints: Waypoints): Call =
     controllers.amend.routes.ChangeRegistrationController.onPageLoad(waypoints, iossNum)
 
+}
+
+object ChangeRegistrationPage {
+  def waypointFromString(s: String): Option[Waypoint] ={
+    val pattern = """change-your-registration-(.+)""".r.anchored
+    
+    s match {
+      case pattern(iossNum) =>
+        Some(ChangeRegistrationPage(iossNum).waypoint)
+      case _ => None
+    }
+  }
 }
