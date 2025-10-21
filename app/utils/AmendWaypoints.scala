@@ -16,14 +16,18 @@
 
 package utils
 
-import pages.{NonEmptyWaypoints, Waypoints}
+import pages.amend.ChangeRegistrationPage
+import pages.{NonEmptyWaypoints, Waypoints, Waypoint}
 
 object AmendWaypoints {
   implicit class AmendWaypointsOps(waypoints: Waypoints) {
     def inAmend: Boolean = {
       waypoints match {
         case nonEmptyWaypoints: NonEmptyWaypoints =>
-          nonEmptyWaypoints.waypoints.toList.map(_.urlFragment).contains("change-your-registration")
+          nonEmptyWaypoints.waypoints.toList.exists {
+            case Waypoint(_: ChangeRegistrationPage, _, _) => true
+            case _ => false
+          }
         case _ =>
           false
       }
