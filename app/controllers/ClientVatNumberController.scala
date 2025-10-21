@@ -64,8 +64,6 @@ class ClientVatNumberController @Inject()(
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
-      val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
-
       form.bindFromRequest().fold(
         formWithErrors =>
           BadRequest(view(formWithErrors, waypoints)).toFuture,
@@ -73,12 +71,10 @@ class ClientVatNumberController @Inject()(
         ukVatNumber =>
           coreRegistrationValidationService.searchUkVrn(Vrn(ukVatNumber)).flatMap {
 
-            case Some(activeMatch) if activeMatch.matchType.isActiveTrader && !activeMatch.traderId.isAnIntermediary =>
+            case Some(activeMatch) if activeMatch.isActiveTrader =>
               Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
 
-            case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader &&
-              LocalDate.parse(activeMatch.getEffectiveDate).isAfter(quarantineCutOffDate) &&
-              !activeMatch.traderId.isAnIntermediary =>
+            case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
               Redirect(
                 controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
                   activeMatch.memberState,

@@ -590,14 +590,14 @@ trait ModelGenerators extends EitherValues with EtmpModelGenerators {
     Arbitrary {
       for {
         searchId <- Gen.alphaStr
-        searchIntermediary <- Gen.alphaStr
+        searchIdIntermediary <- Gen.alphaStr
         searchIdIssuedBy <- Gen.alphaStr
         traderFound <- arbitrary[Boolean]
         matches = Seq.empty
       } yield {
         CoreRegistrationValidationResult(
           searchId = searchId,
-          searchIntermediary = Some(searchIntermediary),
+          searchIdIntermediary = Some(searchIdIntermediary),
           searchIdIssuedBy = searchIdIssuedBy,
           traderFound = traderFound,
           matches = matches

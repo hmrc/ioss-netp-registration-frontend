@@ -207,9 +207,9 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with T
 
       val testConditions = Table(
         ("MatchType", "exclusionStatusCode"),
-        (TraderIdQuarantinedNETP, None),
-        (OtherMSNETPQuarantinedNETP, None),
-        (FixedEstablishmentQuarantinedNETP, None)
+        (TraderIdQuarantinedNETP, Some(4)),
+        (OtherMSNETPQuarantinedNETP, Some(4)),
+        (FixedEstablishmentQuarantinedNETP, Some(4))
       )
 
       forAll(testConditions) { (matchType, exclusionStatusCode) =>

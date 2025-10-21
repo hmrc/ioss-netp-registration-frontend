@@ -34,6 +34,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.previousRegistrations.PreviousOssNumberView
 import utils.FutureSyntax.*
 
+import java.time.Clock
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -42,7 +43,8 @@ class PreviousOssNumberController @Inject()(
                                         cc: AuthenticatedControllerComponents,
                                         formProvider: PreviousOssNumberFormProvider,
                                         view: PreviousOssNumberView,
-                                        coreRegistrationValidationService: CoreRegistrationValidationService
+                                        coreRegistrationValidationService: CoreRegistrationValidationService,
+                                        clock: Clock
                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry with PreviousNonComplianceAnswers {
 
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -173,7 +175,7 @@ class PreviousOssNumberController @Inject()(
         countryCode = country.code
       ).flatMap {
 
-        case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader && !activeMatch.traderId.isAnIntermediary =>
+        case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
           Redirect(
             controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
               activeMatch.memberState,

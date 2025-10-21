@@ -70,12 +70,10 @@ class ClientsNinoNumberController @Inject()(
         value =>
           coreRegistrationValidationService.searchTraderId(value).flatMap {
 
-            case Some(activeMatch) if activeMatch.matchType.isActiveTrader && !activeMatch.traderId.isAnIntermediary =>
+            case Some(activeMatch) if activeMatch.isActiveTrader =>
               Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
 
-            case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader &&
-              LocalDate.parse(activeMatch.getEffectiveDate).isAfter(quarantineCutOffDate) &&
-              !activeMatch.traderId.isAnIntermediary =>
+            case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
               Redirect(
                 controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
                   activeMatch.memberState,
