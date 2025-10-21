@@ -34,6 +34,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.previousRegistrations.PreviousIossNumberView
 
+import java.time.Clock
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,6 +44,7 @@ class PreviousIossNumberController @Inject()(
                                               formProvider: PreviousIossNumberFormProvider,
                                               view: PreviousIossNumberView,
                                               coreRegistrationValidationService: CoreRegistrationValidationService,
+                                              clock: Clock
                                             )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetCountry with PreviousNonComplianceAnswers {
 
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -80,10 +82,10 @@ class PreviousIossNumberController @Inject()(
               intermediaryNumber = None,
               countryCode = country.code
             ).flatMap {
-              case Some(activeMatch) if activeMatch.matchType.isActiveTrader && !activeMatch.traderId.isAnIntermediary =>
+              case Some(activeMatch) if activeMatch.isActiveTrader =>
                 Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
 
-              case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader && !activeMatch.traderId.isAnIntermediary =>
+              case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
                 Redirect(
                   controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
                     activeMatch.memberState,

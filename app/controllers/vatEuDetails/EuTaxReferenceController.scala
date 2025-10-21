@@ -63,8 +63,6 @@ class EuTaxReferenceController @Inject()(
   def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
-      val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
-      
       getCountryWithIndex(waypoints, countryIndex) { country =>
         
         val form = formProvider(country)
@@ -76,12 +74,10 @@ class EuTaxReferenceController @Inject()(
           value =>
             coreRegistrationValidationService.searchEuTaxId(value, country.code).flatMap {
 
-              case Some(activeMatch) if activeMatch.matchType.isActiveTrader && !activeMatch.traderId.isAnIntermediary =>
+              case Some(activeMatch) if activeMatch.isActiveTrader =>
                 Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
 
-              case Some(activeMatch) if activeMatch.matchType.isQuarantinedTrader &&
-                LocalDate.parse(activeMatch.getEffectiveDate).isAfter(quarantineCutOffDate) &&
-                !activeMatch.traderId.isAnIntermediary =>
+              case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
                 Redirect(
                   controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
                     activeMatch.memberState,
