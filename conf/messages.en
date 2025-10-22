@@ -13,6 +13,7 @@ site.govuk = GOV.UK
 site.agree = Agree and confirm
 site.processing = We are processing your registration.
 site.confirm = Confirm
+site.add = Add
 
 date.day = Day
 date.month = Month

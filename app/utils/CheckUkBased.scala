@@ -27,11 +27,15 @@ object CheckUkBased {
     (vatCustomerInfo, otherAddress) match {
       case (Some(vatInfo), Some(address)) =>
         vatInfo.desAddress.countryCode.startsWith(ukCountryCodeAreaPrefix) &&
-          address.issuedBy.startsWith(ukCountryCodeAreaPrefix) //TODO- VEI-199, talk to Andrew RE- requirements, can someone be VAT in UK, Address not in UK
+          address.issuedBy.startsWith(ukCountryCodeAreaPrefix)
       case (Some(vatInfo), None) =>
         vatInfo.desAddress.countryCode.startsWith(ukCountryCodeAreaPrefix)
       case (None, Some(address)) =>
         address.issuedBy.startsWith(ukCountryCodeAreaPrefix)
+      case (None, None) =>
+        throw new IllegalStateException(s"Unable to identify if client is based in the UK. " +
+          s"Client requires either Vat Customer Info or an Etmp Other Address from ETMP for amend journey.")
+
     }
   }
 }

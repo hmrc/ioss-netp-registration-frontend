@@ -20,38 +20,43 @@ import controllers.GetClientCompanyName
 import controllers.actions.AuthenticatedControllerComponents
 import logging.Logging
 import models.UserAnswers
-import pages.{EmptyWaypoints, Waypoints}
+import models.domain.PreviousRegistration
+import models.previousRegistrations.PreviousRegistrationDetails
+import pages.*
 import pages.amend.ChangeRegistrationPage
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import play.api.libs.json.Json
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.OriginalRegistrationQuery
+import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
+import services.RegistrationService
 import viewmodels.checkAnswers.*
-import pages.*
-import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
-import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
+import viewmodels.checkAnswers.tradingNames.*
+import viewmodels.checkAnswers.vatEuDetails.*
 import viewmodels.govuk.summarylist.*
 import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
 import views.html.ChangeRegistrationView
 
 import javax.inject.Inject
+import scala.concurrent.ExecutionContext
 
 class ChangeRegistrationController @Inject()(
-                                              override val messagesApi: MessagesApi,
                                               cc: AuthenticatedControllerComponents,
-                                              val controllerComponents: MessagesControllerComponents,
-                                              view: ChangeRegistrationView
-                                            )extends FrontendBaseController with I18nSupport with Logging with GetClientCompanyName {
+                                              view: ChangeRegistrationView,
+                                              registrationService: RegistrationService
+                                            ) (implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientCompanyName {
+
+  protected val controllerComponents: MessagesControllerComponents = cc
 
   def onPageLoad(waypoints: Waypoints = EmptyWaypoints, iossNumber: String): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       val thisPage = ChangeRegistrationPage(iossNumber)
 
-      val clientBasedInUk = userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
+      val clientBasedInUk = request.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
 
       getClientCompanyName(waypoints) { companyName =>
 
@@ -59,16 +64,19 @@ class ChangeRegistrationController @Inject()(
           rows = Seq(
             BusinessBasedInUKSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientHasVatNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
-            if(!clientBasedInUk) ClientCountryBasedSummary.row(waypoints, request.userAnswers, thisPage) else None,
             ClientVatNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
-            // Trading name
-            ClientBusinessNameSummary.row(waypoints, request.userAnswers, thisPage),
+            if (!clientBasedInUk) ClientCountryBasedSummary.row(waypoints, request.userAnswers, thisPage) else None,
+            if (request.userAnswers.vatInfo.isDefined) {
+              VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, request.userAnswers, thisPage, clientBasedInUk)
+            } else {
+              ClientBusinessNameSummary.row(waypoints, request.userAnswers, thisPage)
+            },
             ClientHasUtrNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientUtrNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientsNinoNumberSummary.row(waypoints, request.userAnswers, thisPage),
+            ClientTaxReferenceSummary.row(waypoints, request.userAnswers, thisPage),
             VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, request.userAnswers, thisPage),
             ClientBusinessAddressSummary.changeRegRow(waypoints, request.userAnswers, thisPage)
-            //Business Address
           ).flatten
         )
 
@@ -78,7 +86,7 @@ class ChangeRegistrationController @Inject()(
 
         val(hasFixedEstablishmentRow, euDetailsSummaryRow) = getFixedEstablishmentRows(waypoints, request.userAnswers, thisPage)
 
-        val (contactNameRow, telephoneNumRow, emailRow) = getBusinessContactRows(waypoints, request.userAnswers, thisPage)
+        val(contactNameRow, telephoneNumRow, emailRow) = getBusinessContactRows(waypoints, request.userAnswers, thisPage)
 
         val importOneStopShopDetailsList = SummaryListViewModel(
           rows = Seq(
@@ -101,8 +109,29 @@ class ChangeRegistrationController @Inject()(
   }
 
 
-  def onSubmit(waypoints: Waypoints, iossNumber: String): Action[AnyContent] = cc.identifyAndGetData() {
-    Ok(Json.toJson(iossNumber)) //TODO VEI-199 - implement submit amend reg.
+  def onSubmit(waypoints: Waypoints, iossNumber: String): Action[AnyContent] = cc.identifyAndGetData().async {
+    implicit request =>
+
+
+      request.userAnswers.get(OriginalRegistrationQuery(iossNumber)) match { //TODO - Change from the query to the request.
+        case Some(registrationWrapper) =>
+          registrationService.amendRegistration(
+          answers = request.userAnswers,
+          registration = registrationWrapper,
+          iossNumber = iossNumber,
+          rejoin = false
+        ).map {
+          case Right(_) =>
+            Redirect(JourneyRecoveryPage.route(waypoints).url) //TODO - to be implemented
+          case Left(error) =>
+            val exception = new Exception(error.body)
+            logger.error(exception.getMessage, exception)
+            throw exception
+        }
+        case None => Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture
+      }
+
+
   }
 
   private def getTradingNameRows(answers: UserAnswers, waypoints: Waypoints, changePage: ChangeRegistrationPage)(implicit messages: Messages) = {
@@ -119,9 +148,20 @@ class ChangeRegistrationController @Inject()(
     (formattedHasTradingNameSummary, tradingNameSummaryRow)
   }
 
-  private def getPreviousRegRows(answers: UserAnswers, waypoints: Waypoints)(implicit messages: Messages) = {
+  private def getPreviousRegRows(answers: UserAnswers, waypoints: Waypoints, currentPage: ChangeRegistrationPage)(implicit messages: Messages) = {
+
+
+    val previousRegistrations: Seq[PreviousRegistration] = answers.get(AllPreviousRegistrationsQuery).map { listOfPreviousReg =>
+      val previousRegistrations = listOfPreviousReg.map { eachReg =>
+        PreviousRegistration(
+          eachReg.previousEuCountry,
+          eachReg.previousSchemesDetails
+        )
+      }
+      previousRegistrations
+    }.getOrElse(Seq.empty)
     val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.rowWithoutAction(answers, waypoints)
-    val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRowWithoutAction(answers, Seq.empty, waypoints)
+    val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(answers, previousRegistrations, waypoints, currentPage)
 
     val formattedPreviouslyRegisteredSummaryRow = previouslyRegisteredSummaryRow.map { nonOptPreviouslyRegisteredSummaryRow =>
       if (previousRegistrationSummaryRow.isDefined) {

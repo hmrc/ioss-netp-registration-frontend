@@ -57,12 +57,6 @@ class StartAmendJourneyController @Inject()(
 
               _ <- cc.sessionRepository.set(originalAnswers)
             } yield {
-              println("\n\nuserAnswers:")
-              println(userAnswers)
-              println("\n\noriginalAnswers:")
-              println(originalAnswers)
-              println("\n\nregistrationWrapper:")
-              println(registrationWrapper)
               Redirect(routes.ChangeRegistrationController.onPageLoad(waypoints, iossNumber).url)
             }
 

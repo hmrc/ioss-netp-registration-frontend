@@ -371,7 +371,7 @@ trait EtmpModelGenerators {
         etmpDisplayRegistration <- arbitraryEtmpDisplayRegistration.arbitrary
       } yield {
         RegistrationWrapper(
-          vatInfo = vatInfo,
+          vatInfo = Some(vatInfo),
           etmpDisplayRegistration = etmpDisplayRegistration
         )
       }

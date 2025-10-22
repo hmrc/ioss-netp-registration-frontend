@@ -18,37 +18,49 @@ package controllers.amend
 
 import base.SpecBase
 import config.Constants.maxSchemes
-import models.domain.{PreviousSchemeDetails, VatCustomerInfo}
+import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
+import models.etmp.amend.AmendRegistrationResponse
+import models.etmp.display.EtmpDisplayRegistration
 import models.previousRegistrations.{NonCompliantDetails, PreviousRegistrationDetails}
-import models.{DesAddress, TradingName, UserAnswers}
+import models.{ClientBusinessName, DesAddress, TradingName, UserAnswers}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Gen
+import org.scalatest.BeforeAndAfterEach
+import org.scalatestplus.mockito.MockitoSugar
 import pages.amend.ChangeRegistrationPage
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.HasTradingNamePage
 import pages.vatEuDetails.HasFixedEstablishmentPage
-import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientHasVatNumberPage, ClientVatNumberPage}
+import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessNamePage, ClientCountryBasedPage, ClientHasUtrNumberPage, ClientHasVatNumberPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage}
 import play.api.i18n.Messages
+import play.api.inject
+import play.api.inject.bind
 import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
+import queries.OriginalRegistrationQuery
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
+import services.RegistrationService
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
+import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
-import viewmodels.checkAnswers.*
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
 import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
+import viewmodels.checkAnswers.*
 import viewmodels.govuk.SummaryListFluency
 import viewmodels.govuk.all.SummaryListViewModel
 import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
 import views.html.ChangeRegistrationView
 
-import java.time.{Instant, LocalDate}
+import java.time.{Instant, LocalDate, LocalDateTime}
 
-class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency {
+class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency with MockitoSugar with BeforeAndAfterEach {
 
   private val iossNum = "IN012345678"
   private val amendYourAnswersPage = ChangeRegistrationPage(iossNum)
+  private val companyName = "Company Name"
 
   override val vatCustomerInfo: VatCustomerInfo = {
     VatCustomerInfo(
@@ -66,7 +78,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
     )
   }
 
-  val previousRegistration: PreviousRegistrationDetails = {
+  val previousRegistrationDetails: PreviousRegistrationDetails = {
     PreviousRegistrationDetails(
       previousEuCountry = arbitraryCountry.arbitrary.sample.value,
       previousSchemesDetails = Gen.listOfN(
@@ -82,70 +94,316 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
     )
   }
 
-  override def basicUserAnswersWithVatInfo: UserAnswers =
+  val previousRegistrationFromDetails: PreviousRegistration = {
+    PreviousRegistration(country = previousRegistrationDetails.previousEuCountry, previousSchemesDetails = previousRegistrationDetails.previousSchemesDetails)
+  }
+
+  private val basicUserAnswersWithVatInfo: UserAnswers =
     UserAnswers(id = "12345-credId", vatInfo = Some(vatCustomerInfo), lastUpdated = Instant.now())
 
-  private val registrationDetailsUserAnswersWithVatInfo: UserAnswers =
+  private val basicUserAnswersWithoutVatInfo: UserAnswers =
+    UserAnswers(id = "12345-credId", vatInfo = None, lastUpdated = Instant.now())
+
+
+  private val ukBasedCompleteUserAnswersWithVatInfo: UserAnswers =
     basicUserAnswersWithVatInfo
       .set(BusinessBasedInUKPage, true).success.value
       .set(ClientHasVatNumberPage, true).success.value
       .set(ClientVatNumberPage, "GB123456").success.value
-
-  private val completeUserAnswersWithVatInfo: UserAnswers =
-    registrationDetailsUserAnswersWithVatInfo
       .set(HasTradingNamePage, true).success.value
       .set(AllTradingNamesQuery, List(TradingName("Some Trading Name"))).success.value
       .set(PreviouslyRegisteredPage, true).success.value
-      .set(AllPreviousRegistrationsQuery, List(previousRegistration)).success.value
+      .set(AllPreviousRegistrationsQuery, List(previousRegistrationDetails)).success.value
       .set(HasFixedEstablishmentPage, true).success.value
       .set(AllEuDetailsQuery, List(arbitraryEuDetails.arbitrary.sample.value)).success.value
       .set(BusinessContactDetailsPage, businessContactDetails).success.value
 
+  private val nonUkBasedCompleteUserAnswersWithVatInfo: UserAnswers =
+    basicUserAnswersWithVatInfo
+      .set(BusinessBasedInUKPage, false).success.value
+      .set(ClientHasVatNumberPage, true).success.value
+      .set(ClientVatNumberPage, "GB123456").success.value
+      .set(ClientCountryBasedPage, arbitraryCountry.arbitrary.sample.value).success.value
+      .set(HasTradingNamePage, true).success.value
+      .set(AllTradingNamesQuery, List(TradingName("Some Trading Name"))).success.value
+      .set(PreviouslyRegisteredPage, true).success.value
+      .set(AllPreviousRegistrationsQuery, List(previousRegistrationDetails)).success.value
+      .set(HasFixedEstablishmentPage, true).success.value
+      .set(AllEuDetailsQuery, List(arbitraryEuDetails.arbitrary.sample.value)).success.value
+      .set(BusinessContactDetailsPage, businessContactDetails).success.value
+
+  private val ukBasedCompleteUserAnswersWithoutVatInfo: UserAnswers =
+    basicUserAnswersWithoutVatInfo
+      .set(BusinessBasedInUKPage, true).success.value
+      .set(ClientHasUtrNumberPage, true).success.value
+      .set(ClientUtrNumberPage, "UTR_NUM_1").success.value
+      .set(HasTradingNamePage, true).success.value
+      .set(AllTradingNamesQuery, List(TradingName("Some Trading Name"))).success.value
+      .set(PreviouslyRegisteredPage, true).success.value
+      .set(AllPreviousRegistrationsQuery, List(previousRegistrationDetails)).success.value
+      .set(HasFixedEstablishmentPage, true).success.value
+      .set(AllEuDetailsQuery, List(arbitraryEuDetails.arbitrary.sample.value)).success.value
+      .set(BusinessContactDetailsPage, businessContactDetails).success.value
+      .set(ClientBusinessNamePage, ClientBusinessName(companyName)).success.value
+
+  private val nonUkBasedCompleteUserAnswersWithoutVatInfo: UserAnswers =
+    basicUserAnswersWithoutVatInfo
+      .set(BusinessBasedInUKPage, false).success.value
+      .set(ClientCountryBasedPage, arbitraryCountry.arbitrary.sample.value).success.value
+      .set(ClientTaxReferencePage, "FTR_NUM_1").success.value
+      .set(HasTradingNamePage, true).success.value
+      .set(AllTradingNamesQuery, List(TradingName("Some Trading Name"))).success.value
+      .set(PreviouslyRegisteredPage, true).success.value
+      .set(AllPreviousRegistrationsQuery, List(previousRegistrationDetails)).success.value
+      .set(HasFixedEstablishmentPage, true).success.value
+      .set(AllEuDetailsQuery, List(arbitraryEuDetails.arbitrary.sample.value)).success.value
+      .set(BusinessContactDetailsPage, businessContactDetails).success.value
+      .set(ClientBusinessNamePage, ClientBusinessName(companyName)).success.value
+
+  private val mockRegistrationService: RegistrationService = mock[RegistrationService]
 
   "ChangeRegistration Controller" - {
 
-    "must return OK and the correct view for a GET" in {
+    ".onPageLoad" - {
+      "must return OK and the correct view for a GET when" - {
+        "A NETP Has a Uk based address and has Vat Info" in {
 
-      val application = applicationBuilder(userAnswers = Some(completeUserAnswersWithVatInfo)).build()
+          val application = applicationBuilder(userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo)).build()
 
-      running(application) {
+          running(application) {
 
-        val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad(iossNumber = iossNum).url)
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad(iossNumber = iossNum).url)
 
-        implicit val msgs: Messages = messages(application)
+            implicit val msgs: Messages = messages(application)
 
-        val result = route(application, request).value
+            val result = route(application, request).value
 
-        val view = application.injector.instanceOf[ChangeRegistrationView]
+            val view = application.injector.instanceOf[ChangeRegistrationView]
 
-        val registrationList = SummaryListViewModel(rows = getRegistrationDetailsList(completeUserAnswersWithVatInfo))
+            val registrationList = SummaryListViewModel(rows = getUkBasedWithVatNumRegistrationDetailsList(ukBasedCompleteUserAnswersWithVatInfo))
 
-        val importOneStopShopDetailsList = SummaryListViewModel(rows = getImportOneStopShopDetailsSummaryList(completeUserAnswersWithVatInfo))
+            val importOneStopShopDetailsList = SummaryListViewModel(
+              rows = getImportOneStopShopDetailsSummaryList(ukBasedCompleteUserAnswersWithVatInfo, previousRegistrationFromDetails)
+            )
 
-        status(result) mustBe OK
-        contentAsString(result) mustBe
-          view(
-            waypoints,
-            vatCustomerInfo.organisationName.get,
-            iossNum,
-            registrationList,
-            importOneStopShopDetailsList
-          )(request, messages(application)).toString
+            status(result) mustBe OK
+            contentAsString(result) mustBe
+              view(
+                waypoints,
+                vatCustomerInfo.organisationName.get,
+                iossNum,
+                registrationList,
+                importOneStopShopDetailsList
+              )(request, messages(application)).toString
+          }
+        }
+        "A NETP Has a Uk based address and does NOT have Vat Info" in {
+
+          val application = applicationBuilder(userAnswers = Some(ukBasedCompleteUserAnswersWithoutVatInfo)).build()
+
+          running(application) {
+
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad(iossNumber = iossNum).url)
+
+            implicit val msgs: Messages = messages(application)
+
+            val result = route(application, request).value
+
+            val view = application.injector.instanceOf[ChangeRegistrationView]
+
+            val registrationList = SummaryListViewModel(rows = getUkBasedWithoutVatNumRegistrationDetailsList(ukBasedCompleteUserAnswersWithoutVatInfo))
+
+            val importOneStopShopDetailsList = SummaryListViewModel(
+              rows = getImportOneStopShopDetailsSummaryList(ukBasedCompleteUserAnswersWithoutVatInfo, previousRegistrationFromDetails)
+            )
+
+            status(result) mustBe OK
+            contentAsString(result) mustBe
+              view(
+                waypoints,
+                companyName,
+                iossNum,
+                registrationList,
+                importOneStopShopDetailsList
+              )(request, messages(application)).toString
+          }
+        }
+        "A NETP Has a Non Uk based address and Vat Info" in {
+
+          val application = applicationBuilder(userAnswers = Some(nonUkBasedCompleteUserAnswersWithVatInfo))
+            .build()
+
+          running(application) {
+            var numOfTimes = 0
+            println(numOfTimes)
+            numOfTimes += 1
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad(iossNumber = iossNum).url)
+
+            implicit val msgs: Messages = messages(application)
+
+            val result = route(application, request).value
+
+            val view = application.injector.instanceOf[ChangeRegistrationView]
+
+            val registrationList = SummaryListViewModel(rows = getNonUkBasedWithVatNumRegistrationDetailsList(nonUkBasedCompleteUserAnswersWithVatInfo))
+
+            println("\n\nregistrationList:")
+            println(registrationList)
+            val importOneStopShopDetailsList = SummaryListViewModel(
+              rows = getImportOneStopShopDetailsSummaryList(nonUkBasedCompleteUserAnswersWithVatInfo, previousRegistrationFromDetails)
+            )
+
+
+            status(result) mustBe OK
+            contentAsString(result) mustBe view(
+              waypoints,
+              vatCustomerInfo.organisationName.get,
+              iossNum,
+              registrationList,
+              importOneStopShopDetailsList
+            )(request, messages(application)).toString
+          }
+        }
+        "A NETP Has a Non Uk based address does NOT have Vat Info" in {
+
+          val application = applicationBuilder(userAnswers = Some(nonUkBasedCompleteUserAnswersWithoutVatInfo)).build()
+
+          running(application) {
+
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad(iossNumber = iossNum).url)
+
+            implicit val msgs: Messages = messages(application)
+
+            val result = route(application, request).value
+
+            val view = application.injector.instanceOf[ChangeRegistrationView]
+
+            val registrationList = SummaryListViewModel(rows = getNonUkBasedWithoutVatNumRegistrationDetailsList(nonUkBasedCompleteUserAnswersWithoutVatInfo))
+
+            val importOneStopShopDetailsList = SummaryListViewModel(
+              rows = getImportOneStopShopDetailsSummaryList(nonUkBasedCompleteUserAnswersWithoutVatInfo, previousRegistrationFromDetails)
+            )
+
+            status(result) mustBe OK
+            contentAsString(result) mustBe
+              view(
+                waypoints,
+                companyName,
+                iossNum,
+                registrationList,
+                importOneStopShopDetailsList
+              )(request, messages(application)).toString
+          }
+        }
       }
     }
+
+    ".onSubmit" - {
+      "should trigger .amendRegistration and redirect to [to be implemented]" in {
+
+        val etmpDisplayRegistration: EtmpDisplayRegistration = arbitraryRegistrationWrapper.arbitrary.sample.value.etmpDisplayRegistration
+        val userAnswers = ukBasedCompleteUserAnswersWithVatInfo.set(OriginalRegistrationQuery(iossNum), etmpDisplayRegistration).success.value
+        val application = applicationBuilder(userAnswers = Some(userAnswers))
+          .overrides(bind[RegistrationService].toInstance(mockRegistrationService))
+          .build()
+        val amendRegistrationResponse: AmendRegistrationResponse = AmendRegistrationResponse(
+          processingDateTime = LocalDateTime.now(),
+          formBundleNumber = "123456789",
+          intermediary = "IN900123456",
+          businessPartner = "Test Business Partner"
+        )
+        when(mockRegistrationService.amendRegistration(any(), any(), any(), any())(any())) thenReturn Right(amendRegistrationResponse).toFuture
+        running(application) {
+
+          val request = FakeRequest(POST, controllers.amend.routes.ChangeRegistrationController.onSubmit(iossNumber = iossNum).url)
+
+          val result = route(application, request).value
+
+          status(result) mustBe SEE_OTHER
+          verify(mockRegistrationService, times(1)).amendRegistration(any(), any(), any(), any())(any())
+        }
+      }
+    }
+
   }
 
-  private def getRegistrationDetailsList(answers: UserAnswers)(implicit msgs: Messages): Seq[SummaryListRow] = {
+  private def getUkBasedWithVatNumRegistrationDetailsList(answers: UserAnswers)(implicit msgs: Messages): Seq[SummaryListRow] = {
 
     Seq(
       BusinessBasedInUKSummary.rowWithoutAction(waypoints, answers),
       ClientHasVatNumberSummary.rowWithoutAction(waypoints, answers),
       ClientVatNumberSummary.rowWithoutAction(waypoints, answers),
-      VatRegistrationDetailsSummary.rowBusinessAddress(waypoints, answers, amendYourAnswersPage)
+      VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, answers, amendYourAnswersPage, true),
+      VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, answers, amendYourAnswersPage)
     ).flatten
   }
 
-  private def getImportOneStopShopDetailsSummaryList(answers: UserAnswers)(implicit msgs: Messages): Seq[SummaryListRow] = {
+  private def getNonUkBasedWithVatNumRegistrationDetailsList(answers: UserAnswers)(implicit msgs: Messages): Seq[SummaryListRow] = {
+
+    val one = BusinessBasedInUKSummary.rowWithoutAction(waypoints, answers)
+    println("one")
+    println(one)
+    val two = ClientHasVatNumberSummary.rowWithoutAction(waypoints, answers)
+    println("two")
+    println(two)
+    val three = ClientVatNumberSummary.rowWithoutAction(waypoints, answers)
+    println("three")
+    println(three)
+    val four = ClientCountryBasedSummary.row(waypoints, answers, amendYourAnswersPage)
+    println("four")
+    println(four)
+    val five = ClientBusinessNameSummary.row(waypoints, answers, amendYourAnswersPage)
+    println("five")
+    println(five)
+    val six = VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, answers, amendYourAnswersPage, true)
+    println("six")
+    println(six)
+    val sev = VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, answers, amendYourAnswersPage)
+    println("sev")
+    println(sev)
+    val eight = ClientBusinessAddressSummary.changeRegRow(waypoints, answers, amendYourAnswersPage)
+    println("eight")
+    println(eight)
+    Seq(
+      BusinessBasedInUKSummary.rowWithoutAction(waypoints, answers),
+      ClientHasVatNumberSummary.rowWithoutAction(waypoints, answers),
+      ClientVatNumberSummary.rowWithoutAction(waypoints, answers),
+      ClientCountryBasedSummary.row(waypoints, answers, amendYourAnswersPage),
+      ClientBusinessNameSummary.row(waypoints, answers, amendYourAnswersPage),
+      VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, answers, amendYourAnswersPage, true),
+      VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, answers, amendYourAnswersPage),
+      ClientBusinessAddressSummary.changeRegRow(waypoints, answers, amendYourAnswersPage)
+    ).flatten
+  }
+
+  private def getUkBasedWithoutVatNumRegistrationDetailsList(answers: UserAnswers)(implicit msgs: Messages): Seq[SummaryListRow] = {
+
+    Seq(
+      BusinessBasedInUKSummary.rowWithoutAction(waypoints, answers),
+      ClientHasVatNumberSummary.rowWithoutAction(waypoints, answers),
+      ClientBusinessNameSummary.row(waypoints, answers, amendYourAnswersPage),
+      ClientHasUtrNumberSummary.rowWithoutAction(waypoints, answers),
+      ClientUtrNumberSummary.rowWithoutAction(waypoints, answers),
+      ClientsNinoNumberSummary.row(waypoints, answers, amendYourAnswersPage),
+      ClientBusinessAddressSummary.changeRegRow(waypoints, answers, amendYourAnswersPage)
+    ).flatten
+  }
+
+  private def getNonUkBasedWithoutVatNumRegistrationDetailsList(answers: UserAnswers)(implicit msgs: Messages): Seq[SummaryListRow] = {
+
+    Seq(
+      BusinessBasedInUKSummary.rowWithoutAction(waypoints, answers),
+      ClientHasVatNumberSummary.rowWithoutAction(waypoints, answers),
+      ClientCountryBasedSummary.row(waypoints, answers, amendYourAnswersPage),
+      ClientBusinessNameSummary.row(waypoints, answers, amendYourAnswersPage),
+      ClientHasUtrNumberSummary.rowWithoutAction(waypoints, answers),
+      ClientTaxReferenceSummary.row(waypoints, answers, amendYourAnswersPage),
+      ClientBusinessAddressSummary.changeRegRow(waypoints, answers, amendYourAnswersPage)
+    ).flatten
+  }
+
+  private def getImportOneStopShopDetailsSummaryList(answers: UserAnswers, previousRegistration: PreviousRegistration)
+                                                    (implicit msgs: Messages): Seq[SummaryListRow] = {
     val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(answers, waypoints, amendYourAnswersPage)
     val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, answers, amendYourAnswersPage)
     val formattedHasTradingNameSummary = maybeHasTradingNameSummaryRow.map { nonOptHasTradingNameSummaryRow =>
@@ -155,8 +413,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
         nonOptHasTradingNameSummaryRow
       }
     }
+
     val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.rowWithoutAction(answers, waypoints)
-    val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRowWithoutAction(answers, Seq.empty, waypoints)
+    val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(answers, Seq(previousRegistration), waypoints, amendYourAnswersPage)
     val formattedPreviouslyRegisteredSummaryRowy = previouslyRegisteredSummaryRow.map { nonOptPreviouslyRegisteredSummaryRow =>
       if (previousRegistrationSummaryRow.isDefined) {
         nonOptPreviouslyRegisteredSummaryRow.withCssClass("govuk-summary-list__row--no-border")

@@ -34,7 +34,6 @@ object Country {
   }
 
   def fromCountryCodeAllCountries(countryCode: String): Option[Country] = {
-    //TODO: VEI-199 What country can a NETP be from? Previously only searching EU countries.
     allCountries.find(_.code == countryCode)
   }
 

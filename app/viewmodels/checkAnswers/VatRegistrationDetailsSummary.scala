@@ -20,7 +20,7 @@ import models.{Country, UserAnswers}
 import pages.{CheckAnswersPage, Waypoints}
 import play.api.i18n.Messages
 import play.twirl.api.HtmlFormat
-import uk.gov.hmrc.govukfrontend.views.viewmodels.content.HtmlContent
+import uk.gov.hmrc.govukfrontend.views.Aliases.HtmlContent
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.govuk.summarylist.*
 import viewmodels.implicits.*
@@ -51,14 +51,14 @@ object VatRegistrationDetailsSummary {
         )
     }
   }
-  
+
   def changeRegBusinessAddressRow(
-                          waypoints: Waypoints,
-                          answers: UserAnswers,
-                          sourcePage: CheckAnswersPage)(implicit messages: Messages): Option[SummaryListRow] = {
+                                   waypoints: Waypoints,
+                                   answers: UserAnswers,
+                                   sourcePage: CheckAnswersPage)(implicit messages: Messages): Option[SummaryListRow] = {
     answers.vatInfo.map {
       answer =>
-        
+
         val country = Country.fromCountryCodeAllCountries(answer.desAddress.countryCode).map(_.name)
 
         val value = Seq(
@@ -76,5 +76,48 @@ object VatRegistrationDetailsSummary {
           value = ValueViewModel(HtmlContent(value))
         )
     }
+  }
+
+  def changeRegVatBusinessNameRow(
+                                   waypoints: Waypoints,
+                                   answers: UserAnswers,
+                                   sourcePage: CheckAnswersPage,
+                                   basedInUk: Boolean)(implicit messages: Messages): Option[SummaryListRow] = {
+
+    val outcome = (answers.vatInfo, basedInUk) match {
+      case (Some(vatCustomerInfo), basedInUk) if basedInUk =>
+        val clientName: String = vatCustomerInfo.organisationName.orElse(vatCustomerInfo.individualName).getOrElse{
+          throw new IllegalStateException("Unable to retrieve a required client Name from the vat information")
+        }
+
+        val there = Some(SummaryListRowViewModel(
+          key = "clientBusinessName.checkYourAnswersLabel",
+          value = ValueViewModel(HtmlContent(HtmlFormat.escape(clientName).toString))
+        ))
+        println("there")
+        println(there)
+        there
+      case (Some(vatCustomerInfo), basedInUk) if !basedInUk =>
+        val clientName: String = vatCustomerInfo.organisationName.orElse(vatCustomerInfo.individualName).getOrElse(
+          throw new IllegalStateException("Unable to retrieve a required client Name from the vat information")
+        )
+
+        val here = Some(SummaryListRowViewModel(
+          key = "clientBusinessName.checkYourAnswersLabel",
+          value = ValueViewModel(HtmlContent(HtmlFormat.escape(clientName).toString)),
+          actions = Seq(
+            ActionItemViewModel("site.change", sourcePage.changeLink(waypoints, sourcePage).url)
+              .withVisuallyHiddenText(messages("clientBusinessName.change.hidden"))
+          )
+        ))
+        println("here1")
+        println(here)
+        here
+      case(_, _) =>
+        None
+    }
+    println("\n\noutcome")
+    println(outcome)
+    outcome
   }
 }

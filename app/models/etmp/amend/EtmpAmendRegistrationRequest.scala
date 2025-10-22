@@ -42,7 +42,7 @@ object EtmpAmendRegistrationRequest {
                                          answers: UserAnswers,
                                          registration: EtmpDisplayRegistration,
                                          commencementDate: LocalDate,
-                                         intermediaryNumber: String,
+                                         iossNumber: String,
                                          rejoin: Boolean = false
                                        ): EtmpAmendRegistrationRequest = {
 
@@ -58,7 +58,7 @@ object EtmpAmendRegistrationRequest {
         reRegistration = rejoin,
         otherAddress = registration.otherAddress != etmpRegistrationRequest.otherAddress
       ),
-      customerIdentification = EtmpAmendCustomerIdentification(intermediaryNumber),
+      customerIdentification = EtmpAmendCustomerIdentification(iossNumber),
       tradingNames = etmpRegistrationRequest.tradingNames,
       intermediaryDetails = etmpRegistrationRequest.intermediaryDetails,
       otherAddress = etmpRegistrationRequest.otherAddress,
