@@ -49,8 +49,8 @@ class DataRequiredActionImpl @Inject()(registrationConnector: RegistrationConnec
       case Some(data) =>
         val eventualMaybeRegistrationWrapper: Future[Option[RegistrationWrapper]] = {
           if (isInAmendMode) {
-             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request.request, request.session)
-              val registrationFuture: Future[EtmpDisplayRegistrationResponse] = data.get(IossNumberQuery) match {
+            implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request.request, request.session)
+            val registrationFuture: Future[EtmpDisplayRegistrationResponse] = data.get(IossNumberQuery) match {
               case Some(iossNumber) =>
                 logger.info(s"Fetching NETP client registration: $iossNumber")
                 registrationConnector.displayRegistrationNetp(iossNumber)(hc)
@@ -58,9 +58,9 @@ class DataRequiredActionImpl @Inject()(registrationConnector: RegistrationConnec
               case None =>
                 logger.info(s"Fetching intermediary registration: $intermediaryNumber")
                 registrationConnector.displayRegistrationIntermediary(intermediaryNumber)(hc)
-             }
+            }
 
-              registrationFuture.flatMap {
+            registrationFuture.flatMap {
               case Left(error: ErrorResponse) =>
                 Future.failed(new RuntimeException(s"Failed to retrieve registration whilst in amend mode: ${error.body}"))
               case Right(registrationWrapper: RegistrationWrapper) =>
@@ -86,8 +86,8 @@ class DataRequiredActionImpl @Inject()(registrationConnector: RegistrationConnec
 }
 
 class DataRequiredAction @Inject()(
-                                            registrationConnector: RegistrationConnector
-                                          )(implicit ec: ExecutionContext){
+                                    registrationConnector: RegistrationConnector
+                                  )(implicit ec: ExecutionContext) {
 
   def apply(isInAmendMode: Boolean = false): ActionRefiner[OptionalDataRequest, DataRequest] = {
     new DataRequiredActionImpl(registrationConnector, isInAmendMode)

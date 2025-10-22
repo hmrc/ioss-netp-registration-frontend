@@ -22,7 +22,7 @@ import logging.Logging
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import queries.OriginalRegistrationQuery
+import queries.{IossNumberQuery, OriginalRegistrationQuery}
 import services.RegistrationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 
@@ -49,9 +49,11 @@ class StartAmendJourneyController @Inject()(
           case Right(registrationWrapper) =>
             for {
               userAnswers <- registrationService.toUserAnswers(request.userId, registrationWrapper)
+              answersWithIossNumber <- Future.fromTry(userAnswers.set(IossNumberQuery, iossNumber))
+              
               originalAnswers <- Future.fromTry(
-                userAnswers.set(OriginalRegistrationQuery(iossNumber), registrationWrapper.etmpDisplayRegistration))
-              _ <- cc.sessionRepository.set(userAnswers)
+                answersWithIossNumber.set(OriginalRegistrationQuery(iossNumber), registrationWrapper.etmpDisplayRegistration))
+
               _ <- cc.sessionRepository.set(originalAnswers)
             } yield Redirect(routes.ChangeRegistrationController.onPageLoad(waypoints, iossNumber).url)
 
