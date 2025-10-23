@@ -25,14 +25,16 @@ import models.previousRegistrations.PreviousRegistrationDetails
 import pages.*
 import pages.amend.ChangeRegistrationPage
 import play.api.i18n.{I18nSupport, Messages}
+import play.api.mvc.Results.Unauthorized
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import queries.OriginalRegistrationQuery
+import queries.{IossNumberQuery, OriginalRegistrationQuery}
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
 import services.RegistrationService
+import uk.gov.hmrc.http.UnauthorizedException
 import viewmodels.checkAnswers.*
 import viewmodels.checkAnswers.tradingNames.*
 import viewmodels.checkAnswers.vatEuDetails.*
@@ -51,10 +53,15 @@ class ChangeRegistrationController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints = EmptyWaypoints, iossNumber: String): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onPageLoad(waypoints: Waypoints = EmptyWaypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
-      val thisPage = ChangeRegistrationPage(iossNumber)
+      val iossNum: String = request.userAnswers.get(IossNumberQuery).getOrElse{
+        logger.info(s"Insufficient Ioss Number to amend the registration for ${request.userId}")
+        throw new UnauthorizedException(s"Insufficient Ioss Number to amend the registration for ${request.userId}")
+      }
+
+      val thisPage: ChangeRegistrationPage = ChangeRegistrationPage(iossNum)
 
       val clientBasedInUk = request.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
 
@@ -103,22 +110,24 @@ class ChangeRegistrationController @Inject()(
           ).flatten
         )
 
-        Ok(view(waypoints, companyName, iossNumber, registrationDetailsList, importOneStopShopDetailsList)).toFuture
-
+        Ok(view(waypoints, companyName, iossNum, registrationDetailsList, importOneStopShopDetailsList)).toFuture
       }
   }
 
 
-  def onSubmit(waypoints: Waypoints, iossNumber: String): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
-
-      request.userAnswers.get(OriginalRegistrationQuery(iossNumber)) match { //TODO - Change from the query to the request.
+      val iossNum: String = request.userAnswers.get(IossNumberQuery).getOrElse{
+        logger.info(s"Insufficient Ioss Number to amend the registration for ${request.userId}")
+        throw new UnauthorizedException(s"Insufficient Ioss Number to amend the registration for ${request.userId}")
+      }
+      request.userAnswers.get(OriginalRegistrationQuery(iossNum)) match {
         case Some(registrationWrapper) =>
           registrationService.amendRegistration(
           answers = request.userAnswers,
           registration = registrationWrapper,
-          iossNumber = iossNumber,
+          iossNumber = iossNum,
           rejoin = false
         ).map {
           case Right(_) =>

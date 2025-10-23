@@ -19,6 +19,6 @@ package queries
 import play.api.libs.json.JsPath
 
 case object IossNumberQuery extends Gettable[String] with Settable[String] {
-  
+
   override def path: JsPath = JsPath \ "iossNumber"
 }

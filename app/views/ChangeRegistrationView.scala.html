@@ -44,7 +44,7 @@
 
     <p class="govuk-body">@messages("changeRegistration.info.p1")</p>
 
-    @formHelper(action = controllers.amend.routes.ChangeRegistrationController.onSubmit(waypoints, iossNum)) {
+    @formHelper(action = controllers.amend.routes.ChangeRegistrationController.onSubmit(waypoints)) {
         @button("site.confirm")
     }
     

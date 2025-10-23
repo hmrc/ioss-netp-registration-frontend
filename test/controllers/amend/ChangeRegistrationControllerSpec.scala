@@ -38,7 +38,7 @@ import play.api.inject
 import play.api.inject.bind
 import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
-import queries.OriginalRegistrationQuery
+import queries.{IossNumberQuery, OriginalRegistrationQuery}
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
@@ -100,9 +100,11 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
   private val basicUserAnswersWithVatInfo: UserAnswers =
     UserAnswers(id = "12345-credId", vatInfo = Some(vatCustomerInfo), lastUpdated = Instant.now())
+      .set(IossNumberQuery, iossNum).success.value
 
   private val basicUserAnswersWithoutVatInfo: UserAnswers =
     UserAnswers(id = "12345-credId", vatInfo = None, lastUpdated = Instant.now())
+      .set(IossNumberQuery, iossNum).success.value
 
 
   private val ukBasedCompleteUserAnswersWithVatInfo: UserAnswers =
@@ -172,7 +174,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
           running(application) {
 
-            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad(iossNumber = iossNum).url)
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
 
             implicit val msgs: Messages = messages(application)
 
@@ -203,7 +205,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
           running(application) {
 
-            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad(iossNumber = iossNum).url)
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
 
             implicit val msgs: Messages = messages(application)
 
@@ -234,7 +236,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
             .build()
 
           running(application) {
-            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad(iossNumber = iossNum).url)
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
 
             implicit val msgs: Messages = messages(application)
 
@@ -265,7 +267,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
           running(application) {
 
-            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad(iossNumber = iossNum).url)
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
 
             implicit val msgs: Messages = messages(application)
 
@@ -310,7 +312,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
         when(mockRegistrationService.amendRegistration(any(), any(), any(), any())(any())) thenReturn Right(amendRegistrationResponse).toFuture
         running(application) {
 
-          val request = FakeRequest(POST, controllers.amend.routes.ChangeRegistrationController.onSubmit(iossNumber = iossNum).url)
+          val request = FakeRequest(POST, controllers.amend.routes.ChangeRegistrationController.onSubmit().url)
 
           val result = route(application, request).value
 

@@ -51,13 +51,12 @@ class StartAmendJourneyController @Inject()(
             for {
               userAnswers <- registrationService.toUserAnswers(request.userId, registrationWrapper)
               answersWithIossNumber <- Future.fromTry(userAnswers.set(IossNumberQuery, iossNumber))
-              
               originalAnswers <- Future.fromTry(
                 answersWithIossNumber.set(OriginalRegistrationQuery(iossNumber), registrationWrapper.etmpDisplayRegistration))
-
+              _ <- cc.sessionRepository.set(userAnswers)
               _ <- cc.sessionRepository.set(originalAnswers)
             } yield {
-              Redirect(routes.ChangeRegistrationController.onPageLoad(waypoints, iossNumber).url)
+              Redirect(routes.ChangeRegistrationController.onPageLoad(waypoints).url)
             }
 
           case Left(error) =>
