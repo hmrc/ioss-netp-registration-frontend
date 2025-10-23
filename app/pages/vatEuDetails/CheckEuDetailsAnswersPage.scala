@@ -19,6 +19,7 @@ package pages.vatEuDetails
 import controllers.vatEuDetails.routes
 import models.{Index, UserAnswers}
 import pages.*
+import pages.amend.ChangeRegistrationPage
 import play.api.mvc.Call
 
 final case class CheckEuDetailsAnswersPage(countryIndex: Index) extends CheckAnswersPage {
@@ -37,6 +38,11 @@ final case class CheckEuDetailsAnswersPage(countryIndex: Index) extends CheckAns
     AddEuDetailsPage()
 
   override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page =
+    if (waypoints.inAmend) {
+      waypoints.waypoints.toList.collectFirst {
+        case Waypoint(page: ChangeRegistrationPage, _, _) => page
+      }.getOrElse(JourneyRecoveryPage)
+    } else {
     AddEuDetailsPage()
 }
 
