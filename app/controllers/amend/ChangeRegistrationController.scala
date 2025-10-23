@@ -82,13 +82,13 @@ class ChangeRegistrationController @Inject()(
             ClientUtrNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientsNinoNumberSummary.row(waypoints, request.userAnswers, thisPage),
             VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, request.userAnswers, thisPage),
-            if (clientBasedInUk) ClientBusinessAddressSummary.changeUkBasedRegRow(waypoints, request.userAnswers, thisPage) else ClientBusinessAddressSummary.row(waypoints, userAnswers, thisPage)
+            if (clientBasedInUk) ClientBusinessAddressSummary.changeUkBasedRegRow(waypoints, request.userAnswers, thisPage) else ClientBusinessAddressSummary.row(waypoints, request.userAnswers, thisPage)
           ).flatten
         )
 
         val(hasTradingNameRow, tradingNameRow) = getTradingNameRows(request.userAnswers, waypoints, thisPage)
 
-        val(previouslyRegisteredRow, previousRegSummaryRow) = getPreviousRegRows(request.userAnswers, waypoints)
+        val(previouslyRegisteredRow, previousRegSummaryRow) = getPreviousRegRows(request.userAnswers, waypoints, thisPage)
 
         val(hasFixedEstablishmentRow, euDetailsSummaryRow) = getFixedEstablishmentRows(waypoints, request.userAnswers, thisPage)
 

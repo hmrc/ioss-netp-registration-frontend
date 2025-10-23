@@ -71,13 +71,13 @@ object PreviousRegistrationSummary {
           key = "previousRegistrations.checkYourAnswersLabel",
           value = ValueViewModel(HtmlContent(value)),
           actions = Seq(
-              if (sameListOfCountries) {
-                ActionItemViewModel("site.add", controllers.previousRegistrations.routes.AddPreviousRegistrationController.onPageLoad(waypoints).url)
-                  .withVisuallyHiddenText(messages("previousRegistrations.add.hidden"))
-              } else {
-                ActionItemViewModel("site.change", AddPreviousRegistrationPage().changeLink(waypoints, sourcePage).url)
-                  .withVisuallyHiddenText(messages("previousRegistrations.change.hidden"))
-              }
+            if (sameListOfCountries) {
+              ActionItemViewModel("site.add", controllers.previousRegistrations.routes.AddPreviousRegistrationController.onPageLoad(waypoints).url)
+                .withVisuallyHiddenText(messages("previousRegistrations.add.hidden"))
+            } else {
+              ActionItemViewModel("site.change", AddPreviousRegistrationPage().changeLink(waypoints, sourcePage).url)
+                .withVisuallyHiddenText(messages("previousRegistrations.change.hidden"))
+            }
           )
         )
 
@@ -85,10 +85,10 @@ object PreviousRegistrationSummary {
     }
 
   def checkAnswersRowWithoutAction(
-                       answers: UserAnswers,
-                       existingPreviousRegistrations: Seq[PreviousRegistration],
-                       waypoints: Waypoints
-                     )(implicit messages: Messages): Option[SummaryListRow] =
+                                    answers: UserAnswers,
+                                    existingPreviousRegistrations: Seq[PreviousRegistration],
+                                    waypoints: Waypoints
+                                  )(implicit messages: Messages): Option[SummaryListRow] =
     answers.get(AllPreviousRegistrationsQuery).map {
       previousRegistrations =>
         val value = previousRegistrations.map {
@@ -109,7 +109,7 @@ object PreviousRegistrationSummary {
 
         listRowViewModel
     }
-    
+
   def amendedAnswersRow(answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] =
     answers.get(AllPreviousRegistrationsQuery).map {
       previousRegistrations =>

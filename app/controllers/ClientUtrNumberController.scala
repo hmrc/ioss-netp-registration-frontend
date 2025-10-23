@@ -20,29 +20,27 @@ import controllers.actions.*
 import forms.ClientUtrNumberFormProvider
 import logging.Logging
 import models.core.Match
-
-import javax.inject.Inject
-import pages.ClientUtrNumberPage
-import pages.Waypoints
+import pages.{ClientUtrNumberPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.ClientUtrNumberView
 import utils.FutureSyntax.FutureOps
+import views.html.ClientUtrNumberView
 
-import java.time.{Clock, LocalDate}
+import java.time.Clock
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class ClientUtrNumberController @Inject()(
-                                        override val messagesApi: MessagesApi,
-                                        cc: AuthenticatedControllerComponents,
-                                        formProvider: ClientUtrNumberFormProvider,
-                                        view: ClientUtrNumberView,
-                                        coreRegistrationValidationService: CoreRegistrationValidationService,
-                                        clock: Clock
-                                    )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
+                                           override val messagesApi: MessagesApi,
+                                           cc: AuthenticatedControllerComponents,
+                                           formProvider: ClientUtrNumberFormProvider,
+                                           view: ClientUtrNumberView,
+                                           coreRegistrationValidationService: CoreRegistrationValidationService,
+                                           clock: Clock
+                                         )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
 
   val form: Form[String] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
