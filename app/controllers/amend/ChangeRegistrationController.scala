@@ -43,12 +43,11 @@ class ChangeRegistrationController @Inject()(
                                               cc: AuthenticatedControllerComponents,
                                               val controllerComponents: MessagesControllerComponents,
                                               view: ChangeRegistrationView
-                                            ) extends FrontendBaseController with I18nSupport with Logging with GetClientCompanyName {
+                                            )extends FrontendBaseController with I18nSupport with Logging with GetClientCompanyName {
 
   def onPageLoad(waypoints: Waypoints = EmptyWaypoints, iossNumber: String): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
-      val userAnswers = request.userAnswers
       val thisPage = ChangeRegistrationPage(iossNumber)
 
       getClientCompanyName(waypoints) { companyName =>
@@ -61,13 +60,13 @@ class ChangeRegistrationController @Inject()(
           ).flatten
         )
 
-        val(hasTradingNameRow, tradingNameRow) = getTradingNameRows(request.userAnswers, waypoints, thisPage)
+        val (hasTradingNameRow, tradingNameRow) = getTradingNameRows(request.userAnswers, waypoints, thisPage)
 
-        val(previouslyRegisteredRow, previousRegSummaryRow) = getPreviousRegRows(request.userAnswers, waypoints)
+        val (previouslyRegisteredRow, previousRegSummaryRow) = getPreviousRegRows(request.userAnswers, waypoints)
 
-        val(hasFixedEstablishmentRow, euDetailsSummaryRow) = getFixedEstablishmentRows(waypoints, request.userAnswers, thisPage)
+        val (hasFixedEstablishmentRow, euDetailsSummaryRow) = getFixedEstablishmentRows(waypoints, request.userAnswers, thisPage)
 
-        val(contactNameRow, telephoneNumRow, emailRow) = getBusinessContactRows(waypoints, userAnswers, thisPage)
+        val (contactNameRow, telephoneNumRow, emailRow) = getBusinessContactRows(waypoints, request.userAnswers, thisPage)
 
         val importOneStopShopDetailsList = SummaryListViewModel(
           rows = Seq(
@@ -77,7 +76,7 @@ class ChangeRegistrationController @Inject()(
             previousRegSummaryRow,
             hasFixedEstablishmentRow,
             euDetailsSummaryRow,
-            WebsiteSummary.checkAnswersRow(waypoints, userAnswers, thisPage),
+            WebsiteSummary.checkAnswersRow(waypoints, request.userAnswers, thisPage),
             contactNameRow,
             telephoneNumRow,
             emailRow
@@ -87,8 +86,8 @@ class ChangeRegistrationController @Inject()(
         Ok(view(waypoints, companyName, iossNumber, registrationDetailsList, importOneStopShopDetailsList)).toFuture
 
       }
-
   }
+
 
   def onSubmit(waypoints: Waypoints, iossNumber: String): Action[AnyContent] = cc.identifyAndGetData() {
     Ok(Json.toJson(iossNumber)) //TODO VEI-199 - implement submit amend reg.

@@ -834,7 +834,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
       }
     }
 
-    ".displayRegistration" - {
+    ".displayRegistrationNetp" - {
 
       val displayRegistrationUrl: String = s"/ioss-netp-registration/registrations/$iossNumber"
 
@@ -855,7 +855,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
           val connector = application.injector.instanceOf[RegistrationConnector]
 
-          val result = connector.displayRegistration(iossNumber).futureValue
+          val result = connector.displayRegistrationNetp(iossNumber).futureValue
 
           result `mustBe` Right(displayRegistrationWrapper)
         }
@@ -877,7 +877,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
           val connector = application.injector.instanceOf[RegistrationConnector]
 
-          val result = connector.displayRegistration(iossNumber).futureValue
+          val result = connector.displayRegistrationNetp(iossNumber).futureValue
 
           result `mustBe` Left(InvalidJson)
         }
@@ -896,9 +896,77 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
           val connector = application.injector.instanceOf[RegistrationConnector]
 
-          val result = connector.displayRegistration(iossNumber).futureValue
+          val result = connector.displayRegistrationNetp(iossNumber).futureValue
 
           result `mustBe` Left(InternalServerError)
+        }
+      }
+    }
+
+    ".displayRegistrationIntermediary" - {
+
+      val displayRegistrationUrl: String = s"/ioss-intermediary-registration/get-registration/$intermediaryNumber"
+
+      val displayRegistrationWrapper: RegistrationWrapper = arbitraryRegistrationWrapper.arbitrary.sample.value
+
+      "must return Right(RegistrationWrapper) when the server returns a successful response and JSON is parsed correctly" in {
+
+        val responseJson = Json.toJson(displayRegistrationWrapper).toString
+
+        server.stubFor(
+          get(urlEqualTo(displayRegistrationUrl))
+            .willReturn(aResponse()
+              .withStatus(OK)
+              .withBody(responseJson))
+        )
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[RegistrationConnector]
+
+          val result = connector.displayRegistrationIntermediary(intermediaryNumber).futureValue
+
+          result mustBe Right(displayRegistrationWrapper)
+        }
+      }
+
+      "must return Left(InvalidJson) when JSON is not parsed correctly" in {
+
+        val responseJson = Json.toJson("JSON" -> "Invalid").toString
+
+        server.stubFor(
+          get(urlEqualTo(displayRegistrationUrl))
+            .willReturn(aResponse()
+              .withStatus(OK)
+              .withBody(responseJson))
+        )
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[RegistrationConnector]
+
+          val result = connector.displayRegistrationIntermediary(intermediaryNumber).futureValue
+
+          result mustBe Left(InvalidJson)
+        }
+      }
+
+      "must return Left(InternalServerError) when server responds with an error" in {
+
+        server.stubFor(
+          get(urlEqualTo(displayRegistrationUrl))
+            .willReturn(aResponse()
+              .withStatus(INTERNAL_SERVER_ERROR)
+            )
+        )
+
+        running(application) {
+
+          val connector = application.injector.instanceOf[RegistrationConnector]
+
+          val result = connector.displayRegistrationIntermediary(intermediaryNumber).futureValue
+
+          result mustBe Left(InternalServerError)
         }
       }
     }

@@ -17,6 +17,7 @@
 package pages
 
 import models.{CheckMode, Mode, NormalMode}
+import pages.amend.ChangeRegistrationPage
 import pages.previousRegistrations.{AddPreviousRegistrationPage, CheckPreviousSchemeAnswersPage}
 import pages.tradingNames.AddTradingNamePage
 import pages.vatEuDetails.{AddEuDetailsPage, CheckEuDetailsAnswersPage}
@@ -50,4 +51,5 @@ object Waypoint {
     fragments.get(s)
       .orElse(CheckPreviousSchemeAnswersPage.waypointFromString(s))
       .orElse(CheckEuDetailsAnswersPage.waypointFromString(s))
+      .orElse(ChangeRegistrationPage.waypointFromString(s))
 }
