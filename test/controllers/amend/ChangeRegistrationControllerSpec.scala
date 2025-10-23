@@ -234,9 +234,6 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
             .build()
 
           running(application) {
-            var numOfTimes = 0
-            println(numOfTimes)
-            numOfTimes += 1
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad(iossNumber = iossNum).url)
 
             implicit val msgs: Messages = messages(application)
@@ -246,9 +243,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
             val view = application.injector.instanceOf[ChangeRegistrationView]
 
             val registrationList = SummaryListViewModel(rows = getNonUkBasedWithVatNumRegistrationDetailsList(nonUkBasedCompleteUserAnswersWithVatInfo))
-
-            println("\n\nregistrationList:")
-            println(registrationList)
+            
             val importOneStopShopDetailsList = SummaryListViewModel(
               rows = getImportOneStopShopDetailsSummaryList(nonUkBasedCompleteUserAnswersWithVatInfo, previousRegistrationFromDetails)
             )
@@ -340,37 +335,13 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
   private def getNonUkBasedWithVatNumRegistrationDetailsList(answers: UserAnswers)(implicit msgs: Messages): Seq[SummaryListRow] = {
 
-    val one = BusinessBasedInUKSummary.rowWithoutAction(waypoints, answers)
-    println("one")
-    println(one)
-    val two = ClientHasVatNumberSummary.rowWithoutAction(waypoints, answers)
-    println("two")
-    println(two)
-    val three = ClientVatNumberSummary.rowWithoutAction(waypoints, answers)
-    println("three")
-    println(three)
-    val four = ClientCountryBasedSummary.row(waypoints, answers, amendYourAnswersPage)
-    println("four")
-    println(four)
-    val five = ClientBusinessNameSummary.row(waypoints, answers, amendYourAnswersPage)
-    println("five")
-    println(five)
-    val six = VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, answers, amendYourAnswersPage, true)
-    println("six")
-    println(six)
-    val sev = VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, answers, amendYourAnswersPage)
-    println("sev")
-    println(sev)
-    val eight = ClientBusinessAddressSummary.changeRegRow(waypoints, answers, amendYourAnswersPage)
-    println("eight")
-    println(eight)
     Seq(
       BusinessBasedInUKSummary.rowWithoutAction(waypoints, answers),
       ClientHasVatNumberSummary.rowWithoutAction(waypoints, answers),
       ClientVatNumberSummary.rowWithoutAction(waypoints, answers),
       ClientCountryBasedSummary.row(waypoints, answers, amendYourAnswersPage),
       ClientBusinessNameSummary.row(waypoints, answers, amendYourAnswersPage),
-      VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, answers, amendYourAnswersPage, true),
+      VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, answers, amendYourAnswersPage, false),
       VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, answers, amendYourAnswersPage),
       ClientBusinessAddressSummary.changeRegRow(waypoints, answers, amendYourAnswersPage)
     ).flatten

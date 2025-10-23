@@ -84,25 +84,22 @@ object VatRegistrationDetailsSummary {
                                    sourcePage: CheckAnswersPage,
                                    basedInUk: Boolean)(implicit messages: Messages): Option[SummaryListRow] = {
 
-    val outcome = (answers.vatInfo, basedInUk) match {
+    (answers.vatInfo, basedInUk) match {
       case (Some(vatCustomerInfo), basedInUk) if basedInUk =>
         val clientName: String = vatCustomerInfo.organisationName.orElse(vatCustomerInfo.individualName).getOrElse{
           throw new IllegalStateException("Unable to retrieve a required client Name from the vat information")
         }
 
-        val there = Some(SummaryListRowViewModel(
+        Some(SummaryListRowViewModel(
           key = "clientBusinessName.checkYourAnswersLabel",
           value = ValueViewModel(HtmlContent(HtmlFormat.escape(clientName).toString))
         ))
-        println("there")
-        println(there)
-        there
       case (Some(vatCustomerInfo), basedInUk) if !basedInUk =>
         val clientName: String = vatCustomerInfo.organisationName.orElse(vatCustomerInfo.individualName).getOrElse(
           throw new IllegalStateException("Unable to retrieve a required client Name from the vat information")
         )
 
-        val here = Some(SummaryListRowViewModel(
+        Some(SummaryListRowViewModel(
           key = "clientBusinessName.checkYourAnswersLabel",
           value = ValueViewModel(HtmlContent(HtmlFormat.escape(clientName).toString)),
           actions = Seq(
@@ -110,14 +107,8 @@ object VatRegistrationDetailsSummary {
               .withVisuallyHiddenText(messages("clientBusinessName.change.hidden"))
           )
         ))
-        println("here1")
-        println(here)
-        here
       case(_, _) =>
         None
     }
-    println("\n\noutcome")
-    println(outcome)
-    outcome
   }
 }

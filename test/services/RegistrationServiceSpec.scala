@@ -239,7 +239,6 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
     }
 
     "must throw an Illegal State Exception when country doesn't exist" in {
-      //TODO- Discussion with Andrew? I understood a Non Uk based Netp with Vat Num would not have an address
 
       val nonExistentCountryCode: String = "non-existent"
 
@@ -323,8 +322,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
         registrationService
           .setClientCountry(userAnswers = noVatUserAnswers, optionEtmpOtherAddress = None, hasUkBasedAddress = false)
       }
-      // TODO- VEI-199: Why must have a uk address?
-      exception.getMessage mustBe "Must have A UK Address."
+      exception.getMessage mustBe "Etmp Other Address must be present if client does not have a Vat number."
     }
   }
 

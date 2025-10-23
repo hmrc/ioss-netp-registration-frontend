@@ -217,11 +217,7 @@ class RegistrationService @Inject()(
         country = Some(getCountry(otherAddress.issuedBy))
       )
     }.getOrElse {
-      val exception = new IllegalStateException(s"Must have A UK Address.")
-      // TODO- VEI-199: Why must have a uk address?
-      //  If it was Uk based with UTR not VRN it would have a EtmpOtherAddress?
-      // If an error occured and it was returned as a None then this would be the error
-      // i.e should be "Other Address not returned by ETMP... or something?"
+      val exception = new IllegalStateException(s"Etmp Other Address must be present if client does not have a Vat number.")
       logger.error(exception.getMessage, exception)
       throw exception
     }
