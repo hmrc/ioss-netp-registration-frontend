@@ -18,20 +18,20 @@ package services.core
 
 import connectors.core.ValidateCoreRegistrationConnector
 import logging.Logging
+import models.{Country, PreviousScheme}
 import models.CountryWithValidationDetails.convertTaxIdentifierForTransfer
 import models.audit.CoreRegistrationAuditModel
-import models.core.Match.ossDateFormatter
 import models.core.*
+import models.core.Match.ossDateFormatter
 import models.iossRegistration.IossEtmpExclusionReason
 import models.requests.DataRequest
-import models.{Country, PreviousScheme}
 import services.AuditService
 import services.ioss.IossRegistrationService
 import services.oss.OssRegistrationService
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
 
-import java.time.{Clock, LocalDate}
+import java.time.Clock
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -151,18 +151,9 @@ class CoreRegistrationValidationService @Inject()(
     iossRegistrationService.getIossRegistration(iossNumber).map { registration =>
 
       val maybeExclusion = registration.exclusions.headOption
-      val exclusionEffectiveDate = maybeExclusion.map(exclusion => exclusion.effectiveDate)
-      val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
-      val matchType = maybeExclusion match {
-        case Some(exclusion) if exclusion.quarantine && exclusionEffectiveDate.exists(_.isAfter(quarantineCutOffDate)) =>
-          MatchType.TraderIdQuarantinedNETP
-        case _ =>
-          MatchType.TraderIdActiveNETP
-      }
 
       Some(
         Match(
-          matchType = matchType,
           traderId = TraderId(iossNumber),
           intermediary = None,
           memberState = Country.northernIreland.code,
@@ -181,18 +172,9 @@ class CoreRegistrationValidationService @Inject()(
     ossRegistrationService.getLatestOssRegistration(Vrn(normalizeVrn)).map { registration =>
 
       val maybeExclusion = registration.excludedTrader
-      val exclusionEffectiveDate = maybeExclusion.flatMap(_.effectiveDate)
-      val quarantineCutOffDate = LocalDate.now(clock).minusYears(2)
-      val isQuarantined = maybeExclusion.flatMap(_.quarantined).contains(true) && exclusionEffectiveDate.exists(_.isAfter(quarantineCutOffDate))
-      val matchType = if (isQuarantined) {
-        MatchType.TraderIdQuarantinedNETP
-      } else {
-        MatchType.TraderIdActiveNETP
-      }
 
       Some(
         Match(
-          matchType = matchType,
           traderId = TraderId(registration.vrn.vrn),
           intermediary = None,
           memberState = Country.northernIreland.code,
