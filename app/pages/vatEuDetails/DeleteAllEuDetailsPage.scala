@@ -18,7 +18,8 @@ package pages.vatEuDetails
 
 import controllers.vatEuDetails.routes
 import models.UserAnswers
-import pages.{JourneyRecoveryPage, Page, QuestionPage, Waypoints}
+import pages.amend.ChangeRegistrationPage
+import pages.{JourneyRecoveryPage, NonEmptyWaypoints, Page, QuestionPage, Waypoints, Waypoint}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
@@ -36,4 +37,17 @@ case object DeleteAllEuDetailsPage extends QuestionPage[Boolean] {
       case Some(_) => HasFixedEstablishmentPage
       case _ => JourneyRecoveryPage
     }
+
+  override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page = {
+    answers.get(this) match {
+      case Some(_) if waypoints.inAmend =>
+        waypoints.waypoints.toList.collectFirst {
+          case Waypoint(page: ChangeRegistrationPage, _, _) => page
+        }.getOrElse(JourneyRecoveryPage)
+      case Some(_) =>
+        HasFixedEstablishmentPage
+      case _ =>
+        JourneyRecoveryPage
+    }
+  }
 }
