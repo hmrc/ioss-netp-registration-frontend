@@ -25,16 +25,15 @@ import models.previousRegistrations.PreviousRegistrationDetails
 import pages.*
 import pages.amend.ChangeRegistrationPage
 import play.api.i18n.{I18nSupport, Messages}
-import play.api.mvc.Results.Unauthorized
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import queries.{IossNumberQuery, OriginalRegistrationQuery}
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
+import queries.{IossNumberQuery, OriginalRegistrationQuery}
+import services.RegistrationService
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
+import uk.gov.hmrc.http.UnauthorizedException
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
-import services.RegistrationService
-import uk.gov.hmrc.http.UnauthorizedException
 import viewmodels.checkAnswers.*
 import viewmodels.checkAnswers.tradingNames.*
 import viewmodels.checkAnswers.vatEuDetails.*
@@ -73,6 +72,7 @@ class ChangeRegistrationController @Inject()(
             ClientHasVatNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientVatNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             if (!clientBasedInUk) ClientCountryBasedSummary.row(waypoints, request.userAnswers, thisPage) else None,
+            ClientTaxReferenceSummary.row(waypoints, request.userAnswers, thisPage),
             if (request.userAnswers.vatInfo.isDefined) {
               VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, request.userAnswers, thisPage, clientBasedInUk)
             } else {
@@ -81,9 +81,8 @@ class ChangeRegistrationController @Inject()(
             ClientHasUtrNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientUtrNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientsNinoNumberSummary.row(waypoints, request.userAnswers, thisPage),
-            ClientTaxReferenceSummary.row(waypoints, request.userAnswers, thisPage),
             VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, request.userAnswers, thisPage),
-            if (clientBasedInUk) ClientBusinessAddressSummary.changeUkBasedRegRow(waypoints, request.userAnswers, thisPage) else ClientBusinessAddressSummary.changeRegRow(waypoints, request.userAnswers, thisPage)
+            if (clientBasedInUk) ClientBusinessAddressSummary.changeUkBasedRegRow(waypoints, request.userAnswers, thisPage) else ClientBusinessAddressSummary.row(waypoints, userAnswers, thisPage)
           ).flatten
         )
 
@@ -131,7 +130,7 @@ class ChangeRegistrationController @Inject()(
           rejoin = false
         ).map {
           case Right(_) =>
-            Redirect(JourneyRecoveryPage.route(waypoints).url) //TODO - to be implemented
+            Redirect(JourneyRecoveryPage.route(waypoints).url) //TODO -VEI-440 to be implemented
           case Left(error) =>
             val exception = new Exception(error.body)
             logger.error(exception.getMessage, exception)

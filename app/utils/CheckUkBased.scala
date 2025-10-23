@@ -26,8 +26,7 @@ object CheckUkBased {
 
     (vatCustomerInfo, otherAddress) match {
       case (Some(vatInfo), Some(address)) =>
-        vatInfo.desAddress.countryCode.startsWith(ukCountryCodeAreaPrefix) &&
-          address.issuedBy.startsWith(ukCountryCodeAreaPrefix)
+        vatInfo.desAddress.countryCode.startsWith(ukCountryCodeAreaPrefix) || address.issuedBy.startsWith(ukCountryCodeAreaPrefix)
       case (Some(vatInfo), None) =>
         vatInfo.desAddress.countryCode.startsWith(ukCountryCodeAreaPrefix)
       case (None, Some(address)) =>

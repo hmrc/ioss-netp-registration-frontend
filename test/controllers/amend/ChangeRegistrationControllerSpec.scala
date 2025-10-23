@@ -344,7 +344,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       ClientBusinessNameSummary.row(waypoints, answers, amendYourAnswersPage),
       VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, answers, amendYourAnswersPage, false),
       VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, answers, amendYourAnswersPage),
-      ClientBusinessAddressSummary.changeRegRow(waypoints, answers, amendYourAnswersPage)
+      ClientBusinessAddressSummary.row(waypoints, answers, amendYourAnswersPage)
     ).flatten
   }
 
@@ -357,7 +357,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       ClientHasUtrNumberSummary.rowWithoutAction(waypoints, answers),
       ClientUtrNumberSummary.rowWithoutAction(waypoints, answers),
       ClientsNinoNumberSummary.row(waypoints, answers, amendYourAnswersPage),
-      ClientBusinessAddressSummary.changeRegRow(waypoints, answers, amendYourAnswersPage)
+      ClientBusinessAddressSummary.row(waypoints, answers, amendYourAnswersPage)
     ).flatten
   }
 
@@ -367,10 +367,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       BusinessBasedInUKSummary.rowWithoutAction(waypoints, answers),
       ClientHasVatNumberSummary.rowWithoutAction(waypoints, answers),
       ClientCountryBasedSummary.row(waypoints, answers, amendYourAnswersPage),
-      ClientBusinessNameSummary.row(waypoints, answers, amendYourAnswersPage),
-      ClientHasUtrNumberSummary.rowWithoutAction(waypoints, answers),
       ClientTaxReferenceSummary.row(waypoints, answers, amendYourAnswersPage),
-      ClientBusinessAddressSummary.changeRegRow(waypoints, answers, amendYourAnswersPage)
+      ClientBusinessNameSummary.row(waypoints, answers, amendYourAnswersPage),
+      ClientBusinessAddressSummary.row(waypoints, answers, amendYourAnswersPage)
     ).flatten
   }
 

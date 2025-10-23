@@ -18,9 +18,11 @@ package utils
 
 import base.SpecBase
 import models.domain.VatCustomerInfo
+import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.mockito.MockitoSugar
+import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 
-class CheckUkBasedSpec extends SpecBase with MockitoSugar {
+class CheckUkBasedSpec extends SpecBase with MockitoSugar with TableDrivenPropertyChecks{
 
   ".isUkBasedNetp when provided with " - {
     val ukBasedCountryCode: String = "GB"
@@ -32,35 +34,26 @@ class CheckUkBasedSpec extends SpecBase with MockitoSugar {
     val ukBasedOtherAddress = arbitraryOtherAddress.copy(issuedBy = ukBasedCountryCode)
     val nonUkOtherAddress = arbitraryOtherAddress.copy(issuedBy = nonUkCountryCode)
 
-    "VatCustomerInfo & EtmpOtherAddress with Uk based address should return true" in {
-      val result = CheckUkBased.isUkBasedNetp(vatCustomerInfo = Some(ukBasedVatInfo), otherAddress = Some(ukBasedOtherAddress))
+    "with either VatCustomerInfo or EtmpOtherAddress with Uk based address should return true" in {
+      val testCases = Table(
+        ("vatInfo", "otherAddress"),
+        (Some(ukBasedVatInfo), Some(ukBasedOtherAddress)),
+        (Some(ukBasedVatInfo), Some(nonUkOtherAddress)),
+        (Some(nonUkVatInfo), Some(ukBasedOtherAddress)),
+        (Some(ukBasedVatInfo), None),
+        (None, Some(ukBasedOtherAddress)),
+      )
 
-      result mustBe true
-    }
-    "VatCustomerInfo WITH a uk address & EtmpOtherAddress WITHOUT a uk address should return false" in {
-      val result = CheckUkBased.isUkBasedNetp(vatCustomerInfo = Some(ukBasedVatInfo), otherAddress = Some(nonUkOtherAddress))
+      forAll(testCases) { (vatConditions, otherAddressConditions) =>
+        val result = CheckUkBased.isUkBasedNetp(vatCustomerInfo = vatConditions, otherAddress = otherAddressConditions)
 
-      result mustBe false
-    }
-    "VatCustomerInfo WITHOUT uk address & EtmpOtherAddress WITH a uk address should return false" in {
-      val result = CheckUkBased.isUkBasedNetp(vatCustomerInfo = Some(nonUkVatInfo), otherAddress = Some(ukBasedOtherAddress))
-
-      result mustBe false
-    }
-    "only VatCustomerInfo WITH Uk based address should return true" in {
-      val result = CheckUkBased.isUkBasedNetp(vatCustomerInfo = Some(ukBasedVatInfo), otherAddress = None)
-
-      result mustBe true
+        result mustBe true
+      }
     }
     "only VatCustomerInfo WITHOUT Uk based address should return false" in {
       val result = CheckUkBased.isUkBasedNetp(vatCustomerInfo = Some(nonUkVatInfo), otherAddress = None)
 
       result mustBe false
-    }
-    "only EtmpOtherAddress WITH Uk based address should return true" in {
-      val result = CheckUkBased.isUkBasedNetp(vatCustomerInfo = None, otherAddress = Some(ukBasedOtherAddress))
-
-      result mustBe true
     }
     "only EtmpOtherAddress WITHOUT Uk based address should return false" in {
       val result = CheckUkBased.isUkBasedNetp(vatCustomerInfo = None, otherAddress = Some(nonUkOtherAddress))

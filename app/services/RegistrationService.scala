@@ -157,6 +157,7 @@ class RegistrationService @Inject()(
 
     if (userAnswers.vatInfo.isEmpty) {
 
+      println(userAnswers.vatInfo)
       val nonVatTradingName: String = maybeOtherAddress.flatMap(_.tradingName).getOrElse {
         logger.error(s"Unable to retrieve a Trading name from Other Address, required for client business naming without vat for amend journey.")
         throw new IllegalStateException(s"Unable to retrieve a Trading name from Other Address, required for client business naming without vat for for amend journey.")
@@ -166,6 +167,7 @@ class RegistrationService @Inject()(
         nonVatTradingNameAnswers <- nonVatBusinessAddress.set(ClientBusinessNamePage, ClientBusinessName(nonVatTradingName))
       } yield nonVatTradingNameAnswers
     } else {
+      println(userAnswers.vatInfo)
       Try(userAnswers)
     }
   }
