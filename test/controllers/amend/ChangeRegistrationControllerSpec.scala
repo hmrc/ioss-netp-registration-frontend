@@ -328,7 +328,6 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       BusinessBasedInUKSummary.rowWithoutAction(waypoints, answers),
       ClientHasVatNumberSummary.rowWithoutAction(waypoints, answers),
       ClientVatNumberSummary.rowWithoutAction(waypoints, answers),
-      VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, answers, amendYourAnswersPage, true),
       VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, answers, amendYourAnswersPage)
     ).flatten
   }

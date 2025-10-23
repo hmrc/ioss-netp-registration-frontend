@@ -85,15 +85,6 @@ object VatRegistrationDetailsSummary {
                                    basedInUk: Boolean)(implicit messages: Messages): Option[SummaryListRow] = {
 
     (answers.vatInfo, basedInUk) match {
-      case (Some(vatCustomerInfo), basedInUk) if basedInUk =>
-        val clientName: String = vatCustomerInfo.organisationName.orElse(vatCustomerInfo.individualName).getOrElse{
-          throw new IllegalStateException("Unable to retrieve a required client Name from the vat information")
-        }
-
-        Some(SummaryListRowViewModel(
-          key = "clientBusinessName.checkYourAnswersLabel",
-          value = ValueViewModel(HtmlContent(HtmlFormat.escape(clientName).toString))
-        ))
       case (Some(vatCustomerInfo), basedInUk) if !basedInUk =>
         val clientName: String = vatCustomerInfo.organisationName.orElse(vatCustomerInfo.individualName).getOrElse(
           throw new IllegalStateException("Unable to retrieve a required client Name from the vat information")
