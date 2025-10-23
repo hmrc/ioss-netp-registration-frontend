@@ -20,14 +20,12 @@ import base.SpecBase
 import controllers.routes
 import forms.previousRegistrations.PreviousIossNumberFormProvider
 import models.{Country, Index, PreviousScheme}
-import models.core.{Match, MatchType, TraderId}
-import models.core.MatchType.*
+import models.core.{Match, TraderId}
 import models.domain.PreviousSchemeNumbers
 import models.previousRegistrations.NonCompliantDetails
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.prop.TableDrivenPropertyChecks
-import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import org.scalatestplus.mockito.MockitoSugar
 import pages.previousRegistrations.{PreviousEuCountryPage, PreviousIossNumberPage, PreviousSchemePage}
 import play.api.inject.bind
@@ -56,12 +54,10 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with T
   private val mockCoreRegistartionValidationService = mock[CoreRegistrationValidationService]
 
   def createMatchResponse(
-                           matchType: MatchType = TraderIdActiveNETP,
                            traderId: TraderId = TraderId("IM0987654321"),
                            exclusionStatusCode: Option[Int] = None,
                            nonCompliantDetails: Option[NonCompliantDetails] = None
                          ): Match = Match(
-    matchType = matchType,
     traderId = traderId,
     intermediary = None,
     memberState = "DE",
@@ -163,40 +159,29 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with T
       val mockSessionRepository = mock[SessionRepository]
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
-      val testConditions = Table(
-        ("MatchType", "exclusionStatusCode"),
-        (TraderIdActiveNETP, None),
-        (OtherMSNETPActiveNETP, None),
-        (FixedEstablishmentActiveNETP, None)
-      )
-
-      forAll(testConditions) { (matchType, exclusionStatusCode) =>
-
-        val application =
-          applicationBuilder(userAnswers = Some(baseAnswers))
-            .overrides(
-              bind[SessionRepository].toInstance(mockSessionRepository),
-              bind[CoreRegistrationValidationService].toInstance(mockCoreRegistartionValidationService)
-            )
-            .build()
-
-        running(application) {
-
-          val activeRegistrationMatch = createMatchResponse(
-            matchType = matchType,
-            traderId = TraderId("IM0987654321")
+      val application =
+        applicationBuilder(userAnswers = Some(baseAnswers))
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistartionValidationService)
           )
+          .build()
 
-          when(mockCoreRegistartionValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
+      running(application) {
 
-          val request = FakeRequest(POST, previousIossNumberRoute)
-            .withFormUrlEncodedBody(("value", "IM0401234567"))
+        val activeRegistrationMatch = createMatchResponse(
+          traderId = TraderId("IM0987654321")
+        )
 
-          val result = route(application, request).value
+        when(mockCoreRegistartionValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
 
-          status(result) `mustEqual` SEE_OTHER
-          redirectLocation(result).value mustEqual controllers.routes.ClientAlreadyRegisteredController.onPageLoad().url
-        }
+        val request = FakeRequest(POST, previousIossNumberRoute)
+          .withFormUrlEncodedBody(("value", "IM0401234567"))
+
+        val result = route(application, request).value
+
+        status(result) `mustEqual` SEE_OTHER
+        redirectLocation(result).value mustEqual controllers.routes.ClientAlreadyRegisteredController.onPageLoad().url
       }
     }
 
@@ -205,43 +190,32 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with T
       val mockSessionRepository = mock[SessionRepository]
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
-      val testConditions = Table(
-        ("MatchType", "exclusionStatusCode"),
-        (TraderIdQuarantinedNETP, Some(4)),
-        (OtherMSNETPQuarantinedNETP, Some(4)),
-        (FixedEstablishmentQuarantinedNETP, Some(4))
-      )
-
-      forAll(testConditions) { (matchType, exclusionStatusCode) =>
-
-        val application =
-          applicationBuilder(userAnswers = Some(baseAnswers))
-            .overrides(
-              bind[SessionRepository].toInstance(mockSessionRepository),
-              bind[CoreRegistrationValidationService].toInstance(mockCoreRegistartionValidationService)
-            )
-            .build()
-
-        running(application) {
-
-          val quarantinedIntermediaryMatch = createMatchResponse(
-            matchType = matchType,
-            traderId = TraderId("IM0987654321"),
-            exclusionStatusCode = exclusionStatusCode
+      val application =
+        applicationBuilder(userAnswers = Some(baseAnswers))
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistartionValidationService)
           )
+          .build()
 
-          when(mockCoreRegistartionValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn
-            Some(quarantinedIntermediaryMatch).toFuture
+      running(application) {
 
-          val request = FakeRequest(POST, previousIossNumberRoute)
-            .withFormUrlEncodedBody(("value", "IM0401234567"))
+        val quarantinedIntermediaryMatch = createMatchResponse(
+          traderId = TraderId("IM0987654321"),
+          exclusionStatusCode = Some(4)
+        )
 
-          val result = route(application, request).value
+        when(mockCoreRegistartionValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn
+          Some(quarantinedIntermediaryMatch).toFuture
 
-          status(result) `mustEqual` SEE_OTHER
-          redirectLocation(result).value mustEqual controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-            quarantinedIntermediaryMatch.memberState, quarantinedIntermediaryMatch.getEffectiveDate).url
-        }
+        val request = FakeRequest(POST, previousIossNumberRoute)
+          .withFormUrlEncodedBody(("value", "IM0401234567"))
+
+        val result = route(application, request).value
+
+        status(result) `mustEqual` SEE_OTHER
+        redirectLocation(result).value mustEqual controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+          quarantinedIntermediaryMatch.memberState, quarantinedIntermediaryMatch.getEffectiveDate).url
       }
     }
 
@@ -263,7 +237,6 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with T
       running(application) {
 
         val activeMatch = createMatchResponse(
-          matchType = MatchType.TransferringMSID,
           traderId = TraderId("IM0987654321"),
           exclusionStatusCode = Some(6),
           nonCompliantDetails = Some(nonCompliantDetails)

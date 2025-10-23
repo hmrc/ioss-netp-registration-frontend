@@ -51,7 +51,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar with ScalaFutures with Matchers with BeforeAndAfterEach {
 
   private val genericMatch = Match(
-    MatchType.FixedEstablishmentActiveNETP,
     TraderId("333333333"),
     None,
     "EE",
@@ -442,7 +441,6 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
       when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
 
       val expectedMatch = Match(
-        matchType = MatchType.TraderIdQuarantinedNETP,
         traderId = TraderId(iossNumber),
         intermediary = None,
         memberState = countryCode,
@@ -509,7 +507,6 @@ class CoreRegistrationValidationServiceSpec extends SpecBase with MockitoSugar w
       when(mockValidateCoreRegistrationConnector.validateCoreRegistration(any())(any())) thenReturn Right(expectedResponse).toFuture
 
       val expectedMatch = Match(
-        matchType = MatchType.TraderIdQuarantinedNETP,
         traderId = TraderId(vrn),
         intermediary = None,
         memberState = countryCode,

@@ -17,7 +17,6 @@
 package models.core
 
 import base.SpecBase
-import models.core.MatchType.*
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.libs.json.{JsError, Json, JsSuccess}
@@ -39,7 +38,6 @@ class CoreRegistrationValidationResultSpec extends AnyFreeSpec with Matchers wit
             "FR",
             true,
             Seq(Match(
-              MatchType.FixedEstablishmentQuarantinedNETP,
               TraderId("IM0987654321"),
               Some("444444444"),
               "DE",
@@ -58,7 +56,6 @@ class CoreRegistrationValidationResultSpec extends AnyFreeSpec with Matchers wit
           "traderFound" -> true,
           "matches" -> Json.arr(
             Json.obj(
-              "matchType" -> "006",
               "traderId" -> "IM0987654321",
               "intermediary" -> "444444444",
               "memberState" -> "DE",
@@ -82,7 +79,6 @@ class CoreRegistrationValidationResultSpec extends AnyFreeSpec with Matchers wit
             "FR",
             true,
             Seq(Match(
-              MatchType.FixedEstablishmentQuarantinedNETP,
               TraderId("IM0987654321"),
               None,
               "DE",
@@ -100,7 +96,6 @@ class CoreRegistrationValidationResultSpec extends AnyFreeSpec with Matchers wit
           "traderFound" -> true,
           "matches" -> Json.arr(
             Json.obj(
-              "matchType" -> "006",
               "traderId" -> "IM0987654321",
               "memberState" -> "DE"
             ))
@@ -121,7 +116,6 @@ class CoreRegistrationValidationResultSpec extends AnyFreeSpec with Matchers wit
         "traderFound" -> true,
         "matches" -> Json.arr(
           Json.obj(
-            "matchType" -> "006",
             "traderId" -> "IM0987654321",
             "intermediary" -> "444444444",
             "memberState" -> "DE",
@@ -139,7 +133,6 @@ class CoreRegistrationValidationResultSpec extends AnyFreeSpec with Matchers wit
 
   "Match" - {
     val activeMatch = Match(
-      matchType = MatchType.PreviousRegistrationFound,
       traderId = TraderId("IM4423268206"),
       intermediary = None,
       memberState = "HU",
@@ -151,7 +144,6 @@ class CoreRegistrationValidationResultSpec extends AnyFreeSpec with Matchers wit
     )
 
     val quarantinedMatch = Match(
-      matchType = MatchType.PreviousRegistrationFound,
       traderId = TraderId("IM4423268206"),
       intermediary = None,
       memberState = "HU",
@@ -170,16 +162,6 @@ class CoreRegistrationValidationResultSpec extends AnyFreeSpec with Matchers wit
       }
 
       "must return false" - {
-        "for not active match types" in {
-          val nonActiveMatchTypes = Seq(TraderIdQuarantinedNETP, OtherMSNETPQuarantinedNETP, FixedEstablishmentQuarantinedNETP, TransferringMSID)
-
-          for (nonActiveType <- nonActiveMatchTypes) {
-
-            val nonActiveMatch = activeMatch.copy(matchType = nonActiveType, exclusionStatusCode = Some(1))
-
-            nonActiveMatch.isActiveTrader mustBe false
-          }
-        }
 
         "for not active status codes" in {
           val nonActiveStatusCodes = Seq(1, 2, 3, 4, 5, 6)
