@@ -83,7 +83,7 @@ class ChangeRegistrationController @Inject()(
             ClientsNinoNumberSummary.row(waypoints, request.userAnswers, thisPage),
             ClientTaxReferenceSummary.row(waypoints, request.userAnswers, thisPage),
             VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, request.userAnswers, thisPage),
-            ClientBusinessAddressSummary.changeRegRow(waypoints, request.userAnswers, thisPage)
+            if (clientBasedInUk) ClientBusinessAddressSummary.changeUkBasedRegRow(waypoints, request.userAnswers, thisPage) else ClientBusinessAddressSummary.changeRegRow(waypoints, request.userAnswers, thisPage)
           ).flatten
         )
 
