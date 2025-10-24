@@ -22,6 +22,7 @@ import pages.amend.ChangeRegistrationPage
 import pages.{JourneyRecoveryPage, NonEmptyWaypoints, Page, QuestionPage, Waypoints, Waypoint}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
+import utils.AmendWaypoints.AmendWaypointsOps
 
 case object DeleteAllEuDetailsPage extends QuestionPage[Boolean] {
 
