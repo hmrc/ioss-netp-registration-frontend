@@ -55,12 +55,7 @@ class ChangeRegistrationController @Inject()(
   def onPageLoad(waypoints: Waypoints = EmptyWaypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
-      val iossNum: String = request.userAnswers.get(IossNumberQuery).getOrElse{
-        logger.info(s"Insufficient Ioss Number to amend the registration for ${request.userId}")
-        throw new UnauthorizedException(s"Insufficient Ioss Number to amend the registration for ${request.userId}")
-      }
-
-      val thisPage: ChangeRegistrationPage = ChangeRegistrationPage(iossNum)
+      val thisPage: ChangeRegistrationPage = ChangeRegistrationPage(request.getIossNumber())
 
       val clientBasedInUk = request.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
 
@@ -109,7 +104,7 @@ class ChangeRegistrationController @Inject()(
           ).flatten
         )
 
-        Ok(view(waypoints, companyName, iossNum, registrationDetailsList, importOneStopShopDetailsList)).toFuture
+        Ok(view(waypoints, companyName, request.getIossNumber(), registrationDetailsList, importOneStopShopDetailsList)).toFuture
       }
   }
 
@@ -117,16 +112,12 @@ class ChangeRegistrationController @Inject()(
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
-      val iossNum: String = request.userAnswers.get(IossNumberQuery).getOrElse{
-        logger.info(s"Insufficient Ioss Number to amend the registration for ${request.userId}")
-        throw new UnauthorizedException(s"Insufficient Ioss Number to amend the registration for ${request.userId}")
-      }
-      request.userAnswers.get(OriginalRegistrationQuery(iossNum)) match {
+      request.userAnswers.get(OriginalRegistrationQuery(request.getIossNumber())) match {
         case Some(registrationWrapper) =>
           registrationService.amendRegistration(
           answers = request.userAnswers,
           registration = registrationWrapper,
-          iossNumber = iossNum,
+          iossNumber = request.getIossNumber(),
           rejoin = false
         ).map {
           case Right(_) =>
