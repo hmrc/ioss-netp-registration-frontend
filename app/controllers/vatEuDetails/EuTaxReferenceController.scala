@@ -20,51 +20,51 @@ import controllers.GetCountry
 import controllers.actions.*
 import forms.vatEuDetails.EuTaxReferenceFormProvider
 import models.Index
-import pages.vatEuDetails.EuTaxReferencePage
 import pages.Waypoints
+import pages.vatEuDetails.EuTaxReferencePage
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.vatEuDetails.EuTaxReferenceView
 import utils.FutureSyntax.FutureOps
+import views.html.vatEuDetails.EuTaxReferenceView
 
-import java.time.{Clock, LocalDate}
+import java.time.Clock
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class EuTaxReferenceController @Inject()(
-                                        override val messagesApi: MessagesApi,
-                                        cc: AuthenticatedControllerComponents,
-                                        formProvider: EuTaxReferenceFormProvider,
-                                        view: EuTaxReferenceView,
-                                        coreRegistrationValidationService: CoreRegistrationValidationService,
-                                        clock: Clock
-                                      )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
+                                          override val messagesApi: MessagesApi,
+                                          cc: AuthenticatedControllerComponents,
+                                          formProvider: EuTaxReferenceFormProvider,
+                                          view: EuTaxReferenceView,
+                                          coreRegistrationValidationService: CoreRegistrationValidationService,
+                                          clock: Clock
+                                        )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
   def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
-    
-          getCountryWithIndex(waypoints, countryIndex) { country =>
-    
-            val form = formProvider(country)
-    
-            val preparedForm = request.userAnswers.get(EuTaxReferencePage(countryIndex)) match {
-              case None => form
-              case Some(value) => form.fill(value)
-            }
-    
-            Ok(view(preparedForm, waypoints, countryIndex, country)).toFuture
-          }
+
+      getCountryWithIndex(waypoints, countryIndex) { country =>
+
+        val form = formProvider(country)
+
+        val preparedForm = request.userAnswers.get(EuTaxReferencePage(countryIndex)) match {
+          case None => form
+          case Some(value) => form.fill(value)
+        }
+
+        Ok(view(preparedForm, waypoints, countryIndex, country)).toFuture
+      }
   }
 
   def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       getCountryWithIndex(waypoints, countryIndex) { country =>
-        
+
         val form = formProvider(country)
 
         form.bindFromRequest().fold(
@@ -83,7 +83,7 @@ class EuTaxReferenceController @Inject()(
                     activeMatch.memberState,
                     activeMatch.getEffectiveDate)
                 ).toFuture
-                
+
               case _ =>
                 for {
                   updatedAnswers <- Future.fromTry(request.userAnswers.set(EuTaxReferencePage(countryIndex), value))

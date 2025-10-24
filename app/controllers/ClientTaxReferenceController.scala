@@ -20,10 +20,7 @@ import controllers.actions.*
 import forms.ClientTaxReferenceFormProvider
 import logging.Logging
 import models.core.Match
-
-import javax.inject.Inject
-import pages.ClientTaxReferencePage
-import pages.Waypoints
+import pages.{ClientTaxReferencePage, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.core.CoreRegistrationValidationService
@@ -31,7 +28,8 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.ClientTaxReferenceView
 
-import java.time.{Clock, LocalDate}
+import java.time.Clock
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class ClientTaxReferenceController @Inject()(

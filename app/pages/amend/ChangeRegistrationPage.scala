@@ -29,7 +29,7 @@ case class ChangeRegistrationPage(iossNum: String) extends CheckAnswersPage {
   override val urlFragment: String = s"change-your-registration-$iossNum"
 
   override def route(waypoints: Waypoints): Call =
-    controllers.amend.routes.ChangeRegistrationController.onPageLoad(waypoints, iossNum)
+    controllers.amend.routes.ChangeRegistrationController.onPageLoad(waypoints)
 
 }
 

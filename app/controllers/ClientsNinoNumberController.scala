@@ -20,29 +20,27 @@ import controllers.actions.*
 import forms.ClientsNinoNumberFormProvider
 import logging.Logging
 import models.core.Match
-
-import javax.inject.Inject
-import pages.ClientsNinoNumberPage
-import pages.Waypoints
+import pages.{ClientsNinoNumberPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.ClientsNinoNumberView
 import utils.FutureSyntax.FutureOps
+import views.html.ClientsNinoNumberView
 
 import java.time.{Clock, LocalDate}
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class ClientsNinoNumberController @Inject()(
-                                        override val messagesApi: MessagesApi,
-                                        cc: AuthenticatedControllerComponents,
-                                        formProvider: ClientsNinoNumberFormProvider,
-                                        view: ClientsNinoNumberView,
-                                        coreRegistrationValidationService: CoreRegistrationValidationService,
-                                        clock: Clock
-                                    )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetCountry {
+                                             override val messagesApi: MessagesApi,
+                                             cc: AuthenticatedControllerComponents,
+                                             formProvider: ClientsNinoNumberFormProvider,
+                                             view: ClientsNinoNumberView,
+                                             coreRegistrationValidationService: CoreRegistrationValidationService,
+                                             clock: Clock
+                                           )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetCountry {
 
   val form: Form[String] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -79,7 +77,7 @@ class ClientsNinoNumberController @Inject()(
                   activeMatch.memberState,
                   activeMatch.getEffectiveDate)
               ).toFuture
-              
+
             case _ =>
               for {
                 updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientsNinoNumberPage, value))

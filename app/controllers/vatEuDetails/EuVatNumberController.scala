@@ -20,17 +20,17 @@ import controllers.GetCountry
 import controllers.actions.*
 import forms.vatEuDetails.EuVatNumberFormProvider
 import models.{CountryWithValidationDetails, Index}
-import pages.vatEuDetails.EuVatNumberPage
 import pages.Waypoints
+import pages.vatEuDetails.EuVatNumberPage
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.vatEuDetails.EuVatNumberView
 import utils.FutureSyntax.FutureOps
+import views.html.vatEuDetails.EuVatNumberView
 
-import java.time.{Clock, LocalDate}
+import java.time.Clock
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
