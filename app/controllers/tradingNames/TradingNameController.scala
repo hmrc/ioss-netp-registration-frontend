@@ -31,6 +31,7 @@ import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.tradingNames.TradingNameView
+import utils.AmendWaypoints.AmendWaypointsOps
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -44,16 +45,13 @@ class TradingNameController @Inject()(
                                        val controllerComponents: MessagesControllerComponents,
                                        sessionRepository: SessionRepository,
                                        formProvider: TradingNameFormProvider,
+                                       cc: AuthenticatedControllerComponents,
                                        view: TradingNameView
                                      )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
 
   def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (
-    identify
-      andThen
-      getData
-      andThen
-      requireData()
+    cc.identifyAndGetData(waypoints.inAmend)
       andThen
       maxIndexFilter(index)) {
 
@@ -71,11 +69,7 @@ class TradingNameController @Inject()(
   }
 
   def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = (
-    identify
-      andThen
-      getData
-      andThen
-      requireData()
+    cc.identifyAndGetData(waypoints.inAmend)
       andThen
       maxIndexFilter(index)).async {
     implicit request =>

@@ -29,6 +29,7 @@ import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.tradingNames.HasTradingNameView
+import utils.AmendWaypoints.AmendWaypointsOps
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,6 +40,7 @@ class HasTradingNameController @Inject()(
                                          getData: DataRetrievalAction,
                                          requireData: DataRequiredAction,
                                          sessionRepository: SessionRepository,
+                                         cc: AuthenticatedControllerComponents,
                                          val controllerComponents: MessagesControllerComponents,
                                          formProvider: HasTradingNameFormProvider,
                                          view: HasTradingNameView
@@ -46,7 +48,7 @@ class HasTradingNameController @Inject()(
 
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData()).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
     implicit request =>
 
       getClientCompanyName(waypoints) {
@@ -60,7 +62,7 @@ class HasTradingNameController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData()).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] =  cc.identifyAndGetData(waypoints.inAmend).async {
     implicit request =>
 
       getClientCompanyName(waypoints) {
