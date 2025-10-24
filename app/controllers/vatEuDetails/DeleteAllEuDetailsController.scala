@@ -26,6 +26,7 @@ import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.euDetails.AllEuDetailsQuery
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.ItemsHelper.determineRemoveAllItemsAndRedirect
+import utils.AmendWaypoints.AmendWaypointsOps
 import views.html.vatEuDetails.DeleteAllEuDetailsView
 import utils.FutureSyntax.FutureOps
 
@@ -43,7 +44,7 @@ class DeleteAllEuDetailsController @Inject()(
   
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData() {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend) {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(DeleteAllEuDetailsPage) match {
@@ -54,7 +55,7 @@ class DeleteAllEuDetailsController @Inject()(
       Ok(view(preparedForm, waypoints))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
     implicit request =>
 
       form.bindFromRequest().fold(
