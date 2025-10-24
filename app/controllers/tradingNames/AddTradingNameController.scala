@@ -30,6 +30,7 @@ import utils.FutureSyntax.FutureOps
 import utils.ItemsHelper.getDerivedItems
 import viewmodels.checkAnswers.tradingNames.TradingNameSummary
 import views.html.tradingNames.AddTradingNameView
+import utils.AmendWaypoints.AmendWaypointsOps
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,13 +42,15 @@ class AddTradingNameController @Inject()(
                                           requireData: DataRequiredAction,
                                           sessionRepository: SessionRepository,
                                           formProvider: AddTradingNameFormProvider,
-                                          val controllerComponents: MessagesControllerComponents,
+                                          cc: AuthenticatedControllerComponents,
                                           view: AddTradingNameView
                                         )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
   
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData()).async {
+  protected val controllerComponents: MessagesControllerComponents = cc
+  
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
     implicit request =>
       getDerivedItems(waypoints, DeriveNumberOfTradingNames) {
         number =>
@@ -58,7 +61,7 @@ class AddTradingNameController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData()).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
     implicit request =>
 
       getDerivedItems(waypoints, DeriveNumberOfTradingNames) {

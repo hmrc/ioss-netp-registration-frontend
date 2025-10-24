@@ -29,6 +29,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import utils.ItemsHelper.determineRemoveAllItemsAndRedirect
 import views.html.tradingNames.DeleteAllTradingNamesView
+import utils.AmendWaypoints.AmendWaypointsOps
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -40,19 +41,21 @@ class DeleteAllTradingNamesController @Inject()(
                                          requireData: DataRequiredAction,
                                          sessionRepository: SessionRepository,
                                          formProvider: DeleteAllTradingNamesFormProvider,
-                                         val controllerComponents: MessagesControllerComponents,
+                                         cc: AuthenticatedControllerComponents,
                                          view: DeleteAllTradingNamesView
                                  )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
   
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData()) {
+  protected val controllerComponents: MessagesControllerComponents = cc
+
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] =  cc.identifyAndGetData(waypoints.inAmend) {
     implicit request =>
 
       Ok(view(form, waypoints))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = (identify andThen getData andThen requireData()).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] =  cc.identifyAndGetData(waypoints.inAmend).async {
     implicit request =>
 
       form.bindFromRequest().fold(

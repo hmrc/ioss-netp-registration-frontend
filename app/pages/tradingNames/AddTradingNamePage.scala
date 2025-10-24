@@ -65,6 +65,5 @@ final case class AddTradingNamePage(override val index: Option[Index] = None) ex
         PreviouslyRegisteredPage
     }.orRecover
 
-
   override def deriveNumberOfItems: Derivable[Seq[JsObject], Int] = DeriveNumberOfTradingNames
 }
