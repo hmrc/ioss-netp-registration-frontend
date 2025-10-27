@@ -59,7 +59,7 @@ import java.time.{Instant, LocalDate, LocalDateTime}
 class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency with MockitoSugar with BeforeAndAfterEach {
 
   private val iossNum = "IN012345678"
-  private val amendYourAnswersPage = ChangeRegistrationPage(iossNum)
+  private val amendYourAnswersPage = ChangeRegistrationPage
   private val companyName = "Company Name"
 
   override val vatCustomerInfo: VatCustomerInfo = {

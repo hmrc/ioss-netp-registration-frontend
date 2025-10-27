@@ -16,31 +16,19 @@
 
 package pages.amend
 
-import pages.{CheckAnswersPage, Page, Waypoint, Waypoints}
+import pages.{CheckAnswersPage, Page, Waypoints}
 import play.api.mvc.Call
 
-case class ChangeRegistrationPage(iossNum: String) extends CheckAnswersPage {
+object ChangeRegistrationPage extends CheckAnswersPage {
 
   override def isTheSamePage(other: Page): Boolean = other match {
-    case p: ChangeRegistrationPage => p.iossNum == this.iossNum
+    case ChangeRegistrationPage => true
     case _ => false
   }
 
-  override val urlFragment: String = s"change-your-registration-$iossNum"
+  override val urlFragment: String = s"change-your-registration"
 
   override def route(waypoints: Waypoints): Call =
     controllers.amend.routes.ChangeRegistrationController.onPageLoad(waypoints)
-
-}
-
-object ChangeRegistrationPage {
-  def waypointFromString(s: String): Option[Waypoint] ={
-    val pattern = """change-your-registration-(.+)""".r.anchored
-
-    s match {
-      case pattern(iossNum) =>
-        Some(ChangeRegistrationPage(iossNum).waypoint)
-      case _ => None
-    }
-  }
+  
 }
