@@ -40,9 +40,7 @@ case object BusinessContactDetailsPage extends QuestionPage[BusinessContactDetai
   override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page = {
     answers.get(this) match {
       case Some(_) if waypoints.inAmend =>
-        waypoints.waypoints.toList.collectFirst {
-          case Waypoint(page: ChangeRegistrationPage, _, _) => page
-        }.getOrElse(JourneyRecoveryPage)
+        ChangeRegistrationPage
       case Some(_) => CheckYourAnswersPage
       case _ => JourneyRecoveryPage
     }

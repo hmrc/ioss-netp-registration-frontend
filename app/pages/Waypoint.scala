@@ -44,12 +44,12 @@ object Waypoint {
       AddEuDetailsPage().normalModeUrlFragment -> AddEuDetailsPage().waypoint(NormalMode),
       AddEuDetailsPage().checkModeUrlFragment -> AddEuDetailsPage().waypoint(CheckMode),
       CheckVatDetailsPage().urlFragment -> CheckVatDetailsPage().waypoint,
-      CheckYourAnswersPage.urlFragment -> CheckYourAnswersPage.waypoint
+      CheckYourAnswersPage.urlFragment -> CheckYourAnswersPage.waypoint,
+      ChangeRegistrationPage.urlFragment -> ChangeRegistrationPage.waypoint
     )
 
   def fromString(s: String): Option[Waypoint] =
     fragments.get(s)
       .orElse(CheckPreviousSchemeAnswersPage.waypointFromString(s))
       .orElse(CheckEuDetailsAnswersPage.waypointFromString(s))
-      .orElse(ChangeRegistrationPage.waypointFromString(s))
 }

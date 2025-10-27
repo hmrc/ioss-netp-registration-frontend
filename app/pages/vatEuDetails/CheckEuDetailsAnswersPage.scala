@@ -21,6 +21,7 @@ import models.{Index, UserAnswers}
 import pages.*
 import pages.amend.ChangeRegistrationPage
 import play.api.mvc.Call
+import queries.IossNumberQuery
 import utils.AmendWaypoints.AmendWaypointsOps
 
 final case class CheckEuDetailsAnswersPage(countryIndex: Index) extends CheckAnswersPage {
@@ -40,9 +41,7 @@ final case class CheckEuDetailsAnswersPage(countryIndex: Index) extends CheckAns
 
   override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page = {
     if (waypoints.inAmend) {
-      waypoints.waypoints.toList.collectFirst {
-        case Waypoint(page: ChangeRegistrationPage, _, _) => page
-      }.getOrElse(JourneyRecoveryPage)
+      ChangeRegistrationPage
     } else {
       AddEuDetailsPage()
     }
