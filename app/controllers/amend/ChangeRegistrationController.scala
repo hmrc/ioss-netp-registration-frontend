@@ -27,10 +27,9 @@ import pages.amend.ChangeRegistrationPage
 import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
-import queries.{IossNumberQuery, OriginalRegistrationQuery}
+import queries.OriginalRegistrationQuery
 import services.RegistrationService
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
-import uk.gov.hmrc.http.UnauthorizedException
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
@@ -48,7 +47,7 @@ class ChangeRegistrationController @Inject()(
                                               cc: AuthenticatedControllerComponents,
                                               view: ChangeRegistrationView,
                                               registrationService: RegistrationService
-                                            ) (implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientCompanyName {
+                                            )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientCompanyName {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -81,13 +80,13 @@ class ChangeRegistrationController @Inject()(
           ).flatten
         )
 
-        val(hasTradingNameRow, tradingNameRow) = getTradingNameRows(request.userAnswers, waypoints, thisPage)
+        val (hasTradingNameRow, tradingNameRow) = getTradingNameRows(request.userAnswers, waypoints, thisPage)
 
-        val(previouslyRegisteredRow, previousRegSummaryRow) = getPreviousRegRows(request.userAnswers, waypoints, thisPage)
+        val (previouslyRegisteredRow, previousRegSummaryRow) = getPreviousRegRows(request.userAnswers, waypoints, thisPage)
 
-        val(hasFixedEstablishmentRow, euDetailsSummaryRow) = getFixedEstablishmentRows(waypoints, request.userAnswers, thisPage)
+        val (hasFixedEstablishmentRow, euDetailsSummaryRow) = getFixedEstablishmentRows(waypoints, request.userAnswers, thisPage)
 
-        val(contactNameRow, telephoneNumRow, emailRow) = getBusinessContactRows(waypoints, request.userAnswers, thisPage)
+        val (contactNameRow, telephoneNumRow, emailRow) = getBusinessContactRows(waypoints, request.userAnswers, thisPage)
 
         val importOneStopShopDetailsList = SummaryListViewModel(
           rows = Seq(
@@ -115,18 +114,18 @@ class ChangeRegistrationController @Inject()(
       request.userAnswers.get(OriginalRegistrationQuery(request.getIossNumber())) match {
         case Some(registrationWrapper) =>
           registrationService.amendRegistration(
-          answers = request.userAnswers,
-          registration = registrationWrapper,
-          iossNumber = request.getIossNumber(),
-          rejoin = false
-        ).map {
-          case Right(_) =>
-            Redirect(JourneyRecoveryPage.route(waypoints).url) //TODO -VEI-440 to be implemented
-          case Left(error) =>
-            val exception = new Exception(error.body)
-            logger.error(exception.getMessage, exception)
-            throw exception
-        }
+            answers = request.userAnswers,
+            registration = registrationWrapper,
+            iossNumber = request.getIossNumber(),
+            rejoin = false
+          ).map {
+            case Right(_) =>
+              Redirect(JourneyRecoveryPage.route(waypoints).url) //TODO -VEI-440 to be implemented
+            case Left(error) =>
+              val exception = new Exception(error.body)
+              logger.error(exception.getMessage, exception)
+              throw exception
+          }
         case None => Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture
       }
 
