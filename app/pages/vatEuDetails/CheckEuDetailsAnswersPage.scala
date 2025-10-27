@@ -40,11 +40,7 @@ final case class CheckEuDetailsAnswersPage(countryIndex: Index) extends CheckAns
     AddEuDetailsPage()
 
   override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page = {
-    if (waypoints.inAmend) {
-      ChangeRegistrationPage
-    } else {
-      AddEuDetailsPage()
-    }
+  AddEuDetailsPage()
   }
 }
 

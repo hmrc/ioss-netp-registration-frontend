@@ -19,7 +19,8 @@ package controllers.amend
 import connectors.RegistrationConnector
 import controllers.actions.AuthenticatedControllerComponents
 import logging.Logging
-import pages.Waypoints
+import models.CheckMode
+import pages.{Waypoint, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.{IossNumberQuery, OriginalRegistrationQuery}
@@ -56,6 +57,9 @@ class StartAmendJourneyController @Inject()(
               _ <- cc.sessionRepository.set(userAnswers)
               _ <- cc.sessionRepository.set(originalAnswers)
             } yield {
+              val amendWaypoints = waypoints.setNextWaypoint(
+                Waypoint(pages.amend.ChangeRegistrationPage, CheckMode, pages.amend.ChangeRegistrationPage.urlFragment)
+              )
               Redirect(routes.ChangeRegistrationController.onPageLoad(waypoints).url)
             }
 

@@ -44,7 +44,7 @@ object EuDetailsSummary {
             key = euDetails.euCountry.name,
             value = ValueViewModel(HtmlContent(value)),
             actions = Seq(
-              ActionItemViewModel("site.change", CheckEuDetailsAnswersPage(Index(countryIndex)).changeLink(waypoints, sourcePage).url)
+              ActionItemViewModel("site.change", CheckEuDetailsAnswersPage(Index(countryIndex)).route(waypoints).url)
                 .withVisuallyHiddenText(messages("change.euDetails.hidden", euDetails.euCountry.name)),
 
               ActionItemViewModel("site.remove", DeleteEuDetailsPage(Index(countryIndex)).route(waypoints).url)
