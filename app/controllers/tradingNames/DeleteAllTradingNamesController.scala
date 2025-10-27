@@ -36,9 +36,6 @@ import scala.concurrent.ExecutionContext
 
 class DeleteAllTradingNamesController @Inject()(
                                          override val messagesApi: MessagesApi,
-                                         identify: IdentifierAction,
-                                         getData: DataRetrievalAction,
-                                         requireData: DataRequiredAction,
                                          sessionRepository: SessionRepository,
                                          formProvider: DeleteAllTradingNamesFormProvider,
                                          cc: AuthenticatedControllerComponents,

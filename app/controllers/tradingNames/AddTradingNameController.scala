@@ -37,9 +37,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class AddTradingNameController @Inject()(
                                           override val messagesApi: MessagesApi,
-                                          identify: IdentifierAction,
-                                          getData: DataRetrievalAction,
-                                          requireData: DataRequiredAction,
                                           sessionRepository: SessionRepository,
                                           formProvider: AddTradingNameFormProvider,
                                           cc: AuthenticatedControllerComponents,
