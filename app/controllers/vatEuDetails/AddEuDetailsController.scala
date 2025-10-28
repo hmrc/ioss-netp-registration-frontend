@@ -31,6 +31,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.CompletionChecks
 import utils.EuDetailsCompletionChecks.*
 import utils.ItemsHelper.getDerivedItems
+import utils.AmendWaypoints.AmendWaypointsOps
 import viewmodels.checkAnswers.vatEuDetails.EuDetailsSummary
 import views.html.vatEuDetails.AddEuDetailsView
 import utils.FutureSyntax.FutureOps
@@ -50,7 +51,7 @@ class AddEuDetailsController @Inject()(
   private val euCountriesSize: Int = Country.euCountries.size
   private val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
     implicit request =>
 
       getDerivedItems(waypoints, DeriveNumberOfEuRegistrations) { numberOfEuRegistrations =>
@@ -69,7 +70,7 @@ class AddEuDetailsController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints, incompletePromptShown: Boolean): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onSubmit(waypoints: Waypoints, incompletePromptShown: Boolean): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
     implicit request =>
 
       withCompleteDataAsync[EuDetails](

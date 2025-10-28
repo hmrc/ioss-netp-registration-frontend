@@ -22,15 +22,11 @@ import pages.{NonEmptyWaypoints, Waypoints, Waypoint}
 object AmendWaypoints {
   implicit class AmendWaypointsOps(waypoints: Waypoints) {
     def inAmend: Boolean = {
-      waypoints match {
+      waypoints match
         case nonEmptyWaypoints: NonEmptyWaypoints =>
-          nonEmptyWaypoints.waypoints.toList.exists {
-            case Waypoint(_: ChangeRegistrationPage, _, _) => true
-            case _ => false
-          }
+          nonEmptyWaypoints.waypoints.toList.map(_.urlFragment).contains(ChangeRegistrationPage.urlFragment)
         case _ =>
           false
-      }
     }
   }
 }

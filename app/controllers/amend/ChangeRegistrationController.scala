@@ -27,10 +27,9 @@ import pages.amend.ChangeRegistrationPage
 import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
-import queries.{IossNumberQuery, OriginalRegistrationQuery}
+import queries.OriginalRegistrationQuery
 import services.RegistrationService
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
-import uk.gov.hmrc.http.UnauthorizedException
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
@@ -55,7 +54,7 @@ class ChangeRegistrationController @Inject()(
   def onPageLoad(waypoints: Waypoints = EmptyWaypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
-      val thisPage: ChangeRegistrationPage = ChangeRegistrationPage(request.getIossNumber())
+      val thisPage = ChangeRegistrationPage
 
       val clientBasedInUk = request.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
 
@@ -133,7 +132,7 @@ class ChangeRegistrationController @Inject()(
 
   }
 
-  private def getTradingNameRows(answers: UserAnswers, waypoints: Waypoints, changePage: ChangeRegistrationPage)(implicit messages: Messages) = {
+  private def getTradingNameRows(answers: UserAnswers, waypoints: Waypoints, changePage: ChangeRegistrationPage.type)(implicit messages: Messages) = {
     val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(answers, waypoints, changePage)
     val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, answers, changePage)
 
@@ -147,7 +146,7 @@ class ChangeRegistrationController @Inject()(
     (formattedHasTradingNameSummary, tradingNameSummaryRow)
   }
 
-  private def getPreviousRegRows(answers: UserAnswers, waypoints: Waypoints, currentPage: ChangeRegistrationPage)(implicit messages: Messages) = {
+  private def getPreviousRegRows(answers: UserAnswers, waypoints: Waypoints, currentPage: ChangeRegistrationPage.type )(implicit messages: Messages) = {
 
 
     val previousRegistrations: Seq[PreviousRegistration] = answers.get(AllPreviousRegistrationsQuery).map { listOfPreviousReg =>
@@ -173,7 +172,7 @@ class ChangeRegistrationController @Inject()(
     (formattedPreviouslyRegisteredSummaryRow, previousRegistrationSummaryRow)
   }
 
-  private def getFixedEstablishmentRows(waypoints: Waypoints, answers: UserAnswers, page: ChangeRegistrationPage)(implicit messages: Messages) = {
+  private def getFixedEstablishmentRows(waypoints: Waypoints, answers: UserAnswers, page: ChangeRegistrationPage.type)(implicit messages: Messages) = {
     val hasFixedEstablishmentSummaryRow = HasFixedEstablishmentSummary.row(waypoints, answers, page)
     val euDetailsSummaryRow = EuDetailsSummary.checkAnswersRow(waypoints, answers, page)
 
@@ -187,7 +186,7 @@ class ChangeRegistrationController @Inject()(
     (formattedHasFixedEstablishmentSummaryRow, euDetailsSummaryRow)
   }
 
-  private def getBusinessContactRows(waypoints: Waypoints, answers: UserAnswers, page: ChangeRegistrationPage)(implicit messages: Messages) = {
+  private def getBusinessContactRows(waypoints: Waypoints, answers: UserAnswers, page: ChangeRegistrationPage.type )(implicit messages: Messages) = {
 
     val formattedContactName = BusinessContactDetailsSummary.rowFullName(waypoints, answers, page).map(_.withCssClass("govuk-summary-list__row--no-border"))
     val formattedTelephoneNumber = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, answers, page).map(_.withCssClass("govuk-summary-list__row--no-border"))

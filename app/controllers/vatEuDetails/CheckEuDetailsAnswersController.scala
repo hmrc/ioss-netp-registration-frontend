@@ -29,6 +29,7 @@ import utils.CompletionChecks
 import utils.EuDetailsCompletionChecks.*
 import views.html.vatEuDetails.CheckEuDetailsAnswersView
 import utils.FutureSyntax.FutureOps
+import utils.AmendWaypoints.AmendWaypointsOps
 import viewmodels.checkAnswers.vatEuDetails.*
 import viewmodels.govuk.all.SummaryListViewModel
 
@@ -42,7 +43,7 @@ class CheckEuDetailsAnswersController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
     implicit request =>
       getCountryWithIndex(waypoints, countryIndex) {
         country =>
@@ -70,7 +71,7 @@ class CheckEuDetailsAnswersController @Inject()(
 
   }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index, incompletePromptShown: Boolean): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index, incompletePromptShown: Boolean): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
     implicit request =>
 
       withCompleteDataModel[EuDetails](
