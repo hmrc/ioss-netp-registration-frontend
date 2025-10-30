@@ -18,6 +18,7 @@ package pages.tradingNames
 
 import controllers.tradingNames.routes
 import models.UserAnswers
+import pages.amend.ChangeRegistrationPage
 import pages.{CheckYourAnswersPage, JourneyRecoveryPage, NonEmptyWaypoints, Page, QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
@@ -34,10 +35,7 @@ case object DeleteAllTradingNamesPage extends QuestionPage[Boolean] {
 
   override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page =
     answers.get(this) match {
-      case Some(_) if waypoints.inAmend =>
-        waypoints.waypoints.toList.collectFirst( waypointPage => waypointPage.page).getOrElse{
-          throw new IllegalStateException("Error retrieving the change registration page")
-        }
+      case Some(_) if waypoints.inAmend => ChangeRegistrationPage
       case Some(_) => CheckYourAnswersPage
       case _ => JourneyRecoveryPage
     }

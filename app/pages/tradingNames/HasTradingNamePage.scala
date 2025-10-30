@@ -18,6 +18,7 @@ package pages.tradingNames
 
 import controllers.tradingNames.routes
 import models.{Index, UserAnswers}
+import pages.amend.ChangeRegistrationPage
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.{JourneyRecoveryPage, NonEmptyWaypoints, Page, QuestionPage, RecoveryOps, Waypoints}
 import play.api.libs.json.JsPath
@@ -46,10 +47,7 @@ case object HasTradingNamePage extends QuestionPage[Boolean] {
       case (Some(true), Some(tradingNames)) if tradingNames.nonEmpty => AddTradingNamePage()
       case (Some(true), _) => TradingNamePage(Index(0))
       case (Some(false), Some(tradingNames)) if tradingNames.nonEmpty => DeleteAllTradingNamesPage
-      case (Some(false), _) if waypoints.inAmend =>
-        waypoints.waypoints.toList.collectFirst( waypointPage => waypointPage.page).getOrElse{
-          throw new IllegalStateException("Error retrieving the change registration page")
-        }
+      case (Some(false), _) if waypoints.inAmend => ChangeRegistrationPage
       case (Some(false), _) => PreviouslyRegisteredPage
       case _ => JourneyRecoveryPage
     }
