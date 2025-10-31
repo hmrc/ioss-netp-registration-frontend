@@ -21,8 +21,8 @@ import config.Constants.maxSchemes
 import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
 import models.etmp.amend.AmendRegistrationResponse
 import models.etmp.display.EtmpDisplayRegistration
-import models.previousRegistrations.{NonCompliantDetails, PreviousRegistrationDetails}
-import models.{ClientBusinessName, DesAddress, TradingName, UserAnswers}
+import models.previousRegistrations.NonCompliantDetails
+import models.{CheckMode, ClientBusinessName, DesAddress, TradingName, UserAnswers}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Gen
@@ -32,23 +32,24 @@ import pages.amend.ChangeRegistrationPage
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.HasTradingNamePage
 import pages.vatEuDetails.HasFixedEstablishmentPage
+import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessNamePage, ClientCountryBasedPage, ClientHasUtrNumberPage, ClientHasVatNumberPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, EmptyWaypoints, Waypoint, Waypoints}
 import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage, ClientBusinessNamePage, ClientCountryBasedPage, ClientHasUtrNumberPage, ClientHasVatNumberPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage}
 import play.api.i18n.Messages
 import play.api.inject
 import play.api.inject.bind
 import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
-import queries.{IossNumberQuery, OriginalRegistrationQuery}
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
+import queries.{IossNumberQuery, OriginalRegistrationQuery}
 import services.RegistrationService
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
+import viewmodels.checkAnswers.*
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
 import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
-import viewmodels.checkAnswers.*
 import viewmodels.govuk.SummaryListFluency
 import viewmodels.govuk.all.SummaryListViewModel
 import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
@@ -58,9 +59,9 @@ import java.time.{Instant, LocalDate, LocalDateTime}
 
 class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency with MockitoSugar with BeforeAndAfterEach {
 
-  private val iossNum = "IN012345678"
   private val amendYourAnswersPage = ChangeRegistrationPage
-  private val companyName = "Company Name"
+  private val waypoints: Waypoints = EmptyWaypoints.setNextWaypoint(Waypoint(amendYourAnswersPage, CheckMode, amendYourAnswersPage.urlFragment))
+  private val companyName: String = "Company Name"
 
   override val vatCustomerInfo: VatCustomerInfo = {
     VatCustomerInfo(
@@ -78,8 +79,10 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
     )
   }
 
-  val previousRegistrationDetails: PreviousRegistrationDetails = {
-    PreviousRegistrationDetails(
+  val existingPreviousRegistrations: Seq[PreviousRegistration] = Gen.listOfN(2, arbitraryPreviousRegistration.arbitrary).sample.value
+
+  val previousRegistrationDetails: PreviousRegistration = {
+    PreviousRegistration(
       previousEuCountry = arbitraryCountry.arbitrary.sample.value,
       previousSchemesDetails = Gen.listOfN(
         maxSchemes, PreviousSchemeDetails(
@@ -94,17 +97,13 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
     )
   }
 
-  val previousRegistrationFromDetails: PreviousRegistration = {
-    PreviousRegistration(country = previousRegistrationDetails.previousEuCountry, previousSchemesDetails = previousRegistrationDetails.previousSchemesDetails)
-  }
-
   private val basicUserAnswersWithVatInfo: UserAnswers =
     UserAnswers(id = "12345-credId", vatInfo = Some(vatCustomerInfo), lastUpdated = Instant.now())
-      .set(IossNumberQuery, iossNum).success.value
+      .set(IossNumberQuery, iossNumber).success.value
 
   private val basicUserAnswersWithoutVatInfo: UserAnswers =
     UserAnswers(id = "12345-credId", vatInfo = None, lastUpdated = Instant.now())
-      .set(IossNumberQuery, iossNum).success.value
+      .set(IossNumberQuery, iossNumber).success.value
 
 
   private val ukBasedCompleteUserAnswersWithVatInfo: UserAnswers =
@@ -170,7 +169,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
   "ChangeRegistration Controller" - {
 
     ".onPageLoad" - {
+
       "must return OK and the correct view for a GET when" - {
+
         "A NETP Has a Uk based address and has Vat Info" in {
 
           val application = applicationBuilder(userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo)).build()
@@ -188,7 +189,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
             val registrationList = SummaryListViewModel(rows = getUkBasedWithVatNumRegistrationDetailsList(ukBasedCompleteUserAnswersWithVatInfo))
 
             val importOneStopShopDetailsList = SummaryListViewModel(
-              rows = getImportOneStopShopDetailsSummaryList(ukBasedCompleteUserAnswersWithVatInfo, previousRegistrationFromDetails)
+              rows = getImportOneStopShopDetailsSummaryList(ukBasedCompleteUserAnswersWithVatInfo, existingPreviousRegistrations)
             )
 
             status(result) mustBe OK
@@ -196,12 +197,13 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               view(
                 waypoints,
                 vatCustomerInfo.organisationName.get,
-                iossNum,
+                iossNumber,
                 registrationList,
                 importOneStopShopDetailsList
               )(request, messages(application)).toString
           }
         }
+
         "A NETP Has a Uk based address and does NOT have Vat Info" in {
 
           val application = applicationBuilder(userAnswers = Some(ukBasedCompleteUserAnswersWithoutVatInfo)).build()
@@ -219,27 +221,21 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
             val registrationList = SummaryListViewModel(rows = getUkBasedWithoutVatNumRegistrationDetailsList(ukBasedCompleteUserAnswersWithoutVatInfo))
 
             val importOneStopShopDetailsList = SummaryListViewModel(
-              rows = getImportOneStopShopDetailsSummaryList(ukBasedCompleteUserAnswersWithoutVatInfo, previousRegistrationFromDetails)
+              rows = getImportOneStopShopDetailsSummaryList(ukBasedCompleteUserAnswersWithoutVatInfo, existingPreviousRegistrations)
             )
 
-            val one = contentAsString(result)
-            val two = view(
-              waypoints,
-              companyName,
-              iossNum,
-              registrationList,
-              importOneStopShopDetailsList
-            )(request, messages(application)).toString
-
-            println("\n\none:")
-            println(one)
-            println("\n\ntwo:")
-            println(two)
             status(result) mustBe OK
-            one mustBe two
-
+            contentAsString(result) mustBe
+              view(
+                waypoints,
+                companyName,
+                iossNumber,
+                registrationList,
+                importOneStopShopDetailsList
+              )(request, messages(application)).toString
           }
         }
+
         "A NETP Has a Non Uk based address and Vat Info" in {
 
           val application = applicationBuilder(userAnswers = Some(nonUkBasedCompleteUserAnswersWithVatInfo))
@@ -257,7 +253,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
             val registrationList = SummaryListViewModel(rows = getNonUkBasedWithVatNumRegistrationDetailsList(nonUkBasedCompleteUserAnswersWithVatInfo))
 
             val importOneStopShopDetailsList = SummaryListViewModel(
-              rows = getImportOneStopShopDetailsSummaryList(nonUkBasedCompleteUserAnswersWithVatInfo, previousRegistrationFromDetails)
+              rows = getImportOneStopShopDetailsSummaryList(nonUkBasedCompleteUserAnswersWithVatInfo, existingPreviousRegistrations)
             )
 
 
@@ -265,12 +261,13 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
             contentAsString(result) mustBe view(
               waypoints,
               vatCustomerInfo.organisationName.get,
-              iossNum,
+              iossNumber,
               registrationList,
               importOneStopShopDetailsList
             )(request, messages(application)).toString
           }
         }
+
         "A NETP Has a Non Uk based address does NOT have Vat Info" in {
 
           val application = applicationBuilder(userAnswers = Some(nonUkBasedCompleteUserAnswersWithoutVatInfo)).build()
@@ -288,7 +285,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
             val registrationList = SummaryListViewModel(rows = getNonUkBasedWithoutVatNumRegistrationDetailsList(nonUkBasedCompleteUserAnswersWithoutVatInfo))
 
             val importOneStopShopDetailsList = SummaryListViewModel(
-              rows = getImportOneStopShopDetailsSummaryList(nonUkBasedCompleteUserAnswersWithoutVatInfo, previousRegistrationFromDetails)
+              rows = getImportOneStopShopDetailsSummaryList(nonUkBasedCompleteUserAnswersWithoutVatInfo, existingPreviousRegistrations)
             )
 
             status(result) mustBe OK
@@ -296,7 +293,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               view(
                 waypoints,
                 companyName,
-                iossNum,
+                iossNumber,
                 registrationList,
                 importOneStopShopDetailsList
               )(request, messages(application)).toString
@@ -306,10 +303,11 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
     }
 
     ".onSubmit" - {
+
       "should trigger .amendRegistration and redirect to [to be implemented]" in {
 
         val etmpDisplayRegistration: EtmpDisplayRegistration = arbitraryRegistrationWrapper.arbitrary.sample.value.etmpDisplayRegistration
-        val userAnswers = ukBasedCompleteUserAnswersWithVatInfo.set(OriginalRegistrationQuery(iossNum), etmpDisplayRegistration).success.value
+        val userAnswers = ukBasedCompleteUserAnswersWithVatInfo.set(OriginalRegistrationQuery(iossNumber), etmpDisplayRegistration).success.value
         val application = applicationBuilder(userAnswers = Some(userAnswers))
           .overrides(bind[RegistrationService].toInstance(mockRegistrationService))
           .build()
@@ -383,7 +381,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
     ).flatten
   }
 
-  private def getImportOneStopShopDetailsSummaryList(answers: UserAnswers, previousRegistration: PreviousRegistration)
+  private def getImportOneStopShopDetailsSummaryList(answers: UserAnswers, previousRegistrations: Seq[PreviousRegistration])
                                                     (implicit msgs: Messages): Seq[SummaryListRow] = {
     val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(answers, waypoints, amendYourAnswersPage)
     val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, answers, amendYourAnswersPage)
@@ -396,7 +394,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
     }
 
     val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.rowWithoutAction(answers, waypoints)
-    val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(answers, Seq(previousRegistration), waypoints, amendYourAnswersPage)
+    val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(answers, previousRegistrations, waypoints, amendYourAnswersPage)
     val formattedPreviouslyRegisteredSummaryRowy = previouslyRegisteredSummaryRow.map { nonOptPreviouslyRegisteredSummaryRow =>
       if (previousRegistrationSummaryRow.isDefined) {
         nonOptPreviouslyRegisteredSummaryRow.withCssClass("govuk-summary-list__row--no-border")
@@ -429,7 +427,6 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       formattedTelephoneNumber,
       formattedEmailAddress
     ).flatten
-
   }
-
 }
+
