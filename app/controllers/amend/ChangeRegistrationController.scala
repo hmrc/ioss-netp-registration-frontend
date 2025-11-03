@@ -73,7 +73,7 @@ class ChangeRegistrationController @Inject()(
             ClientVatNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             if (countryIsUk) None else ClientCountryBasedSummary.row(waypoints, request.userAnswers, thisPage),
             ClientTaxReferenceSummary.row(waypoints, request.userAnswers, thisPage),
-            if (request.userAnswers.vatInfo.isDefined) {
+            if (!hasEtmpOtherAddress.isDefined) {
               VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, request.userAnswers, thisPage, clientBasedInUk)
             } else {
               ClientBusinessNameSummary.row(waypoints, request.userAnswers, thisPage)

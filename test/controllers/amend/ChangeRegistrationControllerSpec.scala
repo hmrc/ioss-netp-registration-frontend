@@ -219,15 +219,18 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               rows = getImportOneStopShopDetailsSummaryList(ukBasedCompleteUserAnswersWithoutVatInfo, previousRegistrationFromDetails)
             )
 
+            val one = contentAsString(result)
+            val two = view(
+              waypoints,
+              companyName,
+              iossNum,
+              registrationList,
+              importOneStopShopDetailsList
+            )(request, messages(application)).toString
+            
             status(result) mustBe OK
-            contentAsString(result) mustBe
-              view(
-                waypoints,
-                companyName,
-                iossNum,
-                registrationList,
-                importOneStopShopDetailsList
-              )(request, messages(application)).toString
+            one mustBe two
+
           }
         }
         "A NETP Has a Non Uk based address and Vat Info" in {
@@ -245,7 +248,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
             val view = application.injector.instanceOf[ChangeRegistrationView]
 
             val registrationList = SummaryListViewModel(rows = getNonUkBasedWithVatNumRegistrationDetailsList(nonUkBasedCompleteUserAnswersWithVatInfo))
-            
+
             val importOneStopShopDetailsList = SummaryListViewModel(
               rows = getImportOneStopShopDetailsSummaryList(nonUkBasedCompleteUserAnswersWithVatInfo, previousRegistrationFromDetails)
             )
