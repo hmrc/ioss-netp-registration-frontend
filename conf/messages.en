@@ -567,3 +567,11 @@ continueRegistrationSelection.delete = No, delete my answers and start again
 noRegistrationInProgress.title = We did not find a registration in progress
 noRegistrationInProgress.heading = We did not find a registration in progress
 noRegistrationInProgress.sessionExpired = Your previous session may have expired.
+
+amendComplete.title = Registration details changed
+amendComplete.heading = Registration details confirmed
+amendComplete.info.noChanges = You have not changed any of your client''s registration details.
+amendComplete.contact.text = We will contact you if we need to check any information.
+amendComplete.returnToYourAccount.link = Return to your account
+amendComplete.feedback.link.text = What did you think of this service?
+amendComplete.feedback.30seconds = (takes 30 seconds)

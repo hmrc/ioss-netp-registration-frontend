@@ -210,6 +210,8 @@ GET        /start-amend-journey/:iossNumber                                contr
 GET         /change-your-registration                                      controllers.amend.ChangeRegistrationController.onPageLoad()
 POST        /change-your-registration                                      controllers.amend.ChangeRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
+GET        /successful-amend                                               controllers.amend.AmendCompleteController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+
 # Save for later section
 GET        /progress-saved                                                  controllers.saveAndComeBack.SavedProgressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, continueUrl: RedirectUrl)
 

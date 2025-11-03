@@ -24,7 +24,7 @@ import models.domain.PreviousRegistration
 import models.etmp.EtmpPreviousEuRegistrationDetails
 import models.{CheckMode, Country, InternationalAddress, UserAnswers}
 import pages.*
-import pages.amend.ChangeRegistrationPage
+import pages.amend.{AmendCompletePage, ChangeRegistrationPage}
 import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.RegistrationService
@@ -132,7 +132,7 @@ class ChangeRegistrationController @Inject()(
         iossNumber = request.iossNumber
       ).map {
         case Right(_) =>
-          Redirect(JourneyRecoveryPage.route(waypoints).url) //TODO -VEI-440 to be implemented
+          Redirect(ChangeRegistrationPage.navigate(EmptyWaypoints, request.userAnswers, request.userAnswers).route)
         case Left(error) =>
           val exception = new Exception(error.body)
           logger.error(exception.getMessage, exception)
