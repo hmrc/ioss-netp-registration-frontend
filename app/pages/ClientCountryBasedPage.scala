@@ -47,8 +47,12 @@ case object ClientCountryBasedPage extends QuestionPage[Country] {
   }
 
   override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page = {
-    answers.get(this) match {
-      case Some(_) if waypoints.inAmend => ChangeRegistrationPage
+
+    (answers.get(ClientHasVatNumberPage), answers.get(this)) match {
+      case (_, Some(_)) if waypoints.inAmend => ChangeRegistrationPage
+      case (Some(true), _) => ClientBusinessNamePage
+      case (Some(false), _) => ClientTaxReferencePage
+      case (None, _) => JourneyRecoveryPage
       case _ => CheckVatDetailsPage()
     }
   }
