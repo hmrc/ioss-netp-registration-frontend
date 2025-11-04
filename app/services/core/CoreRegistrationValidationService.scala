@@ -31,7 +31,6 @@ import services.oss.OssRegistrationService
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
 
-import java.time.Clock
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -40,8 +39,7 @@ class CoreRegistrationValidationService @Inject()(
                                                    connector: ValidateCoreRegistrationConnector,
                                                    iossRegistrationService: IossRegistrationService,
                                                    ossRegistrationService: OssRegistrationService,
-                                                   auditService: AuditService,
-                                                   clock: Clock
+                                                   auditService: AuditService
                                                  )(implicit ec: ExecutionContext) extends Logging {
   
   def searchUkVrn(vrn: Vrn)(implicit hc:HeaderCarrier, request: DataRequest[_]): Future[Option[Match]] = {
