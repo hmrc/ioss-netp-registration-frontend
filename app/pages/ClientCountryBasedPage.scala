@@ -52,8 +52,7 @@ case object ClientCountryBasedPage extends QuestionPage[Country] {
       case (_, Some(_)) if waypoints.inAmend => ChangeRegistrationPage
       case (Some(true), _) => ClientBusinessNamePage
       case (Some(false), _) => ClientTaxReferencePage
-      case (None, _) => JourneyRecoveryPage
-      case _ => CheckVatDetailsPage()
+      case _ => JourneyRecoveryPage
     }
   }
 }
