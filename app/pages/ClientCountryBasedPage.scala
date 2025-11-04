@@ -50,6 +50,7 @@ case object ClientCountryBasedPage extends QuestionPage[Country] {
 
     (answers.get(ClientHasVatNumberPage), answers.get(this)) match {
       case (_, Some(_)) if waypoints.inAmend => ChangeRegistrationPage
+      case (Some(true), Some(_)) => CheckVatDetailsPage()
       case (Some(true), _) => ClientBusinessNamePage
       case (Some(false), _) => ClientTaxReferencePage
       case _ => JourneyRecoveryPage
