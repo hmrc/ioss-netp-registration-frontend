@@ -18,8 +18,10 @@ package pages
 
 import controllers.routes
 import models.{Country, UserAnswers}
+import pages.amend.ChangeRegistrationPage
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
+import utils.AmendWaypoints.AmendWaypointsOps
 
 case object ClientCountryBasedPage extends QuestionPage[Country] {
 
@@ -42,5 +44,16 @@ case object ClientCountryBasedPage extends QuestionPage[Country] {
         JourneyRecoveryPage
     }
     
+  }
+
+  override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page = {
+
+    (answers.get(ClientHasVatNumberPage), answers.get(this), answers.get(ClientBusinessNamePage), answers.get(ClientBusinessAddressPage)) match {
+      case (_, Some(_), _ , _) if waypoints.inAmend => ChangeRegistrationPage
+      case (Some(true), Some(_), Some(_), Some(_)) => CheckVatDetailsPage()
+      case (Some(true), _, _, _) => ClientBusinessNamePage
+      case (Some(false), _, _, _) => ClientTaxReferencePage
+      case _ => JourneyRecoveryPage
+    }
   }
 }

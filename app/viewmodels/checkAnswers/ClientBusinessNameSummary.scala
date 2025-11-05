@@ -16,6 +16,7 @@
 
 package viewmodels.checkAnswers
 
+import config.Constants.ukCountryCodeAreaPrefix
 import models.UserAnswers
 import pages.{CheckAnswersPage, ClientBusinessNamePage, ClientCountryBasedPage, Waypoints}
 import play.api.i18n.Messages
@@ -33,8 +34,11 @@ object ClientBusinessNameSummary {
            sourcePage: CheckAnswersPage
          )(implicit messages: Messages): Option[SummaryListRow] = {
     answers.get(ClientBusinessNamePage).map { answer =>
-
+      
       val messageKey: String = answers.get(ClientCountryBasedPage) match {
+        case Some(country) if country.code.startsWith(ukCountryCodeAreaPrefix)=>
+          messages("clientBusinessName.checkYourAnswersLabel")
+
         case Some(country) =>
           messages("clientBusinessName.checkYourAnswersLabel.withCountry", country.name)
 

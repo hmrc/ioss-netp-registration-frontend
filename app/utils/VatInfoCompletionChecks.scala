@@ -51,8 +51,6 @@ object VatInfoCompletionChecks extends CompletionChecks {
       case None =>
         false
     }
-
-
   }
 
   def incompleteHasVatNumberRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {

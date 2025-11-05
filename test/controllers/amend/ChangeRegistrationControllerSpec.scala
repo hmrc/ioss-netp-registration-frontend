@@ -32,7 +32,7 @@ import pages.amend.ChangeRegistrationPage
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.HasTradingNamePage
 import pages.vatEuDetails.HasFixedEstablishmentPage
-import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessNamePage, ClientCountryBasedPage, ClientHasUtrNumberPage, ClientHasVatNumberPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage}
+import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage, ClientBusinessNamePage, ClientCountryBasedPage, ClientHasUtrNumberPage, ClientHasVatNumberPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage}
 import play.api.i18n.Messages
 import play.api.inject
 import play.api.inject.bind
@@ -147,6 +147,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       .set(AllEuDetailsQuery, List(arbitraryEuDetails.arbitrary.sample.value)).success.value
       .set(BusinessContactDetailsPage, businessContactDetails).success.value
       .set(ClientBusinessNamePage, ClientBusinessName(companyName)).success.value
+      .set(ClientBusinessAddressPage, arbitraryInternationalAddress.arbitrary.sample.value).success.value
 
   private val nonUkBasedCompleteUserAnswersWithoutVatInfo: UserAnswers =
     basicUserAnswersWithoutVatInfo
@@ -161,6 +162,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       .set(AllEuDetailsQuery, List(arbitraryEuDetails.arbitrary.sample.value)).success.value
       .set(BusinessContactDetailsPage, businessContactDetails).success.value
       .set(ClientBusinessNamePage, ClientBusinessName(companyName)).success.value
+      .set(ClientBusinessAddressPage, arbitraryInternationalAddress.arbitrary.sample.value).success.value
+
 
   private val mockRegistrationService: RegistrationService = mock[RegistrationService]
 
@@ -219,15 +222,22 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               rows = getImportOneStopShopDetailsSummaryList(ukBasedCompleteUserAnswersWithoutVatInfo, previousRegistrationFromDetails)
             )
 
+            val one = contentAsString(result)
+            val two = view(
+              waypoints,
+              companyName,
+              iossNum,
+              registrationList,
+              importOneStopShopDetailsList
+            )(request, messages(application)).toString
+
+            println("\n\none:")
+            println(one)
+            println("\n\ntwo:")
+            println(two)
             status(result) mustBe OK
-            contentAsString(result) mustBe
-              view(
-                waypoints,
-                companyName,
-                iossNum,
-                registrationList,
-                importOneStopShopDetailsList
-              )(request, messages(application)).toString
+            one mustBe two
+
           }
         }
         "A NETP Has a Non Uk based address and Vat Info" in {
@@ -245,7 +255,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
             val view = application.injector.instanceOf[ChangeRegistrationView]
 
             val registrationList = SummaryListViewModel(rows = getNonUkBasedWithVatNumRegistrationDetailsList(nonUkBasedCompleteUserAnswersWithVatInfo))
-            
+
             val importOneStopShopDetailsList = SummaryListViewModel(
               rows = getImportOneStopShopDetailsSummaryList(nonUkBasedCompleteUserAnswersWithVatInfo, previousRegistrationFromDetails)
             )
@@ -357,7 +367,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       ClientHasUtrNumberSummary.rowWithoutAction(waypoints, answers),
       ClientUtrNumberSummary.rowWithoutAction(waypoints, answers),
       ClientsNinoNumberSummary.row(waypoints, answers, amendYourAnswersPage),
-      ClientBusinessAddressSummary.row(waypoints, answers, amendYourAnswersPage)
+      ClientBusinessAddressSummary.changeUkBasedRegRow(waypoints, answers, amendYourAnswersPage)
     ).flatten
   }
 

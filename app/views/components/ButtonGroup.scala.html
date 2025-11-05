@@ -15,6 +15,7 @@
  *@
 
 @import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl
+@import utils.AmendWaypoints.AmendWaypointsOps
 @this(govukButton: GovukButton)
 
 @(continueMessage: String, continueUrl: String, waypoints: Waypoints)(implicit messages: Messages)
@@ -25,9 +26,9 @@
     ButtonViewModel(messages(continueMessage)).withAttribute(("id", "continue"))
   )
 
-    <!-- TODO check if in amend-->
-    <a id="saveProgress" role="button" href="@controllers.saveAndComeBack.routes.SavedProgressController.onPageLoad(waypoints, RedirectUrl(continueUrl))" class="govuk-button govuk-button--secondary" data-module="govuk-button">
+    @if(!waypoints.inAmend) {
+        <a id="saveProgress" role="button" href="@controllers.saveAndComeBack.routes.SavedProgressController.onPageLoad(waypoints, RedirectUrl(continueUrl))" class="govuk-button govuk-button--secondary" data-module="govuk-button">
         @messages("saveProgress.button")
-    </a>
-
+        </a>
+    }
 </div>
