@@ -307,6 +307,7 @@ previousScheme.heading = Which scheme did your client''s business register for?
 previousScheme.checkYourAnswersLabel = Scheme
 previousScheme.error.required = Select which scheme your client''s business registered for
 previousScheme.change.hidden = Which scheme did your client''s business register for
+previousScheme.remove.hidden = {0}
 previousScheme.oss.exceed.error = Cannot select another OSS registration for {0}
 previousScheme.ioss.exceed.error = Cannot select another IOSS registration for {0}
 previousScheme.oss = One Stop Shop (OSS)
