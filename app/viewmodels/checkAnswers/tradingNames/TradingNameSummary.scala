@@ -79,4 +79,37 @@ object TradingNameSummary {
           value = ValueViewModel(HtmlContent(value))
         )
     }
+
+  def amendedAnswersRow(answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] =
+    answers.get(AllTradingNamesQuery).map {
+      tradingNames =>
+
+        val value = tradingNames.map {
+          name =>
+            HtmlFormat.escape(name.name)
+        }.mkString("<br/>")
+
+        SummaryListRowViewModel(
+          key = KeyViewModel("tradingName.checkYourAnswersLabel.added").withCssClass("govuk-!-width-one-half"),
+          value = ValueViewModel(HtmlContent(value))
+        )
+    }
+
+  def removedAnswersRow(removedTradingNames: Seq[String])(implicit messages: Messages): Option[SummaryListRow] =
+
+    if (removedTradingNames.nonEmpty) {
+      val value = removedTradingNames.map {
+        name =>
+          HtmlFormat.escape(name)
+      }.mkString("<br/>")
+
+      Some(
+        SummaryListRowViewModel(
+          key = KeyViewModel("tradingName.checkYourAnswersLabel.removed").withCssClass("govuk-!-width-one-half"),
+          value = ValueViewModel(HtmlContent(value))
+        )
+      )
+    } else {
+      None
+    }
 }

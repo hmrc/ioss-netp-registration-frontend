@@ -17,19 +17,34 @@
 @this(
         layout: templates.Layout,
         govukButton: GovukButton,
+        govukSummaryList: GovukSummaryList
 )
 
-@(feedbackLink: String, intermediaryYourAccountUrl: String)(implicit request: Request[_], messages: Messages)
+@(feedbackLink: String, intermediaryYourAccountUrl: String, amendedList: SummaryList)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("amendComplete.title")), showBackLink = false) {
 
     <div class="grid-row column-two-thirds" id="application_complete_id">
         <div class="govuk-panel govuk-panel--confirmation">
-            <h1 class="govuk-panel__title">@messages("amendComplete.heading")</h1>
+            @if(amendedList.rows.nonEmpty) {
+                <h1 class="govuk-panel__title">@messages("amendComplete.changes.heading")</h1>
+            } else {
+                <h1 class="govuk-panel__title">@messages("amendComplete.heading")</h1>
+            }
         </div>
     </div>
 
-    <div class="govuk-body">@messages("amendComplete.info.noChanges")</div>
+    @if(amendedList.rows.nonEmpty) {
+        <div class="govuk-body">@messages("amendComplete.info")</div>
+    } else {
+        <div class="govuk-body">@messages("amendComplete.info.noChanges")</div>
+    }
+
+    @govukSummaryList(
+        SummaryListViewModel(
+            amendedList.rows
+        ).withCssClass("govuk-body govuk-!-margin-bottom-7")
+    )
 
     <p class="govuk-body">
         <a href="@intermediaryYourAccountUrl" class="govuk-link">@messages("amendComplete.returnToYourAccount.link")</a>

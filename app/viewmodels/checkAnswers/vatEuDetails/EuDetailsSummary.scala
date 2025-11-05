@@ -16,7 +16,7 @@
 
 package viewmodels.checkAnswers.vatEuDetails
 
-import models.{Index, UserAnswers}
+import models.{Country, Index, UserAnswers}
 import pages.vatEuDetails.{AddEuDetailsPage, CheckEuDetailsAnswersPage, DeleteEuDetailsPage}
 import pages.{AddItemPage, CheckAnswersPage, Waypoints}
 import play.api.i18n.Messages
@@ -94,4 +94,55 @@ object EuDetailsSummary {
       )
     }
   }
+  
+  def amendedAnswersRow(answers: UserAnswers)(implicit message: Messages): Option[SummaryListRow] = {
+    answers.get(AllEuDetailsQuery).map { euDetails =>
+     val value = euDetails.map { details =>
+       HtmlFormat.escape(details.euCountry.name)
+     }.mkString("<br/>")
+     
+     SummaryListRowViewModel(
+       key = KeyViewModel("euDetails.checkYourAnswersLabel.amended"),
+       value = ValueViewModel(HtmlContent(value))
+     )
+    }
+  }
+
+  def removedAnswersRow(removedEuDetails: Seq[Country])(implicit messages: Messages): Option[SummaryListRow] =
+
+    if (removedEuDetails.nonEmpty) {
+
+      val value = removedEuDetails.map {
+        details =>
+          HtmlFormat.escape(details.name)
+      }.mkString("<br/>")
+
+      Some(
+        SummaryListRowViewModel(
+          key = KeyViewModel("euDetails.checkYourAnswersLabel.removed").withCssClass("govuk-!-width-one-half"),
+          value = ValueViewModel(HtmlContent(value))
+        )
+      )
+    } else {
+      None
+    }
+
+  def changedAnswersRow(removedEuDetails: Seq[Country])(implicit messages: Messages): Option[SummaryListRow] =
+
+    if (removedEuDetails.nonEmpty) {
+
+      val value = removedEuDetails.map {
+        details =>
+          HtmlFormat.escape(details.name)
+      }.mkString("<br/>")
+
+      Some(
+        SummaryListRowViewModel(
+          key = KeyViewModel("euDetails.checkYourAnswersLabel.changed").withCssClass("govuk-!-width-one-half"),
+          value = ValueViewModel(HtmlContent(value))
+        )
+      )
+    } else {
+      None
+    }
 }

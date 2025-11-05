@@ -19,14 +19,31 @@ package controllers.amend
 import config.FrontendAppConfig
 import controllers.actions.AuthenticatedControllerComponents
 import logging.Logging
-import pages.Waypoints
+import models.domain.PreviousSchemeDetails
+import models.{Country, TradingName, UserAnswers, Website}
+import models.etmp.display.EtmpDisplayRegistration
+import models.requests.DataRequest
+import models.vatEuDetails.EuDetails
+import pages.{BusinessContactDetailsPage, JourneyRecoveryPage, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.euDetails.AllEuDetailsQuery
+import queries.previousRegistrations.AllPreviousRegistrationsQuery
+import queries.tradingNames.AllTradingNamesQuery
+import queries.{AllWebsites, IossNumberQuery, OriginalRegistrationQuery}
+import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.{SummaryList, SummaryListRow}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.amend.AmendCompleteView
 import utils.FutureSyntax.FutureOps
+import viewmodels.WebsiteSummary
+import viewmodels.checkAnswers.BusinessContactDetailsSummary
+import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
+import viewmodels.checkAnswers.vatEuDetails.EuDetailsSummary
+import viewmodels.govuk.all.SummaryListViewModel
+import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
 
 import javax.inject.Inject
+import scala.util.{Failure, Success}
 
 class AmendCompleteController @Inject()(
                                          override val messagesApi: MessagesApi,
@@ -39,6 +56,253 @@ class AmendCompleteController @Inject()(
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = true).async {
     implicit request =>
-      Ok(view(frontendAppConfig.feedbackUrl, frontendAppConfig.intermediaryYourAccountUrl)).toFuture
+
+      val iossNumber = request.userAnswers.get(IossNumberQuery).getOrElse(request.iossNumber.get)
+
+      request.userAnswers.get(OriginalRegistrationQuery(iossNumber)) match {
+        case Some(originalRegistration) =>
+          val amendedList: SummaryList = detailsList(originalRegistration)
+          Ok(view(frontendAppConfig.feedbackUrl, frontendAppConfig.intermediaryYourAccountUrl, amendedList)).toFuture
+        case None =>
+          Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture
+      }
+  }
+
+  private def detailsList(originalRegistration: EtmpDisplayRegistration)(implicit request: DataRequest[AnyContent]) =
+    SummaryListViewModel(
+      rows = (
+        getHasTradingNameRows(originalRegistration) ++
+          getTradingNameRows(originalRegistration) ++
+          getHasPreviouslyRegistered(originalRegistration) ++
+          getPreviouslyRegisteredRows(originalRegistration) ++
+          getCountriesWithNewSchemes(originalRegistration) ++
+          getHasRegisteredInEuRows(originalRegistration) ++
+          getRegisteredInEuRows(originalRegistration) ++
+          getWebsitesRows(originalRegistration) ++
+          getBusinessContactDetailsRows(originalRegistration)
+      ).flatten
+    )
+
+  private def getHasTradingNameRows(originalRegistration: EtmpDisplayRegistration)
+                                   (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] = {
+
+    val originalAnswers = originalRegistration.tradingNames
+    val amendedAnswers = request.userAnswers.get(AllTradingNamesQuery).getOrElse(List.empty)
+    val hasChangedToNo = amendedAnswers.isEmpty && originalAnswers.nonEmpty
+    val hasChangedToYes = amendedAnswers.nonEmpty && originalAnswers.nonEmpty || originalAnswers.isEmpty
+    val notAmended = amendedAnswers.nonEmpty && originalAnswers.nonEmpty || amendedAnswers.isEmpty && originalAnswers.isEmpty
+
+    if (notAmended) {
+      Seq.empty
+    } else if (hasChangedToNo || hasChangedToYes) {
+      Seq(HasTradingNameSummary.amendedRow(request.userAnswers))
+    } else {
+      Seq.empty
+    }
+  }
+
+  private def getTradingNameRows(originalRegistration: EtmpDisplayRegistration)(implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] =
+    val originalAnswers = originalRegistration.tradingNames.map(_.tradingName)
+    val amendedAnswers = request.userAnswers.get(AllTradingNamesQuery).map(_.map(_.name)).getOrElse(List.empty)
+    val addedTradingName = amendedAnswers.diff(originalAnswers)
+    val removedTradingNames = originalAnswers.diff(amendedAnswers)
+
+    val changedTradingName: List[TradingName] = amendedAnswers.zip(originalAnswers).collect {
+      case (amended, original) if amended != original => TradingName(amended)
+    } ++ amendedAnswers.drop(originalAnswers.size).map(tradingName => TradingName(tradingName))
+
+    val addedTradingNameRow = if (addedTradingName.nonEmpty) {
+      request.userAnswers.set(AllTradingNamesQuery, changedTradingName) match {
+        case Success(amendedUserAnswer) =>
+          Some(TradingNameSummary.amendedAnswersRow(amendedUserAnswer))
+        case Failure(_) =>
+          None
+      }
+    } else {
+      None
+    }
+
+    val removedTradingNameRow = Some(TradingNameSummary.removedAnswersRow(removedTradingNames))
+
+    Seq(addedTradingNameRow, removedTradingNameRow).flatten
+
+  private def getHasPreviouslyRegistered(originalRegistration: EtmpDisplayRegistration)
+                                        (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] =
+
+    val originalAnswers = originalRegistration.schemeDetails.previousEURegistrationDetails.map(_.issuedBy).distinct
+    val amendedAnswers = request.userAnswers.get(AllPreviousRegistrationsQuery).map(_.map(_.previousEuCountry.code)).getOrElse(List.empty)
+    val hasChangedToNo = amendedAnswers.diff(originalAnswers)
+    val hasChangedToYes = originalAnswers.diff(amendedAnswers)
+    val notAmended = amendedAnswers.nonEmpty && originalAnswers.nonEmpty || amendedAnswers.isEmpty && originalAnswers.isEmpty
+
+    if (notAmended) {
+      Seq.empty
+    } else if (hasChangedToNo.nonEmpty || hasChangedToYes.nonEmpty) {
+      Seq(PreviouslyRegisteredSummary.amendedRow(request.userAnswers))
+    } else {
+      Seq.empty
+    }
+
+  private def getPreviouslyRegisteredRows(originalRegistration: EtmpDisplayRegistration)
+                                         (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] =
+
+    val originalAnswers = originalRegistration.schemeDetails.previousEURegistrationDetails.map(_.issuedBy).distinct
+    val amendedAnswers = request.userAnswers.get(AllPreviousRegistrationsQuery).map(_.map(_.previousEuCountry.code)).getOrElse(List.empty)
+
+    val newPreviouslyRegisteredCountry = amendedAnswers.filterNot { addedCountry =>
+      originalAnswers.contains(addedCountry)
+    }
+
+    if (newPreviouslyRegisteredCountry.nonEmpty) {
+      val addedDetails = request.userAnswers.get(AllPreviousRegistrationsQuery).getOrElse(List.empty)
+        .filter(details => newPreviouslyRegisteredCountry.contains(details.previousEuCountry.code))
+
+      request.userAnswers.set(AllPreviousRegistrationsQuery, addedDetails) match {
+        case Success(amendedUserAnswers) =>
+          Seq(PreviousRegistrationSummary.amendedAnswersRow(answers = amendedUserAnswers))
+        case Failure(exception) =>
+          Seq.empty
+      }
+    } else {
+      Seq.empty
+    }
+
+  private def getCountriesWithNewSchemes(originalRegistration: EtmpDisplayRegistration)
+                                        (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] =
+
+    val amendedDetails = request.userAnswers.get(AllPreviousRegistrationsQuery).getOrElse(List.empty)
+    val registrationDetails = originalRegistration.schemeDetails.previousEURegistrationDetails
+
+    val changedSchemeDetails = amendedDetails.flatMap { amendedCountry =>
+      val matchingEuCountry = registrationDetails.filter(_.issuedBy == amendedCountry.previousEuCountry.code)
+      val existingSchemeDetails = matchingEuCountry.map { registration =>
+        PreviousSchemeDetails.fromEtmpPreviousEuRegistrationDetails(registration).previousSchemeNumbers
+      }
+      val newSchemes = amendedCountry.previousSchemesDetails.map(_.previousSchemeNumbers)
+
+      val hasSchemeNumbersChanged = existingSchemeDetails.nonEmpty && newSchemes != existingSchemeDetails
+
+      if (hasSchemeNumbersChanged) {
+        Some(amendedCountry.previousEuCountry)
+      } else {
+        None
+      }
+    }
+
+    if (changedSchemeDetails.nonEmpty) {
+      Seq(PreviousRegistrationSummary.changedAnswersRow(changedSchemeDetails))
+    } else {
+      Seq.empty
+    }
+
+  private def getHasRegisteredInEuRows(originalRegistration: EtmpDisplayRegistration)
+                                      (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] =
+
+    val originalAnswers = originalRegistration.schemeDetails.euRegistrationDetails.map(_.issuedBy)
+    val amendedAnswers = request.userAnswers.get(AllEuDetailsQuery).map(_.map(_.euCountry.code)).getOrElse(List.empty)
+    val hasChangedToNo = amendedAnswers.isEmpty && originalAnswers.nonEmpty
+    val hasChangedToYes = amendedAnswers.nonEmpty && originalAnswers.nonEmpty || originalAnswers.isEmpty
+    val notAmended = amendedAnswers.nonEmpty && originalAnswers.nonEmpty || amendedAnswers.isEmpty && originalAnswers.isEmpty
+
+    if (notAmended) {
+      Seq.empty
+    } else if (hasChangedToNo || hasChangedToYes) {
+      Seq(EuDetailsSummary.amendedAnswersRow(request.userAnswers))
+    } else {
+      Seq.empty
+    }
+
+  private def getRegisteredInEuRows(originalRegistration: EtmpDisplayRegistration)
+                                   (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] = {
+
+    val originalAnswers = originalRegistration.schemeDetails.euRegistrationDetails.map(_.issuedBy)
+
+    val amendedAnswers = request.userAnswers
+      .get(AllEuDetailsQuery)
+      .map(_.map(_.euCountry.code))
+      .getOrElse(Seq.empty)
+
+    val addedEuDetails = amendedAnswers.diff(originalAnswers)
+    val removedEuDetails = originalAnswers.diff(amendedAnswers)
+
+    val newOrChangedEuDetails = amendedAnswers.filterNot { amendedCountry =>
+      originalAnswers.contains(amendedCountry)
+    }
+
+    val removedEuDetailsCountries: Seq[Country] = removedEuDetails.flatMap(Country.fromCountryCode)
+
+    val addedEuDetailsRow = if (addedEuDetails.nonEmpty) {
+      val changedDetails = request.userAnswers.get(AllEuDetailsQuery).getOrElse(List.empty)
+        .filter(details => newOrChangedEuDetails.contains(details.euCountry.code))
+
+      request.userAnswers.set(AllEuDetailsQuery, changedDetails) match {
+        case Success(amendedUserAnswers) =>
+          Some(EuDetailsSummary.amendedAnswersRow(amendedUserAnswers))
+        case Failure(_) =>
+          None
+      }
+    } else {
+      None
+    }
+
+    val removedEuDetailsRow = Some(EuDetailsSummary.removedAnswersRow(removedEuDetailsCountries))
+
+    Seq(addedEuDetailsRow, removedEuDetailsRow).flatten
+  }
+
+  private def getWebsitesRows(originalRegistration: EtmpDisplayRegistration)
+                             (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] = {
+
+    val originalAnswers = originalRegistration.schemeDetails.websites.map(_.websiteAddress)
+    val amendedUA = request.userAnswers.get(AllWebsites).map(_.map(_.site)).getOrElse(List.empty)
+    val addedWebsites = amendedUA.diff(originalAnswers)
+    val removedWebsites = originalAnswers.diff(amendedUA)
+
+    val changedWebsiteAnswers: List[Website] = amendedUA.zip(originalAnswers).collect {
+      case (amended, original) if amended != original => Website(amended)
+    } ++ amendedUA.drop(originalAnswers.size).map(site => Website(site))
+
+    val addedWebsiteRow = if (addedWebsites.nonEmpty) {
+      request.userAnswers.set(AllWebsites, changedWebsiteAnswers) match {
+        case Success(amendedUserAnswers) =>
+          Some(WebsiteSummary.amendedAnswersRow(amendedUserAnswers))
+        case Failure(_) =>
+          None
+      }
+    } else {
+      None
+    }
+
+    val removedWebsiteRow = Some(WebsiteSummary.removedAnswersRow(removedWebsites))
+    Seq(addedWebsiteRow, removedWebsiteRow).flatten
+  }
+
+  private def getBusinessContactDetailsRows(originalRegistration: EtmpDisplayRegistration)
+                                           (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] = {
+
+    val originalContactName = originalRegistration.schemeDetails.contactName
+    val originalTelephone = originalRegistration.schemeDetails.businessTelephoneNumber
+    val originalEmail = originalRegistration.schemeDetails.businessEmailId
+    val amendedUA = request.userAnswers.get(BusinessContactDetailsPage)
+
+    Seq(
+      if (!amendedUA.map(_.fullName).contains(originalContactName)) {
+        BusinessContactDetailsSummary.amendedRowContactName(request.userAnswers)
+      } else {
+        None
+      },
+
+      if (!amendedUA.map(_.telephoneNumber).contains(originalTelephone)) {
+        BusinessContactDetailsSummary.amendedRowTelephoneNumber(request.userAnswers)
+      } else {
+        None
+      },
+
+      if (!amendedUA.map(_.emailAddress).contains(originalEmail)) {
+        BusinessContactDetailsSummary.amendedRowEmailAddress(request.userAnswers)
+      } else {
+        None
+      }
+    )
   }
 }
