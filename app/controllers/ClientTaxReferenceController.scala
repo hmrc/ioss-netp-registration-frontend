@@ -20,11 +20,13 @@ import controllers.actions.*
 import forms.ClientTaxReferenceFormProvider
 import logging.Logging
 import models.core.Match
+import models.requests.DataRequest
 import pages.{ClientTaxReferencePage, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.AmendWaypoints.AmendWaypointsOps
 import utils.FutureSyntax.FutureOps
 import views.html.ClientTaxReferenceView
 
@@ -73,6 +75,9 @@ class ClientTaxReferenceController @Inject()(
           value =>
             coreRegistrationValidationService.searchForeignTaxReference(value, country.code).flatMap {
 
+              case _ if waypoints.inAmend =>
+                updateAnswersAndRedirect(waypoints, request, value)
+
               case Some(activeMatch) if activeMatch.isActiveTrader =>
                 Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
 
@@ -91,5 +96,12 @@ class ClientTaxReferenceController @Inject()(
             }
         )
       }
+  }
+
+  private def updateAnswersAndRedirect(waypoints: Waypoints, request: DataRequest[AnyContent], taxRef: String) = {
+    for {
+      updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientTaxReferencePage, taxRef))
+      _ <- cc.sessionRepository.set(updatedAnswers)
+    } yield Redirect(ClientTaxReferencePage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
   }
 }
