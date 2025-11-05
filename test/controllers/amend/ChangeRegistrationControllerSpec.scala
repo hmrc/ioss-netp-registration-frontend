@@ -392,9 +392,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
         nonOptHasTradingNameSummaryRow
       }
     }
-
-    val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.rowWithoutAction(answers, waypoints)
+    
     val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(answers, previousRegistrations, waypoints, amendYourAnswersPage)
+    val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.row(answers, waypoints, amendYourAnswersPage)
     val formattedPreviouslyRegisteredSummaryRowy = previouslyRegisteredSummaryRow.map { nonOptPreviouslyRegisteredSummaryRow =>
       if (previousRegistrationSummaryRow.isDefined) {
         nonOptPreviouslyRegisteredSummaryRow.withCssClass("govuk-summary-list__row--no-border")

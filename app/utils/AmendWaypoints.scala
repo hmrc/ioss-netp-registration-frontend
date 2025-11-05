@@ -21,12 +21,22 @@ import pages.{CheckAnswersPage, CheckYourAnswersPage, NonEmptyWaypoints, Waypoin
 
 object AmendWaypoints {
   implicit class AmendWaypointsOps(waypoints: Waypoints) {
-    def inAmend: Boolean = {
+
+    private def isInMode(pages: CheckAnswersPage*): Boolean = {
       waypoints match
         case nonEmptyWaypoints: NonEmptyWaypoints =>
-          nonEmptyWaypoints.waypoints.toList.map(_.urlFragment).contains(ChangeRegistrationPage.urlFragment)
+          pages.exists(pages => nonEmptyWaypoints.waypoints.toList.map(_.urlFragment).contains(ChangeRegistrationPage.urlFragment))
+
         case _ =>
           false
+    }
+
+    def inCheck: Boolean = {
+      isInMode(CheckYourAnswersPage)
+    }
+
+    def inAmend: Boolean = {
+      isInMode(ChangeRegistrationPage)
     }
 
     def getNextCheckYourAnswersPageFromWaypoints: Option[CheckAnswersPage] = {

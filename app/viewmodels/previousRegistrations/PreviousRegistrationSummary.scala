@@ -55,10 +55,8 @@ object PreviousRegistrationSummary {
                        waypoints: Waypoints,
                        sourcePage: CheckAnswersPage
                      )(implicit messages: Messages): Option[SummaryListRow] =
-    answers.get(AllPreviousRegistrationsQuery).map {
-      previousRegistrations =>
-        val value = previousRegistrations.map {
-          details =>
+    answers.get(AllPreviousRegistrationsQuery).map { previousRegistrations =>
+        val value = previousRegistrations.map { details =>
             HtmlFormat.escape(details.previousEuCountry.name)
         }.mkString("<br/>")
         

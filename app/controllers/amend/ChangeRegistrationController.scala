@@ -162,26 +162,19 @@ class ChangeRegistrationController @Inject()(
                                   existingPreviousRegistrations: Seq[EtmpPreviousEuRegistrationDetails]
                                 )(implicit messages: Messages) = {
 
-    val previousRegistrations = PreviousRegistration.fromEtmpPreviousEuRegistrationDetails(existingPreviousRegistrations)
-    val previouslyRegisteredSummaryWithoutActionRow = PreviouslyRegisteredSummary.rowWithoutAction(answers, waypoints)
+    val convertedExistingPreviousRegistrations = PreviousRegistration.fromEtmpPreviousEuRegistrationDetails(existingPreviousRegistrations)
     val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.row(answers, waypoints, currentPage)
-    val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(answers, previousRegistrations, waypoints, currentPage)
+    val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(answers, convertedExistingPreviousRegistrations, waypoints, currentPage)
 
-    val formattedPreviouslyRegisteredSummaryRow = previouslyRegisteredSummaryWithoutActionRow.map { nonOptPreviouslyRegisteredSummaryRow =>
-      if (previousRegistrationSummaryRow.isDefined) {
-        nonOptPreviouslyRegisteredSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+    val formattedPreviouslyRegistered = previouslyRegisteredSummaryRow.map { previouslyRegisteredRow =>
+      if (previousRegistrationSummaryRow.nonEmpty) {
+        previouslyRegisteredRow.withCssClass("govuk-summary-list__row--no-border")
       } else {
-        nonOptPreviouslyRegisteredSummaryRow
+        previouslyRegisteredRow
       }
     }
 
-    val determineRow = if (existingPreviousRegistrations.nonEmpty) {
-      formattedPreviouslyRegisteredSummaryRow
-    } else {
-      previouslyRegisteredSummaryRow
-    }
-
-    (determineRow, previousRegistrationSummaryRow)
+    (formattedPreviouslyRegistered, previousRegistrationSummaryRow)
   }
 
   private def getFixedEstablishmentRows(waypoints: Waypoints, answers: UserAnswers, page: ChangeRegistrationPage.type)(implicit messages: Messages) = {

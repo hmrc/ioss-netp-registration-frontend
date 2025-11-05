@@ -69,5 +69,4 @@ case class AddPreviousRegistrationPage(override val index: Option[Index] = None)
   }
 
   override def deriveNumberOfItems: Derivable[Seq[JsObject], Int] = DeriveNumberOfPreviousRegistrations
-
 }

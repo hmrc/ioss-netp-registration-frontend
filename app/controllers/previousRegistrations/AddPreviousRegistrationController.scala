@@ -19,13 +19,13 @@ package controllers.previousRegistrations
 import controllers.actions.*
 import forms.previousRegistrations.AddPreviousRegistrationFormProvider
 import logging.Logging
-import models.Country
 import models.domain.PreviousRegistration
 import models.etmp.EtmpPreviousEuRegistrationDetails
 import models.previousRegistrations.PreviousRegistrationDetailsWithOptionalVatNumber
 import models.requests.DataRequest
+import models.{CheckMode, Country}
 import pages.previousRegistrations.AddPreviousRegistrationPage
-import pages.{JourneyRecoveryPage, Waypoints}
+import pages.{JourneyRecoveryPage, Waypoint, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
@@ -84,6 +84,7 @@ class AddPreviousRegistrationController @Inject()(
 
   def onSubmit(waypoints: Waypoints, incompletePromptShown: Boolean): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend).async {
     implicit request =>
+
       withCompleteDataAsync[PreviousRegistrationDetailsWithOptionalVatNumber](
         data = getAllIncompleteRegistrationDetails _,
         onFailure = (_: Seq[PreviousRegistrationDetailsWithOptionalVatNumber]) => {
@@ -115,7 +116,7 @@ class AddPreviousRegistrationController @Inject()(
                 updatedAnswers <- Future.fromTry(request.userAnswers.set(AddPreviousRegistrationPage(), addAnotherRegistration))
                 _ <- cc.sessionRepository.set(updatedAnswers)
               } yield Redirect(AddPreviousRegistrationPage().navigate(
-                waypoints,
+                calculateNextStepWaypoints(waypoints, addAnotherRegistration),
                 request.userAnswers,
                 updatedAnswers).url
               )
@@ -136,6 +137,15 @@ class AddPreviousRegistrationController @Inject()(
       }
     } else {
       Seq.empty
+    }
+  }
+
+  private def calculateNextStepWaypoints(waypoints: Waypoints, addAnotherRegistration: Boolean) = {
+    val thisPage = AddPreviousRegistrationPage()
+    if (addAnotherRegistration && (waypoints.inCheck || waypoints.inAmend)) {
+      waypoints.setNextWaypoint(Waypoint(thisPage, CheckMode, AddPreviousRegistrationPage.checkModeUrlFragment))
+    } else {
+      waypoints
     }
   }
 }
