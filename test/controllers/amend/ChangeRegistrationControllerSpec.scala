@@ -32,8 +32,7 @@ import pages.amend.ChangeRegistrationPage
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.HasTradingNamePage
 import pages.vatEuDetails.HasFixedEstablishmentPage
-import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessNamePage, ClientCountryBasedPage, ClientHasUtrNumberPage, ClientHasVatNumberPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, EmptyWaypoints, Waypoint, Waypoints}
-import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage, ClientBusinessNamePage, ClientCountryBasedPage, ClientHasUtrNumberPage, ClientHasVatNumberPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage}
+import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage, ClientBusinessNamePage, ClientCountryBasedPage, ClientHasUtrNumberPage, ClientHasVatNumberPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, EmptyWaypoints, Waypoint, Waypoints}
 import play.api.i18n.Messages
 import play.api.inject
 import play.api.inject.bind
@@ -392,7 +391,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
         nonOptHasTradingNameSummaryRow
       }
     }
-    
+
     val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(answers, previousRegistrations, waypoints, amendYourAnswersPage)
     val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.row(answers, waypoints, amendYourAnswersPage)
     val formattedPreviouslyRegisteredSummaryRowy = previouslyRegisteredSummaryRow.map { nonOptPreviouslyRegisteredSummaryRow =>

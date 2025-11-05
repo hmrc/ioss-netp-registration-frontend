@@ -20,10 +20,9 @@ import config.Constants.ukCountryCodeAreaPrefix
 import controllers.GetClientCompanyName
 import controllers.actions.AuthenticatedControllerComponents
 import logging.Logging
-import models.{Country, InternationalAddress, UserAnswers}
 import models.domain.PreviousRegistration
 import models.etmp.EtmpPreviousEuRegistrationDetails
-import models.{CheckMode, UserAnswers}
+import models.{CheckMode, Country, InternationalAddress, UserAnswers}
 import pages.*
 import pages.amend.ChangeRegistrationPage
 import play.api.i18n.{I18nSupport, Messages}
@@ -86,7 +85,7 @@ class ChangeRegistrationController @Inject()(
             ClientHasUtrNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientUtrNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientsNinoNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
-            if(hasEtmpOtherAddress.isDefined && countryIsUk){
+            if (hasEtmpOtherAddress.isDefined && countryIsUk) {
               ClientBusinessAddressSummary.changeUkBasedRegRow(waypoints, request.userAnswers, thisPage)
             } else if (hasEtmpOtherAddress.isDefined && !countryIsUk) {
               ClientBusinessAddressSummary.row(waypoints, request.userAnswers, thisPage)
