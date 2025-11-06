@@ -19,13 +19,12 @@ package services
 import connectors.RegistrationConnector
 import connectors.RegistrationHttpParser.{AmendRegistrationResultResponse, RegistrationResultResponse}
 import logging.Logging
-import models.domain.PreviousSchemeDetails
+import models.domain.{PreviousRegistration, PreviousSchemeDetails}
 import models.etmp.EtmpRegistrationRequest.buildEtmpRegistrationRequest
 import models.etmp.amend.EtmpAmendRegistrationRequest
 import models.etmp.amend.EtmpAmendRegistrationRequest.*
 import models.etmp.display.*
 import models.etmp.{EtmpIdType, EtmpOtherAddress, EtmpPreviousEuRegistrationDetails, EtmpTradingName}
-import models.previousRegistrations.PreviousRegistrationDetails
 import models.vatEuDetails.{EuDetails, RegistrationType, TradingNameAndBusinessAddress}
 import models.{BusinessContactDetails, ClientBusinessName, Country, InternationalAddress, TradingName, UserAnswers, Website}
 import pages.previousRegistrations.PreviouslyRegisteredPage
@@ -157,7 +156,7 @@ class RegistrationService @Inject()(
   }
 
   private[services] def setNonVatAddressDetails(userAnswers: UserAnswers, maybeOtherAddress: Option[EtmpOtherAddress]): Try[UserAnswers] = {
-    
+
     if (maybeOtherAddress.isDefined) {
       val nonVatTradingName: String = maybeOtherAddress.flatMap(_.tradingName).getOrElse {
         logger.error(s"Unable to retrieve a Trading name from Other Address, required for client business naming without vat for amend journey.")
@@ -232,7 +231,7 @@ class RegistrationService @Inject()(
   }
 
 
-  private def convertEtmpPreviousEuRegistrations(allEtmpPreviousEuRegistrationDetails: Seq[EtmpPreviousEuRegistrationDetails]): List[PreviousRegistrationDetails] = {
+  private def convertEtmpPreviousEuRegistrations(allEtmpPreviousEuRegistrationDetails: Seq[EtmpPreviousEuRegistrationDetails]): List[PreviousRegistration] = {
     val countrySchemaDetailsMapping: Map[Country, Seq[(Country, PreviousSchemeDetails)]] =
       allEtmpPreviousEuRegistrationDetails.map { etmpPreviousEuRegistrationDetails =>
         val country = Country.fromCountryCodeUnsafe(etmpPreviousEuRegistrationDetails.issuedBy)
@@ -243,7 +242,7 @@ class RegistrationService @Inject()(
       }.groupBy(_._1)
 
     countrySchemaDetailsMapping.map { case (country, countryPreviousSchemaDetails) =>
-      PreviousRegistrationDetails(previousEuCountry = country, previousSchemesDetails = countryPreviousSchemaDetails.map(_._2))
+      PreviousRegistration(previousEuCountry = country, previousSchemesDetails = countryPreviousSchemaDetails.map(_._2))
     }.toList
   }
 

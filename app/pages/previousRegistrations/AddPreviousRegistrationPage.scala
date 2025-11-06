@@ -39,7 +39,7 @@ case class AddPreviousRegistrationPage(override val index: Option[Index] = None)
 
   override val normalModeUrlFragment: String = AddPreviousRegistrationPage.normalModeUrlFragment
   override val checkModeUrlFragment: String = AddPreviousRegistrationPage.checkModeUrlFragment
-  
+
   override def path: JsPath = JsPath \ toString
 
   override def toString: String = "addPreviousRegistration"
@@ -69,5 +69,4 @@ case class AddPreviousRegistrationPage(override val index: Option[Index] = None)
   }
 
   override def deriveNumberOfItems: Derivable[Seq[JsObject], Int] = DeriveNumberOfPreviousRegistrations
-
 }

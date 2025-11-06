@@ -17,15 +17,19 @@
 package controllers.previousRegistrations
 
 import base.SpecBase
+import controllers.previousRegistrations.routes as previousRegistrationsRoutes
 import controllers.routes
 import forms.previousRegistrations.DeleteAllPreviousRegistrationsFormProvider
 import models.domain.PreviousSchemeNumbers
-import models.{Country, Index}
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import models.etmp.display.RegistrationWrapper
+import models.{CheckMode, Country, Index, UserAnswers}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
-import pages.{EmptyWaypoints, Waypoints}
+import pages.amend.ChangeRegistrationPage
 import pages.previousRegistrations.*
+import pages.{EmptyWaypoints, Waypoint, Waypoints}
+import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
@@ -38,11 +42,11 @@ import scala.concurrent.Future
 class DeleteAllPreviousRegistrationsControllerSpec extends SpecBase with MockitoSugar {
 
   private val formProvider = new DeleteAllPreviousRegistrationsFormProvider()
-  private val form = formProvider()
+  private val form: Form[Boolean] = formProvider()
 
   private val waypoints: Waypoints = EmptyWaypoints
 
-  private lazy val deleteAllPreviousRegistrationsRoute = controllers.previousRegistrations.routes.DeleteAllPreviousRegistrationsController.onPageLoad().url
+  private lazy val deleteAllPreviousRegistrationsRoute: String = previousRegistrationsRoutes.DeleteAllPreviousRegistrationsController.onPageLoad().url
 
   private val userAnswers = basicUserAnswersWithVatInfo
     .set(PreviousEuCountryPage(Index(0)), Country("DE", "Germany")).success.value
@@ -167,6 +171,35 @@ class DeleteAllPreviousRegistrationsControllerSpec extends SpecBase with Mockito
 
         status(result) `mustEqual` SEE_OTHER
         redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+      }
+    }
+
+    "inAmend" - {
+
+      "must not be able to delete all existing previous registrations when manually navigating to this page" in {
+
+        val amendWaypoints = EmptyWaypoints
+          .setNextWaypoint(Waypoint(ChangeRegistrationPage, CheckMode, ChangeRegistrationPage.urlFragment))
+
+        lazy val deleteAllPreviousRegistrationsInAmendRoute: String = previousRegistrationsRoutes.DeleteAllPreviousRegistrationsController.onPageLoad(amendWaypoints).url
+
+        val registrationWrapper: RegistrationWrapper = arbitraryRegistrationWrapper.arbitrary.sample.value
+
+        val application = applicationBuilder(
+          userAnswers = Some(basicUserAnswersWithVatInfo),
+          registrationWrapper = Some(registrationWrapper)
+        ).build()
+
+        running(application) {
+          val request = FakeRequest(GET, deleteAllPreviousRegistrationsInAmendRoute)
+
+          val result = route(application, request).value
+
+          whenReady(result.failed) { exp =>
+            exp `mustBe` a[InvalidAmendModeOperationException]
+            exp.getMessage `mustBe` "Cannot invoke this action whilst in amend mode"
+          }
+        }
       }
     }
   }

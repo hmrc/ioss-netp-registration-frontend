@@ -16,6 +16,7 @@
 
 package pages.previousRegistrations
 
+import controllers.previousRegistrations.routes
 import models.{CheckMode, Index, NormalMode, UserAnswers}
 import pages.{AddItemPage, Page, QuestionPage, RecoveryOps, Waypoint, Waypoints}
 import play.api.libs.json.{JsObject, JsPath}
@@ -32,13 +33,13 @@ case class CheckPreviousSchemeAnswersPage(countryIndex: Index, schemeIndex: Opti
 
   override val checkModeUrlFragment: String = s"change-previous-scheme-answers-${countryIndex.display}"
   override val normalModeUrlFragment: String = s"previous-scheme-answers-${countryIndex.display}"
-  
+
   override def path: JsPath = JsPath \ "previousRegistrations" \ countryIndex.position \ toString
 
   override def toString: String = "checkPreviousSchemeAnswers"
 
   override def route(waypoints: Waypoints): Call =
-    controllers.previousRegistrations.routes.CheckPreviousSchemeAnswersController.onPageLoad(waypoints, countryIndex)
+    routes.CheckPreviousSchemeAnswersController.onPageLoad(waypoints, countryIndex)
 
   override def deriveNumberOfItems: Derivable[Seq[JsObject], Int] = DeriveNumberOfPreviousSchemes(countryIndex)
 

@@ -24,11 +24,11 @@ import pages.previousRegistrations.PreviousSchemePage
 import play.api.i18n.Messages
 import play.twirl.api.HtmlFormat
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content.HtmlContent
-import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.{Actions, Card, CardTitle, SummaryList, SummaryListRow}
+import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.*
 import viewmodels.govuk.summarylist.*
 import viewmodels.implicits.*
 
-object PreviousSchemeSummary  {
+object PreviousSchemeSummary {
 
   def getSummaryLists(
                        previousSchemes: List[SchemeDetailsWithOptionalVatNumber],
@@ -37,7 +37,6 @@ object PreviousSchemeSummary  {
                        existingSchemes: Seq[PreviousScheme],
                        waypoints: Waypoints
                      )(implicit request: DataRequest[_], messages: Messages): List[SummaryList] = {
-
 
     previousSchemes.zipWithIndex.flatMap { case (scheme, schemeIndex) =>
       val index = Index(schemeIndex)
@@ -68,7 +67,7 @@ object PreviousSchemeSummary  {
                   ActionItemViewModel(
                     "site.remove",
                     controllers.previousRegistrations.routes.DeletePreviousSchemeController.onPageLoad(waypoints, countryIndex, Index(schemeIndex)).url
-                  ).withVisuallyHiddenText(messages("site.remove.hidden", country.name, HtmlFormat.escape(messages(s"previousScheme.$previousAnsweredScheme"))))
+                  ).withVisuallyHiddenText(messages("previousScheme.remove.hidden", country.name, HtmlFormat.escape(messages(s"previousScheme.${previousAnsweredScheme.toString}"))))
                 )
               } else {
                 Seq.empty

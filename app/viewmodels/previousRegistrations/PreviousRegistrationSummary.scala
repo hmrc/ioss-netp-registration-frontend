@@ -55,23 +55,18 @@ object PreviousRegistrationSummary {
                        waypoints: Waypoints,
                        sourcePage: CheckAnswersPage
                      )(implicit messages: Messages): Option[SummaryListRow] =
-    answers.get(AllPreviousRegistrationsQuery).map {
-      previousRegistrations =>
-        val value = previousRegistrations.map {
-          details =>
+    answers.get(AllPreviousRegistrationsQuery).map { previousRegistrations =>
+        val value = previousRegistrations.map { details =>
             HtmlFormat.escape(details.previousEuCountry.name)
         }.mkString("<br/>")
-
-
-        val currentAnswerCountries = previousRegistrations.map(_.previousEuCountry)
-        val existingCountries = existingPreviousRegistrations.map(previousRegistration => previousRegistration.country)
-        val sameListOfCountries: Boolean = currentAnswerCountries.sortBy(_.code) == existingCountries.sortBy(_.code)
+        
+        val sameListOfPreviousSchemesDetails: Boolean = previousRegistrations == existingPreviousRegistrations
 
         val listRowViewModel = SummaryListRowViewModel(
           key = "previousRegistrations.checkYourAnswersLabel",
           value = ValueViewModel(HtmlContent(value)),
           actions = Seq(
-            if (sameListOfCountries) {
+            if (sameListOfPreviousSchemesDetails) {
               ActionItemViewModel("site.add", controllers.previousRegistrations.routes.AddPreviousRegistrationController.onPageLoad(waypoints).url)
                 .withVisuallyHiddenText(messages("previousRegistrations.add.hidden"))
             } else {
@@ -95,12 +90,6 @@ object PreviousRegistrationSummary {
           details =>
             HtmlFormat.escape(details.previousEuCountry.name)
         }.mkString("<br/>")
-
-
-        // TODO -> Required?
-        val currentAnswerCountries = previousRegistrations.map(_.previousEuCountry)
-        val existingCountries = existingPreviousRegistrations.map(previousRegistration => previousRegistration.country)
-        val sameListOfCountries: Boolean = currentAnswerCountries.sortBy(_.code) == existingCountries.sortBy(_.code)
 
         val listRowViewModel = SummaryListRowViewModel(
           key = "previousRegistrations.checkYourAnswersLabel",
@@ -141,5 +130,5 @@ object PreviousRegistrationSummary {
     } else {
       None
     }
-
 }
+

@@ -21,6 +21,7 @@ import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.{CheckAnswersPage, Waypoints}
 import play.api.i18n.Messages
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
+import utils.AmendWaypoints.AmendWaypointsOps
 import viewmodels.govuk.summarylist.*
 import viewmodels.implicits.*
 
@@ -30,27 +31,32 @@ object PreviouslyRegisteredSummary {
            answers: UserAnswers,
            waypoints: Waypoints,
            sourcePage: CheckAnswersPage
-         )(implicit messages: Messages): Option[SummaryListRow] =
+         )(implicit messages: Messages): Option[SummaryListRow] = {
 
-    answers.get(PreviouslyRegisteredPage).map {
-      answer =>
+    answers.get(PreviouslyRegisteredPage).map { answer =>
 
-        val value = if (answer) "site.yes" else "site.no"
-
-        SummaryListRowViewModel(
-          key = "previouslyRegistered.checkYourAnswersLabel",
-          value = ValueViewModel(value),
-          actions = Seq(
-            ActionItemViewModel("site.change", controllers.previousRegistrations.routes.PreviouslyRegisteredController.onPageLoad(waypoints).url)
-              .withVisuallyHiddenText(messages("previouslyRegistered.change.hidden"))
-          )
+      val value = if (answer) "site.yes" else "site.no"
+      val actions = if (answer && waypoints.inAmend) {
+        Seq.empty
+      } else {
+        Seq(
+          ActionItemViewModel("site.change", controllers.previousRegistrations.routes.PreviouslyRegisteredController.onPageLoad(waypoints).url)
+            .withVisuallyHiddenText(messages("previouslyRegistered.change.hidden"))
         )
+      }
+
+      SummaryListRowViewModel(
+        key = "previouslyRegistered.checkYourAnswersLabel",
+        value = ValueViewModel(value),
+        actions = actions
+      )
     }
+  }
 
   def rowWithoutAction(
-           answers: UserAnswers,
-           waypoints: Waypoints
-         )(implicit messages: Messages): Option[SummaryListRow] =
+                        answers: UserAnswers,
+                        waypoints: Waypoints
+                      )(implicit messages: Messages): Option[SummaryListRow] =
 
     answers.get(PreviouslyRegisteredPage).map {
       answer =>

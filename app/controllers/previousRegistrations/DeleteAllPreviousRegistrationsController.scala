@@ -18,14 +18,15 @@ package controllers.previousRegistrations
 
 import controllers.actions.*
 import forms.previousRegistrations.DeleteAllPreviousRegistrationsFormProvider
-import pages.previousRegistrations.{DeleteAllPreviousRegistrationsPage, PreviouslyRegisteredPage}
 import pages.Waypoints
+import pages.previousRegistrations.{DeleteAllPreviousRegistrationsPage, PreviouslyRegisteredPage}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.AmendWaypoints.AmendWaypointsOps
 import utils.ItemsHelper.determineRemoveAllItemsAndRedirect
 import views.html.previousRegistrations.DeleteAllPreviousRegistrationsView
 
@@ -33,28 +34,31 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class DeleteAllPreviousRegistrationsController @Inject()(
-                                         override val messagesApi: MessagesApi,
-                                         cc: AuthenticatedControllerComponents,
-                                         formProvider: DeleteAllPreviousRegistrationsFormProvider,
-                                         sessionRepository: SessionRepository,
-                                         view: DeleteAllPreviousRegistrationsView
-                                 )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+                                                          override val messagesApi: MessagesApi,
+                                                          cc: AuthenticatedControllerComponents,
+                                                          formProvider: DeleteAllPreviousRegistrationsFormProvider,
+                                                          sessionRepository: SessionRepository,
+                                                          view: DeleteAllPreviousRegistrationsView
+                                                        )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
   val form: Form[Boolean] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData() {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend) {
     implicit request =>
 
-      val preparedForm = request.userAnswers.get(DeleteAllPreviousRegistrationsPage) match {
-        case None => form
-        case Some(value) => form.fill(value)
-      }
+      protectAgainstAmendMode(waypoints) {
 
-      Ok(view(preparedForm, waypoints))
+        val preparedForm = request.userAnswers.get(DeleteAllPreviousRegistrationsPage) match {
+          case None => form
+          case Some(value) => form.fill(value)
+        }
+
+        Ok(view(preparedForm, waypoints))
+      }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
     implicit request =>
 
       form.bindFromRequest().fold(
@@ -72,4 +76,14 @@ class DeleteAllPreviousRegistrationsController @Inject()(
           )
       )
   }
+
+  private def protectAgainstAmendMode[A](waypoints: Waypoints)(action: => A): A = {
+    if (waypoints.inAmend) {
+      throw new InvalidAmendModeOperationException("Cannot invoke this action whilst in amend mode")
+    } else {
+      action
+    }
+  }
 }
+
+class InvalidAmendModeOperationException(message: String) extends RuntimeException(message)

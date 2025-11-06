@@ -22,5 +22,4 @@ object TradingNameSection extends AddToListSection
 
 object WebsiteSection extends AddToListSection
 
-object ClientBusinessNameSection extends AddToListSection
 object PreviousSchemeSection extends AddToListSection
