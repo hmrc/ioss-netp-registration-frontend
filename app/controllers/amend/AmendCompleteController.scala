@@ -22,7 +22,7 @@ import logging.Logging
 import models.domain.PreviousSchemeDetails
 import models.{Country, TradingName, UserAnswers, Website}
 import models.etmp.display.EtmpDisplayRegistration
-import models.requests.DataRequest
+import models.requests.AuthenticatedMandatoryRegistrationRequest
 import models.vatEuDetails.EuDetails
 import pages.{BusinessContactDetailsPage, JourneyRecoveryPage, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -30,7 +30,7 @@ import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
-import queries.{AllWebsites, IossNumberQuery, OriginalRegistrationQuery}
+import queries.{AllWebsites, OriginalRegistrationQuery}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.{SummaryList, SummaryListRow}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.amend.AmendCompleteView
@@ -54,12 +54,10 @@ class AmendCompleteController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = true).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndRequireRegistration(inAmend = true).async {
     implicit request =>
-
-      val iossNumber = request.userAnswers.get(IossNumberQuery).getOrElse(request.iossNumber.get)
-
-      request.userAnswers.get(OriginalRegistrationQuery(iossNumber)) match {
+      
+      request.userAnswers.get(OriginalRegistrationQuery(request.iossNumber)) match {
         case Some(originalRegistration) =>
           val amendedList: SummaryList = detailsList(originalRegistration)
           Ok(view(frontendAppConfig.feedbackUrl, frontendAppConfig.intermediaryYourAccountUrl, amendedList)).toFuture
@@ -68,7 +66,7 @@ class AmendCompleteController @Inject()(
       }
   }
 
-  private def detailsList(originalRegistration: EtmpDisplayRegistration)(implicit request: DataRequest[AnyContent]) =
+  private def detailsList(originalRegistration: EtmpDisplayRegistration)(implicit request: AuthenticatedMandatoryRegistrationRequest[AnyContent]) =
     SummaryListViewModel(
       rows = (
         getHasTradingNameRows(originalRegistration) ++
@@ -84,7 +82,7 @@ class AmendCompleteController @Inject()(
     )
 
   private def getHasTradingNameRows(originalRegistration: EtmpDisplayRegistration)
-                                   (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] = {
+                                   (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] = {
 
     val originalAnswers = originalRegistration.tradingNames
     val amendedAnswers = request.userAnswers.get(AllTradingNamesQuery).getOrElse(List.empty)
@@ -101,7 +99,7 @@ class AmendCompleteController @Inject()(
     }
   }
 
-  private def getTradingNameRows(originalRegistration: EtmpDisplayRegistration)(implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] =
+  private def getTradingNameRows(originalRegistration: EtmpDisplayRegistration)(implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] =
     val originalAnswers = originalRegistration.tradingNames.map(_.tradingName)
     val amendedAnswers = request.userAnswers.get(AllTradingNamesQuery).map(_.map(_.name)).getOrElse(List.empty)
     val addedTradingName = amendedAnswers.diff(originalAnswers)
@@ -127,7 +125,7 @@ class AmendCompleteController @Inject()(
     Seq(addedTradingNameRow, removedTradingNameRow).flatten
 
   private def getHasPreviouslyRegistered(originalRegistration: EtmpDisplayRegistration)
-                                        (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] =
+                                        (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] =
 
     val originalAnswers = originalRegistration.schemeDetails.previousEURegistrationDetails.map(_.issuedBy).distinct
     val amendedAnswers = request.userAnswers.get(AllPreviousRegistrationsQuery).map(_.map(_.previousEuCountry.code)).getOrElse(List.empty)
@@ -144,7 +142,7 @@ class AmendCompleteController @Inject()(
     }
 
   private def getPreviouslyRegisteredRows(originalRegistration: EtmpDisplayRegistration)
-                                         (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] =
+                                         (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] =
 
     val originalAnswers = originalRegistration.schemeDetails.previousEURegistrationDetails.map(_.issuedBy).distinct
     val amendedAnswers = request.userAnswers.get(AllPreviousRegistrationsQuery).map(_.map(_.previousEuCountry.code)).getOrElse(List.empty)
@@ -168,7 +166,7 @@ class AmendCompleteController @Inject()(
     }
 
   private def getCountriesWithNewSchemes(originalRegistration: EtmpDisplayRegistration)
-                                        (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] =
+                                        (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] =
 
     val amendedDetails = request.userAnswers.get(AllPreviousRegistrationsQuery).getOrElse(List.empty)
     val registrationDetails = originalRegistration.schemeDetails.previousEURegistrationDetails
@@ -196,7 +194,7 @@ class AmendCompleteController @Inject()(
     }
 
   private def getHasRegisteredInEuRows(originalRegistration: EtmpDisplayRegistration)
-                                      (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] =
+                                      (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] =
 
     val originalAnswers = originalRegistration.schemeDetails.euRegistrationDetails.map(_.issuedBy)
     val amendedAnswers = request.userAnswers.get(AllEuDetailsQuery).map(_.map(_.euCountry.code)).getOrElse(List.empty)
@@ -213,7 +211,7 @@ class AmendCompleteController @Inject()(
     }
 
   private def getRegisteredInEuRows(originalRegistration: EtmpDisplayRegistration)
-                                   (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] = {
+                                   (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] = {
 
     val originalAnswers = originalRegistration.schemeDetails.euRegistrationDetails.map(_.issuedBy)
 
@@ -251,7 +249,7 @@ class AmendCompleteController @Inject()(
   }
 
   private def getWebsitesRows(originalRegistration: EtmpDisplayRegistration)
-                             (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] = {
+                             (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] = {
 
     val originalAnswers = originalRegistration.schemeDetails.websites.map(_.websiteAddress)
     val amendedUA = request.userAnswers.get(AllWebsites).map(_.map(_.site)).getOrElse(List.empty)
@@ -278,7 +276,7 @@ class AmendCompleteController @Inject()(
   }
 
   private def getBusinessContactDetailsRows(originalRegistration: EtmpDisplayRegistration)
-                                           (implicit request: DataRequest[_]): Seq[Option[SummaryListRow]] = {
+                                           (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] = {
 
     val originalContactName = originalRegistration.schemeDetails.contactName
     val originalTelephone = originalRegistration.schemeDetails.businessTelephoneNumber
