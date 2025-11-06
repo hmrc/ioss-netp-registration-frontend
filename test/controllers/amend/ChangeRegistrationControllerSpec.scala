@@ -22,10 +22,10 @@ import models.audit.{NetpAmendRegistrationAuditModel, RegistrationAuditType, Sub
 import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
 import models.etmp.amend.AmendRegistrationResponse
 import models.etmp.display.{EtmpDisplayRegistration, RegistrationWrapper}
-import models.previousRegistrations.NonCompliantDetails
+import models.previousRegistrations.NonCompliantDetails, PreviousRegistrationDetails}
 import models.requests.{AuthenticatedMandatoryRegistrationRequest, DataRequest}
 import models.responses.InternalServerError
-import models.{CheckMode, ClientBusinessName, DesAddress, TradingName, UserAnswers}
+import models.{CheckMode, ClientBusinessName, DesAddress, TradingName, UserAnswers, Website}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{doNothing, times, verify, when}
 import org.scalacheck.Gen
@@ -41,6 +41,7 @@ import play.api.inject
 import play.api.inject.bind
 import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
+import queries.{AllWebsites, IossNumberQuery, OriginalRegistrationQuery}
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
@@ -65,6 +66,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
   private val waypoints: Waypoints = EmptyWaypoints.setNextWaypoint(Waypoint(amendYourAnswersPage, CheckMode, amendYourAnswersPage.urlFragment))
   private val companyName: String = "Company Name"
 
+  private val waypoints: Waypoints = EmptyWaypoints.setNextWaypoint(Waypoint(ChangeRegistrationPage, CheckMode, ChangeRegistrationPage.urlFragment))
+
   override val vatCustomerInfo: VatCustomerInfo = {
     VatCustomerInfo(
       registrationDate = LocalDate.now(),
@@ -86,7 +89,6 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       etmpDisplayRegistration =
         this.registrationWrapper.etmpDisplayRegistration.copy(exclusions = Seq.empty)
     )
-
 
   val existingPreviousRegistrations: Seq[PreviousRegistration] = Gen.listOfN(2, arbitraryPreviousRegistration.arbitrary).sample.value
 
@@ -127,6 +129,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       .set(HasFixedEstablishmentPage, true).success.value
       .set(AllEuDetailsQuery, List(arbitraryEuDetails.arbitrary.sample.value)).success.value
       .set(BusinessContactDetailsPage, businessContactDetails).success.value
+      .set(AllWebsites, List(Website("www.example.com"))).success.value
 
   private val nonUkBasedCompleteUserAnswersWithVatInfo: UserAnswers =
     basicUserAnswersWithVatInfo
@@ -141,6 +144,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       .set(HasFixedEstablishmentPage, true).success.value
       .set(AllEuDetailsQuery, List(arbitraryEuDetails.arbitrary.sample.value)).success.value
       .set(BusinessContactDetailsPage, businessContactDetails).success.value
+      .set(AllWebsites, List(Website("www.example.com"))).success.value
 
   private val ukBasedCompleteUserAnswersWithoutVatInfo: UserAnswers =
     basicUserAnswersWithoutVatInfo
@@ -156,6 +160,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       .set(BusinessContactDetailsPage, businessContactDetails).success.value
       .set(ClientBusinessNamePage, ClientBusinessName(companyName)).success.value
       .set(ClientBusinessAddressPage, arbitraryInternationalAddress.arbitrary.sample.value).success.value
+      .set(AllWebsites, List(Website("www.example.com"))).success.value
 
   private val nonUkBasedCompleteUserAnswersWithoutVatInfo: UserAnswers =
     basicUserAnswersWithoutVatInfo
@@ -172,6 +177,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       .set(ClientBusinessNamePage, ClientBusinessName(companyName)).success.value
       .set(ClientBusinessAddressPage, arbitraryInternationalAddress.arbitrary.sample.value).success.value
 
+      .set(AllWebsites, List(Website("www.example.com"))).success.value
 
   private val mockRegistrationService: RegistrationService = mock[RegistrationService]
   private val mockAuditService: AuditService = mock[AuditService]
@@ -191,7 +197,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
           running(application) {
 
-            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad(waypoints).url)
 
             implicit val msgs: Messages = messages(application)
 
@@ -213,6 +219,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 iossNumber,
                 registrationList,
                 importOneStopShopDetailsList,
+                isValid = false,
                 isExcluded = false,
                 effectiveDate = None
               )(request, messages(application)).toString
@@ -250,6 +257,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 iossNumber,
                 registrationList,
                 importOneStopShopDetailsList,
+                isValid = false,
                 isExcluded = false,
                 effectiveDate = None
               )(request, messages(application)).toString
@@ -286,6 +294,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               iossNumber,
               registrationList,
               importOneStopShopDetailsList,
+              isValid = false,
               isExcluded = false,
               effectiveDate = None
             )(request, messages(application)).toString
@@ -323,6 +332,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 iossNumber,
                 registrationList,
                 importOneStopShopDetailsList,
+                isValid = false,
                 isExcluded = false,
                 effectiveDate = None
               )(request, messages(application)).toString
