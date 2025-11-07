@@ -223,3 +223,8 @@ POST       /clients-continue-registration-selection                         cont
 
 
 # GET        /no-registration-in-progress                                     controllers.NoRegistrationInProgressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+
+GET        /cancelAmendRegistration                        controllers.CancelAmendRegistrationController.onPageLoad(mode: Mode = NormalMode)
+POST       /cancelAmendRegistration                        controllers.CancelAmendRegistrationController.onSubmit(mode: Mode = NormalMode)
+GET        /changeCancelAmendRegistration                  controllers.CancelAmendRegistrationController.onPageLoad(mode: Mode = CheckMode)
+POST       /changeCancelAmendRegistration                  controllers.CancelAmendRegistrationController.onSubmit(mode: Mode = CheckMode)

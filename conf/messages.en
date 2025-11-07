@@ -586,3 +586,9 @@ amendComplete.contact.text = We will contact you if we need to check any informa
 amendComplete.returnToYourAccount.link = Return to your account
 amendComplete.feedback.link.text = What did you think of this service?
 amendComplete.feedback.30seconds = (takes 30 seconds)
+
+cancelAmendRegistration.title = cancelAmendRegistration
+cancelAmendRegistration.heading = cancelAmendRegistration
+cancelAmendRegistration.checkYourAnswersLabel = cancelAmendRegistration
+cancelAmendRegistration.error.required = Select yes if cancelAmendRegistration
+cancelAmendRegistration.change.hidden = CancelAmendRegistration
