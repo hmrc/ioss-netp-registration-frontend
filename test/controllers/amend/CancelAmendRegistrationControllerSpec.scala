@@ -1,16 +1,17 @@
-package controllers
+package controllers.amend
 
 import base.SpecBase
-import forms.CancelAmendRegistrationFormProvider
+import controllers.routes
+import forms.amend.CancelAmendRegistrationFormProvider
 import models.{NormalMode, UserAnswers}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.mockito.MockitoSugar
-import pages.CancelAmendRegistrationPage
+import pages.amend.CancelAmendRegistrationPage
 import play.api.inject.bind
 import play.api.mvc.Call
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import repositories.SessionRepository
 import views.html.CancelAmendRegistrationView
 
