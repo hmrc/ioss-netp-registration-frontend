@@ -591,7 +591,7 @@ cancelAmendRegistration.link = Cancel
 
 errorSubmittingAmendment.title = We have a problem with our service right now
 errorSubmittingAmendment.heading = We cannot update your client''s registration
-errorSubmittingAmendment.notSaved = We haven't saved your changes.
-errorSubmittingAmendment.tryAgainLater = You can <a class="govuk-link" href="{0}">try again later</a>.
+errorSubmittingAmendment.notSaved = We haven not saved your changes.
+errorSubmittingAmendment.tryAgainLater = Please try again later.
 errorSubmittingAmendment.contactUs = If the problem continues, you can email us at <a class="govuk-link" href="mailto:vatoss.contact@hmrc.gov.uk">vatoss.contact@hmrc.gov.uk</a>
 errorSubmittingAmendment.yourAccount = <a class="govuk-link" href={0}>Back to your account</a>
