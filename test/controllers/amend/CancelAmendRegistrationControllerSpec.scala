@@ -1,19 +1,21 @@
 package controllers.amend
 
 import base.SpecBase
-import controllers.routes
+import config.FrontendAppConfig
+import connectors.RegistrationConnector
 import forms.amend.CancelAmendRegistrationFormProvider
-import models.{NormalMode, UserAnswers}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{never, times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
-import pages.amend.CancelAmendRegistrationPage
+import org.scalatestplus.mockito.MockitoSugar.mock
+import pages.amend.ChangeRegistrationPage
 import play.api.inject.bind
 import play.api.mvc.Call
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
-import views.html.CancelAmendRegistrationView
+import uk.gov.hmrc.http.SessionKeys
+import views.html.amend.CancelAmendRegistrationView
 
 import scala.concurrent.Future
 
@@ -21,16 +23,23 @@ class CancelAmendRegistrationControllerSpec extends SpecBase with MockitoSugar {
 
   def onwardRoute = Call("GET", "/foo")
 
+  val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
+  val mockSessionRepository: SessionRepository = mock[SessionRepository]
   val formProvider = new CancelAmendRegistrationFormProvider()
-  val form = formProvider()
+  private val form = formProvider()
 
-  lazy val cancelAmendRegistrationRoute = routes.CancelAmendRegistrationController.onPageLoad(NormalMode).url
+  lazy val cancelAmendRegistrationRoute: String = controllers.amend.routes.CancelAmendRegistrationController.onPageLoad(waypoints).url
 
   "CancelAmendRegistration Controller" - {
 
     "must return OK and the correct view for a GET" in {
 
-      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
+      val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
+        .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+        .build()
+
+      when(mockRegistrationConnector.displayRegistrationNetp(any())(any()))
+        .thenReturn(Future.successful(Right(registrationWrapper)))
 
       running(application) {
         val request = FakeRequest(GET, cancelAmendRegistrationRoute)
@@ -40,101 +49,66 @@ class CancelAmendRegistrationControllerSpec extends SpecBase with MockitoSugar {
         val view = application.injector.instanceOf[CancelAmendRegistrationView]
 
         status(result) mustEqual OK
-        contentAsString(result) mustEqual view(form, NormalMode)(request, messages(application)).toString
+        contentAsString(result) mustEqual view(form, waypoints)(request, messages(application)).toString
       }
     }
 
-    "must populate the view correctly on a GET when the question has previously been answered" in {
+    "must delete the amended answers and redirect to yourAccount page when the user answers Yes" in {
 
-      val userAnswers = UserAnswers(userAnswersId).set(CancelAmendRegistrationPage, true).success.value
+      when(mockSessionRepository.clear(any())) thenReturn Future.successful(true)
 
-      val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
+      when(mockRegistrationConnector.displayRegistrationNetp(any())(any()))
+        .thenReturn(Future.successful(Right(registrationWrapper)))
 
-      running(application) {
-        val request = FakeRequest(GET, cancelAmendRegistrationRoute)
-
-        val view = application.injector.instanceOf[CancelAmendRegistrationView]
-
-        val result = route(application, request).value
-
-        status(result) mustEqual OK
-        contentAsString(result) mustEqual view(form.fill(true), NormalMode)(request, messages(application)).toString
-      }
-    }
-
-    "must redirect to the next page when valid data is submitted" in {
-
-      val mockSessionRepository = mock[SessionRepository]
-
-      when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
 
       val application =
-        applicationBuilder(userAnswers = Some(emptyUserAnswers))
-          .overrides(
-            bind[Navigator].toInstance(new FakeNavigator(onwardRoute)),
-            bind[SessionRepository].toInstance(mockSessionRepository)
-          )
+        applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
+          .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
           .build()
 
       running(application) {
+        val sessionId = "12345-credId"
         val request =
           FakeRequest(POST, cancelAmendRegistrationRoute)
+            .withSession(SessionKeys.sessionId -> sessionId)
             .withFormUrlEncodedBody(("value", "true"))
 
+        val config = application.injector.instanceOf[FrontendAppConfig]
+
         val result = route(application, request).value
 
         status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual onwardRoute.url
+        redirectLocation(result).value mustBe config.intermediaryYourAccountUrl
+        verify(mockSessionRepository, times(1)).clear(eqTo(sessionId))
       }
     }
 
-    "must return a Bad Request and errors when invalid data is submitted" in {
+    "must NOT delete the amended answers and returns user to ChangeYourRegistration page when the user answers No" in {
 
-      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
+      when(mockSessionRepository.clear(any())) thenReturn Future.successful(true)
+
+      when(mockRegistrationConnector.displayRegistrationNetp(any())(any()))
+        .thenReturn(Future.successful(Right(registrationWrapper)))
+
+      val application =
+        applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
+          .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
 
       running(application) {
+        val sessionId = "12345-credId"
         val request =
           FakeRequest(POST, cancelAmendRegistrationRoute)
-            .withFormUrlEncodedBody(("value", ""))
-
-        val boundForm = form.bind(Map("value" -> ""))
-
-        val view = application.injector.instanceOf[CancelAmendRegistrationView]
-
-        val result = route(application, request).value
-
-        status(result) mustEqual BAD_REQUEST
-        contentAsString(result) mustEqual view(boundForm, NormalMode)(request, messages(application)).toString
-      }
-    }
-
-    "must redirect to Journey Recovery for a GET if no existing data is found" in {
-
-      val application = applicationBuilder(userAnswers = None).build()
-
-      running(application) {
-        val request = FakeRequest(GET, cancelAmendRegistrationRoute)
+            .withSession(SessionKeys.sessionId -> sessionId)
+            .withFormUrlEncodedBody(("value", "false"))
 
         val result = route(application, request).value
 
         status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
-      }
-    }
-
-    "must redirect to Journey Recovery for a POST if no existing data is found" in {
-
-      val application = applicationBuilder(userAnswers = None).build()
-
-      running(application) {
-        val request =
-          FakeRequest(POST, cancelAmendRegistrationRoute)
-            .withFormUrlEncodedBody(("value", "true"))
-
-        val result = route(application, request).value
-
-        status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+        redirectLocation(result).value mustBe ChangeRegistrationPage.route(waypoints).url
+        verify(mockSessionRepository, never()).set(eqTo(basicUserAnswersWithVatInfo))
       }
     }
   }

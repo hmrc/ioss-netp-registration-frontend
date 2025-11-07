@@ -587,8 +587,7 @@ amendComplete.returnToYourAccount.link = Return to your account
 amendComplete.feedback.link.text = What did you think of this service?
 amendComplete.feedback.30seconds = (takes 30 seconds)
 
-cancelAmendRegistration.title = cancelAmendRegistration
-cancelAmendRegistration.heading = cancelAmendRegistration
-cancelAmendRegistration.checkYourAnswersLabel = cancelAmendRegistration
-cancelAmendRegistration.error.required = Select yes if cancelAmendRegistration
-cancelAmendRegistration.change.hidden = CancelAmendRegistration
+cancelAmendRegistration.title = Do you want to delete your changes?
+cancelAmendRegistration.heading = Do you want to delete your changes?
+cancelAmendRegistration.warning = This will delete any changes that you have not saved.
+cancelAmendRegistration.error.required = Select yes if you want to remove the changes to your registration

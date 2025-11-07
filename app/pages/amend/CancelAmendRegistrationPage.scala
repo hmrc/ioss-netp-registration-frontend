@@ -16,12 +16,16 @@
 
 package pages.amend
 
-import pages.QuestionPage
+import pages.{QuestionPage, Waypoints}
 import play.api.libs.json.JsPath
+import play.api.mvc.Call
 
 case object CancelAmendRegistrationPage extends QuestionPage[Boolean] {
 
   override def path: JsPath = JsPath \ toString
 
-  override def toString: String = "cancelAmendRegistration"
+  override def toString: String = "cancel-amend-registration"
+  
+  override def route(waypoints: Waypoints): Call =
+    controllers.amend.routes.CancelAmendRegistrationController.onPageLoad(waypoints)
 }

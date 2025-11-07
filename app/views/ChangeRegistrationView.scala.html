@@ -16,6 +16,7 @@
 
 @import viewmodels.InputWidth._
 @import components.CancelAmendRegistrationButton
+@import pages.amend.CancelAmendRegistrationPage
 
 @this(
         layout: templates.Layout,
@@ -45,7 +46,7 @@
     <p class="govuk-body">@messages("changeRegistration.info.p1")</p>
 
     @formHelper(action = controllers.amend.routes.ChangeRegistrationController.onSubmit(waypoints)) {
-        @button("site.confirm")
+        @button("site.confirm", CancelAmendRegistrationPage.route(waypoints).url, waypoints)
     }
     
     <div id="processing-wheel" hidden>

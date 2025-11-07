@@ -16,16 +16,17 @@
 
 package controllers.amend
 
+import config.FrontendAppConfig
 import controllers.actions.*
 import forms.amend.CancelAmendRegistrationFormProvider
-import models.Mode
-import pages.amend.CancelAmendRegistrationPage
-import pages.{Waypoint, Waypoints}
+import pages.amend.ChangeRegistrationPage
+import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.CancelAmendRegistrationView
+import views.html.amend.CancelAmendRegistrationView
+import utils.FutureSyntax.FutureOps
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,40 +34,36 @@ import scala.concurrent.{ExecutionContext, Future}
 class CancelAmendRegistrationController @Inject()(
                                          override val messagesApi: MessagesApi,
                                          sessionRepository: SessionRepository,
-                                         navigator: Navigator,
-                                         identify: IdentifierAction,
-                                         getData: DataRetrievalAction,
-                                         requireData: DataRequiredAction,
+                                         cc: AuthenticatedControllerComponents,
                                          formProvider: CancelAmendRegistrationFormProvider,
                                          val controllerComponents: MessagesControllerComponents,
+                                         frontendAppConfig: FrontendAppConfig,
                                          view: CancelAmendRegistrationView
                                  )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
   val form = formProvider()
 
-  def onPageLoad(mode: Mode): Action[AnyContent] = (identify andThen getData andThen requireData()) {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndRequireRegistration(inAmend = true) {
     implicit request =>
 
-      val preparedForm = request.userAnswers.get(CancelAmendRegistrationPage) match {
-        case None => form
-        case Some(value) => form.fill(value)
-      }
-
-      Ok(view(preparedForm, mode))
+      Ok(view(form, waypoints))
   }
 
-  def onSubmit(mode: Mode): Action[AnyContent] = (identify andThen getData andThen requireData()).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndRequireRegistration(inAmend = true).async {
     implicit request =>
 
       form.bindFromRequest().fold(
         formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, mode))),
+          Future.successful(BadRequest(view(formWithErrors, waypoints))),
 
         value =>
-          for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(CancelAmendRegistrationPage, value))
-            _              <- sessionRepository.set(updatedAnswers)
-          } yield Redirect(navigator.nextPage(CancelAmendRegistrationPage, mode, updatedAnswers))
+          if (value) {
+            for {
+              _ <- sessionRepository.clear(request.userId)
+            } yield Redirect(frontendAppConfig.intermediaryYourAccountUrl)
+          } else {
+            Redirect(ChangeRegistrationPage.route(waypoints).url).toFuture
+          }
       )
   }
 }
