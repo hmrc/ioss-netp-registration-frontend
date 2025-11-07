@@ -134,9 +134,8 @@ class ChangeRegistrationController @Inject()(
         case Right(_) =>
           Redirect(ChangeRegistrationPage.navigate(EmptyWaypoints, request.userAnswers, request.userAnswers).route)
         case Left(error) =>
-          val exception = new Exception(error.body)
-          logger.error(exception.getMessage, exception)
-          throw exception
+          logger.error(s"Unexpected result on submit: ${error.body}")
+          Redirect(controllers.amend.routes.ErrorSubmittingAmendController.onPageLoad())
       }
   }
 

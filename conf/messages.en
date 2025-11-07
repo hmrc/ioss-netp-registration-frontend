@@ -548,10 +548,6 @@ changeRegistration.registrationDetails.heading = Registration details
 changeRegistration.iossDetails.heading = Import One Stop Shop details
 changeRegistration.info.p1 = Confirm these changes to save them to your client''s account.
 
-
-
-cancelAmendRegistration.link = Cancel
-
 savedProgress.title = We have saved your progress
 savedProgress.subtitle =We will keep the registration details until {0}
 savedProgress.nextSteps = What happens next
@@ -591,3 +587,11 @@ cancelAmendRegistration.title = Do you want to delete your changes?
 cancelAmendRegistration.heading = Do you want to delete your changes?
 cancelAmendRegistration.warning = This will delete any changes that you have not saved.
 cancelAmendRegistration.error.required = Select yes if you want to remove the changes to your registration
+cancelAmendRegistration.link = Cancel
+
+errorSubmittingAmendment.title = We have a problem with our service right now
+errorSubmittingAmendment.heading = We cannot update your client''s registration
+errorSubmittingAmendment.notSaved = We haven't saved your changes.
+errorSubmittingAmendment.tryAgainLater = You can <a class="govuk-link" href="{0}">try again later</a>.
+errorSubmittingAmendment.contactUs = If the problem continues, you can email us at <a class="govuk-link" href="mailto:vatoss.contact@hmrc.gov.uk">vatoss.contact@hmrc.gov.uk</a>
+errorSubmittingAmendment.yourAccount = <a class="govuk-link" href={0}>Back to your account</a>
