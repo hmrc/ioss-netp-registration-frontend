@@ -68,4 +68,17 @@ object PreviouslyRegisteredSummary {
           value = ValueViewModel(value)
         )
     }
+
+  def amendedRow(answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] =
+
+    answers.get(PreviouslyRegisteredPage).map {
+      (otherOneStopRegistrations: Boolean) =>
+        val value = if (otherOneStopRegistrations) "site.yes" else "site.no"
+
+        SummaryListRowViewModel(
+          key = "previouslyRegistered.checkYourAnswersLabel",
+          value = ValueViewModel(value)
+        )
+    }
+    
 }

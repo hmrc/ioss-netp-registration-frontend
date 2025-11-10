@@ -113,6 +113,20 @@ object PreviousRegistrationSummary {
         )
     }
 
+  def addedRow(answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] =
+    answers.get(AllPreviousRegistrationsQuery).map {
+      previousRegistrations =>
+        val value = previousRegistrations.map {
+          details =>
+            HtmlFormat.escape(details.previousEuCountry.name)
+        }.mkString("<br/>")
+
+        SummaryListRowViewModel(
+          key = KeyViewModel("previousRegistrations.checkYourAnswersLabel.added").withCssClass("govuk-!-width-one-half"),
+          value = ValueViewModel(HtmlContent(value)),
+        )
+    }
+
   def changedAnswersRow(changedAnswers: Seq[Country])(implicit messages: Messages): Option[SummaryListRow] =
 
     if (changedAnswers.nonEmpty) {

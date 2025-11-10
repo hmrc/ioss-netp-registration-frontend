@@ -57,6 +57,8 @@ unauthorised.heading = You can’t access this service with this account
 website.title = Enter a website your client uses to sell goods
 website.heading = Enter a website your client uses to sell goods
 website.checkYourAnswersLabel = Trading websites
+websites.checkYourAnswersLabel.added = Trading websites added
+websites.checkYourAnswersLabel.removed = Trading websites removed
 website.error.required = Enter a website address
 website.error.length = Website address must be 250 characters or less
 website.error.duplicate = You entered this website address already. Enter a different one.
@@ -212,6 +214,8 @@ hasTradingName.change.hidden = if they have a different trading name
 tradingName.title = What is your client''s other trading name?
 tradingName.heading = What is your client''s other trading name?
 tradingName.checkYourAnswersLabel = Other trading names
+tradingName.checkYourAnswersLabel.added = Trading names added
+tradingName.checkYourAnswersLabel.removed = Trading names removed
 tradingName.error.required = Enter your client''s other trading name
 tradingName.error.length = Trading name must be 100 characters or less
 tradingName.error.duplicate = You have entered this trading name already. Enter a different one.
@@ -299,6 +303,8 @@ previousEuCountry.error.required = Select an EU country
 previousEuCountry.error.duplicate = You selected this EU country already. Select a different one.
 
 previousRegistrations.checkYourAnswersLabel = Countries registered in
+previousRegistrations.checkYourAnswersLabel.added = Countries registered in added
+previousRegistrations.checkYourAnswersLabel.changed = Countries registered in changed
 previousRegistrations.change.hidden = countries registered in
 previousRegistrations.add.hidden = countries registered in
 
@@ -459,6 +465,14 @@ deleteAllEuDetails.warning = This will delete all the countries you have added t
 deleteAllEuDetails.error.required = Select yes if you want to remove all the countries you have added tax information for from this scheme
 
 euDetails.checkYourAnswersLabel = Countries established in
+euDetails.checkYourAnswersLabel.amended = EU tax details added
+euDetails.checkYourAnswersLabel.changed = EU tax details changed
+euDetails.checkYourAnswersLabel.removed = EU tax details removed
+euDetails.change.hidden = EU tax registration details added
+euDetails.remove.hidden = tax details for {0}
+euDetails.amended = EU tax details changed
+euDetails.removed = EU tax details removed
+euDetails.added = EU tax details added
 
 error.missing_answers = Some of your information is missing. You must complete this before you can submit your changes.
 error.missing_answers_header = Some information is missing.
@@ -539,10 +553,6 @@ changeRegistration.registrationDetails.heading = Registration details
 changeRegistration.iossDetails.heading = Import One Stop Shop details
 changeRegistration.info.p1 = Confirm these changes to save them to your client''s account.
 
-
-
-cancelAmendRegistration.link = Cancel
-
 savedProgress.title = We have saved your progress
 savedProgress.subtitle =We will keep the registration details until {0}
 savedProgress.nextSteps = What happens next
@@ -567,3 +577,26 @@ continueRegistrationSelection.delete = No, delete my answers and start again
 noRegistrationInProgress.title = We did not find a registration in progress
 noRegistrationInProgress.heading = We did not find a registration in progress
 noRegistrationInProgress.sessionExpired = Your previous session may have expired.
+
+amendComplete.title = Registration details changed
+amendComplete.heading = Registration details confirmed
+amendComplete.changes.heading = Registration details changed
+amendComplete.info = You changed the following details:
+amendComplete.info.noChanges = You have not changed any of your client''s registration details.
+amendComplete.contact.text = We will contact you if we need to check any information.
+amendComplete.returnToYourAccount.link = Return to your account
+amendComplete.feedback.link.text = What did you think of this service?
+amendComplete.feedback.30seconds = (takes 30 seconds)
+
+cancelAmendRegistration.title = Do you want to delete your changes?
+cancelAmendRegistration.heading = Do you want to delete your changes?
+cancelAmendRegistration.warning = This will delete any changes that you have not saved.
+cancelAmendRegistration.error.required = Select yes if you want to remove the changes to your registration
+cancelAmendRegistration.link = Cancel
+
+errorSubmittingAmendment.title = We have a problem with our service right now
+errorSubmittingAmendment.heading = We cannot update your client''s registration
+errorSubmittingAmendment.notSaved = We have not saved your changes.
+errorSubmittingAmendment.tryAgainLater = Please try again later.
+errorSubmittingAmendment.contactUs = If the problem continues, you can email us at <a class="govuk-link" href="mailto:vatoss.contact@hmrc.gov.uk">vatoss.contact@hmrc.gov.uk</a>
+errorSubmittingAmendment.yourAccount = <a class="govuk-link" href={0}>Back to your account</a>

@@ -60,4 +60,16 @@ object HasFixedEstablishmentSummary {
       )
     }
   }
+
+  def amendedRow(answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] = {
+    answers.get(HasFixedEstablishmentPage).map { answer =>
+
+      val value = if (answer) "site.yes" else "site.no"
+
+      SummaryListRowViewModel(
+        key = KeyViewModel("hasFixedEstablishment.checkYourAnswersLabel").withCssClass("govuk-!-width-one-half"),
+        value = ValueViewModel(value)
+      )
+    }
+  }
 }

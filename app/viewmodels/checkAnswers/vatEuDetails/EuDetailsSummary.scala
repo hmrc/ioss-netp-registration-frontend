@@ -16,7 +16,7 @@
 
 package viewmodels.checkAnswers.vatEuDetails
 
-import models.{Index, UserAnswers}
+import models.{Country, Index, UserAnswers}
 import pages.vatEuDetails.{AddEuDetailsPage, CheckEuDetailsAnswersPage, DeleteEuDetailsPage}
 import pages.{AddItemPage, CheckAnswersPage, Waypoints}
 import play.api.i18n.Messages
@@ -92,6 +92,56 @@ object EuDetailsSummary {
         key = "euDetails.checkYourAnswersLabel",
         value = ValueViewModel(HtmlContent(value))
       )
+    }
+  }
+  
+  def addedRow(answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] = {
+    answers.get(AllEuDetailsQuery).map { allFixedEstablishmentDetails =>
+
+      val value = allFixedEstablishmentDetails.map { fixedEstablishmentDetails =>
+        HtmlFormat.escape(fixedEstablishmentDetails.euCountry.name)
+      }.mkString("<br/>")
+
+      SummaryListRowViewModel(
+        key = KeyViewModel("euDetails.added").withCssClass("govuk-!-width-one-half"),
+        value = ValueViewModel(HtmlContent(value))
+      )
+    }
+  }
+
+  def removedRow(removedFixedEstablishmentDetails: Seq[Country])(implicit messages: Messages): Option[SummaryListRow] = {
+    if (removedFixedEstablishmentDetails.nonEmpty) {
+
+      val value = removedFixedEstablishmentDetails.map { removedCountry =>
+        HtmlFormat.escape(removedCountry.name)
+      }.mkString("<br/>")
+
+      Some(
+        SummaryListRowViewModel(
+          key = KeyViewModel("euDetails.removed").withCssClass("govuk-!-width-one-half"),
+          value = ValueViewModel(HtmlContent(value))
+        )
+      )
+    } else {
+      None
+    }
+  }
+
+  def amendedRow(amendedFixedEstablishmentDetails: Seq[Country])(implicit messages: Messages): Option[SummaryListRow] = {
+    if (amendedFixedEstablishmentDetails.nonEmpty) {
+
+      val value = amendedFixedEstablishmentDetails.map { amendedCountry =>
+        HtmlFormat.escape(amendedCountry.name)
+      }.mkString("<br/>")
+
+      Some(
+        SummaryListRowViewModel(
+          key = KeyViewModel("euDetails.amended").withCssClass("govuk-!-width-one-half"),
+          value = ValueViewModel(HtmlContent(value))
+        )
+      )
+    } else {
+      None
     }
   }
 }

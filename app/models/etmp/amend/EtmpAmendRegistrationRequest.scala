@@ -19,7 +19,7 @@ package models.etmp.amend
 import logging.Logging
 import models.UserAnswers
 import models.etmp.*
-import models.etmp.display.{EtmpDisplayRegistration, EtmpDisplaySchemeDetails}
+import models.etmp.display.{EtmpDisplayEuRegistrationDetails, EtmpDisplayRegistration, EtmpDisplaySchemeDetails}
 import pages.{ClientHasUtrNumberPage, ClientHasVatNumberPage, ClientTaxReferencePage, ClientsNinoNumberPage}
 import play.api.libs.json.{Json, OFormat}
 
@@ -48,13 +48,16 @@ object EtmpAmendRegistrationRequest extends EtmpCommonRegistrationRequest with L
                                          rejoin: Boolean = false
                                        ): EtmpAmendRegistrationRequest = {
 
+    val schemeDetails = getSchemeDetails(answers, commencementDate)
     val taxIdType: EtmpIdType = determineTaxIdType(answers)
 
     EtmpAmendRegistrationRequest(
       administration = EtmpAdministration(messageType = EtmpMessageType.IOSSIntAmendClient),
       changeLog = EtmpAmendRegistrationChangeLog(
         tradingNames = registration.tradingNames != getTradingNames(answers),
-        fixedEstablishments = registration.schemeDetails.euRegistrationDetails != getSchemeDetails(answers, commencementDate).euRegistrationDetails,
+        fixedEstablishments = compareEuRegistrationDetails(
+          registration.schemeDetails.euRegistrationDetails, schemeDetails.euRegistrationDetails,
+        ),
         contactDetails = contactDetailsDiff(registration.schemeDetails, getSchemeDetails(answers, commencementDate)),
         bankDetails = false,
         reRegistration = rejoin,
@@ -98,6 +101,53 @@ object EtmpAmendRegistrationRequest extends EtmpCommonRegistrationRequest with L
                 throw exception
               }
             }
+        }
+    }
+  }
+  
+  private def compareEuRegistrationDetails(
+                                            originalDetails: Seq[EtmpDisplayEuRegistrationDetails],
+                                            amendedDetails: Seq[EtmpEuRegistrationDetails]
+                                          ): Boolean = {
+    
+    val addedAdditionalCountries: Boolean = originalDetails.size != amendedDetails.size
+    
+    val hasOriginalDetailsChanged: Boolean = amendedDetails.zip(originalDetails).collect {
+      case (amended, original) =>
+        amended.countryOfRegistration != original.issuedBy ||
+          compareTraderId(amended.traderId, original.vatNumber, original.taxIdentificationNumber) ||
+          amended.tradingName != original.fixedEstablishmentTradingName ||
+          amended.fixedEstablishmentAddressLine1 != original.fixedEstablishmentAddressLine1 ||
+          amended.fixedEstablishmentAddressLine2 != original.fixedEstablishmentAddressLine2 ||
+          amended.townOrCity != original.townOrCity ||
+          amended.regionOrState != original.regionOrState ||
+          amended.postcode != original.postcode
+    }.contains(true)
+    
+    hasOriginalDetailsChanged || addedAdditionalCountries
+  }
+  
+  private def compareTraderId(
+                             traderId: TraderId,
+                             maybeVatNumber: Option[String],
+                             maybeEuTaxReferenceNumber: Option[String]
+                             ): Boolean = {
+    traderId match {
+      case vatNumberTraderId: VatNumberTraderId =>
+        maybeVatNumber match {
+          case Some(vatNumber) =>
+            vatNumberTraderId.vatNumber != vatNumber
+            
+          case _ =>
+            true
+        }
+      case taxRefTraderID: TaxRefTraderID =>
+        maybeEuTaxReferenceNumber match {
+          case Some(euTaxReference) =>
+            taxRefTraderID.taxReferenceNumber != euTaxReference
+            
+          case _ =>
+            true
         }
     }
   }

@@ -23,9 +23,10 @@ import models.domain.VatCustomerInfo
 import models.etmp.SchemeType
 import models.iossRegistration.*
 import models.ossRegistration.*
+import models.previousRegistrations.NonCompliantDetails
 import models.vatEuDetails.{EuDetails, RegistrationType, TradingNameAndBusinessAddress}
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen.{choose, listOfN}
+import org.scalacheck.Gen.{choose, listOfN, option}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.EitherValues
 import play.api.libs.json.{JsObject, Json}
@@ -605,4 +606,17 @@ trait ModelGenerators extends EitherValues with EtmpModelGenerators {
       }
     }
   }
+
+  implicit lazy val arbitraryNonCompliantDetails: Arbitrary[NonCompliantDetails] =
+    Arbitrary {
+      for {
+        nonCompliantReturns <- option(Gen.chooseNum(1, 2))
+        nonCompliantPayments <- option(Gen.chooseNum(1, 2))
+      } yield {
+        NonCompliantDetails(
+          nonCompliantReturns = nonCompliantReturns,
+          nonCompliantPayments = nonCompliantPayments
+        )
+      }
+    }
 }
