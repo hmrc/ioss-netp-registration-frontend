@@ -26,16 +26,19 @@ import models.audit.RegistrationAuditType.AmendRegistration
 import models.audit.SubmissionResult.{Failure, Success}
 import models.domain.PreviousRegistration
 import models.etmp.EtmpPreviousEuRegistrationDetails
+import models.requests.AuthenticatedMandatoryRegistrationRequest
 import models.{CheckMode, Country, InternationalAddress, UserAnswers}
 import pages.*
 import pages.amend.ChangeRegistrationPage
 import play.api.i18n.{I18nSupport, Messages}
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import services.{AuditService, RegistrationService}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.CompletionChecks
 import utils.FutureSyntax.FutureOps
+import utils.VatInfoCompletionChecks.*
 import viewmodels.WebsiteSummary
 import viewmodels.checkAnswers.*
 import viewmodels.checkAnswers.tradingNames.*
@@ -45,7 +48,7 @@ import viewmodels.previousRegistrations.{PreviousRegistrationSummary, Previously
 import views.html.ChangeRegistrationView
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class ChangeRegistrationController @Inject()(
                                               cc: AuthenticatedControllerComponents,
@@ -58,9 +61,6 @@ class ChangeRegistrationController @Inject()(
 
   def onPageLoad(): Action[AnyContent] = cc.identifyAndRequireRegistration(inAmend = true).async {
     implicit request =>
-
-      val waypoints = EmptyWaypoints
-        .setNextWaypoint(Waypoint(ChangeRegistrationPage, CheckMode, ChangeRegistrationPage.urlFragment))
 
       val thisPage = ChangeRegistrationPage
 
@@ -155,46 +155,61 @@ class ChangeRegistrationController @Inject()(
           ).flatten
         )
 
-        Ok(view(waypoints, companyName, request.iossNumber, registrationDetailsList, importOneStopShopDetailsList, isExcluded, effectiveDate)).toFuture
-      }(request.request)
-        val isValid: Boolean = validate()
+        val isValid: Boolean = validate()(request.request)
 
-        Ok(view(waypoints, companyName, request.getIossNumber(), registrationDetailsList, importOneStopShopDetailsList, isValid)).toFuture
-      }
+        Ok(view(waypoints, companyName, request.iossNumber, registrationDetailsList, importOneStopShopDetailsList, isValid, isExcluded, effectiveDate)).toFuture
+      }(request.request)
   }
 
 
   def onSubmit(waypoints: Waypoints, incompletePrompt: Boolean): Action[AnyContent] = cc.identifyAndRequireRegistration(inAmend = true).async {
     implicit request =>
 
-      registrationService.amendRegistration(
-        answers = request.userAnswers,
-        registration = request.registrationWrapper.etmpDisplayRegistration,
-        iossNumber = request.iossNumber
-      ).map {
-        case Right(amendResponse) =>
-          auditService.audit(
-            NetpAmendRegistrationAuditModel.build(
-              registrationAuditType = AmendRegistration,
-              userAnswers = request.userAnswers,
-              amendRegistrationResponse = Some(amendResponse),
-              submissionResult = Success
-            )
-          )
-          Redirect(ChangeRegistrationPage.navigate(EmptyWaypoints, request.userAnswers, request.userAnswers).route)
-
-        case Left(error) =>
-          logger.error(s"Unexpected result on submit: ${error.body}")
-          auditService.audit(
-            NetpAmendRegistrationAuditModel.build(
-              registrationAuditType = AmendRegistration,
-              userAnswers = request.userAnswers,
-              amendRegistrationResponse = None,
-              submissionResult = Failure
-            )
-          )
-          Redirect(controllers.amend.routes.ErrorSubmittingAmendController.onPageLoad())
+      if (incompletePrompt) {
+        getFirstValidationErrorRedirect(waypoints)(request.request) match {
+          case Some(redirectResult) => Future.successful(redirectResult)
+          case None =>
+            submitRegistration(request, waypoints)
+        }
+      } else {
+        submitRegistration(request, waypoints)
       }
+  }
+
+  private def submitRegistration(
+                                  request: AuthenticatedMandatoryRegistrationRequest[AnyContent],
+                                  waypoints: Waypoints
+                                )(implicit ec: ExecutionContext): Future[Result] = {
+
+    implicit val hc: HeaderCarrier = HeaderCarrier()
+
+    registrationService.amendRegistration(
+      answers = request.userAnswers,
+      registration = request.registrationWrapper.etmpDisplayRegistration,
+      iossNumber = request.iossNumber
+    ).map {
+      case Right(amendResponse) =>
+        auditService.audit(
+          NetpAmendRegistrationAuditModel.build(
+            registrationAuditType = AmendRegistration,
+            userAnswers = request.userAnswers,
+            amendRegistrationResponse = Some(amendResponse),
+            submissionResult = Success
+          )
+        )
+        Redirect(ChangeRegistrationPage.navigate(EmptyWaypoints, request.userAnswers, request.userAnswers).route)
+      case Left(error) =>
+        logger.error(s"Unexpected result on submit: ${error.body}")
+        auditService.audit(
+          NetpAmendRegistrationAuditModel.build(
+            registrationAuditType = AmendRegistration,
+            userAnswers = request.userAnswers,
+            amendRegistrationResponse = None,
+            submissionResult = Failure
+          )
+        )
+        Redirect(controllers.amend.routes.ErrorSubmittingAmendController.onPageLoad())
+    }
   }
 
   private def getTradingNameRows(answers: UserAnswers, waypoints: Waypoints, changePage: ChangeRegistrationPage.type, isExcluded: Boolean)(implicit messages: Messages) = {

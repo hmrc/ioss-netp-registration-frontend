@@ -254,7 +254,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
       whenReady(result) { exp =>
         exp mustBe a[IllegalStateException]
         exp.getMessage mustBe
-          s"Unable to find country $nonExistentCountryCode"
+          s"Unable to retrieve a Country from the Country Code $nonExistentCountryCode provided in the Vat information returned from ETMP for amend journey."
       }
     }
   }
@@ -406,16 +406,31 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
     } else {
       businessBasedUkUA
         .copy(vatInfo = None)
+        .set(ClientHasVatNumberPage, false).success.value
         .set(ClientHasUtrNumberPage, true).success.value
         .set(ClientUtrNumberPage, registrationWrapper.etmpDisplayRegistration.customerIdentification.idValue).success.value
     }
 
-    val addBusinessDetailsUA: UserAnswers = if (registrationWrapper.vatInfo.isEmpty) {
-      userAnswersWithVat
-        .set(ClientBusinessAddressPage, convertNonUkAddress(displayRegistration.otherAddress)).success.value
-        .set(ClientBusinessNamePage, ClientBusinessName(displayRegistration.otherAddress.get.tradingName.get)).success.value
-    } else {
-      userAnswersWithVat
+    val addBusinessDetailsUA: UserAnswers = (registrationWrapper.vatInfo, isUkBased) match {
+      case (Some(vatInfo), false) =>
+        val orgName = vatInfo.organisationName.get
+        val address = InternationalAddress(
+          line1 = vatInfo.desAddress.line1,
+          line2 = vatInfo.desAddress.line2,
+          townOrCity = vatInfo.desAddress.line3.getOrElse(""),
+          stateOrRegion = vatInfo.desAddress.line4,
+          postCode = vatInfo.desAddress.postCode,
+          country = Country.fromCountryCode(vatInfo.desAddress.countryCode)
+        )
+        userAnswersWithVat
+          .set(ClientBusinessAddressPage, address).success.value
+          .set(ClientBusinessNamePage, ClientBusinessName(orgName)).success.value
+      case (None, _) =>
+        userAnswersWithVat
+          .set(ClientBusinessAddressPage, convertNonUkAddress(displayRegistration.otherAddress)).success.value
+          .set(ClientBusinessNamePage, ClientBusinessName(displayRegistration.otherAddress.get.tradingName.get)).success.value
+      case _ =>
+        userAnswersWithVat
     }
 
     val userAnswersPreCountry: UserAnswers = addBusinessDetailsUA
