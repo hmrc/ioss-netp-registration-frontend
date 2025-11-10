@@ -158,7 +158,7 @@ class AmendCompleteController @Inject()(
 
       request.userAnswers.set(AllPreviousRegistrationsQuery, addedDetails) match {
         case Success(amendedUserAnswers) =>
-          Seq(PreviousRegistrationSummary.amendedAnswersRow(answers = amendedUserAnswers))
+          Seq(PreviousRegistrationSummary.addedRow(answers = amendedUserAnswers))
         case Failure(exception) =>
           Seq.empty
       }
