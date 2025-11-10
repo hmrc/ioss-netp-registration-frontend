@@ -303,6 +303,8 @@ previousEuCountry.error.required = Select an EU country
 previousEuCountry.error.duplicate = You selected this EU country already. Select a different one.
 
 previousRegistrations.checkYourAnswersLabel = Countries registered in
+previousRegistrations.checkYourAnswersLabel.added = Countries registered in added
+previousRegistrations.checkYourAnswersLabel.changed = Countries registered in changed
 previousRegistrations.change.hidden = countries registered in
 previousRegistrations.add.hidden = countries registered in
 
@@ -470,6 +472,7 @@ euDetails.change.hidden = EU tax registration details added
 euDetails.remove.hidden = tax details for {0}
 euDetails.amended = EU tax details changed
 euDetails.removed = EU tax details removed
+euDetails.added = EU tax details added
 
 error.missing_answers = Some of your information is missing. You must complete this before you can submit your changes.
 error.missing_answers_header = Some information is missing.
