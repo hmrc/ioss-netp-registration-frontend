@@ -22,7 +22,7 @@ import models.audit.{NetpAmendRegistrationAuditModel, RegistrationAuditType, Sub
 import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
 import models.etmp.amend.AmendRegistrationResponse
 import models.etmp.display.{EtmpDisplayRegistration, RegistrationWrapper}
-import models.previousRegistrations.NonCompliantDetails, PreviousRegistrationDetails}
+import models.previousRegistrations._
 import models.requests.{AuthenticatedMandatoryRegistrationRequest, DataRequest}
 import models.responses.InternalServerError
 import models.{CheckMode, ClientBusinessName, DesAddress, TradingName, UserAnswers, Website}
@@ -65,8 +65,6 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
   private val amendYourAnswersPage = ChangeRegistrationPage
   private val waypoints: Waypoints = EmptyWaypoints.setNextWaypoint(Waypoint(amendYourAnswersPage, CheckMode, amendYourAnswersPage.urlFragment))
   private val companyName: String = "Company Name"
-
-  private val waypoints: Waypoints = EmptyWaypoints.setNextWaypoint(Waypoint(ChangeRegistrationPage, CheckMode, ChangeRegistrationPage.urlFragment))
 
   override val vatCustomerInfo: VatCustomerInfo = {
     VatCustomerInfo(
@@ -197,7 +195,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
           running(application) {
 
-            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad(waypoints).url)
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
 
             implicit val msgs: Messages = messages(application)
 
