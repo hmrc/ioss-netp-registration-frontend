@@ -22,7 +22,7 @@ import config.FrontendAppConfig
 import connectors.RegistrationConnector
 import models.domain.{PreviousRegistration, PreviousSchemeDetails}
 import models.{BusinessContactDetails, Country, TradingName, UserAnswers, Website}
-import models.etmp.display.RegistrationWrapper
+import models.etmp.display.{EtmpDisplayRegistration, RegistrationWrapper}
 import models.vatEuDetails.EuDetails
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -41,7 +41,7 @@ import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.WebsiteSummary
 import viewmodels.checkAnswers.BusinessContactDetailsSummary
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
-import viewmodels.checkAnswers.vatEuDetails.EuDetailsSummary
+import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
 import viewmodels.govuk.all.SummaryListViewModel
 import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
 import views.html.amend.AmendCompleteView
@@ -162,7 +162,7 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
             summaryList
           )(request, messages(application)).toString
 
-          val expectedRow = PreviousRegistrationSummary.amendedAnswersRow(updatedAnswers).get
+          val expectedRow = PreviousRegistrationSummary.addedRow(updatedAnswers).get
 
           summaryList.rows must contain(expectedRow)
         }
@@ -244,10 +244,11 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
     val tradingNameSummaryRow = TradingNameSummary.amendedAnswersRow(answers)
     val removedTradingNameRow = TradingNameSummary.removedAnswersRow(getRemovedTradingNames(answers, registrationWrapper))
     val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.amendedRow(answers)
-    val previousRegistrationSummaryRow = PreviousRegistrationSummary.amendedAnswersRow(answers)
-    val taxRegisteredInEuSummaryRow = EuDetailsSummary.amendedAnswersRow(answers)
-    val euDetailsSummaryRow = EuDetailsSummary.amendedAnswersRow(answers)
-    val removedEuDetailsRow = EuDetailsSummary.removedAnswersRow(getRemovedEuDetailsRow(answers, registrationWrapper))
+    val previousRegistrationSummaryRow = PreviousRegistrationSummary.addedRow(answers)
+    val hasFixedEstablishmentInEuDetails = HasFixedEstablishmentSummary.amendedRow(answers)
+    val fixedEstablishmentInEuDetailsSummaryRow = EuDetailsSummary.addedRow(answers)
+    val removeFixedEstablishmentInEuDetailsRow = EuDetailsSummary
+      .removedRow(removedFixedEstablishmentInEuDetailsRow(answers, registrationWrapper.map(_.etmpDisplayRegistration)))
     val websiteSummaryRow = WebsiteSummary.amendedAnswersRow(answers)
     val removedWebsiteRow = WebsiteSummary.removedAnswersRow(getRemovedWebsites(answers, registrationWrapper))
     val businessContactDetailsContactNameSummaryRow = BusinessContactDetailsSummary.amendedRowContactName(answers)
@@ -260,9 +261,9 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
       removedTradingNameRow,
       previouslyRegisteredSummaryRow,
       previousRegistrationSummaryRow,
-      taxRegisteredInEuSummaryRow,
-      euDetailsSummaryRow,
-      removedEuDetailsRow,
+      hasFixedEstablishmentInEuDetails,
+      fixedEstablishmentInEuDetailsSummaryRow,
+      removeFixedEstablishmentInEuDetailsRow,
       websiteSummaryRow,
       removedWebsiteRow,
       businessContactDetailsContactNameSummaryRow,
@@ -280,21 +281,21 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
 
   }
 
-  private def getRemovedEuDetailsRow(answers: UserAnswers, registrationWrapper: Option[RegistrationWrapper]): Seq[Country] = {
-
-    val amendedAnswers = answers.get(AllEuDetailsQuery).map(_.map(_.euCountry.code)).getOrElse(List.empty)
-    val originalAnswers = registrationWrapper.map(_.etmpDisplayRegistration.schemeDetails.euRegistrationDetails.map(_.issuedBy)).getOrElse(List.empty)
-
-    val removedCountryCodes = originalAnswers.diff(amendedAnswers)
-
-    removedCountryCodes.flatMap(Country.fromCountryCode)
-  }
-
   private def getRemovedWebsites(answers: UserAnswers, registrationWrapper: Option[RegistrationWrapper]): Seq[String] = {
 
     val amendedAnswers = answers.get(AllWebsites).getOrElse(List.empty)
     val originalAnswers = registrationWrapper.map(_.etmpDisplayRegistration.schemeDetails.websites.map(_.websiteAddress)).getOrElse(List.empty)
 
     originalAnswers.diff(amendedAnswers)
+  }
+
+  private def removedFixedEstablishmentInEuDetailsRow(answers: UserAnswers, etmpDisplayRegistration: Option[EtmpDisplayRegistration]): Seq[Country] = {
+
+    val amendedAnswers = answers.get(AllEuDetailsQuery).map(_.map(_.euCountry.code)).getOrElse(List.empty)
+    val originalAnswers = etmpDisplayRegistration.map(_.schemeDetails.euRegistrationDetails.map(_.issuedBy)).getOrElse(Seq.empty)
+
+    val removedCountries = originalAnswers.diff(amendedAnswers)
+
+    removedCountries.flatMap(Country.fromCountryCode)
   }
 }
