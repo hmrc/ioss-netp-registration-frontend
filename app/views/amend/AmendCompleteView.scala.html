@@ -22,7 +22,7 @@
 
 @(feedbackLink: String, intermediaryYourAccountUrl: String, amendedList: SummaryList)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = titleNoForm(messages("amendComplete.title")), showBackLink = false) {
+@layout(pageTitle = titleNoForm(messages("amendComplete.title")), showBackLink = true) {
 
     <div class="grid-row column-two-thirds" id="application_complete_id">
         <div class="govuk-panel govuk-panel--confirmation">
@@ -40,11 +40,13 @@
         <div class="govuk-body">@messages("amendComplete.info.noChanges")</div>
     }
 
-    @govukSummaryList(
-        SummaryListViewModel(
-            amendedList.rows
-        ).withCssClass("govuk-body govuk-!-margin-bottom-7")
-    )
+    @if(amendedList.rows.nonEmpty) {
+        @govukSummaryList(
+            SummaryListViewModel(
+                amendedList.rows
+            ).withCssClass("govuk-body govuk-!-margin-bottom-7")
+        )
+    }
 
     <p class="govuk-body">
         <a href="@intermediaryYourAccountUrl" class="govuk-link">@messages("amendComplete.returnToYourAccount.link")</a>

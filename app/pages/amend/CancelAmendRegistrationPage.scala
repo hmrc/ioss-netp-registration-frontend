@@ -24,7 +24,7 @@ case object CancelAmendRegistrationPage extends QuestionPage[Boolean] {
 
   override def path: JsPath = JsPath \ toString
 
-  override def toString: String = "cancel-amend-registration"
+  override def toString: String = "cancelAmendRegistration"
   
   override def route(waypoints: Waypoints): Call =
     controllers.amend.routes.CancelAmendRegistrationController.onPageLoad(waypoints)

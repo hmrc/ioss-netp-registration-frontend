@@ -463,7 +463,7 @@ deleteAllEuDetails.warning = This will delete all the countries you have added t
 deleteAllEuDetails.error.required = Select yes if you want to remove all the countries you have added tax information for from this scheme
 
 euDetails.checkYourAnswersLabel = Countries established in
-euDetails.checkYourAnswersLabel.amended = Eu tax details added
+euDetails.checkYourAnswersLabel.amended = EU tax details added
 euDetails.checkYourAnswersLabel.changed = EU tax details changed
 euDetails.checkYourAnswersLabel.removed = EU tax details removed
 euDetails.change.hidden = EU tax registration details added
@@ -591,7 +591,7 @@ cancelAmendRegistration.link = Cancel
 
 errorSubmittingAmendment.title = We have a problem with our service right now
 errorSubmittingAmendment.heading = We cannot update your client''s registration
-errorSubmittingAmendment.notSaved = We haven not saved your changes.
+errorSubmittingAmendment.notSaved = We have not saved your changes.
 errorSubmittingAmendment.tryAgainLater = Please try again later.
 errorSubmittingAmendment.contactUs = If the problem continues, you can email us at <a class="govuk-link" href="mailto:vatoss.contact@hmrc.gov.uk">vatoss.contact@hmrc.gov.uk</a>
 errorSubmittingAmendment.yourAccount = <a class="govuk-link" href={0}>Back to your account</a>
