@@ -176,7 +176,7 @@ class PreviousOssNumberController @Inject()(
       countryCode = country.code
     ).flatMap {
 
-      case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
+      case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) && !waypoints.inAmend =>
         Redirect(
           controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
             activeMatch.memberState,
