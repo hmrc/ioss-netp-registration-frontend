@@ -95,54 +95,53 @@ object EuDetailsSummary {
     }
   }
   
-  def amendedAnswersRow(answers: UserAnswers)(implicit message: Messages): Option[SummaryListRow] = {
-    answers.get(AllEuDetailsQuery).map { euDetails =>
-     val value = euDetails.map { details =>
-       HtmlFormat.escape(details.euCountry.name)
-     }.mkString("<br/>")
-     
-     SummaryListRowViewModel(
-       key = KeyViewModel("euDetails.checkYourAnswersLabel.amended"),
-       value = ValueViewModel(HtmlContent(value))
-     )
+  def addedRow(answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] = {
+    answers.get(AllEuDetailsQuery).map { allFixedEstablishmentDetails =>
+
+      val value = allFixedEstablishmentDetails.map { fixedEstablishmentDetails =>
+        HtmlFormat.escape(fixedEstablishmentDetails.euCountry.name)
+      }.mkString("<br/>")
+
+      SummaryListRowViewModel(
+        key = KeyViewModel("euDetails.added").withCssClass("govuk-!-width-one-half"),
+        value = ValueViewModel(HtmlContent(value))
+      )
     }
   }
 
-  def removedAnswersRow(removedEuDetails: Seq[Country])(implicit messages: Messages): Option[SummaryListRow] =
+  def removedRow(removedFixedEstablishmentDetails: Seq[Country])(implicit messages: Messages): Option[SummaryListRow] = {
+    if (removedFixedEstablishmentDetails.nonEmpty) {
 
-    if (removedEuDetails.nonEmpty) {
-
-      val value = removedEuDetails.map {
-        details =>
-          HtmlFormat.escape(details.name)
+      val value = removedFixedEstablishmentDetails.map { removedCountry =>
+        HtmlFormat.escape(removedCountry.name)
       }.mkString("<br/>")
 
       Some(
         SummaryListRowViewModel(
-          key = KeyViewModel("euDetails.checkYourAnswersLabel.removed").withCssClass("govuk-!-width-one-half"),
+          key = KeyViewModel("euDetails.removed").withCssClass("govuk-!-width-one-half"),
           value = ValueViewModel(HtmlContent(value))
         )
       )
     } else {
       None
     }
+  }
 
-  def changedAnswersRow(removedEuDetails: Seq[Country])(implicit messages: Messages): Option[SummaryListRow] =
+  def amendedRow(amendedFixedEstablishmentDetails: Seq[Country])(implicit messages: Messages): Option[SummaryListRow] = {
+    if (amendedFixedEstablishmentDetails.nonEmpty) {
 
-    if (removedEuDetails.nonEmpty) {
-
-      val value = removedEuDetails.map {
-        details =>
-          HtmlFormat.escape(details.name)
+      val value = amendedFixedEstablishmentDetails.map { amendedCountry =>
+        HtmlFormat.escape(amendedCountry.name)
       }.mkString("<br/>")
 
       Some(
         SummaryListRowViewModel(
-          key = KeyViewModel("euDetails.checkYourAnswersLabel.changed").withCssClass("govuk-!-width-one-half"),
+          key = KeyViewModel("euDetails.amended").withCssClass("govuk-!-width-one-half"),
           value = ValueViewModel(HtmlContent(value))
         )
       )
     } else {
       None
     }
+  }
 }

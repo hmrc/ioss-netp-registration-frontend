@@ -468,6 +468,8 @@ euDetails.checkYourAnswersLabel.changed = EU tax details changed
 euDetails.checkYourAnswersLabel.removed = EU tax details removed
 euDetails.change.hidden = EU tax registration details added
 euDetails.remove.hidden = tax details for {0}
+euDetails.amended = EU tax details changed
+euDetails.removed = EU tax details removed
 
 error.missing_answers = Some of your information is missing. You must complete this before you can submit your changes.
 error.missing_answers_header = Some information is missing.

@@ -21,7 +21,7 @@ import controllers.actions.AuthenticatedControllerComponents
 import logging.Logging
 import models.domain.PreviousSchemeDetails
 import models.{Country, TradingName, UserAnswers, Website}
-import models.etmp.display.EtmpDisplayRegistration
+import models.etmp.display.{EtmpDisplayEuRegistrationDetails, EtmpDisplayRegistration, EtmpDisplaySchemeDetails}
 import models.requests.AuthenticatedMandatoryRegistrationRequest
 import models.vatEuDetails.EuDetails
 import pages.{BusinessContactDetailsPage, JourneyRecoveryPage, Waypoints}
@@ -38,7 +38,7 @@ import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
 import viewmodels.checkAnswers.BusinessContactDetailsSummary
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
-import viewmodels.checkAnswers.vatEuDetails.EuDetailsSummary
+import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
 import viewmodels.govuk.all.SummaryListViewModel
 import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
 
@@ -73,9 +73,10 @@ class AmendCompleteController @Inject()(
           getTradingNameRows(originalRegistration) ++
           getHasPreviouslyRegistered(originalRegistration) ++
           getPreviouslyRegisteredRows(originalRegistration) ++
+          getHasFixedEstablishmentInEuDetails(originalRegistration.schemeDetails) ++
+          getFixedEstablishmentInEuRows(originalRegistration.schemeDetails) ++
+          getAmendedFixedEstablishmentInEuRows(originalRegistration.schemeDetails) ++
           getCountriesWithNewSchemes(originalRegistration) ++
-          getHasRegisteredInEuRows(originalRegistration) ++
-          getRegisteredInEuRows(originalRegistration) ++
           getWebsitesRows(originalRegistration) ++
           getBusinessContactDetailsRows(originalRegistration)
       ).flatten
@@ -165,6 +166,102 @@ class AmendCompleteController @Inject()(
       Seq.empty
     }
 
+
+  private def getHasFixedEstablishmentInEuDetails(originalRegistration: EtmpDisplaySchemeDetails)
+                                                 (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] =
+
+    val originalCountries: Seq[String] = originalRegistration.euRegistrationDetails.map(_.issuedBy)
+    val amendedCountries: Seq[String] = request.userAnswers.get(AllEuDetailsQuery).map(_.map(_.euCountry.code)).getOrElse(Seq.empty)
+    val hasChangedToNo: Boolean = amendedCountries.diff(originalCountries).nonEmpty
+    val hasChangedToYes: Boolean = originalCountries.diff(amendedCountries).nonEmpty
+    val notAmended: Boolean = originalCountries.nonEmpty && amendedCountries.nonEmpty || originalCountries.isEmpty && amendedCountries.isEmpty
+
+    if (notAmended) {
+      Seq.empty
+    } else if (hasChangedToYes || hasChangedToNo) {
+      Seq(HasFixedEstablishmentSummary.amendedRow(request.userAnswers))
+    } else {
+      Seq.empty
+    }
+
+  private def getFixedEstablishmentInEuRows(originalAnswers: EtmpDisplaySchemeDetails)
+                                           (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] = {
+
+    val originalCountries: Seq[String] = originalAnswers.euRegistrationDetails.map(_.issuedBy)
+    val amendedCountries: Seq[String] = request.userAnswers.get(AllEuDetailsQuery)
+      .map(_.map(_.euCountry.code))
+      .getOrElse(Seq.empty)
+
+    val addedFixedEstablishmentDetails: Seq[String] = amendedCountries.diff(originalCountries)
+    val removedFixedEstablishmentDetails: Seq[String] = originalCountries.diff(amendedCountries)
+
+    val newFixedEstablishmentDetails: Seq[String] = amendedCountries.filterNot { amendedCountryCode =>
+      originalCountries.contains(amendedCountryCode)
+    }
+
+    val addedFixedEstablishmentRow = if (addedFixedEstablishmentDetails.nonEmpty) {
+      val amendedFixedEstablishmentDetails = request.userAnswers.get(AllEuDetailsQuery).getOrElse(Seq.empty)
+        .filter(fixedEstablishmentDetails => newFixedEstablishmentDetails
+          .contains(fixedEstablishmentDetails.euCountry.code)
+        ).toList
+
+      request.userAnswers.set(AllEuDetailsQuery, amendedFixedEstablishmentDetails) match {
+        case Success(amendedAnswers) =>
+          Some(EuDetailsSummary.addedRow(amendedAnswers))
+
+        case Failure(_) => None
+      }
+    } else {
+      None
+    }
+
+    val removedFixedEstablishmentCountries: Seq[Country] = removedFixedEstablishmentDetails.flatMap(Country.fromCountryCode)
+
+    val removedFixedEstablishmentDetailsRow = Some(EuDetailsSummary.removedRow(removedFixedEstablishmentCountries))
+
+    Seq(addedFixedEstablishmentRow, removedFixedEstablishmentDetailsRow).flatten
+  }
+
+  private def getAmendedFixedEstablishmentInEuRows(originalRegistration: EtmpDisplaySchemeDetails)
+                                                  (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] = {
+
+    val allFixedEstablishmentDetails = request.userAnswers.get(AllEuDetailsQuery).getOrElse(List.empty)
+
+    val changedFixedEstablishmentCountries: Seq[Country] = allFixedEstablishmentDetails.flatMap { fixedEstablishmentDetails =>
+      originalRegistration.euRegistrationDetails.find(_.issuedBy == fixedEstablishmentDetails.euCountry.code) match {
+        case Some(originalFixedEstablishmentDetails)
+          if hasFixedEstablishmentDetailsChanged(fixedEstablishmentDetails, originalFixedEstablishmentDetails) =>
+          Some(fixedEstablishmentDetails.euCountry)
+
+        case _ =>
+          None
+      }
+    }
+
+    if (changedFixedEstablishmentCountries.nonEmpty) {
+      Seq(EuDetailsSummary.amendedRow(changedFixedEstablishmentCountries))
+    } else {
+      Seq.empty
+    }
+  }
+
+  private def hasFixedEstablishmentDetailsChanged(amendedDetails: EuDetails, originalDetails: EtmpDisplayEuRegistrationDetails): Boolean = {
+
+    val vatNumberWithoutCountryCode: Option[String] = amendedDetails.euVatNumber.map(_.stripPrefix(amendedDetails.euCountry.code))
+    val originalRegistrationVatNumber: Option[String] = originalDetails.vatNumber
+
+    amendedDetails.tradingNameAndBusinessAddress.map(_.tradingName.name).exists(_ != originalDetails.fixedEstablishmentTradingName) ||
+      amendedDetails.tradingNameAndBusinessAddress.map(_.address).exists(address =>
+        !originalDetails.fixedEstablishmentAddressLine1.equals(address.line1) ||
+          !originalDetails.fixedEstablishmentAddressLine2.equals(address.line2) ||
+          !originalDetails.townOrCity.equals(address.townOrCity) ||
+          !originalDetails.regionOrState.equals(address.stateOrRegion) ||
+          !originalDetails.postcode.equals(address.postCode)
+      ) ||
+      !vatNumberWithoutCountryCode.equals(originalRegistrationVatNumber) ||
+      !amendedDetails.euTaxReference.equals(originalDetails.taxIdentificationNumber)
+  }
+
   private def getCountriesWithNewSchemes(originalRegistration: EtmpDisplayRegistration)
                                         (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] =
 
@@ -193,60 +290,6 @@ class AmendCompleteController @Inject()(
       Seq.empty
     }
 
-  private def getHasRegisteredInEuRows(originalRegistration: EtmpDisplayRegistration)
-                                      (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] =
-
-    val originalAnswers = originalRegistration.schemeDetails.euRegistrationDetails.map(_.issuedBy)
-    val amendedAnswers = request.userAnswers.get(AllEuDetailsQuery).map(_.map(_.euCountry.code)).getOrElse(List.empty)
-    val hasChangedToNo = amendedAnswers.isEmpty && originalAnswers.nonEmpty
-    val hasChangedToYes = amendedAnswers.nonEmpty && originalAnswers.nonEmpty || originalAnswers.isEmpty
-    val notAmended = amendedAnswers.nonEmpty && originalAnswers.nonEmpty || amendedAnswers.isEmpty && originalAnswers.isEmpty
-
-    if (notAmended) {
-      Seq.empty
-    } else if (hasChangedToNo || hasChangedToYes) {
-      Seq(EuDetailsSummary.amendedAnswersRow(request.userAnswers))
-    } else {
-      Seq.empty
-    }
-
-  private def getRegisteredInEuRows(originalRegistration: EtmpDisplayRegistration)
-                                   (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] = {
-
-    val originalAnswers = originalRegistration.schemeDetails.euRegistrationDetails.map(_.issuedBy)
-
-    val amendedAnswers = request.userAnswers
-      .get(AllEuDetailsQuery)
-      .map(_.map(_.euCountry.code))
-      .getOrElse(Seq.empty)
-
-    val addedEuDetails = amendedAnswers.diff(originalAnswers)
-    val removedEuDetails = originalAnswers.diff(amendedAnswers)
-
-    val newOrChangedEuDetails = amendedAnswers.filterNot { amendedCountry =>
-      originalAnswers.contains(amendedCountry)
-    }
-
-    val removedEuDetailsCountries: Seq[Country] = removedEuDetails.flatMap(Country.fromCountryCode)
-
-    val addedEuDetailsRow = if (addedEuDetails.nonEmpty) {
-      val changedDetails = request.userAnswers.get(AllEuDetailsQuery).getOrElse(List.empty)
-        .filter(details => newOrChangedEuDetails.contains(details.euCountry.code))
-
-      request.userAnswers.set(AllEuDetailsQuery, changedDetails) match {
-        case Success(amendedUserAnswers) =>
-          Some(EuDetailsSummary.amendedAnswersRow(amendedUserAnswers))
-        case Failure(_) =>
-          None
-      }
-    } else {
-      None
-    }
-
-    val removedEuDetailsRow = Some(EuDetailsSummary.removedAnswersRow(removedEuDetailsCountries))
-
-    Seq(addedEuDetailsRow, removedEuDetailsRow).flatten
-  }
 
   private def getWebsitesRows(originalRegistration: EtmpDisplayRegistration)
                              (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] = {
