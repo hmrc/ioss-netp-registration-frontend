@@ -105,8 +105,10 @@ class ChangeRegistrationController @Inject()(
             ClientHasUtrNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientUtrNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientsNinoNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
-            if (isExcluded) {
+            if (isExcluded && hasEtmpOtherAddress.isDefined) {
               ClientBusinessAddressSummary.rowWithoutAction(waypoints, request.userAnswers)
+            } else if (isExcluded) {
+              VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, request.userAnswers, thisPage)
             } else if (hasEtmpOtherAddress.isDefined && countryIsUk) {
               ClientBusinessAddressSummary.changeUkBasedRegRow(waypoints, request.userAnswers, thisPage)
             } else if (hasEtmpOtherAddress.isDefined && !countryIsUk) {
