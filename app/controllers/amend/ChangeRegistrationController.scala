@@ -90,7 +90,11 @@ class ChangeRegistrationController @Inject()(
             } else {
               ClientCountryBasedSummary.row(waypoints, request.userAnswers, thisPage)
             },
-            ClientTaxReferenceSummary.row(waypoints, request.userAnswers, thisPage),
+            if (isExcluded) {
+              ClientTaxReferenceSummary.rowWithoutAction(waypoints, request.userAnswers)
+            } else {
+              ClientTaxReferenceSummary.row(waypoints, request.userAnswers, thisPage)
+            },
             if (!hasEtmpOtherAddress.isDefined) {
               VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, request.userAnswers, thisPage, clientBasedInUk)
             } else if (isExcluded) {

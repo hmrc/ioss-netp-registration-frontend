@@ -36,7 +36,7 @@
     <p class="govuk-caption-l govuk-!-margin-bottom-6">@messages("changeRegistration.intermediaryNumber", iossNum)</p>
 
     @if(isExcluded) {
-        <p class="govuk-inset-text">@Html(messages("changeRegistration.removedClient.text", companyName, effectiveDate))</p>
+        <p class="govuk-inset-text">@Html(messages("changeRegistration.removedClient.text", companyName, effectiveDate.getOrElse("")))</p>
     }
 
     <h2 class="govuk-heading-m">@messages("changeRegistration.registrationDetails.heading")</h2>
