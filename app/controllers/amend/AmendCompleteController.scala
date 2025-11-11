@@ -16,6 +16,7 @@
 
 package controllers.amend
 
+import config.Constants.ukCountryCodeAreaPrefix
 import config.FrontendAppConfig
 import controllers.actions.AuthenticatedControllerComponents
 import logging.Logging
@@ -69,10 +70,10 @@ class AmendCompleteController @Inject()(
   private def detailsList(originalRegistration: EtmpDisplayRegistration)(implicit request: AuthenticatedMandatoryRegistrationRequest[AnyContent]) =
     SummaryListViewModel(
       rows = (
-        getPrinciplePlaceOfBusinessDetailsRows(originalRegistration) ++
+        getCountryBasedInRows(originalRegistration) ++
           getTaxReferenceDetailsRows(originalRegistration) ++
-          getCountryBasedInRows(originalRegistration) ++
           getClientBusinessNameRows(originalRegistration) ++
+          getPrinciplePlaceOfBusinessDetailsRows(originalRegistration) ++
           getHasTradingNameRows(originalRegistration) ++
           getTradingNameRows(originalRegistration) ++
           getHasPreviouslyRegistered(originalRegistration) ++
@@ -396,9 +397,11 @@ class AmendCompleteController @Inject()(
     val originalAnswers = originalRegistration.otherAddress.map(_.issuedBy)
     val amendedAnswers = request.userAnswers.get(ClientCountryBasedPage).map(_.code)
     val changed = amendedAnswers != originalAnswers
-
+    val clientHasUkAddress: Option[Country] = request.userAnswers.get(ClientCountryBasedPage)
+    val countryIsUk: Boolean = clientHasUkAddress.exists(_.code.startsWith(ukCountryCodeAreaPrefix))
+    
     Seq(
-      if (changed) {
+      if (changed && !countryIsUk) {
         ClientCountryBasedSummary.amendedRowWithoutAction(request.userAnswers)
       } else {
         None

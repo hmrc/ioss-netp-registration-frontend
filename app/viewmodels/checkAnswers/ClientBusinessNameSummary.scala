@@ -81,7 +81,7 @@ object ClientBusinessNameSummary {
       val value = HtmlFormat.escape(answer.name).toString
 
       SummaryListRowViewModel(
-        key = "clientBusinessName.checkYourAnswersLabel",
+        key = "clientBusinessName.amended.checkYourAnswersLabel",
         value = ValueViewModel(HtmlContent(value))
       )
     }
