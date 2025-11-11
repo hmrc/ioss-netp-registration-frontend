@@ -56,4 +56,14 @@ object ClientCountryBasedSummary {
       )
     }
   }
+
+  def amendedRowWithoutAction(answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] = {
+    answers.get(ClientCountryBasedPage).map { answer =>
+
+      SummaryListRowViewModel(
+        key = "clientCountryBased.amend.checkYourAnswersLabel",
+        value = ValueViewModel(HtmlFormat.escape(answer.name).toString)
+      )
+    }
+  }
 }

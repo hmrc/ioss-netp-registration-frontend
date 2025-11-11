@@ -24,7 +24,7 @@ import models.{Country, TradingName, UserAnswers, Website}
 import models.etmp.display.{EtmpDisplayEuRegistrationDetails, EtmpDisplayRegistration, EtmpDisplaySchemeDetails}
 import models.requests.AuthenticatedMandatoryRegistrationRequest
 import models.vatEuDetails.EuDetails
-import pages.{BusinessContactDetailsPage, JourneyRecoveryPage, Waypoints}
+import pages.*
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.euDetails.AllEuDetailsQuery
@@ -36,7 +36,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.amend.AmendCompleteView
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
-import viewmodels.checkAnswers.BusinessContactDetailsSummary
+import viewmodels.checkAnswers.*
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
 import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
 import viewmodels.govuk.all.SummaryListViewModel
@@ -69,7 +69,11 @@ class AmendCompleteController @Inject()(
   private def detailsList(originalRegistration: EtmpDisplayRegistration)(implicit request: AuthenticatedMandatoryRegistrationRequest[AnyContent]) =
     SummaryListViewModel(
       rows = (
-        getHasTradingNameRows(originalRegistration) ++
+        getPrinciplePlaceOfBusinessDetailsRows(originalRegistration) ++
+          getTaxReferenceDetailsRows(originalRegistration) ++
+          getCountryBasedInRows(originalRegistration) ++
+          getClientBusinessNameRows(originalRegistration) ++
+          getHasTradingNameRows(originalRegistration) ++
           getTradingNameRows(originalRegistration) ++
           getHasPreviouslyRegistered(originalRegistration) ++
           getPreviouslyRegisteredRows(originalRegistration) ++
@@ -341,6 +345,76 @@ class AmendCompleteController @Inject()(
 
       if (!amendedUA.map(_.emailAddress).contains(originalEmail)) {
         BusinessContactDetailsSummary.amendedRowEmailAddress(request.userAnswers)
+      } else {
+        None
+      }
+    )
+  }
+
+  private def getPrinciplePlaceOfBusinessDetailsRows(originalRegistration: EtmpDisplayRegistration)
+                                                    (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] = {
+    val originalAnswers = originalRegistration.otherAddress
+    val amendedAnswers = request.userAnswers.get(ClientBusinessAddressPage)
+    val changed = (originalAnswers, amendedAnswers) match {
+      case (Some(originalAddress), Some(amendedAddress)) =>
+        originalAddress.addressLine1 != amendedAddress.line1 ||
+        originalAddress.addressLine2 != amendedAddress.line2 ||
+        originalAddress.townOrCity != amendedAddress.townOrCity ||
+        originalAddress.regionOrState != amendedAddress.stateOrRegion ||
+        originalAddress.postcode != amendedAddress.postCode
+      case (None, Some(_)) => true
+      case (Some(_), None) => true
+      case _ => false
+        
+    }
+    Seq(
+      if (changed) {
+        ClientBusinessAddressSummary.amendedRowWithoutAction(request.userAnswers)
+      } else {
+        None
+      }
+    )
+  }
+
+  private def getTaxReferenceDetailsRows(originalRegistration: EtmpDisplayRegistration)
+                                                    (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] = {
+    val originalAnswers = Some(originalRegistration.customerIdentification.idValue)
+    val amendedAnswers = request.userAnswers.get(ClientTaxReferencePage)
+    val changed = amendedAnswers != originalAnswers
+    
+    Seq(
+      if (changed) {
+        ClientTaxReferenceSummary.amendedRowWithoutAction(request.userAnswers)
+      } else {
+        None
+      }
+    )
+  }
+
+  private def getCountryBasedInRows(originalRegistration: EtmpDisplayRegistration)
+                                        (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] = {
+    val originalAnswers = originalRegistration.otherAddress.map(_.issuedBy)
+    val amendedAnswers = request.userAnswers.get(ClientCountryBasedPage).map(_.code)
+    val changed = amendedAnswers != originalAnswers
+
+    Seq(
+      if (changed) {
+        ClientCountryBasedSummary.amendedRowWithoutAction(request.userAnswers)
+      } else {
+        None
+      }
+    )
+  }
+
+  private def getClientBusinessNameRows(originalRegistration: EtmpDisplayRegistration)
+                                   (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] = {
+    val originalAnswers = originalRegistration.otherAddress.flatMap(_.tradingName)
+    val amendedAnswers = request.userAnswers.get(ClientBusinessNamePage).map(_.name)
+    val changed = amendedAnswers != originalAnswers
+
+    Seq(
+      if (changed) {
+        ClientBusinessNameSummary.amendedRowWithoutAction(request.userAnswers)
       } else {
         None
       }
