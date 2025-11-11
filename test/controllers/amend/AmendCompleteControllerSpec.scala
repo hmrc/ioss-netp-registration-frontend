@@ -21,14 +21,16 @@ import config.Constants.maxSchemes
 import config.FrontendAppConfig
 import connectors.RegistrationConnector
 import models.domain.{PreviousRegistration, PreviousSchemeDetails}
-import models.{BusinessContactDetails, Country, TradingName, UserAnswers, Website}
+import models.etmp.{EtmpCustomerIdentification, EtmpOtherAddress, EtmpIdType}
+import models.etmp.display.EtmpDisplayCustomerIdentification
+import models.{BusinessContactDetails, ClientBusinessName, Country, InternationalAddress, TradingName, UserAnswers, Website}
 import models.etmp.display.{EtmpDisplayRegistration, RegistrationWrapper}
 import models.vatEuDetails.EuDetails
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Gen
 import org.scalatestplus.mockito.MockitoSugar
-import pages.BusinessContactDetailsPage
+import pages.{BusinessContactDetailsPage, ClientBusinessAddressPage, ClientBusinessNamePage, ClientCountryBasedPage, ClientTaxReferencePage}
 import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
@@ -39,7 +41,7 @@ import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.WebsiteSummary
-import viewmodels.checkAnswers.BusinessContactDetailsSummary
+import viewmodels.checkAnswers.{BusinessContactDetailsSummary, ClientBusinessAddressSummary, ClientBusinessNameSummary, ClientCountryBasedSummary, ClientTaxReferenceSummary}
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
 import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
 import viewmodels.govuk.all.SummaryListViewModel
@@ -65,6 +67,18 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
   )
 
   private val originalRegistration = userAnswers.set(OriginalRegistrationQuery(iossNumber), registrationWrapper.etmpDisplayRegistration).success.value
+  private val originalEtmpRegistration: EtmpDisplayRegistration = originalRegistration.get(OriginalRegistrationQuery(iossNumber)).get
+  private val originalEtmpWithAddress = originalEtmpRegistration.copy(
+    otherAddress = Some(EtmpOtherAddress(
+      issuedBy = "FR",
+      tradingName = Some("Client Name"),
+      addressLine1 = "123 Street",
+      addressLine2 = None,
+      townOrCity = "Paris",
+      regionOrState = None,
+      postcode = Some("12345")
+    ))
+  )
 
   "AmendComplete Controller" - {
 
@@ -232,6 +246,87 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
           summaryList.rows must contain(expectedEmail)
         }
       }
+
+      "must show row for when country is amended and not UK" in {
+        
+        val userAnswersWithOriginal = originalRegistration
+          .set(OriginalRegistrationQuery(iossNumber), originalEtmpWithAddress).success.value
+
+        val amendedCountry = Country("DE", "Germany")
+        val updatedAnswers = userAnswersWithOriginal.set(ClientCountryBasedPage, amendedCountry).success.value
+
+        val application = applicationBuilder(userAnswers = Some(updatedAnswers)).build()
+
+        running(application) {
+          val request = FakeRequest(GET, controllers.amend.routes.AmendCompleteController.onPageLoad(waypoints).url)
+          val result = route(application, request).value
+          implicit val msgs: Messages = messages(application)
+
+          status(result) mustBe OK
+          
+          val summaryList = SummaryListViewModel(rows = getAmendedRegistrationSummaryList(updatedAnswers, Some(registrationWrapper)))
+
+          val expectedRow = ClientCountryBasedSummary.amendedRowWithoutAction(updatedAnswers).get
+          summaryList.rows must contain(expectedRow)
+        }
+      }
+
+      
+
+      "must show row for when trading name is amended" in {
+
+        val userAnswersWithOriginal = originalRegistration
+          .set(OriginalRegistrationQuery(iossNumber), originalEtmpWithAddress).success.value
+
+        val amendedTradingName = ClientBusinessName("Amended trading Name")
+        val updatedAnswers = userAnswersWithOriginal.set(ClientBusinessNamePage, amendedTradingName).success.value
+        
+        val application = applicationBuilder(userAnswers = Some(updatedAnswers)).build()
+
+        running(application) {
+          val request = FakeRequest(GET, controllers.amend.routes.AmendCompleteController.onPageLoad(waypoints).url)
+          val result = route(application, request).value
+          implicit val msgs: Messages = messages(application)
+
+          status(result) mustBe OK
+
+          val summaryList = SummaryListViewModel(rows = getAmendedRegistrationSummaryList(updatedAnswers, Some(registrationWrapper)))
+
+          val expectedRow = ClientBusinessNameSummary.amendedRowWithoutAction(updatedAnswers).get
+          summaryList.rows must contain(expectedRow)
+        }
+      }
+
+      "must show row for when otherAddress is amended" in {
+
+        val userAnswersWithOriginal = originalRegistration
+          .set(OriginalRegistrationQuery(iossNumber), originalEtmpWithAddress).success.value
+
+        val amendedOtherAddress = InternationalAddress(
+          line1 = "123 Street",
+          line2 = None,
+          townOrCity = "Paris",
+          stateOrRegion = None,
+          postCode = Some("12345"),
+          country = None
+        )
+        val updatedAnswers = userAnswersWithOriginal.set(ClientBusinessAddressPage, amendedOtherAddress).success.value
+
+        val application = applicationBuilder(userAnswers = Some(updatedAnswers)).build()
+
+        running(application) {
+          val request = FakeRequest(GET, controllers.amend.routes.AmendCompleteController.onPageLoad(waypoints).url)
+          val result = route(application, request).value
+          implicit val msgs: Messages = messages(application)
+
+          status(result) mustBe OK
+
+          val summaryList = SummaryListViewModel(rows = getAmendedRegistrationSummaryList(updatedAnswers, Some(registrationWrapper)))
+
+          val expectedRow = ClientBusinessAddressSummary.amendedRowWithoutAction(updatedAnswers).get
+          summaryList.rows must contain(expectedRow)
+        }
+      }
     }
   }
 
@@ -239,7 +334,7 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
                                                  answers: UserAnswers,
                                                  registrationWrapper: Option[RegistrationWrapper]
                                                )(implicit msgs: Messages): Seq[SummaryListRow] = {
-
+    
     val hasTradingNameSummaryRow = HasTradingNameSummary.amendedRow(answers)
     val tradingNameSummaryRow = TradingNameSummary.amendedAnswersRow(answers)
     val removedTradingNameRow = TradingNameSummary.removedAnswersRow(getRemovedTradingNames(answers, registrationWrapper))
@@ -254,6 +349,9 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
     val businessContactDetailsContactNameSummaryRow = BusinessContactDetailsSummary.amendedRowContactName(answers)
     val businessContactDetailsTelephoneSummaryRow = BusinessContactDetailsSummary.amendedRowTelephoneNumber(answers)
     val businessContactDetailsEmailSummaryRow = BusinessContactDetailsSummary.amendedRowEmailAddress(answers)
+    val countryBasedRow = ClientCountryBasedSummary.amendedRowWithoutAction(answers)
+    val principlePlaceOfBusinessRow = ClientBusinessAddressSummary.amendedRowWithoutAction(answers)
+    val primaryTradingNameRow = ClientBusinessNameSummary.amendedRowWithoutAction(answers)
 
     Seq(
       hasTradingNameSummaryRow,
@@ -268,7 +366,10 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
       removedWebsiteRow,
       businessContactDetailsContactNameSummaryRow,
       businessContactDetailsTelephoneSummaryRow,
-      businessContactDetailsEmailSummaryRow
+      businessContactDetailsEmailSummaryRow,
+      countryBasedRow,
+      principlePlaceOfBusinessRow,
+      primaryTradingNameRow
     ).flatten
   }
 
