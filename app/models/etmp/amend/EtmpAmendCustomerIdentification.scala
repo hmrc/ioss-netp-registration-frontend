@@ -18,7 +18,7 @@ package models.etmp.amend
 
 import play.api.libs.json.{Json, OFormat}
 
-case class EtmpAmendCustomerIdentification(iossNumber: String)
+case class EtmpAmendCustomerIdentification(iossNumber: String, foreignTaxReference: Option[String])
 
 object EtmpAmendCustomerIdentification {
   implicit val format: OFormat[EtmpAmendCustomerIdentification] = Json.format[EtmpAmendCustomerIdentification]

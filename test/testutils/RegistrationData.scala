@@ -78,7 +78,8 @@ object RegistrationData extends SpecBase {
   )
 
   val etmpAmendCustomerIdentification: EtmpAmendCustomerIdentification = EtmpAmendCustomerIdentification(
-    iossNumber = "IN900123456"
+    iossNumber = "IN900123456",
+    foreignTaxReference = None
   )
 
   val amendRegistrationResponse: AmendRegistrationResponse = AmendRegistrationResponse(

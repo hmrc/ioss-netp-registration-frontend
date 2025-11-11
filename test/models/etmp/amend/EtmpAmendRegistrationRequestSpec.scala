@@ -24,7 +24,7 @@ import play.api.libs.json.{JsError, JsSuccess, Json}
 class EtmpAmendRegistrationRequestSpec extends SpecBase {
 
   private val administration = EtmpAdministration(EtmpMessageType.IOSSIntAmendClient)
-  private val customerIdentification = EtmpAmendCustomerIdentification(intermediaryNumber)
+  private val customerIdentification = EtmpAmendCustomerIdentification(intermediaryNumber, None)
   private val tradingNames = Seq(EtmpTradingName("Test Trading Name"))
   private val changeLog = arbitrary[EtmpAmendRegistrationChangeLog].sample.value
 

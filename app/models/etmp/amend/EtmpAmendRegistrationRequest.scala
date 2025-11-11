@@ -50,6 +50,7 @@ object EtmpAmendRegistrationRequest extends EtmpCommonRegistrationRequest with L
 
     val schemeDetails = getSchemeDetails(answers, commencementDate)
     val taxIdType: EtmpIdType = determineTaxIdType(answers)
+    val maybeFtr: Option[String] = answers.get(ClientTaxReferencePage)
 
     EtmpAmendRegistrationRequest(
       administration = EtmpAdministration(messageType = EtmpMessageType.IOSSIntAmendClient),
@@ -63,7 +64,7 @@ object EtmpAmendRegistrationRequest extends EtmpCommonRegistrationRequest with L
         reRegistration = rejoin,
         otherAddress = registration.otherAddress != getOtherAddress(taxIdType, answers)
       ),
-      customerIdentification = EtmpAmendCustomerIdentification(iossNumber),
+      customerIdentification = EtmpAmendCustomerIdentification(iossNumber, maybeFtr),
       tradingNames = getTradingNames(answers),
       intermediaryDetails = None,
       otherAddress = getOtherAddress(taxIdType, answers),
