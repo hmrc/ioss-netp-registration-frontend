@@ -21,14 +21,17 @@ import controllers.GetClientCompanyName
 import controllers.actions.AuthenticatedControllerComponents
 import formats.Format.dateFormatter
 import logging.Logging
+import models.audit.NetpAmendRegistrationAuditModel
+import models.audit.RegistrationAuditType.AmendRegistration
+import models.audit.SubmissionResult.{Failure, Success}
 import models.domain.PreviousRegistration
 import models.etmp.EtmpPreviousEuRegistrationDetails
 import models.{CheckMode, Country, InternationalAddress, UserAnswers}
 import pages.*
-import pages.amend.{AmendCompletePage, ChangeRegistrationPage}
+import pages.amend.ChangeRegistrationPage
 import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import services.RegistrationService
+import services.{AuditService, RegistrationService}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
@@ -46,7 +49,8 @@ import scala.concurrent.ExecutionContext
 class ChangeRegistrationController @Inject()(
                                               cc: AuthenticatedControllerComponents,
                                               view: ChangeRegistrationView,
-                                              registrationService: RegistrationService
+                                              registrationService: RegistrationService,
+                                              auditService: AuditService
                                             )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientCompanyName {
 
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -161,10 +165,27 @@ class ChangeRegistrationController @Inject()(
         registration = request.registrationWrapper.etmpDisplayRegistration,
         iossNumber = request.iossNumber
       ).map {
-        case Right(_) =>
+        case Right(amendResponse) =>
+          auditService.audit(
+            NetpAmendRegistrationAuditModel.build(
+              registrationAuditType = AmendRegistration,
+              userAnswers = request.userAnswers,
+              amendRegistrationResponse = Some(amendResponse),
+              submissionResult = Success
+            )
+          )
           Redirect(ChangeRegistrationPage.navigate(EmptyWaypoints, request.userAnswers, request.userAnswers).route)
+
         case Left(error) =>
           logger.error(s"Unexpected result on submit: ${error.body}")
+          auditService.audit(
+            NetpAmendRegistrationAuditModel.build(
+              registrationAuditType = AmendRegistration,
+              userAnswers = request.userAnswers,
+              amendRegistrationResponse = None,
+              submissionResult = Failure
+            )
+          )
           Redirect(controllers.amend.routes.ErrorSubmittingAmendController.onPageLoad())
       }
   }
