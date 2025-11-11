@@ -18,13 +18,16 @@ package controllers.amend
 
 import base.SpecBase
 import config.Constants.maxSchemes
+import models.audit.{NetpAmendRegistrationAuditModel, RegistrationAuditType, SubmissionResult}
 import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
 import models.etmp.amend.AmendRegistrationResponse
 import models.etmp.display.EtmpDisplayRegistration
 import models.previousRegistrations.NonCompliantDetails
+import models.requests.{AuthenticatedMandatoryRegistrationRequest, DataRequest}
+import models.responses.InternalServerError
 import models.{CheckMode, ClientBusinessName, DesAddress, TradingName, UserAnswers}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{doNothing, times, verify, when}
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
@@ -42,7 +45,7 @@ import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
 import queries.{IossNumberQuery, OriginalRegistrationQuery}
-import services.RegistrationService
+import services.{AuditService, RegistrationService}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
@@ -164,6 +167,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
 
   private val mockRegistrationService: RegistrationService = mock[RegistrationService]
+  private val mockAuditService: AuditService = mock[AuditService]
 
   "ChangeRegistration Controller" - {
 
@@ -327,8 +331,108 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
           verify(mockRegistrationService, times(1)).amendRegistration(any(), any(), any(), any())(any())
         }
       }
-    }
 
+      "must audit success even then redirect when registration succeeds" in {
+
+        val amendRegistrationResponse: AmendRegistrationResponse = AmendRegistrationResponse(
+          processingDateTime = LocalDateTime.now(),
+          formBundleNumber = "123456789",
+          intermediary = "IN900123456",
+          businessPartner = "Test Business Partner"
+        )
+        when(mockRegistrationService.amendRegistration(any(), any(), any(), any())(any())) thenReturn Right(amendRegistrationResponse).toFuture
+        doNothing().when(mockAuditService).audit(any())(any(), any())
+
+        val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
+          .overrides(
+            bind[RegistrationService].toInstance(mockRegistrationService),
+            bind[AuditService].toInstance(mockAuditService)
+          )
+          .build()
+
+        running(application) {
+          val request = FakeRequest(POST, controllers.amend.routes.ChangeRegistrationController.onSubmit().url)
+
+          val result = route(application, request).value
+
+          implicit val dataRequest: DataRequest[_] =
+            DataRequest(
+              request = request,
+              userId = userAnswersId,
+              userAnswers = basicUserAnswersWithVatInfo,
+              intermediaryNumber = intermediaryNumber,
+              iossNumber = Some(iossNumber),
+              registrationWrapper = Some(registrationWrapper)
+            )
+
+          implicit val authenticatedDataRequest: AuthenticatedMandatoryRegistrationRequest[_] =
+            AuthenticatedMandatoryRegistrationRequest(
+              request = dataRequest,
+              userAnswers = basicUserAnswersWithVatInfo,
+              iossNumber = iossNumber,
+              registrationWrapper = registrationWrapper
+            )
+
+          val expectedAuditEvent = NetpAmendRegistrationAuditModel.build(
+            RegistrationAuditType.AmendRegistration,
+            basicUserAnswersWithVatInfo,
+            Some(amendRegistrationResponse),
+            SubmissionResult.Success
+          )
+
+          status(result) mustBe SEE_OTHER
+          redirectLocation(result).value mustBe controllers.amend.routes.AmendCompleteController.onPageLoad().url
+          verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
+        }
+      }
+
+      "must audit failure event and redirect to amend registration failure page" in {
+
+        when(mockRegistrationService.amendRegistration(any(), any(), any(), any())(any())) thenReturn Left(InternalServerError).toFuture
+        doNothing().when(mockAuditService).audit(any())(any(), any())
+
+        val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
+          .overrides(
+            bind[RegistrationService].toInstance(mockRegistrationService),
+            bind[AuditService].toInstance(mockAuditService)
+          )
+          .build()
+
+        running(application) {
+          val request = FakeRequest(POST, controllers.amend.routes.ChangeRegistrationController.onSubmit().url)
+
+          val result = route(application, request).value
+
+          implicit val dataRequest: DataRequest[_] =
+            DataRequest(
+              request = request,
+              userId = userAnswersId,
+              userAnswers = basicUserAnswersWithVatInfo,
+              intermediaryNumber = intermediaryNumber,
+              iossNumber = Some(iossNumber),
+              registrationWrapper = Some(registrationWrapper)
+            )
+
+          implicit val authenticatedDataRequest: AuthenticatedMandatoryRegistrationRequest[_] =
+            AuthenticatedMandatoryRegistrationRequest(
+              request = dataRequest,
+              userAnswers = basicUserAnswersWithVatInfo,
+              iossNumber = iossNumber,
+              registrationWrapper = registrationWrapper
+            )
+
+          val expectedAuditEvent = NetpAmendRegistrationAuditModel.build(
+            RegistrationAuditType.AmendRegistration,
+            basicUserAnswersWithVatInfo,
+            None,
+            SubmissionResult.Failure
+          )
+
+          redirectLocation(result).value mustBe controllers.amend.routes.ErrorSubmittingAmendController.onPageLoad().url
+          verify(mockAuditService, times(1)).audit(eqTo(expectedAuditEvent))(any(), any())
+        }
+      }
+    }
   }
 
   private def getUkBasedWithVatNumRegistrationDetailsList(answers: UserAnswers)(implicit msgs: Messages): Seq[SummaryListRow] = {
