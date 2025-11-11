@@ -20,7 +20,7 @@ import base.SpecBase
 import config.Constants.maxSchemes
 import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
 import models.etmp.amend.AmendRegistrationResponse
-import models.etmp.display.EtmpDisplayRegistration
+import models.etmp.display.{EtmpDisplayRegistration, RegistrationWrapper}
 import models.previousRegistrations.NonCompliantDetails
 import models.{CheckMode, ClientBusinessName, DesAddress, TradingName, UserAnswers}
 import org.mockito.ArgumentMatchers.any
@@ -77,6 +77,13 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       deregistrationDecisionDate = None
     )
   }
+
+  private val registrationWrapperWithoutExclusions: RegistrationWrapper =
+    this.registrationWrapper.copy(
+      etmpDisplayRegistration =
+        this.registrationWrapper.etmpDisplayRegistration.copy(exclusions = Seq.empty)
+    )
+
 
   val existingPreviousRegistrations: Seq[PreviousRegistration] = Gen.listOfN(2, arbitraryPreviousRegistration.arbitrary).sample.value
 
@@ -173,7 +180,10 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
         "A NETP Has a Uk based address and has Vat Info" in {
 
-          val application = applicationBuilder(userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo)).build()
+          val application = applicationBuilder(
+            userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo),
+            registrationWrapper = Some(registrationWrapperWithoutExclusions)
+          ).build()
 
           running(application) {
 
@@ -198,14 +208,19 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 vatCustomerInfo.organisationName.get,
                 iossNumber,
                 registrationList,
-                importOneStopShopDetailsList
+                importOneStopShopDetailsList,
+                isExcluded = false,
+                effectiveDate = None
               )(request, messages(application)).toString
           }
         }
 
         "A NETP Has a Uk based address and does NOT have Vat Info" in {
 
-          val application = applicationBuilder(userAnswers = Some(ukBasedCompleteUserAnswersWithoutVatInfo)).build()
+          val application = applicationBuilder(
+            userAnswers = Some(ukBasedCompleteUserAnswersWithoutVatInfo),
+            registrationWrapper = Some(registrationWrapperWithoutExclusions)
+          ).build()
 
           running(application) {
 
@@ -230,15 +245,19 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 companyName,
                 iossNumber,
                 registrationList,
-                importOneStopShopDetailsList
+                importOneStopShopDetailsList,
+                isExcluded = false,
+                effectiveDate = None
               )(request, messages(application)).toString
           }
         }
 
         "A NETP Has a Non Uk based address and Vat Info" in {
 
-          val application = applicationBuilder(userAnswers = Some(nonUkBasedCompleteUserAnswersWithVatInfo))
-            .build()
+          val application = applicationBuilder(
+            userAnswers = Some(nonUkBasedCompleteUserAnswersWithVatInfo),
+            registrationWrapper = Some(registrationWrapperWithoutExclusions)
+          ).build()
 
           running(application) {
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
@@ -262,14 +281,19 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               vatCustomerInfo.organisationName.get,
               iossNumber,
               registrationList,
-              importOneStopShopDetailsList
+              importOneStopShopDetailsList,
+              isExcluded = false,
+              effectiveDate = None
             )(request, messages(application)).toString
           }
         }
 
         "A NETP Has a Non Uk based address does NOT have Vat Info" in {
 
-          val application = applicationBuilder(userAnswers = Some(nonUkBasedCompleteUserAnswersWithoutVatInfo)).build()
+          val application = applicationBuilder(
+            userAnswers = Some(nonUkBasedCompleteUserAnswersWithoutVatInfo),
+            registrationWrapper = Some(registrationWrapperWithoutExclusions)
+          ).build()
 
           running(application) {
 
@@ -294,7 +318,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 companyName,
                 iossNumber,
                 registrationList,
-                importOneStopShopDetailsList
+                importOneStopShopDetailsList,
+                isExcluded = false,
+                effectiveDate = None
               )(request, messages(application)).toString
           }
         }

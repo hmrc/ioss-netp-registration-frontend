@@ -19,6 +19,7 @@ package controllers.amend
 import config.Constants.ukCountryCodeAreaPrefix
 import controllers.GetClientCompanyName
 import controllers.actions.AuthenticatedControllerComponents
+import formats.Format.dateFormatter
 import logging.Logging
 import models.domain.PreviousRegistration
 import models.etmp.EtmpPreviousEuRegistrationDetails
@@ -68,6 +69,13 @@ class ChangeRegistrationController @Inject()(
       val existingPreviousRegistrations: Seq[EtmpPreviousEuRegistrationDetails] = request.registrationWrapper
         .etmpDisplayRegistration.schemeDetails.previousEURegistrationDetails
 
+      val exclusions = request.registrationWrapper.etmpDisplayRegistration.exclusions
+      val isExcluded = exclusions.nonEmpty
+
+      val effectiveDate: Option[String] = exclusions.headOption.map { exclusion =>
+        exclusion.effectiveDate.format(dateFormatter)
+      }
+
       getClientCompanyName(waypoints) { companyName =>
 
         val registrationDetailsList = SummaryListViewModel(
@@ -75,17 +83,27 @@ class ChangeRegistrationController @Inject()(
             BusinessBasedInUKSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientHasVatNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientVatNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
-            if (countryIsUk) None else ClientCountryBasedSummary.row(waypoints, request.userAnswers, thisPage),
+            if (countryIsUk) {
+              None
+            } else if (isExcluded){
+              ClientCountryBasedSummary.rowWithoutAction(waypoints, request.userAnswers)
+            } else {
+              ClientCountryBasedSummary.row(waypoints, request.userAnswers, thisPage)
+            },
             ClientTaxReferenceSummary.row(waypoints, request.userAnswers, thisPage),
             if (!hasEtmpOtherAddress.isDefined) {
               VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, request.userAnswers, thisPage, clientBasedInUk)
+            } else if (isExcluded) {
+              ClientBusinessNameSummary.rowWithoutAction(waypoints, request.userAnswers)
             } else {
               ClientBusinessNameSummary.row(waypoints, request.userAnswers, thisPage)
             },
             ClientHasUtrNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientUtrNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
             ClientsNinoNumberSummary.rowWithoutAction(waypoints, request.userAnswers),
-            if (hasEtmpOtherAddress.isDefined && countryIsUk) {
+            if (isExcluded) {
+              ClientBusinessAddressSummary.rowWithoutAction(waypoints, request.userAnswers)
+            } else if (hasEtmpOtherAddress.isDefined && countryIsUk) {
               ClientBusinessAddressSummary.changeUkBasedRegRow(waypoints, request.userAnswers, thisPage)
             } else if (hasEtmpOtherAddress.isDefined && !countryIsUk) {
               ClientBusinessAddressSummary.row(waypoints, request.userAnswers, thisPage)
@@ -95,13 +113,19 @@ class ChangeRegistrationController @Inject()(
           ).flatten
         )
 
-        val (hasTradingNameRow, tradingNameRow) = getTradingNameRows(request.userAnswers, waypoints, thisPage)
+        val (hasTradingNameRow, tradingNameRow) = getTradingNameRows(request.userAnswers, waypoints, thisPage, isExcluded)
 
-        val (previouslyRegisteredRow, previousRegSummaryRow) = getPreviousRegRows(request.userAnswers, waypoints, thisPage, existingPreviousRegistrations)
+        val (previouslyRegisteredRow, previousRegSummaryRow) = getPreviousRegRows(request.userAnswers, waypoints, thisPage, existingPreviousRegistrations, isExcluded)
 
-        val (hasFixedEstablishmentRow, euDetailsSummaryRow) = getFixedEstablishmentRows(waypoints, request.userAnswers, thisPage)
+        val (hasFixedEstablishmentRow, euDetailsSummaryRow) = getFixedEstablishmentRows(waypoints, request.userAnswers, thisPage, isExcluded)
 
         val (contactNameRow, telephoneNumRow, emailRow) = getBusinessContactRows(waypoints, request.userAnswers, thisPage)
+
+        val websiteSummary = if (isExcluded) {
+          WebsiteSummary.checkAnswersRowWithoutAction(waypoints, request.userAnswers)
+        } else {
+          WebsiteSummary.checkAnswersRow(waypoints, request.userAnswers, thisPage)
+        }
 
         val importOneStopShopDetailsList = SummaryListViewModel(
           rows = Seq(
@@ -111,14 +135,14 @@ class ChangeRegistrationController @Inject()(
             previousRegSummaryRow,
             hasFixedEstablishmentRow,
             euDetailsSummaryRow,
-            WebsiteSummary.checkAnswersRow(waypoints, request.userAnswers, thisPage),
+            websiteSummary,
             contactNameRow,
             telephoneNumRow,
             emailRow
           ).flatten
         )
 
-        Ok(view(waypoints, companyName, request.iossNumber, registrationDetailsList, importOneStopShopDetailsList)).toFuture
+        Ok(view(waypoints, companyName, request.iossNumber, registrationDetailsList, importOneStopShopDetailsList, isExcluded, effectiveDate)).toFuture
       }(request.request)
   }
 
@@ -139,54 +163,97 @@ class ChangeRegistrationController @Inject()(
       }
   }
 
-  private def getTradingNameRows(answers: UserAnswers, waypoints: Waypoints, changePage: ChangeRegistrationPage.type)(implicit messages: Messages) = {
-    val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(answers, waypoints, changePage)
-    val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, answers, changePage)
+  private def getTradingNameRows(answers: UserAnswers, waypoints: Waypoints, changePage: ChangeRegistrationPage.type, isExcluded: Boolean)(implicit messages: Messages) = {
 
-    val formattedHasTradingNameSummary = maybeHasTradingNameSummaryRow.map { nonOptHasTradingNameSummaryRow =>
-      if (tradingNameSummaryRow.nonEmpty) {
-        nonOptHasTradingNameSummaryRow.withCssClass("govuk-summary-list__row--no-border")
-      } else {
-        nonOptHasTradingNameSummaryRow
+    if (isExcluded) {
+      val maybeExcludedHasTradingNameSummaryRow = HasTradingNameSummary.rowWithoutAction(answers, waypoints)
+      val excludedTradingNameSummaryRow = TradingNameSummary.checkAnswersRowWithoutAction(waypoints, answers)
+      val formattedHasTradingNameSummary = maybeExcludedHasTradingNameSummaryRow.map { nonOptHasTradingNameSummaryRow =>
+        if (excludedTradingNameSummaryRow.nonEmpty) {
+          nonOptHasTradingNameSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+        } else {
+          nonOptHasTradingNameSummaryRow
+        }
       }
+      (formattedHasTradingNameSummary, excludedTradingNameSummaryRow)
+    } else {
+      val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(answers, waypoints, changePage)
+      val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, answers, changePage)
+
+      val formattedHasTradingNameSummary = maybeHasTradingNameSummaryRow.map { nonOptHasTradingNameSummaryRow =>
+        if (tradingNameSummaryRow.nonEmpty) {
+          nonOptHasTradingNameSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+        } else {
+          nonOptHasTradingNameSummaryRow
+        }
+      }
+      (formattedHasTradingNameSummary, tradingNameSummaryRow)
     }
-    (formattedHasTradingNameSummary, tradingNameSummaryRow)
   }
 
   private def getPreviousRegRows(
                                   answers: UserAnswers,
                                   waypoints: Waypoints,
                                   currentPage: ChangeRegistrationPage.type,
-                                  existingPreviousRegistrations: Seq[EtmpPreviousEuRegistrationDetails]
+                                  existingPreviousRegistrations: Seq[EtmpPreviousEuRegistrationDetails],
+                                  isExcluded: Boolean
                                 )(implicit messages: Messages) = {
 
     val convertedExistingPreviousRegistrations = PreviousRegistration.fromEtmpPreviousEuRegistrationDetails(existingPreviousRegistrations)
-    val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.row(answers, waypoints, currentPage)
-    val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(answers, convertedExistingPreviousRegistrations, waypoints, currentPage)
-
-    val formattedPreviouslyRegistered = previouslyRegisteredSummaryRow.map { previouslyRegisteredRow =>
-      if (previousRegistrationSummaryRow.nonEmpty) {
-        previouslyRegisteredRow.withCssClass("govuk-summary-list__row--no-border")
-      } else {
-        previouslyRegisteredRow
+    if (isExcluded) {
+      val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.rowWithoutAction(answers, waypoints)
+      val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRowWithoutAction(answers, convertedExistingPreviousRegistrations, waypoints)
+      val formattedPreviouslyRegistered = previouslyRegisteredSummaryRow.map { previouslyRegisteredRow =>
+        if (previousRegistrationSummaryRow.nonEmpty) {
+          previouslyRegisteredRow.withCssClass("govuk-summary-list__row--no-border")
+        } else {
+          previouslyRegisteredRow
+        }
       }
-    }
+      (formattedPreviouslyRegistered, previousRegistrationSummaryRow)
+    } else {
+      val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.row(answers, waypoints, currentPage)
+      val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(answers, convertedExistingPreviousRegistrations, waypoints, currentPage)
 
-    (formattedPreviouslyRegistered, previousRegistrationSummaryRow)
+      val formattedPreviouslyRegistered = previouslyRegisteredSummaryRow.map { previouslyRegisteredRow =>
+        if (previousRegistrationSummaryRow.nonEmpty) {
+          previouslyRegisteredRow.withCssClass("govuk-summary-list__row--no-border")
+        } else {
+          previouslyRegisteredRow
+        }
+      }
+
+      (formattedPreviouslyRegistered, previousRegistrationSummaryRow)
+    }
   }
 
-  private def getFixedEstablishmentRows(waypoints: Waypoints, answers: UserAnswers, page: ChangeRegistrationPage.type)(implicit messages: Messages) = {
-    val hasFixedEstablishmentSummaryRow = HasFixedEstablishmentSummary.row(waypoints, answers, page)
-    val euDetailsSummaryRow = EuDetailsSummary.checkAnswersRow(waypoints, answers, page)
+  private def getFixedEstablishmentRows(waypoints: Waypoints, answers: UserAnswers, page: ChangeRegistrationPage.type, isExcluded: Boolean)(implicit messages: Messages) = {
+    if (isExcluded) {
+      val hasFixedEstablishmentSummaryRow = HasFixedEstablishmentSummary.rowWithoutAction(waypoints, answers)
+      val euDetailsSummaryRow = EuDetailsSummary.checkAnswersRowWithoutAction(waypoints, answers)
 
-    val formattedHasFixedEstablishmentSummaryRow = hasFixedEstablishmentSummaryRow.map { nonOptHasFixedEstablishmentSummaryRow =>
-      if (euDetailsSummaryRow.nonEmpty) {
-        nonOptHasFixedEstablishmentSummaryRow.withCssClass("govuk-summary-list__row--no-border")
-      } else {
-        nonOptHasFixedEstablishmentSummaryRow.withCssClass("govuk-summary-list")
+      val formattedHasFixedEstablishmentSummaryRow = hasFixedEstablishmentSummaryRow.map { nonOptHasFixedEstablishmentSummaryRow =>
+        if (euDetailsSummaryRow.nonEmpty) {
+          nonOptHasFixedEstablishmentSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+        } else {
+          nonOptHasFixedEstablishmentSummaryRow.withCssClass("govuk-summary-list")
+        }
       }
+      (formattedHasFixedEstablishmentSummaryRow, euDetailsSummaryRow)
+    } else {
+
+      val hasFixedEstablishmentSummaryRow = HasFixedEstablishmentSummary.row(waypoints, answers, page)
+      val euDetailsSummaryRow = EuDetailsSummary.checkAnswersRow(waypoints, answers, page)
+
+      val formattedHasFixedEstablishmentSummaryRow = hasFixedEstablishmentSummaryRow.map { nonOptHasFixedEstablishmentSummaryRow =>
+        if (euDetailsSummaryRow.nonEmpty) {
+          nonOptHasFixedEstablishmentSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+        } else {
+          nonOptHasFixedEstablishmentSummaryRow.withCssClass("govuk-summary-list")
+        }
+      }
+      (formattedHasFixedEstablishmentSummaryRow, euDetailsSummaryRow)
     }
-    (formattedHasFixedEstablishmentSummaryRow, euDetailsSummaryRow)
   }
 
   private def getBusinessContactRows(waypoints: Waypoints, answers: UserAnswers, page: ChangeRegistrationPage.type)(implicit messages: Messages) = {

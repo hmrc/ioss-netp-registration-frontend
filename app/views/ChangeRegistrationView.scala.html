@@ -27,13 +27,17 @@
         button: CancelAmendRegistrationButton
 )
 
-@(waypoints: Waypoints, companyName: String, iossNum: String, list: SummaryList, ilist: SummaryList)(implicit request: Request[_], messages: Messages)
+@(waypoints: Waypoints, companyName: String, iossNum: String, list: SummaryList, ilist: SummaryList, isExcluded: Boolean, effectiveDate: Option[String])(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("changeRegistration.title",companyName )), showBackLink = false) {
 
     <h1 class="govuk-heading-xl govuk-!-margin-0">@messages("changeRegistration.heading", companyName)</h1>
 
     <p class="govuk-caption-l govuk-!-margin-bottom-6">@messages("changeRegistration.intermediaryNumber", iossNum)</p>
+
+    @if(isExcluded) {
+        <p class="govuk-inset-text">@Html(messages("changeRegistration.removedClient.text", companyName, effectiveDate))</p>
+    }
 
     <h2 class="govuk-heading-m">@messages("changeRegistration.registrationDetails.heading")</h2>
 
