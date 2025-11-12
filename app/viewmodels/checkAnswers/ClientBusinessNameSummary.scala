@@ -73,4 +73,17 @@ object ClientBusinessNameSummary {
       )
     }
   }
+
+  def amendedRowWithoutAction(answers: UserAnswers)(implicit messages: Messages): Option[SummaryListRow] = {
+    
+    answers.get(ClientBusinessNamePage).map { answer =>
+
+      val value = HtmlFormat.escape(answer.name).toString
+
+      SummaryListRowViewModel(
+        key = "clientBusinessName.amended.checkYourAnswersLabel",
+        value = ValueViewModel(HtmlContent(value))
+      )
+    }
+  }
 }
