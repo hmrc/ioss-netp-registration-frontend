@@ -21,7 +21,7 @@
 
 @(memberState: String, exclusionDate: String)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = titleNoForm(messages("otherCountryExcludedAndQuarantined.title"))) {
+@layout(pageTitle = titleNoForm(messages("otherCountryExcludedAndQuarantined.title")), showBackLink = false) {
 
     <h1 class="govuk-heading-l">@messages("otherCountryExcludedAndQuarantined.heading")</h1>
 
