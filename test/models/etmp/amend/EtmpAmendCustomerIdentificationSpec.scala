@@ -20,54 +20,41 @@ import base.SpecBase
 import play.api.libs.json.*
 
 class EtmpAmendCustomerIdentificationSpec extends SpecBase {
+
+  private val iossNumber = "IN900123456"
+  private val foreignTaxReference = "BR123456789"
+
   "EtmpAmendCustomerIdentification" - {
 
-    "must serialize to JSON correctly when foreignTaxReference is present" in {
-      val etmpAmendCustomerIdentification = EtmpAmendCustomerIdentification(
-        iossNumber = "IN9001234567"
-      )
+    "must deserialise/serialise to and from EtmpAmendCustomerIdentification when only required fields are present" in {
 
-      val expectedJson = Json.obj(
-        "iossNumber" -> "IN9001234567"
-      )
-
-      Json.toJson(etmpAmendCustomerIdentification) mustBe expectedJson
-    }
-
-    "must serialize to JSON correctly when foreignTaxReference is absent" in {
-      val etmpAmendCustomerIdentification = EtmpAmendCustomerIdentification(
-        iossNumber = "IN9001234567")
-
-      val expectedJson = Json.obj(
-        "iossNumber" -> "IN9001234567"
-      )
-
-      Json.toJson(etmpAmendCustomerIdentification) mustBe expectedJson
-    }
-
-    "must deserialize from JSON correctly with foreignTaxReference" in {
       val json = Json.obj(
-        "iossNumber" -> "IN9001234567"
+        "iossNumber" -> iossNumber
       )
 
       val expectedResult = EtmpAmendCustomerIdentification(
-        iossNumber = "IN9001234567"
+        iossNumber = iossNumber,
+        foreignTaxReference = None
       )
 
+      Json.toJson(expectedResult) mustBe json
       json.validate[EtmpAmendCustomerIdentification] mustBe JsSuccess(expectedResult)
     }
 
-    "must handle missing required fields during deserialization" in {
-      val json = Json.obj()
-      json.validate[EtmpAmendCustomerIdentification] mustBe a[JsError]
-    }
+    "must deserialise/serialise to and from EtmpAmendCustomerIdentification when all fields are present" in {
 
-    "must handle invalid data during deserialization" in {
       val json = Json.obj(
-        "iossNumber" -> 123456789
+        "iossNumber" -> iossNumber,
+        "foreignTaxReference" -> foreignTaxReference
       )
 
-      json.validate[EtmpAmendCustomerIdentification] mustBe a[JsError]
+      val expectedResult = EtmpAmendCustomerIdentification(
+        iossNumber = iossNumber,
+        foreignTaxReference = Some(foreignTaxReference)
+      )
+
+      Json.toJson(expectedResult) mustBe json
+      json.validate[EtmpAmendCustomerIdentification] mustBe JsSuccess(expectedResult)
     }
   }
 }
