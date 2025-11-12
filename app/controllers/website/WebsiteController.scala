@@ -41,7 +41,7 @@ class WebsiteController @Inject()(
   
   protected val controllerComponents: MessagesControllerComponents = cc
   
-  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (cc.identifyAndGetOptionalData andThen limitIndex(index, Constants.maxWebsites)) {
+  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (cc.identifyAndGetOptionalData() andThen limitIndex(index, Constants.maxWebsites)) {
     implicit request =>
       val userAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
 
@@ -55,7 +55,7 @@ class WebsiteController @Inject()(
       Ok(view(preparedForm, waypoints, index))
   }
 
-  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = (cc.identifyAndGetOptionalData andThen limitIndex(index, Constants.maxWebsites)).async {
+  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = (cc.identifyAndGetOptionalData() andThen limitIndex(index, Constants.maxWebsites)).async {
     implicit request =>
 
       val form = formProvider(index, request.userAnswers.getOrElse(UserAnswers(request.userId)).get(AllWebsites).getOrElse(Seq.empty).map(_.site))

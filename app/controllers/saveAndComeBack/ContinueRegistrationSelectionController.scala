@@ -48,7 +48,7 @@ class ContinueRegistrationSelectionController @Inject()(
 
   val form: Form[String] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetOptionalData.async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetOptionalData().async {
     implicit request =>
 
       val userAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
