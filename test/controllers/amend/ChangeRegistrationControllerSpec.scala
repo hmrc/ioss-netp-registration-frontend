@@ -22,6 +22,11 @@ import models.audit.{NetpAmendRegistrationAuditModel, RegistrationAuditType, Sub
 import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
 import models.etmp.amend.AmendRegistrationResponse
 import models.etmp.display.{EtmpDisplayRegistration, RegistrationWrapper}
+import models.previousRegistrations.*
+import models.vatEuDetails.EuDetails
+import models.requests.{AuthenticatedMandatoryRegistrationRequest, DataRequest}
+import models.responses.InternalServerError
+import models.etmp.display.{EtmpDisplayRegistration, RegistrationWrapper}
 import models.previousRegistrations._
 import models.requests.{AuthenticatedMandatoryRegistrationRequest, DataRequest}
 import models.responses.InternalServerError
@@ -114,6 +119,16 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
     UserAnswers(id = "12345-credId", vatInfo = None, lastUpdated = Instant.now())
       .set(IossNumberQuery, iossNumber).success.value
 
+  private val numberOfRegistrations: Int = 8
+  private val euRegistration: EuDetails = EuDetails(
+    euCountry = arbitraryCountry.arbitrary.sample.value,
+    hasFixedEstablishment = Some(true),
+    registrationType = Some(arbitraryRegistrationType.arbitrary.sample.value),
+    euVatNumber = Some(arbitraryEuVatNumber.sample.value),
+    euTaxReference = Some(arbitraryEuTaxReference.sample.value),
+    tradingNameAndBusinessAddress = Some(arbitraryTradingNameAndBusinessAddress.arbitrary.sample.value)
+  )
+  private val euRegistrations = Gen.listOfN(numberOfRegistrations, euRegistration).sample.value
 
   private val ukBasedCompleteUserAnswersWithVatInfo: UserAnswers =
     basicUserAnswersWithVatInfo
@@ -125,7 +140,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       .set(PreviouslyRegisteredPage, true).success.value
       .set(AllPreviousRegistrationsQuery, List(previousRegistrationDetails)).success.value
       .set(HasFixedEstablishmentPage, true).success.value
-      .set(AllEuDetailsQuery, List(arbitraryEuDetails.arbitrary.sample.value)).success.value
+      .set(AllEuDetailsQuery, euRegistrations).success.value
       .set(BusinessContactDetailsPage, businessContactDetails).success.value
       .set(AllWebsites, List(Website("www.example.com"))).success.value
 
