@@ -21,7 +21,7 @@
 
 @()(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = titleNoForm(messages("cannotUseNotAnIntermediary.title"))) {
+@layout(pageTitle = titleNoForm(messages("cannotUseNotAnIntermediary.title")), showBackLink = false) {
 
     <h1 class="govuk-heading-l">@messages("cannotUseNotAnIntermediary.heading")</h1>
 
