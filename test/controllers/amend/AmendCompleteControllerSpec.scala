@@ -21,7 +21,7 @@ import config.Constants.maxSchemes
 import config.FrontendAppConfig
 import connectors.RegistrationConnector
 import models.domain.{PreviousRegistration, PreviousSchemeDetails}
-import models.etmp.{EtmpCustomerIdentification, EtmpOtherAddress, EtmpIdType}
+import models.etmp.EtmpOtherAddress
 import models.etmp.display.EtmpDisplayCustomerIdentification
 import models.{BusinessContactDetails, ClientBusinessName, Country, InternationalAddress, TradingName, UserAnswers, Website}
 import models.etmp.display.{EtmpDisplayRegistration, RegistrationWrapper}
@@ -30,7 +30,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Gen
 import org.scalatestplus.mockito.MockitoSugar
-import pages.{BusinessContactDetailsPage, ClientBusinessAddressPage, ClientBusinessNamePage, ClientCountryBasedPage, ClientTaxReferencePage}
+import pages.*
 import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
@@ -41,7 +41,7 @@ import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.WebsiteSummary
-import viewmodels.checkAnswers.{BusinessContactDetailsSummary, ClientBusinessAddressSummary, ClientBusinessNameSummary, ClientCountryBasedSummary, ClientTaxReferenceSummary}
+import viewmodels.checkAnswers.*
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
 import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
 import viewmodels.govuk.all.SummaryListViewModel
@@ -248,7 +248,7 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
       }
 
       "must show row for when country is amended and not UK" in {
-        
+
         val userAnswersWithOriginal = originalRegistration
           .set(OriginalRegistrationQuery(iossNumber), originalEtmpWithAddress).success.value
 
@@ -263,15 +263,13 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
           implicit val msgs: Messages = messages(application)
 
           status(result) mustBe OK
-          
+
           val summaryList = SummaryListViewModel(rows = getAmendedRegistrationSummaryList(updatedAnswers, Some(registrationWrapper)))
 
           val expectedRow = ClientCountryBasedSummary.amendedRowWithoutAction(updatedAnswers).get
           summaryList.rows must contain(expectedRow)
         }
       }
-
-      
 
       "must show row for when trading name is amended" in {
 
@@ -280,7 +278,7 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
 
         val amendedTradingName = ClientBusinessName("Amended trading Name")
         val updatedAnswers = userAnswersWithOriginal.set(ClientBusinessNamePage, amendedTradingName).success.value
-        
+
         val application = applicationBuilder(userAnswers = Some(updatedAnswers)).build()
 
         running(application) {
@@ -327,6 +325,31 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
           summaryList.rows must contain(expectedRow)
         }
       }
+
+      "must show row for when taxReference is amended" in {
+
+        val userAnswersWithOriginal = originalRegistration
+          .set(OriginalRegistrationQuery(iossNumber), originalEtmpWithAddress).success.value
+        
+        val updatedAnswers = userAnswersWithOriginal
+          .set(ClientCountryBasedPage, Country("DE", "Germany")).success.value
+          .set(ClientTaxReferencePage, "FTR_NUM_1").success.value
+
+        val application = applicationBuilder(userAnswers = Some(updatedAnswers)).build()
+
+        running(application) {
+          val request = FakeRequest(GET, controllers.amend.routes.AmendCompleteController.onPageLoad(waypoints).url)
+          val result = route(application, request).value
+          implicit val msgs: Messages = messages(application)
+
+          status(result) mustBe OK
+
+          val summaryList = SummaryListViewModel(rows = getAmendedRegistrationSummaryList(updatedAnswers, Some(registrationWrapper)))
+
+          val expectedRow = ClientTaxReferenceSummary.amendedRowWithoutAction(updatedAnswers).get
+          summaryList.rows must contain(expectedRow)
+        }
+      }
     }
   }
 
@@ -334,7 +357,7 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
                                                  answers: UserAnswers,
                                                  registrationWrapper: Option[RegistrationWrapper]
                                                )(implicit msgs: Messages): Seq[SummaryListRow] = {
-    
+
     val hasTradingNameSummaryRow = HasTradingNameSummary.amendedRow(answers)
     val tradingNameSummaryRow = TradingNameSummary.amendedAnswersRow(answers)
     val removedTradingNameRow = TradingNameSummary.removedAnswersRow(getRemovedTradingNames(answers, registrationWrapper))
@@ -352,6 +375,7 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
     val countryBasedRow = ClientCountryBasedSummary.amendedRowWithoutAction(answers)
     val principlePlaceOfBusinessRow = ClientBusinessAddressSummary.amendedRowWithoutAction(answers)
     val primaryTradingNameRow = ClientBusinessNameSummary.amendedRowWithoutAction(answers)
+    val taxReferenceDetailsRow = ClientTaxReferenceSummary.amendedRowWithoutAction(answers)
 
     Seq(
       hasTradingNameSummaryRow,
@@ -369,7 +393,8 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
       businessContactDetailsEmailSummaryRow,
       countryBasedRow,
       principlePlaceOfBusinessRow,
-      primaryTradingNameRow
+      primaryTradingNameRow,
+      taxReferenceDetailsRow
     ).flatten
   }
 
