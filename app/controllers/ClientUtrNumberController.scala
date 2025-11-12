@@ -27,6 +27,7 @@ import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
+import utils.AmendWaypoints.AmendWaypointsOps
 import views.html.ClientUtrNumberView
 
 import java.time.Clock
@@ -45,7 +46,7 @@ class ClientUtrNumberController @Inject()(
   val form: Form[String] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData() {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend, checkAmendAccess = Some(ClientUtrNumberPage))  {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(ClientUtrNumberPage) match {

@@ -41,7 +41,7 @@ import play.api.inject
 import play.api.inject.bind
 import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
-import queries.{AllWebsites, IossNumberQuery, OriginalRegistrationQuery}
+import queries.AllWebsites
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery

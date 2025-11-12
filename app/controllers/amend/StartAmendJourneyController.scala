@@ -37,7 +37,7 @@ class StartAmendJourneyController @Inject()(
                                            )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with Logging {
 
-  def onPageLoad(iossNumber: String): Action[AnyContent] = cc.identifyAndGetOptionalData.async {
+  def onPageLoad(iossNumber: String): Action[AnyContent] = cc.identifyAndGetOptionalData().async {
     implicit request =>
 
       (for {

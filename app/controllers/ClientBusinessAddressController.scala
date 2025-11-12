@@ -40,7 +40,7 @@ class ClientBusinessAddressController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend, checkAmendAccess = Some(ClientBusinessAddressPage)).async {
     implicit request =>
 
       val isUKBased = request.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)

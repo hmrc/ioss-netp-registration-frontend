@@ -26,6 +26,7 @@ import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.AmendWaypoints.AmendWaypointsOps
 import views.html.ClientHasUtrNumberView
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,7 +41,7 @@ class ClientHasUtrNumberController @Inject()(
   val form: Form[Boolean] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData() {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend, checkAmendAccess = Some(ClientHasUtrNumberPage)) {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(ClientHasUtrNumberPage) match {

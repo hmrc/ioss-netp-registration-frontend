@@ -31,6 +31,7 @@ import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
+import utils.AmendWaypoints.AmendWaypointsOps
 import views.html.ClientVatNumberView
 
 import java.time.{Clock, LocalDate}
@@ -50,7 +51,7 @@ class ClientVatNumberController @Inject()(
 
   private val form: Form[String] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData() {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend, checkAmendAccess = Some(ClientVatNumberPage)) {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(ClientVatNumberPage) match {

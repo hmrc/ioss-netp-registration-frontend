@@ -17,6 +17,7 @@
 package controllers.actions
 
 import models.requests.{AuthenticatedMandatoryRegistrationRequest, DataRequest, OptionalDataRequest}
+import pages.QuestionPage
 import play.api.http.FileMimeTypes
 import play.api.i18n.{Langs, MessagesApi}
 import play.api.mvc.*
@@ -43,17 +44,29 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
 
   def requireRegistration: RegistrationRequiredAction
 
-  def identifyAndGetData(inAmend: Boolean = false): ActionBuilder[DataRequest, AnyContent] = {
-    actionBuilder andThen
+  def checkAmendAccess: CheckAmendPageAccessFilter
+
+  def identifyAndGetData(inAmend: Boolean = false, checkAmendAccess: Option[QuestionPage[_]] = None): ActionBuilder[DataRequest, AnyContent] = {
+    val baseActions = actionBuilder andThen
       identify andThen
       getData andThen
       requireData(inAmend)
+
+      (inAmend, checkAmendAccess) match {
+      case (true, Some(page)) => baseActions andThen this.checkAmendAccess(page)
+      case _ => baseActions
+    }
   }
 
-  def identifyAndGetOptionalData: ActionBuilder[OptionalDataRequest, AnyContent] = {
-    actionBuilder andThen
+  def identifyAndGetOptionalData(inAmend: Boolean = false, checkAmendAccess: Option[QuestionPage[_]] = None): ActionBuilder[OptionalDataRequest, AnyContent] = {
+    val baseActions = actionBuilder andThen
       identify andThen
       getData
+
+    (inAmend, checkAmendAccess) match {
+      case (true, Some(page)) => baseActions andThen this.checkAmendAccess.forOptionalData(page)
+      case _ => baseActions
+    }
   }
 
   def identifyAndRequireRegistration(
@@ -78,5 +91,6 @@ case class DefaultAuthenticatedControllerComponents @Inject()(
                                                                requireData: DataRequiredAction,
                                                                clientIdentify: ClientIdentifierAction,
                                                                clientGetData: ClientDataRetrievalAction,
-                                                               requireRegistration: RegistrationRequiredAction
+                                                               requireRegistration: RegistrationRequiredAction,
+                                                               checkAmendAccess: CheckAmendPageAccessFilter
                                                              ) extends AuthenticatedControllerComponents
