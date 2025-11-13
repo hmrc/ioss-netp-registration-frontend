@@ -85,7 +85,7 @@ object RegistrationData extends SpecBase {
   val amendRegistrationResponse: AmendRegistrationResponse = AmendRegistrationResponse(
     processingDateTime = LocalDateTime.now(),
     formBundleNumber = "123456789",
-    intermediary = "IN900123456",
+    iossReference = "IM900123456",
     businessPartner = "Test Business Partner"
   )
 

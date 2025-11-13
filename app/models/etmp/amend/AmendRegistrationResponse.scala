@@ -22,7 +22,7 @@ import java.time.LocalDateTime
 
 case class AmendRegistrationResponse(processingDateTime: LocalDateTime,
                                      formBundleNumber: String,
-                                     intermediary: String,
+                                     iossReference: String,
                                      businessPartner: String)
 
 object AmendRegistrationResponse {
