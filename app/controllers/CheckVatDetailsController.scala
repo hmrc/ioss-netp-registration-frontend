@@ -26,6 +26,7 @@ import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
+import utils.AmendWaypoints.AmendWaypointsOps
 import viewmodels.CheckVatDetailsViewModel
 import viewmodels.checkAnswers.*
 import viewmodels.govuk.all.SummaryListViewModel
@@ -41,7 +42,7 @@ class CheckVatDetailsController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend, checkAmendAccess = Some(CheckVatDetailsPage())).async {
     implicit request =>
 
       val isBasedInUk = request.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
@@ -50,7 +51,7 @@ class CheckVatDetailsController @Inject()(
       val ukVatNumber = request.userAnswers.get(ClientVatNumberPage).getOrElse("")
 
       getClientCompanyName(waypoints) { clientCompanyName =>
-        
+
         if (isBasedInUk && hasVatNumber) {
           request.userAnswers.vatInfo match {
             case Some(vatCustomerInfo) =>

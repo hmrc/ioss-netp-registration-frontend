@@ -37,7 +37,7 @@ class StartAmendJourneyController @Inject()(
                                            )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with Logging {
 
-  def onPageLoad(iossNumber: String): Action[AnyContent] = cc.identifyAndGetOptionalData.async {
+  def onPageLoad(iossNumber: String): Action[AnyContent] = cc.identifyAndGetOptionalData().async {
     implicit request =>
 
       (for {
@@ -58,7 +58,6 @@ class StartAmendJourneyController @Inject()(
 
               Redirect(routes.ChangeRegistrationController.onPageLoad().url)
             }
-
           case Left(error) =>
             val exception = new Exception(error.body)
             logger.error(exception.getMessage, exception)

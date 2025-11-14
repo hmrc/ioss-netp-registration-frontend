@@ -28,7 +28,7 @@
     govukErrorSummary: GovukErrorSummary,
     govukSummaryList: GovukSummaryList,
     button: ButtonGroup
-)
+    )
 
 @(
     waypoints: Waypoints,
@@ -37,28 +37,28 @@
     companyName: String,
     isBasedInUk: Boolean,
     hasVatNumber: Boolean
-)(implicit request: Request[_], messages: Messages)
+    )(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("checkVatDetails.title", companyName))) {
 
-    @formHelper(action = routes.CheckVatDetailsController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
+@formHelper(action = routes.CheckVatDetailsController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
 
-        <h1 class="govuk-heading-l">@messages("checkVatDetails.heading", companyName)</h1>
+    <h1 class="govuk-heading-l">@messages("checkVatDetails.heading", companyName)</h1>
 
-        @{
-            val maybeAddressRow = if (isBasedInUk) {
-                viewModel.map { model =>
-                    SummaryListRow(
-                        key = Key(content = Text(messages("checkVatDetails.address"))),
-                        value = Value(content = HtmlContent(model.formattedAddress.body))
-                    )
-                }
-            } else None
+    @{
+        val maybeAddressRow = if (isBasedInUk) {
+            viewModel.map { model =>
+            SummaryListRow(
+            key = Key(content = Text(messages("checkVatDetails.address"))),
+            value = Value(content = HtmlContent(model.formattedAddress.body))
+            )
+            }
+        } else None
 
             val rowsWithAddress = summaryList.rows ++ maybeAddressRow.toSeq
 
             govukSummaryList(summaryList.copy(rows = rowsWithAddress))
-        }
+    }
 
         @if(isBasedInUk && hasVatNumber) {
             <p class="govuk-body">@messages("checkVatDetails.info.p1")</p>

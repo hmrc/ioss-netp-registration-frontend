@@ -23,6 +23,7 @@ import play.api.data.Form
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.AmendWaypoints.AmendWaypointsOps
 import views.html.ClientHasVatNumberView
 
 import javax.inject.Inject
@@ -38,7 +39,7 @@ class ClientHasVatNumberController @Inject()(
 
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData() {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend, checkAmendAccess = Some(ClientHasVatNumberPage)) {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(ClientHasVatNumberPage) match {
