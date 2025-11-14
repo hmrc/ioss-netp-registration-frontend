@@ -94,21 +94,21 @@ class CheckAmendPageAccessFilterSpec extends SpecBase with MockitoSugar with Bef
         filter.shouldBlockPage(Some(userAnswers), ClientVatNumberPage) mustBe true
       }
 
-      "must return false for UK-based client with UTR" in {
+      "must return true for UK-based client with UTR" in {
         val userAnswers = emptyUserAnswers
           .set(BusinessBasedInUKPage, true).success.value
           .set(ClientHasVatNumberPage, false).success.value
           .set(ClientHasUtrNumberPage, true).success.value
 
-        filter.shouldBlockPage(Some(userAnswers), ClientVatNumberPage) mustBe false
+        filter.shouldBlockPage(Some(userAnswers), ClientVatNumberPage) mustBe true
       }
 
-      "must return false for non-UK client without VAT" in {
+      "must return true for non-UK client without VAT" in {
         val userAnswers = emptyUserAnswers
           .set(BusinessBasedInUKPage, false).success.value
           .set(ClientHasVatNumberPage, false).success.value
 
-        filter.shouldBlockPage(Some(userAnswers), ClientVatNumberPage) mustBe false
+        filter.shouldBlockPage(Some(userAnswers), ClientVatNumberPage) mustBe true
       }
     }
 
@@ -132,12 +132,12 @@ class CheckAmendPageAccessFilterSpec extends SpecBase with MockitoSugar with Bef
         filter.shouldBlockPage(Some(userAnswers), ClientHasUtrNumberPage) mustBe true
       }
 
-      "must return false for non-UK client" in {
+      "must return true for non-UK client" in {
         val userAnswers = emptyUserAnswers
           .set(BusinessBasedInUKPage, false).success.value
           .set(ClientHasVatNumberPage, false).success.value
 
-        filter.shouldBlockPage(Some(userAnswers), ClientHasUtrNumberPage) mustBe false
+        filter.shouldBlockPage(Some(userAnswers), ClientHasUtrNumberPage) mustBe true
       }
     }
 
@@ -152,12 +152,12 @@ class CheckAmendPageAccessFilterSpec extends SpecBase with MockitoSugar with Bef
         filter.shouldBlockPage(Some(userAnswers), ClientUtrNumberPage) mustBe true
       }
 
-      "must return false for non-UK client without VAT" in {
+      "must return true for non-UK client without VAT" in {
         val userAnswers = emptyUserAnswers
           .set(BusinessBasedInUKPage, false).success.value
           .set(ClientHasVatNumberPage, false).success.value
 
-        filter.shouldBlockPage(Some(userAnswers), ClientUtrNumberPage) mustBe false
+        filter.shouldBlockPage(Some(userAnswers), ClientUtrNumberPage) mustBe true
       }
     }
 
@@ -172,21 +172,21 @@ class CheckAmendPageAccessFilterSpec extends SpecBase with MockitoSugar with Bef
         filter.shouldBlockPage(Some(userAnswers), ClientsNinoNumberPage) mustBe true
       }
 
-      "must return false for UK-based client with UTR" in {
+      "must return true for UK-based client with UTR" in {
         val userAnswers = emptyUserAnswers
           .set(BusinessBasedInUKPage, true).success.value
           .set(ClientHasVatNumberPage, false).success.value
           .set(ClientHasUtrNumberPage, true).success.value
 
-        filter.shouldBlockPage(Some(userAnswers), ClientsNinoNumberPage) mustBe false
+        filter.shouldBlockPage(Some(userAnswers), ClientsNinoNumberPage) mustBe true
       }
 
-      "must return false for non-UK client" in {
+      "must return true for non-UK client" in {
         val userAnswers = emptyUserAnswers
           .set(BusinessBasedInUKPage, false).success.value
           .set(ClientHasVatNumberPage, false).success.value
 
-        filter.shouldBlockPage(Some(userAnswers), ClientsNinoNumberPage) mustBe false
+        filter.shouldBlockPage(Some(userAnswers), ClientsNinoNumberPage) mustBe true
       }
     }
 
@@ -220,12 +220,12 @@ class CheckAmendPageAccessFilterSpec extends SpecBase with MockitoSugar with Bef
 
     "when checking ClientCountryBasedPage" - {
 
-      "must return false for all client types" in {
+      "must return true for all client types" in {
         val userAnswers = emptyUserAnswers
           .set(BusinessBasedInUKPage, true).success.value
           .set(ClientHasVatNumberPage, true).success.value
 
-        filter.shouldBlockPage(Some(userAnswers), ClientCountryBasedPage) mustBe false
+        filter.shouldBlockPage(Some(userAnswers), ClientCountryBasedPage) mustBe true
       }
     }
 

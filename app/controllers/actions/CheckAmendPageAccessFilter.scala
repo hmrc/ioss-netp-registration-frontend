@@ -42,13 +42,21 @@ class CheckAmendPageAccessFilter @Inject()(
     val hasVatNumber = userAnswers.get(ClientHasVatNumberPage).getOrElse(false)
     val hasUtrNumber = userAnswers.get(ClientHasUtrNumberPage).getOrElse(false)
 
-    val alwaysBlocked = Seq(BusinessBasedInUKPage, ClientHasVatNumberPage, CheckVatDetailsPage())
+    val alwaysBlocked = Seq(
+      BusinessBasedInUKPage,
+      ClientHasVatNumberPage,
+      CheckVatDetailsPage(),
+      ClientHasUtrNumberPage,
+      ClientUtrNumberPage,
+      ClientsNinoNumberPage,
+      ClientVatNumberPage
+    )
 
     val additionalBlocked = (isUkBased, hasVatNumber, hasUtrNumber) match {
-      case (true, true, _) => Seq(ClientVatNumberPage, ClientBusinessAddressPage)
-      case (true, false, true) => Seq(ClientHasUtrNumberPage, ClientUtrNumberPage)
-      case (true, false, false) => Seq(ClientHasUtrNumberPage, ClientsNinoNumberPage)
-      case (false, true, _) => Seq(ClientVatNumberPage)
+      case (true, true, _) => Seq(ClientBusinessAddressPage, ClientCountryBasedPage, ClientTaxReferencePage, ClientBusinessNamePage)
+      case (true, false, true) => Seq(ClientTaxReferencePage, ClientCountryBasedPage)
+      case (true, false, false) => Seq(ClientTaxReferencePage, ClientCountryBasedPage)
+      case (false, true, _) => Seq(ClientTaxReferencePage)
       case (false, false, _) => Seq.empty
     }
 

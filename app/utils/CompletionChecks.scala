@@ -19,7 +19,7 @@ package utils
 import models.Index
 import models.requests.DataRequest
 import pages.*
-import pages.tradingNames.{AddTradingNamePage, HasTradingNamePage, TradingNamePage}
+import pages.tradingNames.HasTradingNamePage
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{AnyContent, Result}
 import queries.AllWebsites
@@ -64,7 +64,6 @@ trait CompletionChecks {
       clientTaxReferenceDefined() &&
       clientBusinessAddressDefined() &&
       isTradingNamesValid() &&
-      !hasUnfilledTradingNamePageAttempt() &&
       getAllIncompleteRegistrationDetails().isEmpty &&
       isPreviouslyRegisteredDefined() &&
       isEuDetailsDefined() &&
@@ -85,7 +84,6 @@ trait CompletionChecks {
       incompleteBusinessAddressRedirect(waypoints) ++
       incompleteHasTradingNameRedirect(waypoints) ++
       incompleteTradingNameRedirect(waypoints) ++
-      incompleteAdditionalTradingNameRedirect(waypoints) ++
       emptyPreviousRegistrationRedirect(waypoints) ++
       incompletePreviousRegistrationRedirect(waypoints) ++
       emptyEuDetailsRedirect(waypoints) ++
@@ -129,34 +127,14 @@ trait CompletionChecks {
         } else {
           None
         }
+      case Some(false) =>
+        val tradingNames = request.userAnswers.get(AllTradingNamesQuery).getOrElse(Nil)
+        if (tradingNames.nonEmpty) {
+          Some(Redirect(HasTradingNamePage.route(waypoints)))
+        } else {
+          None
+        }
       case _ => None
     }
   }
-
-  private def hasUnfilledTradingNamePageAttempt()(implicit request: DataRequest[AnyContent]): Boolean = {
-    val allAnswers = request.userAnswers
-    val tradingNames = allAnswers.get(AllTradingNamesQuery).getOrElse(Nil)
-
-    val declaredCount = tradingNames.length
-    val nextIndex = Index(declaredCount)
-
-    val addAnother = allAnswers.get(AddTradingNamePage(Some(Index(declaredCount - 1)))).contains(true)
-
-    addAnother && allAnswers.get(TradingNamePage(nextIndex)).isEmpty
-  }
-
-  private def incompleteAdditionalTradingNameRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
-    val tradingNames = request.userAnswers.get(AllTradingNamesQuery).getOrElse(Nil)
-    val lastCompletedIndex = Index(tradingNames.length - 1)
-    val nextIndex = Index(tradingNames.length)
-
-    val addAnother = request.userAnswers.get(AddTradingNamePage(Some(lastCompletedIndex))).contains(true)
-
-    if (addAnother && request.userAnswers.get(TradingNamePage(nextIndex)).isEmpty) {
-      Some(Redirect(controllers.tradingNames.routes.TradingNameController.onPageLoad(waypoints, nextIndex)))
-    } else {
-      None
-    }
-  }
-
 }
