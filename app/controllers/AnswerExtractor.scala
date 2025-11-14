@@ -19,11 +19,13 @@ package controllers
 import logging.Logging
 import models.UserAnswers
 import models.requests.DataRequest
+import pages.amend.ChangeRegistrationPage
 import pages.{JourneyRecoveryPage, Waypoints}
 import play.api.libs.json.{JsArray, JsObject, Reads}
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{AnyContent, Result}
 import queries.{Derivable, Gettable, Settable}
+import utils.AmendWaypoints.AmendWaypointsOps
 import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.Future
@@ -38,8 +40,12 @@ trait AnswerExtractor extends Logging {
       .get(query)
       .map(block(_))
       .getOrElse({
-        logAnswerNotFoundMessage(query)
-        Redirect(JourneyRecoveryPage.route(waypoints).url)
+        if (waypoints.inAmend) {
+          Redirect(ChangeRegistrationPage.route(waypoints))
+        } else {
+          logAnswerNotFoundMessage(query)
+          Redirect(JourneyRecoveryPage.route(waypoints).url)
+        }
       })
   }
 
@@ -50,8 +56,12 @@ trait AnswerExtractor extends Logging {
       .get(query)
       .map(block(_))
       .getOrElse({
-        logAnswerNotFoundMessage(query)
-        Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture
+        if (waypoints.inAmend) {
+          Redirect(ChangeRegistrationPage.route(waypoints)).toFuture
+        } else {
+          logAnswerNotFoundMessage(query)
+          Redirect(JourneyRecoveryPage.route(waypoints).url).toFuture
+        }
       })
   }
 

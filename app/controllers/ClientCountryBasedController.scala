@@ -21,8 +21,7 @@ import forms.ClientCountryBasedFormProvider
 
 import javax.inject.Inject
 import models.Country
-import pages.ClientCountryBasedPage
-import pages.Waypoints
+import pages.{ClientCountryBasedPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -42,7 +41,7 @@ class ClientCountryBasedController @Inject()(
   val form: Form[Country] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend) {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(ClientCountryBasedPage)) {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(ClientCountryBasedPage) match {
