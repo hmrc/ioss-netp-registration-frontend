@@ -164,7 +164,7 @@ class RegistrationService @Inject()(
     val isUkBased = userAnswers.get(BusinessBasedInUKPage).getOrElse(true)
 
     (vatInfo, isUkBased, maybeOtherAddress) match {
-      case (Some(vatInfo), false, _) =>
+      case (Some(vatInfo), false, None) =>
         val orgName = vatInfo.organisationName.getOrElse {
           logger.error("Organisation name missing from VAT info for non-UK client")
           throw new IllegalStateException("Organisation name missing from VAT info for non-UK client")
@@ -184,7 +184,7 @@ class RegistrationService @Inject()(
           businessNameUA <- addressUA.set(ClientBusinessNamePage, ClientBusinessName(orgName))
         } yield businessNameUA
 
-      case (None, _, Some(otherAddress)) =>
+      case (_, _, Some(otherAddress)) =>
         val nonVatTradingName: String = otherAddress.tradingName.getOrElse {
           logger.error(s"Unable to retrieve a Trading name from Other Address, required for client business naming without vat for amend journey.")
           throw new IllegalStateException(s"Unable to retrieve a Trading name from Other Address, required for client business naming without vat for amend journey.")
