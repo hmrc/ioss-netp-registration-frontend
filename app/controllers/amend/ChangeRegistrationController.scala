@@ -169,16 +169,14 @@ class ChangeRegistrationController @Inject()(
         getFirstValidationErrorRedirect(waypoints)(request.request) match {
           case Some(redirectResult) => Future.successful(redirectResult)
           case None =>
-            submitRegistration()
+            submitAmendReg()
         }
       } else {
-        submitRegistration()
+        submitAmendReg()
       }
   }
 
-  private def submitRegistration()(implicit request: AuthenticatedMandatoryRegistrationRequest[_], ec: ExecutionContext): Future[Result] = {
-
-    implicit val hc: HeaderCarrier = HeaderCarrier()
+  private def submitAmendReg()(implicit request: AuthenticatedMandatoryRegistrationRequest[_], ec: ExecutionContext, hc: HeaderCarrier): Future[Result] = {
 
     registrationService.amendRegistration(
       answers = request.userAnswers,
