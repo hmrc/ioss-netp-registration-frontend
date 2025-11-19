@@ -81,6 +81,7 @@ class RegistrationService @Inject()(
       registrationWrapper.etmpDisplayRegistration.schemeDetails.previousEURegistrationDetails
 
     val hasUkBasedAddress: Boolean = isUkBasedNetp(registrationWrapper.vatInfo, registrationWrapper.etmpDisplayRegistration.otherAddress)
+    val hasVatNumber: Boolean = registrationWrapper.etmpDisplayRegistration.customerIdentification.idType == EtmpIdType.VRN
 
     val userAnswers = for {
       businessBasedInUk <- UserAnswers(
@@ -88,7 +89,9 @@ class RegistrationService @Inject()(
         vatInfo = registrationWrapper.vatInfo
       ).set(BusinessBasedInUKPage, hasUkBasedAddress)
 
-      taxIdUA <- getTaxIdentifierAndNum(businessBasedInUk, registrationWrapper.etmpDisplayRegistration.customerIdentification)
+      withVatFlag <- businessBasedInUk.set(ClientHasVatNumberPage, hasVatNumber)
+
+      taxIdUA <- getTaxIdentifierAndNum(withVatFlag, registrationWrapper.etmpDisplayRegistration.customerIdentification)
 
       hasTradingNamesUA <- taxIdUA.set(HasTradingNamePage, etmpTradingNames.nonEmpty)
       tradingNamesUA <- if (etmpTradingNames.nonEmpty) {
@@ -115,7 +118,7 @@ class RegistrationService @Inject()(
       addressDetailsUA <- setNonVatAddressDetails(websiteUA, maybeOtherAddress)
 
       setClientCountryUA <- setClientCountry(addressDetailsUA, maybeOtherAddress)
-      
+
     } yield setClientCountryUA
 
     Future.fromTry(userAnswers)
@@ -140,8 +143,8 @@ class RegistrationService @Inject()(
 
       case (Some(vatInfo), _) => {
         val country = Country.fromCountryCodeAllCountries(vatInfo.desAddress.countryCode).getOrElse {
-          logger.error(s"Unable to retrieve a Country from the Country Code [${vatInfo.desAddress.countryCode}] provided in the Vat information returned from ETMP for amend journey.")
-          throw new IllegalStateException(s"Unable to retrieve a Country from the Country Code [${vatInfo.desAddress.countryCode}] provided in the Vat information returned from ETMP for amend journey.")
+          logger.error(s"Unable to retrieve a Country from the Country Code ${vatInfo.desAddress.countryCode} provided in the Vat information returned from ETMP for amend journey.")
+          throw new IllegalStateException(s"Unable to retrieve a Country from the Country Code ${vatInfo.desAddress.countryCode} provided in the Vat information returned from ETMP for amend journey.")
         }
         for {
           nonVatCountryAnswers <- userAnswers.set(ClientCountryBasedPage, country)
@@ -157,26 +160,51 @@ class RegistrationService @Inject()(
 
   private[services] def setNonVatAddressDetails(userAnswers: UserAnswers, maybeOtherAddress: Option[EtmpOtherAddress]): Try[UserAnswers] = {
 
-    if (maybeOtherAddress.isDefined) {
-      val nonVatTradingName: String = maybeOtherAddress.flatMap(_.tradingName).getOrElse {
-        logger.error(s"Unable to retrieve a Trading name from Other Address, required for client business naming without vat for amend journey.")
-        throw new IllegalStateException(s"Unable to retrieve a Trading name from Other Address, required for client business naming without vat for for amend journey.")
-      }
-      for {
-        nonVatBusinessAddress <- userAnswers.set(ClientBusinessAddressPage, convertNonUkAddress(maybeOtherAddress))
-        nonVatTradingNameAnswers <- nonVatBusinessAddress.set(ClientBusinessNamePage, ClientBusinessName(nonVatTradingName))
-      } yield nonVatTradingNameAnswers
-    } else {
-      Try(userAnswers)
+    val vatInfo = userAnswers.vatInfo
+    val isUkBased = userAnswers.get(BusinessBasedInUKPage).getOrElse(true)
+
+    (vatInfo, isUkBased, maybeOtherAddress) match {
+      case (Some(vatInfo), false, None) =>
+        val orgName = vatInfo.organisationName.getOrElse {
+          logger.error("Organisation name missing from VAT info for non-UK client")
+          throw new IllegalStateException("Organisation name missing from VAT info for non-UK client")
+        }
+
+        val address = InternationalAddress(
+          line1 = vatInfo.desAddress.line1,
+          line2 = vatInfo.desAddress.line2,
+          townOrCity = vatInfo.desAddress.line3.getOrElse(""),
+          stateOrRegion = vatInfo.desAddress.line4,
+          postCode = vatInfo.desAddress.postCode,
+          country = Country.fromCountryCode(vatInfo.desAddress.countryCode)
+        )
+
+        for {
+          addressUA <- userAnswers.set(ClientBusinessAddressPage, address)
+          businessNameUA <- addressUA.set(ClientBusinessNamePage, ClientBusinessName(orgName))
+        } yield businessNameUA
+
+      case (_, _, Some(otherAddress)) =>
+        val nonVatTradingName: String = otherAddress.tradingName.getOrElse {
+          logger.error(s"Unable to retrieve a Trading name from Other Address, required for client business naming without vat for amend journey.")
+          throw new IllegalStateException(s"Unable to retrieve a Trading name from Other Address, required for client business naming without vat for amend journey.")
+        }
+        for {
+          nonVatBusinessAddress <- userAnswers.set(ClientBusinessAddressPage, convertNonUkAddress(Some(otherAddress)))
+          nonVatTradingNameAnswers <- nonVatBusinessAddress.set(ClientBusinessNamePage, ClientBusinessName(nonVatTradingName))
+        } yield nonVatTradingNameAnswers
+      case _ =>
+        Try(userAnswers)
     }
   }
 
   private[services] def getTaxIdentifierAndNum(userAnswers: UserAnswers, customerInfo: EtmpDisplayCustomerIdentification): Try[UserAnswers] = {
+
     customerInfo.idType match {
-      case EtmpIdType.VRN => for {
-        hasUkVatUA <- userAnswers.set(ClientHasVatNumberPage, true)
-        userAnswersWithUkVatNum <- hasUkVatUA.set(ClientVatNumberPage, customerInfo.idValue)
-      } yield userAnswersWithUkVatNum
+      case EtmpIdType.VRN =>
+        for {
+          userAnswersWithUkVatNum <- userAnswers.set(ClientVatNumberPage, customerInfo.idValue)
+        } yield userAnswersWithUkVatNum
 
       case EtmpIdType.UTR =>
         for {
@@ -184,15 +212,16 @@ class RegistrationService @Inject()(
           userAnswersWithUtrNum <- hasUtrUa.set(ClientUtrNumberPage, customerInfo.idValue)
         } yield userAnswersWithUtrNum
 
-      case EtmpIdType.FTR => for {
-        userAnswersWithFtrNum <- userAnswers.set(ClientTaxReferencePage, customerInfo.idValue)
-      } yield userAnswersWithFtrNum
+      case EtmpIdType.FTR =>
+        for {
+          userAnswersWithFtrNum <- userAnswers.set(ClientTaxReferencePage, customerInfo.idValue)
+        } yield userAnswersWithFtrNum
 
-
-      case EtmpIdType.NINO => for {
-        hasUtrUa <- userAnswers.set(ClientHasUtrNumberPage, false)
-        userAnswersWithNinoNum <- hasUtrUa.set(ClientsNinoNumberPage, customerInfo.idValue)
-      } yield userAnswersWithNinoNum
+      case EtmpIdType.NINO =>
+        for {
+          hasUtrUa <- userAnswers.set(ClientHasUtrNumberPage, false)
+          userAnswersWithNinoNum <- hasUtrUa.set(ClientsNinoNumberPage, customerInfo.idValue)
+        } yield userAnswersWithNinoNum
     }
   }
 
@@ -278,7 +307,8 @@ class RegistrationService @Inject()(
     Country.fromCountryCodeAllCountries(countryCode) match {
       case Some(country) => country
       case _ =>
-        val exception = new IllegalStateException(s"Unable to find country $countryCode")
+        val exception = new IllegalStateException(
+          s"Unable to retrieve a Country from the Country Code $countryCode provided in the Vat information returned from ETMP for amend journey.")
         logger.error(exception.getMessage, exception)
         throw exception
     }

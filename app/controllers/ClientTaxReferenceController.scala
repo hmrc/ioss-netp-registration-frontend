@@ -45,7 +45,10 @@ class ClientTaxReferenceController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
   
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(
+    inAmend = waypoints.inAmend,
+    checkAmendAccess = Some(ClientTaxReferencePage)
+  ).async {
     implicit request =>
 
       getCountry(waypoints) { country =>

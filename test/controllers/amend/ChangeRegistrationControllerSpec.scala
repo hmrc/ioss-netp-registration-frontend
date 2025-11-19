@@ -22,10 +22,15 @@ import models.audit.{NetpAmendRegistrationAuditModel, RegistrationAuditType, Sub
 import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
 import models.etmp.amend.AmendRegistrationResponse
 import models.etmp.display.{EtmpDisplayRegistration, RegistrationWrapper}
-import models.previousRegistrations.NonCompliantDetails
+import models.previousRegistrations.*
+import models.vatEuDetails.EuDetails
 import models.requests.{AuthenticatedMandatoryRegistrationRequest, DataRequest}
 import models.responses.InternalServerError
-import models.{CheckMode, ClientBusinessName, DesAddress, TradingName, UserAnswers}
+import models.etmp.display.{EtmpDisplayRegistration, RegistrationWrapper}
+import models.previousRegistrations._
+import models.requests.{AuthenticatedMandatoryRegistrationRequest, DataRequest}
+import models.responses.InternalServerError
+import models.{CheckMode, ClientBusinessName, DesAddress, TradingName, UserAnswers, Website}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{doNothing, times, verify, when}
 import org.scalacheck.Gen
@@ -41,6 +46,7 @@ import play.api.inject
 import play.api.inject.bind
 import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
+import queries.AllWebsites
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
@@ -87,7 +93,6 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
         this.registrationWrapper.etmpDisplayRegistration.copy(exclusions = Seq.empty)
     )
 
-
   val existingPreviousRegistrations: Seq[PreviousRegistration] = Gen.listOfN(2, arbitraryPreviousRegistration.arbitrary).sample.value
 
   val previousRegistrationDetails: PreviousRegistration = {
@@ -114,6 +119,16 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
     UserAnswers(id = "12345-credId", vatInfo = None, lastUpdated = Instant.now())
       .set(IossNumberQuery, iossNumber).success.value
 
+  private val numberOfRegistrations: Int = 8
+  private val euRegistration: EuDetails = EuDetails(
+    euCountry = arbitraryCountry.arbitrary.sample.value,
+    hasFixedEstablishment = Some(true),
+    registrationType = Some(arbitraryRegistrationType.arbitrary.sample.value),
+    euVatNumber = Some(arbitraryEuVatNumber.sample.value),
+    euTaxReference = Some(arbitraryEuTaxReference.sample.value),
+    tradingNameAndBusinessAddress = Some(arbitraryTradingNameAndBusinessAddress.arbitrary.sample.value)
+  )
+  private val euRegistrations = Gen.listOfN(numberOfRegistrations, euRegistration).sample.value
 
   private val ukBasedCompleteUserAnswersWithVatInfo: UserAnswers =
     basicUserAnswersWithVatInfo
@@ -125,8 +140,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       .set(PreviouslyRegisteredPage, true).success.value
       .set(AllPreviousRegistrationsQuery, List(previousRegistrationDetails)).success.value
       .set(HasFixedEstablishmentPage, true).success.value
-      .set(AllEuDetailsQuery, List(arbitraryEuDetails.arbitrary.sample.value)).success.value
+      .set(AllEuDetailsQuery, euRegistrations).success.value
       .set(BusinessContactDetailsPage, businessContactDetails).success.value
+      .set(AllWebsites, List(Website("www.example.com"))).success.value
 
   private val nonUkBasedCompleteUserAnswersWithVatInfo: UserAnswers =
     basicUserAnswersWithVatInfo
@@ -141,6 +157,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       .set(HasFixedEstablishmentPage, true).success.value
       .set(AllEuDetailsQuery, List(arbitraryEuDetails.arbitrary.sample.value)).success.value
       .set(BusinessContactDetailsPage, businessContactDetails).success.value
+      .set(AllWebsites, List(Website("www.example.com"))).success.value
 
   private val ukBasedCompleteUserAnswersWithoutVatInfo: UserAnswers =
     basicUserAnswersWithoutVatInfo
@@ -156,6 +173,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       .set(BusinessContactDetailsPage, businessContactDetails).success.value
       .set(ClientBusinessNamePage, ClientBusinessName(companyName)).success.value
       .set(ClientBusinessAddressPage, arbitraryInternationalAddress.arbitrary.sample.value).success.value
+      .set(AllWebsites, List(Website("www.example.com"))).success.value
 
   private val nonUkBasedCompleteUserAnswersWithoutVatInfo: UserAnswers =
     basicUserAnswersWithoutVatInfo
@@ -172,6 +190,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       .set(ClientBusinessNamePage, ClientBusinessName(companyName)).success.value
       .set(ClientBusinessAddressPage, arbitraryInternationalAddress.arbitrary.sample.value).success.value
 
+      .set(AllWebsites, List(Website("www.example.com"))).success.value
 
   private val mockRegistrationService: RegistrationService = mock[RegistrationService]
   private val mockAuditService: AuditService = mock[AuditService]
@@ -213,6 +232,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 iossNumber,
                 registrationList,
                 importOneStopShopDetailsList,
+                isValid = false,
                 isExcluded = false,
                 effectiveDate = None
               )(request, messages(application)).toString
@@ -250,6 +270,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 iossNumber,
                 registrationList,
                 importOneStopShopDetailsList,
+                isValid = false,
                 isExcluded = false,
                 effectiveDate = None
               )(request, messages(application)).toString
@@ -286,6 +307,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               iossNumber,
               registrationList,
               importOneStopShopDetailsList,
+              isValid = false,
               isExcluded = false,
               effectiveDate = None
             )(request, messages(application)).toString
@@ -323,6 +345,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 iossNumber,
                 registrationList,
                 importOneStopShopDetailsList,
+                isValid = false,
                 isExcluded = false,
                 effectiveDate = None
               )(request, messages(application)).toString

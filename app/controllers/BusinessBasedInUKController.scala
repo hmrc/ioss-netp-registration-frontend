@@ -24,6 +24,7 @@ import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.AmendWaypoints.AmendWaypointsOps
 import views.html.BusinessBasedInUKView
 
 import java.util.UUID
@@ -40,7 +41,7 @@ class BusinessBasedInUKController @Inject()(
   val form: Form[Boolean] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetOptionalData {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetOptionalData(inAmend = waypoints.inAmend, checkAmendAccess = Some(BusinessBasedInUKPage)) {
     implicit request =>
 
       val preparedForm = request.userAnswers.getOrElse(UserAnswers(request.userId)).get(BusinessBasedInUKPage) match {
@@ -51,7 +52,7 @@ class BusinessBasedInUKController @Inject()(
       Ok(view(preparedForm, waypoints))
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetOptionalData.async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetOptionalData().async {
     implicit request =>
 
       form.bindFromRequest().fold(

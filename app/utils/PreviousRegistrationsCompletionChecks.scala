@@ -93,10 +93,17 @@ object PreviousRegistrationsCompletionChecks extends CompletionChecks {
 
     firstIndexedIncompleteRegisteredCountry(getAllIncompleteRegistrationDetails().map(_.previousEuCountry)) match {
       case Some(incompleteCountry) if incompleteCountry._1.previousSchemesDetails.isDefined =>
-        incompleteCountry._1.previousSchemesDetails.getOrElse(List.empty).zipWithIndex
-          .find(sd => sd._1.clientHasIntermediary.isEmpty || sd._1.previousSchemeNumbers.isEmpty) match {
-          case Some(schemeDetails) => incompleteSchemeDetailsRedirect(incompleteCountry, schemeDetails)
-          case None => None
+        incompleteCountry._1.previousSchemesDetails.getOrElse(List.empty).zipWithIndex.find {
+          case (schemeDetails, schemeIndex) =>
+            val countryIndex = incompleteCountry._2
+            val schemeType = request.userAnswers.get(
+              PreviousSchemeTypePage(Index(countryIndex), Index(schemeIndex))
+            )
+
+            schemeDetails.previousSchemeNumbers.isEmpty || (schemeType.contains(PreviousSchemeType.IOSS) && schemeDetails.clientHasIntermediary.isEmpty)
+        } match {
+            case Some(schemeDetails) => incompleteSchemeDetailsRedirect(incompleteCountry, schemeDetails)
+            case None => None
         }
       case Some(incompleteCountry) =>
         Some(Redirect(routes.PreviousSchemeController.onPageLoad(

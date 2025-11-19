@@ -208,7 +208,7 @@ GET        /client-email-updated/:journeyId                                contr
 GET        /start-amend-journey/:iossNumber                                controllers.amend.StartAmendJourneyController.onPageLoad(iossNumber: String)
 
 GET         /change-your-registration                                      controllers.amend.ChangeRegistrationController.onPageLoad()
-POST        /change-your-registration                                      controllers.amend.ChangeRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /change-your-registration                                      controllers.amend.ChangeRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, incompletePrompt: Boolean ?= false)
 
 GET        /cancel-amend-registration                                      controllers.amend.CancelAmendRegistrationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST       /cancel-amend-registration                                      controllers.amend.CancelAmendRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)

@@ -25,6 +25,7 @@ import pages.{BusinessBasedInUKPage, ClientBusinessNamePage, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.AmendWaypoints.AmendWaypointsOps
 import utils.FutureSyntax.FutureOps
 import views.html.ClientBusinessNameView
 
@@ -39,7 +40,7 @@ class ClientBusinessNameController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
   
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(ClientBusinessNamePage)).async {
     implicit request =>
       
       val isUKBased = request.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
