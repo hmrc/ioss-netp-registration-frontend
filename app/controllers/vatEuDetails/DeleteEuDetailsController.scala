@@ -42,7 +42,8 @@ class DeleteEuDetailsController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData() {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] =
+    cc.identifyAndGetData(checkAmendAccess = Some(DeleteEuDetailsPage(countryIndex))) {
     implicit request =>
 
       getAnswer(waypoints, EuDetailsQuery(countryIndex)) { euDetails =>

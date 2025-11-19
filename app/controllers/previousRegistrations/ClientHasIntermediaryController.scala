@@ -25,6 +25,7 @@ import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.AmendWaypoints.AmendWaypointsOps
 import utils.FutureSyntax.FutureOps
 import views.html.previousRegistrations.ClientHasIntermediaryView
 
@@ -42,7 +43,8 @@ class ClientHasIntermediaryController @Inject()(
 
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData() {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] =
+    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(ClientHasIntermediaryPage(countryIndex, schemeIndex))) {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(ClientHasIntermediaryPage(countryIndex, schemeIndex)) match {

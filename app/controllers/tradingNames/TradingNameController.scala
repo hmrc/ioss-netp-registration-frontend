@@ -48,7 +48,7 @@ class TradingNameController @Inject()(
 
 
   def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (
-    cc.identifyAndGetData(waypoints.inAmend)
+    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(TradingNamePage(index)))
       andThen
       maxIndexFilter(index)) {
 

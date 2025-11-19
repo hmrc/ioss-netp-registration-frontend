@@ -35,18 +35,17 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class DeleteTradingNameController @Inject()(
                                         override val messagesApi: MessagesApi,
-                                        identify: IdentifierAction,
-                                        getData: DataRetrievalAction,
-                                        requireData: DataRequiredAction,
+                                        cc: AuthenticatedControllerComponents,
                                         sessionRepository: SessionRepository,
                                         formProvider: DeleteTradingNameFormProvider,
-                                        val controllerComponents: MessagesControllerComponents,
                                         view: DeleteTradingNameView
                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with AnswerExtractor {
   
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen requireData()) {
+  protected val controllerComponents: MessagesControllerComponents = cc
+
+  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData(checkAmendAccess = Some(DeleteTradingNamePage(index))) {
     implicit request =>
 
       getAnswer(waypoints, TradingNamePage(index)) {
@@ -56,7 +55,7 @@ class DeleteTradingNameController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = (identify andThen getData andThen requireData()).async {
+  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       getAnswerAsync(waypoints, TradingNamePage(index)) {

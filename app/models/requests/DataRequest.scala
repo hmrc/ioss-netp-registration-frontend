@@ -30,7 +30,8 @@ case class OptionalDataRequest[A](
                                    request: Request[A],
                                    userId: String,
                                    userAnswers: Option[UserAnswers] = None,
-                                   intermediaryNumber: Option[String] = None
+                                   intermediaryNumber: Option[String] = None,
+                                   registrationWrapper: Option[RegistrationWrapper] = None
                                  ) extends WrappedRequest[A](request)
 
 case class DataRequest[A](

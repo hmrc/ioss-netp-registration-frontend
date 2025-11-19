@@ -53,7 +53,8 @@ class AddPreviousRegistrationController @Inject()(
 
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] =
+    cc.identifyAndGetData(inAmend = waypoints.inAmend, checkAmendAccess = Some(AddPreviousRegistrationPage())).async {
     implicit request =>
 
       getDerivedItems(waypoints, DeriveNumberOfPreviousRegistrations) { number =>

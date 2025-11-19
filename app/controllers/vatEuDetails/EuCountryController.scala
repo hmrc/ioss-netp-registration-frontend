@@ -26,6 +26,7 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.euDetails.AllEuDetailsQuery
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.AmendWaypoints.AmendWaypointsOps
 import views.html.vatEuDetails.EuCountryView
 
 import javax.inject.Inject
@@ -41,7 +42,8 @@ class EuCountryController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
   
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData() {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] =
+    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(EuCountryPage(countryIndex))) {
     implicit request =>
 
       val form: Form[Country] = formProvider(countryIndex, request.userAnswers.get(AllEuDetailsQuery)

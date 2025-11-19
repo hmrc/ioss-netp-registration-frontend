@@ -19,13 +19,14 @@ package controllers.website
 import config.Constants
 import controllers.actions.*
 import forms.WebsiteFormProvider
-import models.{Index, UserAnswers, Website}
+import models.{Index, Website}
 import pages.Waypoints
 import pages.website.WebsitePage
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.AllWebsites
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.AmendWaypoints.AmendWaypointsOps
 import views.html.WebsiteView
 
 import javax.inject.Inject
@@ -34,16 +35,16 @@ import scala.concurrent.{ExecutionContext, Future}
 class WebsiteController @Inject()(
                                    override val messagesApi: MessagesApi,
                                    cc: AuthenticatedControllerComponents,
-                                   limitIndex: MaximumIndexFilterProvider,
                                    formProvider: WebsiteFormProvider,
                                    view: WebsiteView
                                  )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
   
   protected val controllerComponents: MessagesControllerComponents = cc
   
-  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = (cc.identifyAndGetOptionalData() andThen limitIndex(index, Constants.maxWebsites)) {
+  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] =
+    (cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(WebsitePage(index))) andThen cc.limitIndex(index, Constants.maxWebsites)) {
     implicit request =>
-      val userAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
+      val userAnswers = request.userAnswers
 
       val form = formProvider(index, userAnswers.get(AllWebsites).getOrElse(Seq.empty).map(_.site))
 
@@ -55,21 +56,20 @@ class WebsiteController @Inject()(
       Ok(view(preparedForm, waypoints, index))
   }
 
-  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = (cc.identifyAndGetOptionalData() andThen limitIndex(index, Constants.maxWebsites)).async {
+  def onSubmit(waypoints: Waypoints, index: Index): Action[AnyContent] = (cc.identifyAndGetData() andThen cc.limitIndex(index, Constants.maxWebsites)).async {
     implicit request =>
 
-      val form = formProvider(index, request.userAnswers.getOrElse(UserAnswers(request.userId)).get(AllWebsites).getOrElse(Seq.empty).map(_.site))
+      val form = formProvider(index, request.userAnswers.get(AllWebsites).getOrElse(Seq.empty).map(_.site))
 
       form.bindFromRequest().fold(
         formWithErrors =>
           Future.successful(BadRequest(view(formWithErrors, waypoints, index))),
 
         value =>
-          val originalAnswers: UserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
           for {
-            updatedAnswers <- Future.fromTry(originalAnswers.set(WebsitePage(index), Website(value)))
+            updatedAnswers <- Future.fromTry(request.userAnswers.set(WebsitePage(index), Website(value)))
             _              <- cc.sessionRepository.set(updatedAnswers)
-          } yield Redirect(WebsitePage(index).navigate(waypoints, originalAnswers, updatedAnswers).route)
+          } yield Redirect(WebsitePage(index).navigate(waypoints, updatedAnswers, updatedAnswers).route)
       )
   }
 }

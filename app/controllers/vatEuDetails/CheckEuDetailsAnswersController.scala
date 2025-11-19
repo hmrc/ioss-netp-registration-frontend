@@ -43,7 +43,8 @@ class CheckEuDetailsAnswersController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] =
+    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(CheckEuDetailsAnswersPage(countryIndex))).async {
     implicit request =>
       getCountryWithIndex(waypoints, countryIndex) {
         country =>
