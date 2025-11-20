@@ -42,7 +42,8 @@ class PreviousSchemeController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend).async {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] =
+    cc.identifyAndGetData(inAmend = waypoints.inAmend, checkAmendAccess = Some(PreviousSchemeTypePage(countryIndex, schemeIndex))).async {
     implicit request =>
       getPreviousCountry(waypoints, countryIndex) {
         country =>

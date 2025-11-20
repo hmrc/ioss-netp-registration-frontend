@@ -44,7 +44,10 @@ class PreviouslyRegisteredController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend) {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(
+    inAmend = waypoints.inAmend,
+    checkAmendAccess = Some(PreviouslyRegisteredPage)
+  ) {
     implicit request =>
       val userAnswers = request.userAnswers
 

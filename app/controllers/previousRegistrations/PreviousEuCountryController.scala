@@ -41,7 +41,10 @@ class PreviousEuCountryController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend) {
+  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData(
+    inAmend = waypoints.inAmend,
+    checkAmendAccess = Some(PreviousEuCountryPage(index))
+  ) {
     implicit request =>
 
       val form = formProvider(index, request.userAnswers.get(AllPreviousRegistrationsQuery).getOrElse(Seq.empty).map(_.previousEuCountry))

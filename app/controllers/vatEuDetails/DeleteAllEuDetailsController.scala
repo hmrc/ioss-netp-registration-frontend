@@ -44,7 +44,8 @@ class DeleteAllEuDetailsController @Inject()(
   
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend) {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] =
+    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(DeleteAllEuDetailsPage)) {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(DeleteAllEuDetailsPage) match {

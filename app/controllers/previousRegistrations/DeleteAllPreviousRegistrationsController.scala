@@ -44,7 +44,8 @@ class DeleteAllPreviousRegistrationsController @Inject()(
   val form: Form[Boolean] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend) {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] =
+    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(DeleteAllPreviousRegistrationsPage)) {
     implicit request =>
 
       protectAgainstAmendMode(waypoints) {

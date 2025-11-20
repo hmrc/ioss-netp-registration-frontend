@@ -21,11 +21,7 @@ import config.Constants.maxSchemes
 import models.audit.{NetpAmendRegistrationAuditModel, RegistrationAuditType, SubmissionResult}
 import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
 import models.etmp.amend.AmendRegistrationResponse
-import models.etmp.display.{EtmpDisplayRegistration, RegistrationWrapper}
-import models.previousRegistrations.*
 import models.vatEuDetails.EuDetails
-import models.requests.{AuthenticatedMandatoryRegistrationRequest, DataRequest}
-import models.responses.InternalServerError
 import models.etmp.display.{EtmpDisplayRegistration, RegistrationWrapper}
 import models.previousRegistrations._
 import models.requests.{AuthenticatedMandatoryRegistrationRequest, DataRequest}

@@ -46,7 +46,8 @@ class CheckPreviousSchemeAnswersController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend).async {
+  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] =
+    cc.identifyAndGetData(inAmend = waypoints.inAmend, checkAmendAccess = Some(CheckPreviousSchemeAnswersPage(index))).async {
     implicit request =>
       getPreviousCountry(waypoints, index) { country =>
 

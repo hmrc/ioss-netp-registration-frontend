@@ -28,6 +28,7 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
 import queries.previousRegistrations.{PreviousRegistrationQuery, PreviousRegistrationWithOptionalVatNumberQuery}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.AmendWaypoints.AmendWaypointsOps
 import views.html.previousRegistrations.DeletePreviousRegistrationView
 import utils.FutureSyntax.*
 
@@ -45,7 +46,8 @@ class DeletePreviousRegistrationController @Inject()(
   
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onPageLoad(waypoints: Waypoints, index: Index): Action[AnyContent] =
+    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(DeletePreviousRegistrationPage(index))).async {
     implicit request =>
       getPreviousRegistration(waypoints, index) {
         details =>

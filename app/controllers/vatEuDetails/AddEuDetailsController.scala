@@ -51,7 +51,8 @@ class AddEuDetailsController @Inject()(
   private val euCountriesSize: Int = Country.euCountries.size
   private val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] =
+    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(AddEuDetailsPage())).async {
     implicit request =>
 
       getDerivedItems(waypoints, DeriveNumberOfEuRegistrations) { numberOfEuRegistrations =>

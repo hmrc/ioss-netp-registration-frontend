@@ -17,14 +17,14 @@
 package controllers.actions
 
 import models.requests.{DataRequest, OptionalDataRequest}
-import pages.QuestionPage
+import pages.Page
 import play.api.mvc.{ActionFilter, Result}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeCheckAmendPageAccessFilter() extends CheckAmendPageAccessFilter()(ExecutionContext.Implicits.global) {
 
-  override def apply(page: QuestionPage[_]): ActionFilter[DataRequest] = {
+  override def apply(page: Page): ActionFilter[DataRequest] = {
     new ActionFilter[DataRequest] {
       override protected def executionContext: ExecutionContext = ExecutionContext.Implicits.global
 
@@ -34,7 +34,7 @@ class FakeCheckAmendPageAccessFilter() extends CheckAmendPageAccessFilter()(Exec
     }
   }
 
-  override def forOptionalData(page: QuestionPage[_]): ActionFilter[OptionalDataRequest] = {
+  override def forOptionalData(page: Page): ActionFilter[OptionalDataRequest] = {
     new ActionFilter[OptionalDataRequest] {
       override protected def executionContext: ExecutionContext = ExecutionContext.Implicits.global
 

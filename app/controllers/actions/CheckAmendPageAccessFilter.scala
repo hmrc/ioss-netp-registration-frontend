@@ -17,9 +17,13 @@
 package controllers.actions
 
 import logging.Logging
-import models.UserAnswers
+import models.{Index, UserAnswers}
 import models.requests.{DataRequest, OptionalDataRequest}
 import pages.*
+import pages.previousRegistrations.*
+import pages.tradingNames.*
+import pages.vatEuDetails.*
+import pages.website.*
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{ActionFilter, Result}
 
@@ -30,14 +34,15 @@ class CheckAmendPageAccessFilter @Inject()(
                                             implicit val executionContext: ExecutionContext
                                           ) extends Logging {
 
-  private[actions] def shouldBlockPage(maybeUserAnswers: Option[UserAnswers], page: QuestionPage[_]): Boolean = {
+  private[actions] def shouldBlockPage(maybeUserAnswers: Option[UserAnswers], page: Page, hasExclusion: Boolean): Boolean = {
     maybeUserAnswers.exists { userAnswers =>
-      val blockedPages = getBlockedPages(userAnswers)
-      blockedPages.contains(page)
+      val userAnswers = maybeUserAnswers.getOrElse(UserAnswers(""))
+      val blockedPages = getBlockedPages(userAnswers, hasExclusion)
+      blockedPages.exists(_.getClass == page.getClass)
     }
   }
 
-  private[actions] def getBlockedPages(userAnswers: UserAnswers): Seq[QuestionPage[_]] = {
+  private[actions] def getBlockedPages(userAnswers: UserAnswers, hasExclusion: Boolean): Seq[Page] = {
     val isUkBased = userAnswers.get(BusinessBasedInUKPage).getOrElse(true)
     val hasVatNumber = userAnswers.get(ClientHasVatNumberPage).getOrElse(false)
     val hasUtrNumber = userAnswers.get(ClientHasUtrNumberPage).getOrElse(false)
@@ -52,6 +57,21 @@ class CheckAmendPageAccessFilter @Inject()(
       ClientVatNumberPage
     )
 
+    val exclusionBlocked = if (hasExclusion) {
+      Seq(
+        ClientBusinessAddressPage,
+        ClientCountryBasedPage,
+        ClientTaxReferencePage,
+        ClientBusinessNamePage,
+      ) ++
+      websiteBlocked ++
+      vatEuDetailsBlocked ++
+      previousRegistrationsBlocked ++
+      tradingNameBlocked
+    } else {
+      Seq.empty
+    }
+
     val additionalBlocked = (isUkBased, hasVatNumber, hasUtrNumber) match {
       case (true, true, _) => Seq(ClientBusinessAddressPage, ClientCountryBasedPage, ClientTaxReferencePage, ClientBusinessNamePage)
       case (true, false, true) => Seq(ClientTaxReferencePage, ClientCountryBasedPage)
@@ -60,14 +80,58 @@ class CheckAmendPageAccessFilter @Inject()(
       case (false, false, _) => Seq.empty
     }
 
-    alwaysBlocked ++ additionalBlocked
+    alwaysBlocked ++ additionalBlocked ++ exclusionBlocked
   }
 
-  def apply(page: QuestionPage[_]): ActionFilter[DataRequest] = new ActionFilter[DataRequest] {
+  private def tradingNameBlocked = Seq(
+    TradingNamePage(Index(0)),
+    HasTradingNamePage,
+    AddTradingNamePage(),
+    DeleteAllTradingNamesPage,
+    DeleteTradingNamePage(Index(0)),
+  )
+
+  private def previousRegistrationsBlocked = Seq(
+    PreviouslyRegisteredPage,
+    PreviousEuCountryPage(Index(0)),
+    PreviousSchemeTypePage(Index(0), Index(0)),
+    ClientHasIntermediaryPage(Index(0), Index(0)),
+    PreviousSchemePage(Index(0), Index(0)),
+    CheckPreviousSchemeAnswersPage(Index(0)),
+    PreviousOssNumberPage(Index(0), Index(0)),
+    PreviousIossNumberPage(Index(0), Index(0)),
+    AddPreviousRegistrationPage(),
+    DeleteAllPreviousRegistrationsPage,
+    DeletePreviousSchemePage(Index(0), Index(0)),
+    DeletePreviousRegistrationPage(Index(0)),
+  )
+
+  private def vatEuDetailsBlocked = Seq(
+    HasFixedEstablishmentPage,
+    EuCountryPage(Index(0)),
+    TradingNameAndBusinessAddressPage(Index(0)),
+    RegistrationTypePage(Index(0)),
+    EuVatNumberPage(Index(0)),
+    EuTaxReferencePage(Index(0)),
+    CheckEuDetailsAnswersPage(Index(0)),
+    AddEuDetailsPage(),
+    DeleteAllEuDetailsPage,
+    DeleteEuDetailsPage(Index(0)),
+  )
+
+  private def websiteBlocked = Seq(
+    WebsitePage(Index(0)),
+    AddWebsitePage(),
+    DeleteWebsitePage(Index(0))
+  )
+
+  def apply(page: Page): ActionFilter[DataRequest] = new ActionFilter[DataRequest] {
     override protected def executionContext: ExecutionContext = CheckAmendPageAccessFilter.this.executionContext
 
     override protected def filter[A](request: DataRequest[A]): Future[Option[Result]] = {
-      if (shouldBlockPage(Some(request.userAnswers), page)) {
+      val hasExclusion = request.registrationWrapper.exists(_.etmpDisplayRegistration.exclusions.nonEmpty)
+
+      if (shouldBlockPage(Some(request.userAnswers), page, hasExclusion)) {
         logger.info(s"Blocked access to ${page.toString}")
         Future.successful(Some(Redirect(controllers.amend.routes.ChangeRegistrationController.onPageLoad())))
       } else {
@@ -76,11 +140,13 @@ class CheckAmendPageAccessFilter @Inject()(
     }
   }
 
-  def forOptionalData(page: QuestionPage[_]): ActionFilter[OptionalDataRequest] = new ActionFilter[OptionalDataRequest] {
+  def forOptionalData(page: Page): ActionFilter[OptionalDataRequest] = new ActionFilter[OptionalDataRequest] {
     override protected def executionContext: ExecutionContext = CheckAmendPageAccessFilter.this.executionContext
 
     override protected def filter[A](request: OptionalDataRequest[A]): Future[Option[Result]] = {
-      if (shouldBlockPage(request.userAnswers, page)) {
+      val hasExclusion = request.registrationWrapper.exists(_.etmpDisplayRegistration.exclusions.nonEmpty)
+
+      if (shouldBlockPage(request.userAnswers, page, hasExclusion)) {
         logger.info(s"Blocked access to ${page.toString}")
         Future.successful(Some(Redirect(controllers.amend.routes.ChangeRegistrationController.onPageLoad())))
       } else {

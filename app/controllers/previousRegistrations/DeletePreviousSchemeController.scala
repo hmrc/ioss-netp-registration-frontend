@@ -29,6 +29,7 @@ import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.previousRegistrations.{DeriveNumberOfPreviousSchemes, PreviousSchemeForCountryQuery}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.AmendWaypoints.AmendWaypointsOps
 import views.html.previousRegistrations.DeletePreviousSchemeView
 import utils.FutureSyntax.*
 import viewmodels.govuk.all.SummaryListViewModel
@@ -46,7 +47,8 @@ class DeletePreviousSchemeController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] =
+    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(DeletePreviousSchemePage(countryIndex, schemeIndex))).async {
     implicit request =>
       getPreviousCountry(waypoints, countryIndex) {
         country =>

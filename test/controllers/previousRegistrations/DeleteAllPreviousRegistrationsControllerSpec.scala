@@ -195,10 +195,9 @@ class DeleteAllPreviousRegistrationsControllerSpec extends SpecBase with Mockito
 
           val result = route(application, request).value
 
-          whenReady(result.failed) { exp =>
-            exp `mustBe` a[InvalidAmendModeOperationException]
-            exp.getMessage `mustBe` "Cannot invoke this action whilst in amend mode"
-          }
+          status(result) mustBe SEE_OTHER
+          redirectLocation(result).value mustBe
+            controllers.amend.routes.ChangeRegistrationController.onPageLoad().url
         }
       }
     }

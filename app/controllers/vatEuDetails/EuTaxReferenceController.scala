@@ -46,7 +46,8 @@ class EuTaxReferenceController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] =
+    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(EuTaxReferencePage(countryIndex))).async {
     implicit request =>
 
       getCountryWithIndex(waypoints, countryIndex) { country =>

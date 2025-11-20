@@ -46,7 +46,7 @@ class DeleteAllTradingNamesController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] =  cc.identifyAndGetData(waypoints.inAmend) {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] =  cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(DeleteAllTradingNamesPage)) {
     implicit request =>
 
       Ok(view(form, waypoints))

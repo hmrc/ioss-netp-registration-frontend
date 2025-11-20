@@ -45,7 +45,7 @@ class HasTradingNameController @Inject()(
 
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(HasTradingNamePage)).async {
     implicit request =>
 
       getClientCompanyName(waypoints) {

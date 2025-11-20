@@ -17,7 +17,7 @@
 package controllers.actions
 
 import models.requests.{AuthenticatedMandatoryRegistrationRequest, DataRequest, OptionalDataRequest}
-import pages.QuestionPage
+import pages.Page
 import play.api.http.FileMimeTypes
 import play.api.i18n.{Langs, MessagesApi}
 import play.api.mvc.*
@@ -42,11 +42,13 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
 
   def requireData: DataRequiredAction
 
+  def limitIndex: MaximumIndexFilterProvider
+
   def requireRegistration: RegistrationRequiredAction
 
   def checkAmendAccess: CheckAmendPageAccessFilter
 
-  def identifyAndGetData(inAmend: Boolean = false, checkAmendAccess: Option[QuestionPage[_]] = None): ActionBuilder[DataRequest, AnyContent] = {
+  def identifyAndGetData(inAmend: Boolean = false, checkAmendAccess: Option[Page] = None): ActionBuilder[DataRequest, AnyContent] = {
     val baseActions = actionBuilder andThen
       identify andThen
       getData andThen
@@ -58,7 +60,7 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
     }
   }
 
-  def identifyAndGetOptionalData(inAmend: Boolean = false, checkAmendAccess: Option[QuestionPage[_]] = None): ActionBuilder[OptionalDataRequest, AnyContent] = {
+  def identifyAndGetOptionalData(inAmend: Boolean = false, checkAmendAccess: Option[Page] = None): ActionBuilder[OptionalDataRequest, AnyContent] = {
     val baseActions = actionBuilder andThen
       identify andThen
       getData
@@ -89,6 +91,7 @@ case class DefaultAuthenticatedControllerComponents @Inject()(
                                                                identify: IdentifierAction,
                                                                getData: DataRetrievalAction,
                                                                requireData: DataRequiredAction,
+                                                               limitIndex: MaximumIndexFilterProvider,
                                                                clientIdentify: ClientIdentifierAction,
                                                                clientGetData: ClientDataRetrievalAction,
                                                                requireRegistration: RegistrationRequiredAction,

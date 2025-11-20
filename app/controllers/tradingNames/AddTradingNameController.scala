@@ -47,7 +47,7 @@ class AddTradingNameController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
   
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(AddTradingNamePage())).async {
     implicit request =>
       getDerivedItems(waypoints, DeriveNumberOfTradingNames) {
         number =>
