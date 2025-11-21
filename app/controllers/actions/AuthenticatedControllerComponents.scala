@@ -43,6 +43,8 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
   def requireData: DataRequiredAction
 
   def limitIndex: MaximumIndexFilterProvider
+  
+  def netpValidation: NetpValidationFilterProvider
 
   def requireRegistration: RegistrationRequiredAction
 
@@ -77,6 +79,19 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
     identifyAndGetData(inAmend) andThen
       requireRegistration()
   }
+  
+  def identifyAndGetDataWithNetp(inAmend: Boolean = false, checkAmendAccess: Option[Page] = None): ActionBuilder[DataRequest, AnyContent] = {
+    val baseActions = actionBuilder andThen
+      identify andThen
+      netpValidation.apply() andThen
+      getData andThen
+      requireData(inAmend)
+    
+    (inAmend, checkAmendAccess) match {
+      case (true, Some(page)) => baseActions andThen this.checkAmendAccess(page)
+      case _ => baseActions
+    }
+  }
 }
 
 case class DefaultAuthenticatedControllerComponents @Inject()(
@@ -92,6 +107,7 @@ case class DefaultAuthenticatedControllerComponents @Inject()(
                                                                getData: DataRetrievalAction,
                                                                requireData: DataRequiredAction,
                                                                limitIndex: MaximumIndexFilterProvider,
+                                                               netpValidation: NetpValidationFilterProvider,
                                                                clientIdentify: ClientIdentifierAction,
                                                                clientGetData: ClientDataRetrievalAction,
                                                                requireRegistration: RegistrationRequiredAction,
