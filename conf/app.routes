@@ -181,9 +181,9 @@ GET         /client-already-registered                                      cont
 # Netp Declaration Section
 GET         /client-code-start/:uniqueUrlCode                               controllers.clientDeclarationJourney.ClientJourneyStartController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, uniqueUrlCode: String)
 
-GET        /client-code-entry/:uniqueUrlCode                            controllers.clientDeclarationJourney.ClientCodeEntryController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, uniqueUrlCode: String)
-POST       /client-code-entry/:uniqueUrlCode                            controllers.clientDeclarationJourney.ClientCodeEntryController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, uniqueUrlCode: String)
-GET        /resend-email/:uniqueUrlCode                                 controllers.clientDeclarationJourney.ClientResendEmailController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, uniqueUrlCode: String)
+GET         /client-code-entry/:uniqueUrlCode                               controllers.clientDeclarationJourney.ClientCodeEntryController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, uniqueUrlCode: String)
+POST        /client-code-entry/:uniqueUrlCode                               controllers.clientDeclarationJourney.ClientCodeEntryController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, uniqueUrlCode: String)
+GET         /resend-email/:uniqueUrlCode                                    controllers.clientDeclarationJourney.ClientResendEmailController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, uniqueUrlCode: String)
 
 GET         /declaration-client                                             controllers.clientDeclarationJourney.ClientDeclarationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST        /declaration-client                                             controllers.clientDeclarationJourney.ClientDeclarationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
@@ -194,41 +194,39 @@ GET         /error-submitting-registration                                  cont
 
 
 # Client Activation Section
-GET        /client-not-activated/:journeyId                                controllers.ClientNotActivatedController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
+GET         /client-not-activated/:journeyId                                controllers.ClientNotActivatedController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
 
 
 # Update Client Email Address
-GET        /update-client-email-address/:journeyId                         controllers.UpdateClientEmailAddressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
-POST       /update-client-email-address/:journeyId                         controllers.UpdateClientEmailAddressController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
+GET         /update-client-email-address/:journeyId                         controllers.UpdateClientEmailAddressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
+POST        /update-client-email-address/:journeyId                         controllers.UpdateClientEmailAddressController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
 
-GET        /client-email-updated/:journeyId                                controllers.ClientEmailUpdatedController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
+GET         /client-email-updated/:journeyId                                controllers.ClientEmailUpdatedController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
 
 # Amend Registration
+GET         /start-amend-journey/:iossNumber                                controllers.amend.StartAmendJourneyController.onPageLoad(iossNumber: String)
 
-GET        /start-amend-journey/:iossNumber                                controllers.amend.StartAmendJourneyController.onPageLoad(iossNumber: String)
+GET         /change-your-registration                                       controllers.amend.ChangeRegistrationController.onPageLoad()
+POST        /change-your-registration                                       controllers.amend.ChangeRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, incompletePrompt: Boolean ?= false)
 
-GET         /change-your-registration                                      controllers.amend.ChangeRegistrationController.onPageLoad()
-POST        /change-your-registration                                      controllers.amend.ChangeRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, incompletePrompt: Boolean ?= false)
+GET         /cancel-amend-registration                                      controllers.amend.CancelAmendRegistrationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /cancel-amend-registration                                      controllers.amend.CancelAmendRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET        /cancel-amend-registration                                      controllers.amend.CancelAmendRegistrationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-POST       /cancel-amend-registration                                      controllers.amend.CancelAmendRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+GET         /error-submitting-amend                                         controllers.amend.ErrorSubmittingAmendController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET        /error-submitting-amend                                         controllers.amend.ErrorSubmittingAmendController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-
-GET        /successful-amend                                               controllers.amend.AmendCompleteController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+GET         /successful-amend                                               controllers.amend.AmendCompleteController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 
 # Save for later section
-GET        /progress-saved                                                  controllers.saveAndComeBack.SavedProgressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, continueUrl: RedirectUrl)
+GET         /progress-saved                                                 controllers.saveAndComeBack.SavedProgressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, continueUrl: RedirectUrl)
 
-GET        /clients-continue-registration                                   controllers.saveAndComeBack.ContinueRegistrationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-POST       /clients-continue-registration                                   controllers.saveAndComeBack.ContinueRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+GET         /clients-continue-registration                                  controllers.saveAndComeBack.ContinueRegistrationController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /clients-continue-registration                                  controllers.saveAndComeBack.ContinueRegistrationController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET        /clients-continue-registration-selection                         controllers.saveAndComeBack.ContinueRegistrationSelectionController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-POST       /clients-continue-registration-selection                         controllers.saveAndComeBack.ContinueRegistrationSelectionController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+GET         /clients-continue-registration-selection                        controllers.saveAndComeBack.ContinueRegistrationSelectionController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /clients-continue-registration-selection                        controllers.saveAndComeBack.ContinueRegistrationSelectionController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
+# GET       /no-registration-in-progress                                    controllers.NoRegistrationInProgressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 
-# GET      /no-registration-in-progress                                     controllers.NoRegistrationInProgressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+GET         /secure-messages                                                controllers.SecureMessagesController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET        /secure-messages                                                 controllers.SecureMessagesController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-
-GET        /cannot-use-not-an-netp                                          controllers.CannotUseNotAnNetpController.onPageLoad()
+GET         /cannot-use-not-an-netp                                         controllers.CannotUseNotAnNetpController.onPageLoad()
