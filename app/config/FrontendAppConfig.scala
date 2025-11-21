@@ -71,4 +71,6 @@ class FrontendAppConfig @Inject()(configuration: Configuration) {
   val ossEnrolment: String = configuration.get[String]("oss-enrolment")
 
   val iossEnrolment: String = configuration.get[String]("ioss-enrolment")
+  
+  val netpEnrolment: String = configuration.get[String]("netp-enrolment")
 }

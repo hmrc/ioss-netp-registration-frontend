@@ -140,6 +140,7 @@ trait SpecBase
         bind[ClientIdentifierAction].to[FakeClientIdentifierAction],
         bind[ClientValidationFilterProvider].to[FakeClientValidationFilterProvider],
         bind[ClientDeclarationFilterProvider].to[FakeClientDeclarationFilterProvider],
+        bind[NetpValidationFilterProvider].to[FakeNetpValidationFilterProvider],
         bind[DataRequiredAction].toInstance(new FakeDataRequiredAction(userAnswers, intermediaryNumber.getOrElse(this.intermediaryNumber), registrationWrapper.getOrElse(this.registrationWrapper))),
         bind[RegistrationRequiredAction].toInstance(new FakeRegistrationRequiredAction(userAnswers, iossNumber.getOrElse(this.iossNumber), registrationWrapper.getOrElse(this.registrationWrapper))),
         bind[Clock].toInstance(clockToBind)
