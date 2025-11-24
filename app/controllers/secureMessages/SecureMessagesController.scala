@@ -14,61 +14,80 @@
  * limitations under the License.
  */
 
-package controllers
+package controllers.secureMessages
 
 import config.FrontendAppConfig
-import connectors.SecureMessageConnector
+import connectors.{RegistrationConnector, SecureMessageConnector}
+import controllers.GetClientCompanyName
 import controllers.actions.*
 import logging.Logging
-
-import javax.inject.Inject
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import pages.Waypoints
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.govukfrontend.views.Aliases.Table
 import uk.gov.hmrc.govukfrontend.views.viewmodels.content.{HtmlContent, Text}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.table.{HeadCell, TableRow}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.SecureMessagesView
 import utils.FutureSyntax.FutureOps
+import views.html.secureMessages.SecureMessagesView
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import scala.concurrent.ExecutionContext
+import javax.inject.Inject
+import scala.concurrent.{ExecutionContext, Future}
 
 class SecureMessagesController @Inject()(
                                        override val messagesApi: MessagesApi,
                                        cc: AuthenticatedControllerComponents,
                                        val controllerComponents: MessagesControllerComponents,
+                                       registrationConnector: RegistrationConnector,
                                        secureMessageConnector: SecureMessageConnector,
+                                       netpValidationFilterProvider: NetpValidationFilterProvider,
                                        frontendAppConfig: FrontendAppConfig,
                                        view: SecureMessagesView
                                      )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetClientCompanyName with Logging {
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetDataWithNetp().async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (cc.clientIdentify andThen netpValidationFilterProvider.apply()).async {
     implicit request =>
 
-      getClientCompanyName(waypoints) { clientCompanyName =>
-        val netpEnrolment = frontendAppConfig.netpEnrolment
-        val iossNumber = request.iossNumber.getOrElse("")
+      val netpEnrolment = frontendAppConfig.netpEnrolment
+      val iossNumber = request.enrolments.enrolments
+        .find(_.key == frontendAppConfig.netpEnrolment)
+        .flatMap(_.identifiers.headOption.map(_.value))
+        .getOrElse("")
 
-        secureMessageConnector.getMessages(taxIdentifiers = Some(netpEnrolment)).flatMap {
-          case Right(secureMessage) =>
+      registrationConnector.displayRegistrationNetp(iossNumber).flatMap {
+        case Right(registrationWrapper) =>
 
-            val unreadMessages: Seq[Boolean] = secureMessage.items.map(_.unreadMessages)
-            val messageSubject: Seq[String] = secureMessage.items.map(_.subject)
-            val messageValidFrom: Seq[String] = secureMessage.items.map(_.validFrom)
+          val clientCompanyName =
+            registrationWrapper.vatInfo.flatMap(_.organisationName)
+              .orElse(registrationWrapper.vatInfo.flatMap(_.individualName))
+              .orElse(registrationWrapper.etmpDisplayRegistration.otherAddress.flatMap(_.tradingName))
+              .getOrElse("")
 
-            val messageTable = buildMessagesTable(messageSubject, messageValidFrom, unreadMessages)
+          secureMessageConnector.getMessages(taxIdentifiers = Some(netpEnrolment)).flatMap {
+            case Right(secureMessage) =>
 
-            Ok(view(clientCompanyName, iossNumber, messageTable)).toFuture
+              val unreadMessages: Seq[Boolean] = secureMessage.items.map(_.unreadMessages)
+              val messageSubject: Seq[String] = secureMessage.items.map(_.subject)
+              val messageValidFrom: Seq[String] = secureMessage.items.map(_.validFrom)
 
-          case Left(errors) =>
-            val message: String = s"Received an unexpected error when trying to retrieve secure messages: $errors."
-            val exception: Exception = new Exception(message)
-            logger.error(exception.getMessage, exception)
-            throw exception
-        }
+              val messageTable = buildMessagesTable(messageSubject, messageValidFrom, unreadMessages)
+
+              Ok(view(clientCompanyName, iossNumber, messageTable)).toFuture
+
+            case Left(errors) =>
+              val message: String = s"Received an unexpected error when trying to retrieve secure messages: $errors."
+              val exception: Exception = new Exception(message)
+              logger.error(exception.getMessage, exception)
+              throw exception
+          }
+
+        case Left(error) =>
+          val message = s"Failed to retrieve registration for IOSS number $iossNumber: $error"
+          logger.error(message)
+          Future.failed(new Exception(message))
+
       }
   }
 

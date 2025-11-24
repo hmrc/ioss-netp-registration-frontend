@@ -18,6 +18,7 @@ package controllers.actions
 
 import models.requests.OptionalDataRequest
 import play.api.mvc.*
+import uk.gov.hmrc.auth.core.Enrolments
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -26,7 +27,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class FakeClientIdentifierAction @Inject()(bodyParsers: PlayBodyParsers) extends ClientIdentifierAction {
 
   override def invokeBlock[A](request: Request[A], block: OptionalDataRequest[A] => Future[Result]): Future[Result] = {
-    block(OptionalDataRequest(request, "12345-credId"))
+    block(OptionalDataRequest(request, "12345-credId", enrolments = Enrolments(Set.empty)))
   }
 
   override def parser: BodyParser[AnyContent] =

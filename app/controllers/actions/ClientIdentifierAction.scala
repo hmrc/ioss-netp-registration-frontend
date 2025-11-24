@@ -23,6 +23,7 @@ import play.api.mvc.*
 import play.api.mvc.Results.Redirect
 import repositories.SessionRepository
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions, NoActiveSession}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
@@ -50,12 +51,12 @@ class ClientIdentifierActionImpl @Inject()(
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 
-    authorised().retrieve(Retrievals.internalId) {
-      case Some(internalId) =>
+    authorised().retrieve(Retrievals.internalId and Retrievals.allEnrolments ) {
+      case Some(internalId) ~ enrolments =>
         sessionRepository.get(internalId).flatMap { sessionData =>
-          block(OptionalDataRequest(request, internalId, sessionData, None))
+          block(OptionalDataRequest(request, internalId, sessionData, None, enrolments))
         }
-      case None =>
+      case _ =>
         logger.error(s"No Internal ID found to create User ID.\nRequest Body:${request.body}")
         Future.failed(new IllegalStateException("Missing Internal ID"))
     } recover {

@@ -17,7 +17,7 @@
 package controllers
 
 import base.SpecBase
-import connectors.SecureMessageConnector
+import connectors.{RegistrationConnector, SecureMessageConnector}
 import models.responses.InternalServerError
 import models.securemessage.*
 import org.mockito.ArgumentMatchers.any
@@ -32,6 +32,7 @@ import utils.FutureSyntax.FutureOps
 class SecureMessagesControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
   val mockSecureMessageConnector: SecureMessageConnector = mock[SecureMessageConnector]
+  val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
 
   val emptyTaxpayerName = TaxpayerName(
     title = None,
@@ -74,12 +75,18 @@ class SecureMessagesControllerSpec extends SpecBase with MockitoSugar with Befor
       when(mockSecureMessageConnector.getMessages(any(), any(), any(), any(), any())(any()))
         .thenReturn(Right(secureMessageResponseWithCount).toFuture)
 
+      when(mockRegistrationConnector.displayRegistrationNetp(any())(any()))
+        .thenReturn(Right(registrationWrapper).toFuture)
+
       val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
-        .overrides(bind[SecureMessageConnector].toInstance(mockSecureMessageConnector))
+        .overrides(
+          bind[SecureMessageConnector].toInstance(mockSecureMessageConnector),
+          bind[RegistrationConnector].toInstance(mockRegistrationConnector)
+        )
         .build()
 
       running(application) {
-        val request = FakeRequest(GET, routes.SecureMessagesController.onPageLoad(waypoints).url)
+        val request = FakeRequest(GET, controllers.secureMessages.routes.SecureMessagesController.onPageLoad(waypoints).url)
 
         val result  = route(application, request).value
 
@@ -93,12 +100,18 @@ class SecureMessagesControllerSpec extends SpecBase with MockitoSugar with Befor
       when(mockSecureMessageConnector.getMessages(any(), any(), any(), any(), any())(any()))
         .thenReturn(Left(InternalServerError).toFuture)
 
+      when(mockRegistrationConnector.displayRegistrationNetp(any())(any()))
+        .thenReturn(Right(registrationWrapper).toFuture)
+
       val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
-        .overrides(bind[SecureMessageConnector].toInstance(mockSecureMessageConnector))
+        .overrides(
+          bind[SecureMessageConnector].toInstance(mockSecureMessageConnector),
+          bind[RegistrationConnector].toInstance(mockRegistrationConnector)
+        )
         .build()
 
       running(application) {
-        val request = FakeRequest(GET, routes.SecureMessagesController.onPageLoad(waypoints).url)
+        val request = FakeRequest(GET, controllers.secureMessages.routes.SecureMessagesController.onPageLoad(waypoints).url)
 
         assertThrows[Exception] {
           route(application, request).value.futureValue

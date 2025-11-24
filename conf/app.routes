@@ -227,6 +227,6 @@ POST        /clients-continue-registration-selection                        cont
 
 # GET       /no-registration-in-progress                                    controllers.NoRegistrationInProgressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET         /secure-messages                                                controllers.SecureMessagesController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+GET         /secure-messages                                                controllers.secureMessages.SecureMessagesController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET         /cannot-use-not-an-netp                                         controllers.CannotUseNotAnNetpController.onPageLoad()
+GET         /cannot-use-not-an-netp                                         controllers.secureMessages.CannotUseNotAnNetpController.onPageLoad()

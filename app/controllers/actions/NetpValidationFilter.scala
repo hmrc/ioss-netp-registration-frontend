@@ -16,7 +16,7 @@
 
 package controllers.actions
 
-import models.requests.IdentifierRequest
+import models.requests.OptionalDataRequest
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{ActionFilter, Result}
 
@@ -24,11 +24,11 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class NetpValidationFilter()
-                            (implicit val executionContext: ExecutionContext) extends ActionFilter[IdentifierRequest] {
+                            (implicit val executionContext: ExecutionContext) extends ActionFilter[OptionalDataRequest] {
 
   private val NetpEnrolmentKey = "HMRC-IOSS-NETP"
 
-  override protected def filter[A](request: IdentifierRequest[A]): Future[Option[Result]] = {
+  override protected def filter[A](request: OptionalDataRequest[A]): Future[Option[Result]] = {
 
     val hasNetpEnrolment =
       request.enrolments.enrolments.exists(_.key == NetpEnrolmentKey)
@@ -36,7 +36,7 @@ class NetpValidationFilter()
     if hasNetpEnrolment then
       Future.successful(None)
     else
-      Future.successful(Some(Redirect(controllers.routes.CannotUseNotAnNetpController.onPageLoad())))
+      Future.successful(Some(Redirect(controllers.secureMessages.routes.CannotUseNotAnNetpController.onPageLoad())))
   }
 }
 

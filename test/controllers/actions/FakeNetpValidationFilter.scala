@@ -16,14 +16,14 @@
 
 package controllers.actions
 
-import models.requests.IdentifierRequest
+import models.requests.OptionalDataRequest
 import play.api.mvc.Result
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeNetpValidationFilter extends NetpValidationFilter()(ExecutionContext.Implicits.global) {
 
-  override protected def filter[A](request: IdentifierRequest[A]): Future[Option[Result]] = {
+  override protected def filter[A](request: OptionalDataRequest[A]): Future[Option[Result]] = {
     Future.successful(None)
   }
 }
