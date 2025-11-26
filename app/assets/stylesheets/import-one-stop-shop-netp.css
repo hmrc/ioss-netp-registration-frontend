@@ -72,3 +72,12 @@
     z-index: 0;
     pointer-events: none;
 }
+
+.dot-unread {
+   height: 10px;
+   width: 10px;
+   background-color: #d4351c;
+   border-radius: 50%;
+   display: inline-block;
+   margin-right: 10px;
+}

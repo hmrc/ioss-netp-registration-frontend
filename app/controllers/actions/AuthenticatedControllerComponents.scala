@@ -43,6 +43,8 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
   def requireData: DataRequiredAction
 
   def limitIndex: MaximumIndexFilterProvider
+  
+  def netpValidation: NetpValidationFilterProvider
 
   def requireRegistration: RegistrationRequiredAction
 
@@ -77,6 +79,7 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
     identifyAndGetData(inAmend) andThen
       requireRegistration()
   }
+  
 }
 
 case class DefaultAuthenticatedControllerComponents @Inject()(
@@ -92,6 +95,7 @@ case class DefaultAuthenticatedControllerComponents @Inject()(
                                                                getData: DataRetrievalAction,
                                                                requireData: DataRequiredAction,
                                                                limitIndex: MaximumIndexFilterProvider,
+                                                               netpValidation: NetpValidationFilterProvider,
                                                                clientIdentify: ClientIdentifierAction,
                                                                clientGetData: ClientDataRetrievalAction,
                                                                requireRegistration: RegistrationRequiredAction,

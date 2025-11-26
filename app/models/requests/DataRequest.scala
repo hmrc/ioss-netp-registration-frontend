@@ -19,6 +19,7 @@ package models.requests
 import models.UserAnswers
 import models.etmp.display.RegistrationWrapper
 import play.api.mvc.{Request, WrappedRequest}
+import uk.gov.hmrc.auth.core.Enrolments
 
 sealed abstract class GenericRequest[+A](
                                           request: Request[A],
@@ -31,6 +32,7 @@ case class OptionalDataRequest[A](
                                    userId: String,
                                    userAnswers: Option[UserAnswers] = None,
                                    intermediaryNumber: Option[String] = None,
+                                   enrolments: Enrolments,
                                    registrationWrapper: Option[RegistrationWrapper] = None
                                  ) extends WrappedRequest[A](request)
 

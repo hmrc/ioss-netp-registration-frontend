@@ -28,6 +28,7 @@ import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import queries.IossNumberQuery
+import uk.gov.hmrc.auth.core.Enrolments
 import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -57,7 +58,8 @@ class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAf
           FakeRequest(),
           userAnswersId,
           Some(emptyUserAnswersWithVatInfo),
-          Some(intermediaryNumber)
+          Some(intermediaryNumber),
+          Enrolments(Set.empty)
         )
 
         val result = action.callRefine(request).futureValue
@@ -81,7 +83,8 @@ class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAf
           FakeRequest(),
           userAnswersId,
           None,
-          Some(intermediaryNumber)
+          Some(intermediaryNumber),
+          Enrolments(Set.empty)
         )
 
         val result = action.callRefine(request).futureValue
@@ -100,7 +103,8 @@ class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAf
           FakeRequest(),
           userAnswersId,
           Some(emptyUserAnswersWithVatInfo),
-          None
+          None,
+          Enrolments(Set.empty)
         )
 
         val exception = intercept[IllegalStateException] {
@@ -126,7 +130,8 @@ class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAf
           FakeRequest(),
           userAnswersId,
           Some(userAnswersWithIossNumber),
-          Some(intermediaryNumber)
+          Some(intermediaryNumber),
+          Enrolments(Set.empty)
         )
 
         val result = action.callRefine(request).futureValue
@@ -158,7 +163,8 @@ class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAf
           FakeRequest(),
           userAnswersId,
           Some(userAnswersWithoutIossNumber),
-          Some(intermediaryNumber)
+          Some(intermediaryNumber),
+          Enrolments(Set.empty)
         )
 
         val result = action.callRefine(request).futureValue
@@ -191,7 +197,8 @@ class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAf
           FakeRequest(),
           userAnswersId,
           Some(userAnswersWithIossNumber),
-          Some(intermediaryNumber)
+          Some(intermediaryNumber),
+          Enrolments(Set.empty)
         )
 
         val exception = intercept[RuntimeException] {
@@ -213,7 +220,8 @@ class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAf
           FakeRequest(),
           userAnswersId,
           Some(userAnswersWithoutIossNumber),
-          Some(intermediaryNumber)
+          Some(intermediaryNumber),
+          Enrolments(Set.empty)
         )
 
         val exception = intercept[RuntimeException] {
@@ -230,7 +238,8 @@ class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAf
           FakeRequest(),
           userAnswersId,
           Some(emptyUserAnswersWithVatInfo),
-          None
+          None,
+          Enrolments(Set.empty)
         )
 
         val exception = intercept[IllegalStateException] {

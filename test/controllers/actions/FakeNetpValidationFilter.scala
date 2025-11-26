@@ -17,22 +17,17 @@
 package controllers.actions
 
 import models.requests.OptionalDataRequest
-import play.api.mvc.*
-import uk.gov.hmrc.auth.core.Enrolments
+import play.api.mvc.Result
 
-import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
+class FakeNetpValidationFilter extends NetpValidationFilter()(ExecutionContext.Implicits.global) {
 
-class FakeClientIdentifierAction @Inject()(bodyParsers: PlayBodyParsers) extends ClientIdentifierAction {
-
-  override def invokeBlock[A](request: Request[A], block: OptionalDataRequest[A] => Future[Result]): Future[Result] = {
-    block(OptionalDataRequest(request, "12345-credId", enrolments = Enrolments(Set.empty)))
+  override protected def filter[A](request: OptionalDataRequest[A]): Future[Option[Result]] = {
+    Future.successful(None)
   }
+}
 
-  override def parser: BodyParser[AnyContent] =
-    bodyParsers.default
-
-  override protected def executionContext: ExecutionContext =
-    scala.concurrent.ExecutionContext.Implicits.global
+class FakeNetpValidationFilterProvider extends NetpValidationFilterProvider()(ExecutionContext.Implicits.global) {
+  override def apply(): NetpValidationFilter = new FakeNetpValidationFilter
 }

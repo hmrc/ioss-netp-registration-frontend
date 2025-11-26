@@ -28,6 +28,7 @@ import play.api.mvc.Results.Redirect
 import play.api.test.FakeRequest
 import queries.ClientUrlCodeQuery
 import repositories.SessionRepository
+import uk.gov.hmrc.auth.core.Enrolments
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -53,7 +54,8 @@ class ClientDataRetrievalActionSpec extends SpecBase with MockitoSugar {
 
         val action = new Harness(sessionRepository)
 
-        val result = action.callRefine(OptionalDataRequest(FakeRequest("GET", "UrlCode"), "id", userAnswers, Some(intermediaryNumber))).futureValue
+        val result = action.callRefine(OptionalDataRequest(
+          FakeRequest("GET", "UrlCode"), "id", userAnswers, Some(intermediaryNumber), Enrolments(Set.empty))).futureValue
 
         result mustBe Left(Redirect(controllers.clientDeclarationJourney.routes.ClientJourneyStartController.onPageLoad(EmptyWaypoints, "UrlCode")))
       }
@@ -70,7 +72,8 @@ class ClientDataRetrievalActionSpec extends SpecBase with MockitoSugar {
         when(sessionRepository.set(any())) thenReturn Future.successful(true)
         val action = new Harness(sessionRepository)
 
-        val result = action.callRefine(OptionalDataRequest(FakeRequest("GET", "UrlCode"), "id", Some(userAnswers), Some(intermediaryNumber))).futureValue
+        val result = action.callRefine(
+          OptionalDataRequest(FakeRequest("GET", "UrlCode"), "id", Some(userAnswers), Some(intermediaryNumber), Enrolments(Set.empty))).futureValue
 
         result.value.userAnswers.isDefined
         result.value.userAnswers.get(ClientUrlCodeQuery).isDefined
@@ -86,7 +89,8 @@ class ClientDataRetrievalActionSpec extends SpecBase with MockitoSugar {
         when(sessionRepository.get("id")) thenReturn Future(Some(userAnswers))
         val action = new Harness(sessionRepository)
 
-        val result = action.callRefine(OptionalDataRequest(FakeRequest(), "id", Some(userAnswers), Some(intermediaryNumber))).futureValue
+        val result = action.callRefine(
+          OptionalDataRequest(FakeRequest(), "id", Some(userAnswers), Some(intermediaryNumber), Enrolments(Set.empty))).futureValue
 
 
         result.value.userAnswers.isDefined
