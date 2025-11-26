@@ -608,11 +608,14 @@ errorSubmittingAmendment.yourAccount = <a class="govuk-link" href={0}>Back to yo
 secureMessages.title = Your Import One Stop Shop secure messages
 secureMessages.heading = Your Import One Stop Shop secure messages
 secureMessages.clientName = {0} <br> IOSS number: {1}
-secureMessages.subject.read = <a class="govuk-link" href="">{0}</a>
-secureMessages.subject.unread = <a class="govuk-link" href=""><span class="govuk-visually-hidden">Unread message</span><span class="govuk-!-font-weight-bold">{0}</span></a>
+secureMessages.subject.read = <a class="govuk-link" href="{1}">{0}</a>
+secureMessages.subject.unread = <a class="govuk-link" href="{1}"><span class="govuk-visually-hidden">Unread message</span><span class="govuk-!-font-weight-bold">{0}</span></a>
 secureMessages.table.headContent.column1 = Messages
 secureMessages.table.headContent.column2 = Date
 redDot = <span class="dot-unread"></span>
 
 cannotUseNotAnNetp.title = You cannot access this page
 cannotUseNotAnNetp.heading = You cannot access this page
+
+individualSecureMessage.title = Message Details
+

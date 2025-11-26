@@ -17,7 +17,7 @@
 package connectors
 
 import config.Service
-import connectors.SecureMessagesHttpParser.{SecureMessageResultResponse, SecureMessageResultResponseReads}
+import connectors.SecureMessagesHttpParser.*
 import logging.Logging
 import models.securemessage.{CustomerEnrolment, MessageFilter}
 import play.api.Configuration
@@ -53,5 +53,15 @@ class SecureMessageConnector @Inject()(
     httpClientV2.get(url"$baseUrl/messages")
       .transform(_.addQueryStringParameters(queryParams: _*))
       .execute[SecureMessageResultResponse]
+  }
+
+  def markAsRead(id: String)(implicit hc: HeaderCarrier): Future[MarkAsReadResponse] = {
+    httpClientV2.post(url"$baseUrl/messages/$id/read-time")
+      .execute[MarkAsReadResponse]
+  }
+
+  def getMessage(id: String)(implicit hc: HeaderCarrier): Future[GetMessageResponse] = {
+    httpClientV2.get(url"$baseUrl/messages/$id/content")
+      .execute[GetMessageResponse]
   }
 }
