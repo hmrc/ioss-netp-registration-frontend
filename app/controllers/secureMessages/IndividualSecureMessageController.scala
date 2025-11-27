@@ -40,8 +40,14 @@ class IndividualSecureMessageController @Inject()(
     implicit request =>
       secureMessageConnector.getMessage(id).flatMap {
         case Right(message) =>
-          secureMessageConnector.markAsRead(id)
-          Ok(view(id, message)).toFuture
+          secureMessageConnector.markAsRead(id).map {
+            case Right(_) =>
+              Ok(view(id, message))
+
+            case Left(error) =>
+              logger.error(s"Error marking message $id as read: $error")
+              Ok(view(id, message))
+          }
         case Left(error) =>
           logger.error(s"Error retrieving message $id: $error")
           NotFound("Message not found").toFuture
