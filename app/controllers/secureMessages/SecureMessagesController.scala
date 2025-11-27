@@ -71,8 +71,9 @@ class SecureMessagesController @Inject()(
               val unreadMessages: Seq[Boolean] = secureMessage.items.map(_.unreadMessages)
               val messageSubject: Seq[String] = secureMessage.items.map(_.subject)
               val messageValidFrom: Seq[String] = secureMessage.items.map(_.validFrom)
+              val messageId: Seq[String] = secureMessage.items.map(_.id)
 
-              val messageTable = buildMessagesTable(messageSubject, messageValidFrom, unreadMessages)
+              val messageTable = buildMessagesTable(messageSubject, messageValidFrom, unreadMessages, messageId)
 
               Ok(view(clientCompanyName, iossNumber, messageTable)).toFuture
 
@@ -94,26 +95,29 @@ class SecureMessagesController @Inject()(
   private def buildMessagesTable(
                                   subject: Seq[String],
                                   validFrom: Seq[String],
-                                  unreadMessages: Seq[Boolean]
+                                  unreadMessages: Seq[Boolean],
+                                  messageId: Seq[String]
                                 )(implicit messages: Messages): Table = {
 
     val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
 
     val rows: Seq[Seq[TableRow]] = {
 
-      val combinedList = subject.lazyZip(validFrom).lazyZip(unreadMessages).toList
+      val combinedList = subject.lazyZip(validFrom).lazyZip(unreadMessages).lazyZip(messageId).toList
 
-      val sortedList = combinedList.sortBy { case (_, dateStr, _) =>
+      val sortedList = combinedList.sortBy { case (_, dateStr, _, _) =>
         LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE)
       }(Ordering[LocalDate].reverse)
 
-      sortedList.map { case (sub, dateStr, unreadMessage) =>
+      sortedList.map { case (sub, dateStr, unreadMessage, messageId) =>
         val formattedDate = LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE).format(dateFormatter)
 
         val displayRedDot = if (unreadMessage) HtmlContent(messages("redDot")) else HtmlContent(messages(""))
 
+        val messageLink = routes.IndividualSecureMessageController.onPageLoad(messageId).url
+
         val displayCorrectMessage =
-          if (unreadMessage) HtmlContent(messages("secureMessages.subject.unread", sub)) else HtmlContent(messages("secureMessages.subject.read", sub))
+          if (unreadMessage) HtmlContent(messages("secureMessages.subject.unread", sub, messageLink)) else HtmlContent(messages("secureMessages.subject.read", sub, messageLink))
 
         Seq(
           TableRow(content = displayRedDot),
