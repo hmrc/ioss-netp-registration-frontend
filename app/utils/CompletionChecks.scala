@@ -68,7 +68,8 @@ trait CompletionChecks {
       isPreviouslyRegisteredDefined() &&
       isEuDetailsDefined() &&
       getAllIncompleteEuDetails().isEmpty &&
-      hasWebsiteValid()
+      hasWebsiteValid() &&
+      isContactDetailsPopulated()
   }
 
   def getFirstValidationErrorRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
@@ -88,7 +89,8 @@ trait CompletionChecks {
       incompletePreviousRegistrationRedirect(waypoints) ++
       emptyEuDetailsRedirect(waypoints) ++
       incompleteEuDetailsRedirect(waypoints) ++
-      incompleteWebsiteUrlsRedirect(waypoints)
+      incompleteWebsiteUrlsRedirect(waypoints) ++
+      emptyContactDetails(waypoints)
       ).headOption
   }
 
@@ -135,6 +137,22 @@ trait CompletionChecks {
           None
         }
       case _ => None
+    }
+  }
+
+  private def isContactDetailsPopulated()(implicit request: DataRequest[AnyContent]): Boolean = {
+    request.userAnswers.get(BusinessContactDetailsPage) exists { details =>
+      details.fullName.trim.nonEmpty &&
+        details.telephoneNumber.trim.nonEmpty &&
+        details.emailAddress.trim.nonEmpty
+    }
+  }
+
+  private def emptyContactDetails(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
+    if (!isContactDetailsPopulated()) {
+      Some(Redirect(controllers.routes.BusinessContactDetailsController.onPageLoad(waypoints)))
+    } else {
+      None
     }
   }
 }
