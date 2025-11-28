@@ -73,6 +73,7 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
     .set(RegistrationTypePage(countryIndex(0)), VatNumber).success.value
     .set(EuVatNumberPage(countryIndex(0)), euDetails.euVatNumber.value).success.value
     .set(WebsitePage(Index(0)), Website("www.test-website.com")).success.value
+    .set(BusinessContactDetailsPage, BusinessContactDetails("fullName", "555999111", "test@test.com")).success.value
 
 
   "CompletionChecks" - {
@@ -98,6 +99,23 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
 
         val invalidAnswers: UserAnswers = validAnswers
           .remove(WebsitePage(Index(0))).success.value
+
+        val application = applicationBuilder(userAnswers = Some(invalidAnswers)).build()
+
+        running(application) {
+          implicit val request: DataRequest[AnyContent] = mock[DataRequest[AnyContent]]
+
+          when(request.userAnswers) thenReturn invalidAnswers
+
+          val result = CompletionChecksTests.validate()
+
+          result `mustBe` false
+        }
+      }
+
+      "must validate and return false when contact details are missing" in {
+
+        val invalidAnswers = validAnswers.remove(BusinessContactDetailsPage).success.value
 
         val application = applicationBuilder(userAnswers = Some(invalidAnswers)).build()
 
