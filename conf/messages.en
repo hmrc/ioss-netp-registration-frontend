@@ -516,6 +516,7 @@ clientSuccessfulRegistration.title = Registration successful
 clientSuccessfulRegistration.heading = Registration successful
 clientSuccessfulRegistration.text = Your IOSS number is
 clientSuccessfulRegistration.info.1 = We have let your intermediary know.
+clientSuccessfulRegistration.next = What happens next
 clientSuccessfulRegistration.info.2 = They must now complete your monthly IOSS VAT returns and pay any VAT due.
 
 clientJourneyRecovery.startAgain.title = Sorry, there is a problem with the service
