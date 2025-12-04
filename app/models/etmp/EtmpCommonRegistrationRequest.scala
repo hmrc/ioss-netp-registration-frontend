@@ -29,8 +29,9 @@ import java.time.LocalDate
 trait EtmpCommonRegistrationRequest extends EtmpEuRegistrations with EtmpPreviousRegistrationsRequest {
 
   def getOtherAddress(idType: EtmpIdType, answers: UserAnswers): Option[EtmpOtherAddress] = {
-    idType match {
-      case EtmpIdType.VRN =>
+    val maybeBasedInUK = answers.get(BusinessBasedInUKPage)
+    (idType, maybeBasedInUK) match {
+      case (EtmpIdType.VRN, Some(true)) =>
         None
       case _ =>
         Some(

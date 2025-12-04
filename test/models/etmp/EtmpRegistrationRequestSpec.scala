@@ -29,8 +29,8 @@ import org.scalacheck.Gen
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.HasTradingNamePage
 import pages.vatEuDetails.HasFixedEstablishmentPage
-import pages.{BusinessContactDetailsPage, ClientHasVatNumberPage, ClientVatNumberPage}
-import play.api.libs.json.{JsError, JsSuccess, Json}
+import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientHasVatNumberPage, ClientVatNumberPage}
+import play.api.libs.json.{JsError, Json, JsSuccess}
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
@@ -115,6 +115,7 @@ class EtmpRegistrationRequestSpec extends SpecBase {
       )
 
       val userAnswers: UserAnswers = emptyUserAnswersWithVatInfo
+        .set(BusinessBasedInUKPage, true).success.value
         .set(ClientHasVatNumberPage, true).success.value
         .set(ClientVatNumberPage, "123456789").success.value
         .set(HasTradingNamePage, true).success.value
