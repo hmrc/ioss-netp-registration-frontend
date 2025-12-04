@@ -35,15 +35,16 @@ object ClientBusinessNameSummary {
          )(implicit messages: Messages): Option[SummaryListRow] = {
     answers.get(ClientBusinessNamePage).map { answer =>
       
-      val messageKey: String = answers.get(ClientCountryBasedPage) match {
+      val (messageKey, hiddenText): String = answers.get(ClientCountryBasedPage) match {
         case Some(country) if country.code.startsWith(ukCountryCodeAreaPrefix)=>
-          messages("clientBusinessName.checkYourAnswersLabel")
+          (messages("clientBusinessName.checkYourAnswersLabel"),messages("clientBusinessName.change.hidden"))
 
         case Some(country) =>
-          messages("clientBusinessName.checkYourAnswersLabel.withCountry", country.name)
+          (messages("clientBusinessName.checkYourAnswersLabel.withCountry", country.name),
+            messages("clientBusinessName.change.withCountry.hidden", country.name))
 
         case None =>
-          messages("clientBusinessName.checkYourAnswersLabel")
+          (messages("clientBusinessName.checkYourAnswersLabel"),messages("clientBusinessName.change.hidden"))
       }
 
       val value = HtmlFormat.escape(answer.name).toString
@@ -53,7 +54,7 @@ object ClientBusinessNameSummary {
         value = ValueViewModel(HtmlContent(value)),
         actions = Seq(
           ActionItemViewModel("site.change", ClientBusinessNamePage.changeLink(waypoints, sourcePage).url)
-            .withVisuallyHiddenText(messages("clientBusinessName.change.hidden"))
+            .withVisuallyHiddenText(hiddenText)
         )
       )
     }
