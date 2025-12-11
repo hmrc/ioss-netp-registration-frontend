@@ -27,7 +27,9 @@ case class EtmpDisplayRegistration(
                                     schemeDetails: EtmpDisplaySchemeDetails,
                                     exclusions: Seq[EtmpExclusion],
                                     adminUse: EtmpAdminUse
-                                  )
+                                  ) {
+  def isExcluded: Boolean = !exclusions.forall(_.exclusionReason == EtmpExclusionReason.Reversal)
+}
 
 object EtmpDisplayRegistration {
 

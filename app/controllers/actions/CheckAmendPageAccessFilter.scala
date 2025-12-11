@@ -129,10 +129,10 @@ class CheckAmendPageAccessFilter @Inject()(
     override protected def executionContext: ExecutionContext = CheckAmendPageAccessFilter.this.executionContext
 
     override protected def filter[A](request: DataRequest[A]): Future[Option[Result]] = {
-      val hasExclusion = request.registrationWrapper.exists(_.etmpDisplayRegistration.exclusions.nonEmpty)
+      val hasExclusion = request.registrationWrapper.exists(_.etmpDisplayRegistration.isExcluded)
 
       if (shouldBlockPage(Some(request.userAnswers), page, hasExclusion)) {
-        logger.info(s"Blocked access to ${page.toString}")
+        logger.info(s"Blocked access to ${page.toString} for ${request.iossNumber}")
         Future.successful(Some(Redirect(controllers.amend.routes.ChangeRegistrationController.onPageLoad())))
       } else {
         Future.successful(None)
@@ -144,10 +144,10 @@ class CheckAmendPageAccessFilter @Inject()(
     override protected def executionContext: ExecutionContext = CheckAmendPageAccessFilter.this.executionContext
 
     override protected def filter[A](request: OptionalDataRequest[A]): Future[Option[Result]] = {
-      val hasExclusion = request.registrationWrapper.exists(_.etmpDisplayRegistration.exclusions.nonEmpty)
+      val hasExclusion = request.registrationWrapper.exists(_.etmpDisplayRegistration.isExcluded)
 
       if (shouldBlockPage(request.userAnswers, page, hasExclusion)) {
-        logger.info(s"Blocked access to ${page.toString}")
+        logger.info(s"Blocked access to ${page.toString} for ${request.intermediaryNumber}")
         Future.successful(Some(Redirect(controllers.amend.routes.ChangeRegistrationController.onPageLoad())))
       } else {
         Future.successful(None)
