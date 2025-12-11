@@ -76,10 +76,9 @@ class ChangeRegistrationController @Inject()(
       val existingPreviousRegistrations: Seq[EtmpPreviousEuRegistrationDetails] = request.registrationWrapper
         .etmpDisplayRegistration.schemeDetails.previousEURegistrationDetails
 
-      val exclusions = request.registrationWrapper.etmpDisplayRegistration.exclusions
-      val isExcluded = exclusions.nonEmpty
+      val isExcluded = request.registrationWrapper.etmpDisplayRegistration.isExcluded
 
-      val effectiveDate: Option[String] = exclusions.headOption.map { exclusion =>
+      val effectiveDate: Option[String] = request.registrationWrapper.etmpDisplayRegistration.exclusions.headOption.map { exclusion =>
         exclusion.effectiveDate.format(dateFormatter)
       }
 
