@@ -17,15 +17,19 @@
 package controllers.actions
 
 import config.FrontendAppConfig
+import controllers.routes
 import logging.Logging
 import models.requests.OptionalDataRequest
 import play.api.mvc.*
 import play.api.mvc.Results.Redirect
 import repositories.SessionRepository
+import services.UrlBuilderService
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisationException, AuthorisedFunctions, NoActiveSession}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.~
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions, NoActiveSession}
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.binders.{AbsoluteWithHostnameFromAllowlist, OnlyRelative}
+import uk.gov.hmrc.play.bootstrap.binders.RedirectUrl.idFunctor
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.Inject
@@ -38,10 +42,13 @@ class ClientIdentifierActionImpl @Inject()(
                                             override val authConnector: AuthConnector,
                                             config: FrontendAppConfig,
                                             val parser: BodyParsers.Default,
+                                            urlBuilderService: UrlBuilderService
                                           )(implicit val ec: ExecutionContext)
   extends ClientIdentifierAction with AuthorisedFunctions with Logging {
 
   override protected def executionContext: ExecutionContext = ec
+
+  private lazy val redirectPolicy = (OnlyRelative | AbsoluteWithHostnameFromAllowlist(config.allowedRedirectUrls: _*))
 
   override def invokeBlock[A](
                                request: Request[A],
@@ -61,10 +68,9 @@ class ClientIdentifierActionImpl @Inject()(
         Future.failed(new IllegalStateException("Missing Internal ID"))
     } recover {
       case _: NoActiveSession =>
-        val clientJourneyStartUrl: String = s"${config.clientCodeEntryUrl}/${request.path.split("/").last}"
-        Redirect(
-          config.loginUrl,
-          Map("continue" -> Seq(clientJourneyStartUrl)))
+        Redirect(config.loginUrl, Map("continue" -> Seq(urlBuilderService.loginContinueUrl(request).get(redirectPolicy).url)))
+      case _: AuthorisationException =>
+        Redirect(routes.UnauthorisedController.onPageLoad())
     }
   }
 }
