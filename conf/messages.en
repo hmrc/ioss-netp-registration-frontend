@@ -358,8 +358,9 @@ previousIossNumber.checkYourAnswersLabel = Registration number
 previousIossNumber.error.schemeNumber.required = Enter your client''s previous IOSS registration number for {0}
 previousIossNumber.error.invalid = Enter a valid IOSS registration number
 
-deletePreviousScheme.title = Remove this registration for {0}?
-deletePreviousScheme.heading = Remove this registration for {0}?
+deletePreviousScheme.title = Remove this registration for {0}
+deletePreviousScheme.heading = Removing {0}''s registration
+deletePreviousScheme.label = Do you want to remove this registration for {0}?
 deletePreviousScheme.paragraph = This will remove {0} from your previous registrations.
 deletePreviousScheme.error.required = Select yes if you want to remove this registration for {0}
 

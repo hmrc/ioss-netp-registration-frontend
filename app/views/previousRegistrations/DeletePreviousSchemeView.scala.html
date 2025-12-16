@@ -16,6 +16,7 @@
 
 @import views.html.components.ButtonGroup
 @import pages.previousRegistrations.DeletePreviousSchemePage
+@import viewmodels.LegendSize
 
 
 @this(
@@ -29,6 +30,16 @@
 
 @(form: Form[_], waypoints: Waypoints, countryIndex: Index, schemeIndex: Index, country: Country, list: SummaryList, isLastPreviousScheme: Boolean)(implicit request: Request[_], messages: Messages)
 
+@hintText = @{
+    if (isLastPreviousScheme) {
+        HtmlContent(
+            s"""<p class="govuk-body">${messages("deletePreviousScheme.paragraph", country.name)}</p>"""
+        )
+    } else {
+        HtmlContent("")
+    }
+}
+
 @layout(pageTitle = title(form, messages("deletePreviousScheme.title", country.name))) {
 
     @formHelper(action = controllers.previousRegistrations.routes.DeletePreviousSchemeController.onSubmit(waypoints, countryIndex, schemeIndex), Symbol("autoComplete") -> "off") {
@@ -39,17 +50,15 @@
 
         <h1 class="govuk-heading-l">@messages("deletePreviousScheme.heading", country.name)</h1>
 
-        @if(isLastPreviousScheme) {
-            <p class="govuk-body">@messages("deletePreviousScheme.paragraph", country.name)</p>
-        }
-
         @govukSummaryList(list)
 
         @govukRadios(
             RadiosViewModel.yesNo(
                 field  = form("value"),
-                legend = LegendViewModel(messages(""))
-            )
+                legend = LegendViewModel(
+                    HtmlContent(Html("""<h2 class="govuk-fieldset__heading">""" + messages("deletePreviousScheme.label", country.name) + "</h2>"))
+                ).withSize(LegendSize.Medium)
+            ).withHint(HintViewModel(hintText))
         )
 
         @button("site.continue", DeletePreviousSchemePage(countryIndex, schemeIndex).route(waypoints).url, waypoints)
