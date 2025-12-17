@@ -300,10 +300,10 @@ previouslyRegistered.checkYourAnswersLabel = Other One Stop Shop registrations
 previouslyRegistered.error.required = Select yes if your client''s business has ever registered for an Import One Stop Shop scheme
 previouslyRegistered.change.hidden = Select yes if your client''s business has ever registered for an Import One Stop Shop scheme
 
-previousEuCountry.title = Which EU country was it registered in?
-previousEuCountry.heading = Which EU country was it registered in?
-previousEuCountry.error.required = Select an EU country
-previousEuCountry.error.duplicate = You selected this EU country already. Select a different one.
+previousEuCountry.title = Which country was it registered in?
+previousEuCountry.heading = Which country was it registered in?
+previousEuCountry.error.required = Select a country
+previousEuCountry.error.duplicate = You selected this country already. Select a different one.
 
 previousRegistrations.checkYourAnswersLabel = Countries registered in
 previousRegistrations.checkYourAnswersLabel.added = Countries registered in added
