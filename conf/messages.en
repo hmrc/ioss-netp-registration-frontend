@@ -302,8 +302,8 @@ previouslyRegistered.change.hidden = Select yes if your client''s business has e
 
 previousEuCountry.title = Which country was it registered in?
 previousEuCountry.heading = Which country was it registered in?
-previousEuCountry.error.required = Select an EU country
-previousEuCountry.error.duplicate = You selected this EU country already. Select a different one.
+previousEuCountry.error.required = Select a country
+previousEuCountry.error.duplicate = You selected this country already. Select a different one.
 
 previousRegistrations.checkYourAnswersLabel = Countries registered in
 previousRegistrations.checkYourAnswersLabel.added = Countries registered in added
