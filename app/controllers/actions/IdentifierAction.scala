@@ -61,7 +61,6 @@ class AuthenticatedIdentifierAction @Inject()(
             val vrn: Vrn = findVrnFromEnrolments(enrolments)
             intermediaryRegistrationService.getIntermediaryRegistration().flatMap {
               case Some(_) =>
-                println("identify here")
                 block(IdentifierRequest(request, internalId, enrolments, vrn, intermediaryNumber))
               case None =>
                 logger.error(s"No VAT customer info found for VRN: ${vrn.vrn}")
