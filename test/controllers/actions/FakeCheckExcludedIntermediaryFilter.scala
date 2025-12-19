@@ -18,19 +18,20 @@ package controllers.actions
 
 import connectors.RegistrationConnector
 import models.requests.OptionalDataRequest
+import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.mvc.Result
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class FakeCheckExcludedIntermediaryFilter(registrationConnector: RegistrationConnector)
-  extends CheckExcludedIntermediaryFilter(registrationConnector)(ExecutionContext.Implicits.global) {
+class FakeCheckExcludedIntermediaryFilter
+  extends CheckExcludedIntermediaryFilter(mock[RegistrationConnector])(ExecutionContext.Implicits.global) {
 
   override protected def filter[A](request: OptionalDataRequest[A]): Future[Option[Result]] = {
     Future.successful(None)
   }
 }
 
-class FakeCheckExcludedIntermediaryFilterProvider(registrationConnector: RegistrationConnector)
-  extends CheckExcludedIntermediaryFilterProvider(registrationConnector)(ExecutionContext.Implicits.global) {
-  override def apply(): CheckExcludedIntermediaryFilter = new FakeCheckExcludedIntermediaryFilter(registrationConnector)
+class FakeCheckExcludedIntermediaryFilterProvider
+  extends CheckExcludedIntermediaryFilterProvider(mock[RegistrationConnector])(ExecutionContext.Implicits.global) {
+  override def apply(): CheckExcludedIntermediaryFilter = new FakeCheckExcludedIntermediaryFilter()
 }

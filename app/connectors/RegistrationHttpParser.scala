@@ -19,6 +19,7 @@ package connectors
 import logging.Logging
 import models.etmp.amend.AmendRegistrationResponse
 import models.etmp.display.RegistrationWrapper
+import models.etmp.intermediary.IntermediaryRegistrationWrapper
 import models.iossRegistration.IossEtmpDisplayRegistration
 import models.ossRegistration.OssRegistration
 import models.responses.*
@@ -34,6 +35,7 @@ object RegistrationHttpParser extends Logging {
   type OssRegistrationResponse = Either[ErrorResponse, OssRegistration]
   type AmendRegistrationResultResponse = Either[ErrorResponse, AmendRegistrationResponse]
   type EtmpDisplayRegistrationResponse = Either[ErrorResponse, RegistrationWrapper]
+  type EtmpDisplayIntermediaryRegistrationResponse = Either[ErrorResponse, IntermediaryRegistrationWrapper]
 
   implicit object RegistrationResponseReads extends HttpReads[RegistrationResultResponse] {
 
@@ -116,6 +118,27 @@ object RegistrationHttpParser extends Logging {
       response.status match {
         case OK =>
           response.json.validate[RegistrationWrapper] match {
+            case JsSuccess(registrationWrapper, _) => Right(registrationWrapper)
+            case JsError(errors) =>
+              logger.error(s"Failed trying to parse Registration Wrapper JSON with status: ${response.status} " +
+                s"and response body: ${response.body} with errors: $errors.")
+              Left(InvalidJson)
+          }
+
+        case status =>
+          logger.error(s"An unknown error occurred when trying to retrieve Registration Wrapper with status: $status " +
+            s"and response body: ${response.body}")
+          Left(InternalServerError)
+      }
+    }
+  }
+
+  implicit object EtmpDisplayIntermediaryRegistrationResponseReads extends HttpReads[EtmpDisplayIntermediaryRegistrationResponse] {
+
+    override def read(method: String, url: String, response: HttpResponse): EtmpDisplayIntermediaryRegistrationResponse = {
+      response.status match {
+        case OK =>
+          response.json.validate[IntermediaryRegistrationWrapper] match {
             case JsSuccess(registrationWrapper, _) => Right(registrationWrapper)
             case JsError(errors) =>
               logger.error(s"Failed trying to parse Registration Wrapper JSON with status: ${response.status} " +

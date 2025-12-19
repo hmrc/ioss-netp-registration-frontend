@@ -39,7 +39,7 @@ class CheckExcludedIntermediaryFilter(registrationConnector: RegistrationConnect
 
     request.intermediaryNumber match {
       case Some(intermediaryNumber) =>
-        registrationConnector.displayRegistrationIntermediary(intermediaryNumber).flatMap {
+        registrationConnector.displayIntermediaryRegistration(intermediaryNumber).flatMap {
           case Right(intermediaryRegistration) =>
             if (intermediaryRegistration.etmpDisplayRegistration.exclusions.nonEmpty) {
               Some(Redirect(routes.CannotUseNotAnIntermediaryController.onPageLoad())).toFuture
