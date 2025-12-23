@@ -230,7 +230,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 importOneStopShopDetailsList,
                 isValid = false,
                 isExcluded = false,
-                effectiveDate = None
+                maybeExclusion= None,
+                exclusionDeadline = None
               )(request, messages(application)).toString
           }
         }
@@ -268,7 +269,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 importOneStopShopDetailsList,
                 isValid = false,
                 isExcluded = false,
-                effectiveDate = None
+                maybeExclusion= None,
+                exclusionDeadline = None
               )(request, messages(application)).toString
           }
         }
@@ -305,7 +307,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               importOneStopShopDetailsList,
               isValid = false,
               isExcluded = false,
-              effectiveDate = None
+              maybeExclusion= None,
+              exclusionDeadline = None
             )(request, messages(application)).toString
           }
         }
@@ -343,7 +346,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 importOneStopShopDetailsList,
                 isValid = false,
                 isExcluded = false,
-                effectiveDate = None
+                maybeExclusion= None,
+                exclusionDeadline = None
               )(request, messages(application)).toString
           }
         }

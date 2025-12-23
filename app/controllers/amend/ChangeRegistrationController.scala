@@ -25,7 +25,7 @@ import models.audit.NetpAmendRegistrationAuditModel
 import models.audit.RegistrationAuditType.AmendRegistration
 import models.audit.SubmissionResult.{Failure, Success}
 import models.domain.PreviousRegistration
-import models.etmp.EtmpPreviousEuRegistrationDetails
+import models.etmp.{EtmpPreviousEuRegistrationDetails, EtmpExclusion}
 import models.requests.AuthenticatedMandatoryRegistrationRequest
 import models.{CheckMode, Country, InternationalAddress, UserAnswers}
 import pages.*
@@ -76,10 +76,12 @@ class ChangeRegistrationController @Inject()(
       val existingPreviousRegistrations: Seq[EtmpPreviousEuRegistrationDetails] = request.registrationWrapper
         .etmpDisplayRegistration.schemeDetails.previousEURegistrationDetails
 
-      val isExcluded = request.registrationWrapper.etmpDisplayRegistration.isExcluded
+      val maybeExclusion: Option[EtmpExclusion] = request.registrationWrapper.etmpDisplayRegistration.exclusions.lastOption
 
-      val effectiveDate: Option[String] = request.registrationWrapper.etmpDisplayRegistration.exclusions.headOption.map { exclusion =>
-        exclusion.effectiveDate.format(dateFormatter)
+      val isExcluded = maybeExclusion.isDefined
+
+      val exclusionDeadline: Option[String] = maybeExclusion.map { exclusion =>
+        exclusion.effectiveDate.plusDays(45).format(dateFormatter)
       }
 
       getClientCompanyName(waypoints) { companyName =>
@@ -156,7 +158,7 @@ class ChangeRegistrationController @Inject()(
 
         val isValid: Boolean = validate()(request.request)
 
-        Ok(view(waypoints, companyName, request.iossNumber, registrationDetailsList, importOneStopShopDetailsList, isValid, isExcluded, effectiveDate)).toFuture
+        Ok(view(waypoints, companyName, request.iossNumber, registrationDetailsList, importOneStopShopDetailsList, isValid, isExcluded, maybeExclusion, exclusionDeadline)).toFuture
       }(request.request)
   }
 
