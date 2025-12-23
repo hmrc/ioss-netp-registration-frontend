@@ -19,6 +19,8 @@
 @import uk.gov.hmrc.govukfrontend.views.html.components.GovukWarningText
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.warningtext.WarningText
 @import pages.amend.CancelAmendRegistrationPage
+@import models.etmp.{EtmpExclusion, TRADER}
+@import formats.Format.dateFormatter
 
 @this(
         layout: templates.Layout,
@@ -30,7 +32,7 @@
         govukWarningText: GovukWarningText
 )
 
-@(waypoints: Waypoints, companyName: String, iossNum: String, list: SummaryList, ilist: SummaryList, isValid: Boolean, isExcluded: Boolean, effectiveDate: Option[String])(implicit request: Request[_], messages: Messages)
+@(waypoints: Waypoints, companyName: String, iossNum: String, list: SummaryList, ilist: SummaryList, isValid: Boolean, isExcluded: Boolean, maybeExclusion: Option[EtmpExclusion], exclusionDeadline: Option[String])(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("changeRegistration.title",companyName )), showBackLink = false) {
 
@@ -45,8 +47,15 @@
 
     <p class="govuk-caption-l govuk-!-margin-bottom-6">@messages("changeRegistration.intermediaryNumber", iossNum)</p>
 
-    @if(isExcluded) {
-        <p class="govuk-inset-text">@Html(messages("changeRegistration.removedClient.text", companyName, effectiveDate.getOrElse("")))</p>
+    @maybeExclusion.map { exclusion =>
+        <div class="govuk-inset-text">
+            @if(exclusion.exclusionReason.exclusionSource == TRADER) {
+                <p class="govuk-body">@messages("changeRegistration.removedClient.intermediary", companyName, exclusion.effectiveDate.format(dateFormatter))</p>
+                <p class="govuk-body">@Html(messages("changeRegistration.removedClient.intermediary.undo", exclusionDeadline.getOrElse("")))</p>
+             } else {
+                <p class="govuk-body">@messages("changeRegistration.removedClient.hmrc", companyName, exclusion.effectiveDate.format(dateFormatter))</p>
+            }
+        </div>
     }
 
     <h2 class="govuk-heading-m">@messages("changeRegistration.registrationDetails.heading")</h2>
