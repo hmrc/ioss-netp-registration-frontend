@@ -50,10 +50,10 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
 
   def checkAmendAccess: CheckAmendPageAccessFilter
 
+  def checkExcludedIntermediary: CheckExcludedIntermediaryFilterProvider
+
   def identifyAndGetData(inAmend: Boolean = false, checkAmendAccess: Option[Page] = None): ActionBuilder[DataRequest, AnyContent] = {
-    val baseActions = actionBuilder andThen
-      identify andThen
-      getData andThen
+    val baseActions = identifyAndGetOptionalData(inAmend, checkAmendAccess) andThen
       requireData(inAmend)
 
       (inAmend, checkAmendAccess) match {
@@ -65,7 +65,8 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
   def identifyAndGetOptionalData(inAmend: Boolean = false, checkAmendAccess: Option[Page] = None): ActionBuilder[OptionalDataRequest, AnyContent] = {
     val baseActions = actionBuilder andThen
       identify andThen
-      getData
+      getData andThen
+      checkExcludedIntermediary()
 
     (inAmend, checkAmendAccess) match {
       case (true, Some(page)) => baseActions andThen this.checkAmendAccess.forOptionalData(page)
@@ -99,5 +100,6 @@ case class DefaultAuthenticatedControllerComponents @Inject()(
                                                                clientIdentify: ClientIdentifierAction,
                                                                clientGetData: ClientDataRetrievalAction,
                                                                requireRegistration: RegistrationRequiredAction,
-                                                               checkAmendAccess: CheckAmendPageAccessFilter
+                                                               checkAmendAccess: CheckAmendPageAccessFilter,
+                                                               checkExcludedIntermediary: CheckExcludedIntermediaryFilterProvider
                                                              ) extends AuthenticatedControllerComponents

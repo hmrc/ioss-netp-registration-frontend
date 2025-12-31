@@ -45,7 +45,6 @@ case class DataRequest[A](
                            registrationWrapper: Option[RegistrationWrapper] = None
                          ) extends GenericRequest[A](request, userId, userAnswers)
 
-// TODO -> Required???
 case class IntermediaryDataRequest[A](
                                        request: Request[A],
                                        override val userId: String,
