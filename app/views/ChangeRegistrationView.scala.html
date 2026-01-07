@@ -50,10 +50,12 @@
     @maybeExclusion.map { exclusion =>
         <div class="govuk-inset-text">
             @if(exclusion.exclusionReason.exclusionSource == TRADER) {
-                <p class="govuk-body">@messages("changeRegistration.removedClient.intermediary", companyName, exclusion.effectiveDate.format(dateFormatter))</p>
-                <p class="govuk-body">@Html(messages("changeRegistration.removedClient.intermediary.undo", exclusionDeadline.getOrElse("")))</p>
-             } else {
-                <p class="govuk-body">@messages("changeRegistration.removedClient.hmrc", companyName, exclusion.effectiveDate.format(dateFormatter))</p>
+                <p class="govuk-body">@messages("changeRegistration.removedClient.intermediary", companyName, exclusion.decisionDate.format(dateFormatter))</p>
+                @exclusionDeadline.map { deadline =>
+                    <p class="govuk-body">@Html(messages("changeRegistration.removedClient.intermediary.undo", deadline))</p>
+                }
+            } else {
+                <p class="govuk-body">@messages("changeRegistration.removedClient.hmrc", companyName, exclusion.decisionDate.format(dateFormatter))</p>
             }
         </div>
     }

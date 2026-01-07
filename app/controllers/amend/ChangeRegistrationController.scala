@@ -48,6 +48,7 @@ import viewmodels.previousRegistrations.{PreviousRegistrationSummary, Previously
 import views.html.ChangeRegistrationView
 
 import javax.inject.Inject
+import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
 class ChangeRegistrationController @Inject()(
@@ -76,12 +77,22 @@ class ChangeRegistrationController @Inject()(
       val existingPreviousRegistrations: Seq[EtmpPreviousEuRegistrationDetails] = request.registrationWrapper
         .etmpDisplayRegistration.schemeDetails.previousEURegistrationDetails
 
-      val maybeExclusion: Option[EtmpExclusion] = request.registrationWrapper.etmpDisplayRegistration.exclusions.lastOption
+      val maybeExclusion: Option[EtmpExclusion] = request.registrationWrapper.etmpDisplayRegistration.exclusions.lastOption.flatMap { exclusion =>
+        exclusion.exclusionReason match {
+          case models.etmp.EtmpExclusionReason.Reversal => None
+          case _ => Some(exclusion)
+        }
+      }
 
       val isExcluded = maybeExclusion.isDefined
 
-      val exclusionDeadline: Option[String] = maybeExclusion.map { exclusion =>
-        exclusion.effectiveDate.plusDays(45).format(dateFormatter)
+      val exclusionDeadline: Option[String] = maybeExclusion.flatMap { exclusion =>
+        val deadline = exclusion.effectiveDate.withDayOfMonth(exclusion.effectiveDate.lengthOfMonth())
+        if (LocalDate.now().isBefore(deadline) || LocalDate.now().isEqual(deadline)) {
+          Some(deadline.format(dateFormatter))
+        } else {
+          None
+        }
       }
 
       getClientCompanyName(waypoints) { companyName =>
