@@ -54,24 +54,31 @@ class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAf
       "must return DataRequest with no registrationWrapper when userAnswers present" in {
 
         val action = new Harness(isInAmendMode = false)
+
+        val userAnswers =
+          emptyUserAnswersWithVatInfo.set(IossNumberQuery, iossNumber).success.value
+
         val request = OptionalDataRequest(
           FakeRequest(),
           userAnswersId,
-          Some(emptyUserAnswersWithVatInfo),
+          Some(userAnswers),
           Some(intermediaryNumber),
           Enrolments(Set.empty)
         )
 
         val result = action.callRefine(request).futureValue
 
-        result mustBe Right(DataRequest(
-          request = request.request,
-          userId = userAnswersId,
-          userAnswers = emptyUserAnswersWithVatInfo,
-          intermediaryNumber = intermediaryNumber,
-          iossNumber = None,
-          registrationWrapper = None
-        ))
+        result match {
+          case Right(dataRequest) =>
+            dataRequest.userId mustBe userAnswersId
+            dataRequest.userAnswers mustBe userAnswers
+            dataRequest.intermediaryNumber mustBe intermediaryNumber
+            dataRequest.iossNumber mustBe Some(iossNumber)
+            dataRequest.registrationWrapper mustBe None
+
+          case Left(_) =>
+            fail("Expected Right(DataRequest), got Left")
+        }
 
         verifyNoInteractions(mockRegistrationConnector)
       }
@@ -147,41 +154,6 @@ class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAf
 
         verify(mockRegistrationConnector, times(1))
           .displayRegistrationNetp(eqTo(iossNumber))(any())
-        verify(mockRegistrationConnector, times(0))
-          .displayRegistrationIntermediary(any())(any())
-      }
-
-      "must fetch intermediary registration when IossNumberQuery is NOT present" in {
-
-        val userAnswersWithoutIossNumber = emptyUserAnswersWithVatInfo
-
-        when(mockRegistrationConnector.displayRegistrationIntermediary(eqTo(intermediaryNumber))(any()))
-          .thenReturn(Right(registrationWrapper).toFuture)
-
-        val action = new Harness(isInAmendMode = true)
-        val request = OptionalDataRequest(
-          FakeRequest(),
-          userAnswersId,
-          Some(userAnswersWithoutIossNumber),
-          Some(intermediaryNumber),
-          Enrolments(Set.empty)
-        )
-
-        val result = action.callRefine(request).futureValue
-
-        result mustBe Right(DataRequest(
-          request = request.request,
-          userId = userAnswersId,
-          userAnswers = userAnswersWithoutIossNumber,
-          intermediaryNumber = intermediaryNumber,
-          iossNumber = None,
-          registrationWrapper = Some(registrationWrapper)
-        ))
-
-        verify(mockRegistrationConnector, times(1))
-          .displayRegistrationIntermediary(eqTo(intermediaryNumber))(any())
-        verify(mockRegistrationConnector, times(0))
-          .displayRegistrationNetp(any())(any())
       }
 
       "must throw RuntimeException when displayRegistrationNetp fails" in {
@@ -197,29 +169,6 @@ class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAf
           FakeRequest(),
           userAnswersId,
           Some(userAnswersWithIossNumber),
-          Some(intermediaryNumber),
-          Enrolments(Set.empty)
-        )
-
-        val exception = intercept[RuntimeException] {
-          action.callRefine(request).futureValue
-        }
-
-        exception.getMessage must include("Failed to retrieve registration whilst in amend mode")
-      }
-
-      "must throw RuntimeException when displayRegistrationIntermediary fails" in {
-
-        val userAnswersWithoutIossNumber = emptyUserAnswersWithVatInfo
-
-        when(mockRegistrationConnector.displayRegistrationIntermediary(eqTo(intermediaryNumber))(any()))
-          .thenReturn(Left(NotFound).toFuture)
-
-        val action = new Harness(isInAmendMode = true)
-        val request = OptionalDataRequest(
-          FakeRequest(),
-          userAnswersId,
-          Some(userAnswersWithoutIossNumber),
           Some(intermediaryNumber),
           Enrolments(Set.empty)
         )

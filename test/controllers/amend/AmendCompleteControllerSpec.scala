@@ -84,7 +84,7 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
 
     "must return OK and the correct view for a GET" in {
 
-      when(mockRegistrationConnector.displayRegistrationIntermediary(any())(any())) thenReturn Right(registrationWrapper).toFuture
+      when(mockRegistrationConnector.displayIntermediaryRegistration(any())(any())) thenReturn Right(registrationWrapper).toFuture
 
       val application = applicationBuilder(userAnswers = Some(originalRegistration)).build()
       

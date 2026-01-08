@@ -21,6 +21,7 @@ import models.core.{CoreRegistrationRequest, CoreRegistrationValidationResult}
 import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
 import models.etmp.SchemeType
+import models.etmp.intermediary.IntermediaryVatCustomerInfo
 import models.iossRegistration.*
 import models.ossRegistration.*
 import models.previousRegistrations.NonCompliantDetails
@@ -135,6 +136,27 @@ trait ModelGenerators extends EitherValues with EtmpModelGenerators {
         VatCustomerInfo(
           desAddress = desAddress,
           registrationDate = registrationDate,
+          organisationName = Some(organisationName),
+          individualName = Some(individualName),
+          singleMarketIndicator = singleMarketIndicator,
+          deregistrationDecisionDate = None
+        )
+      }
+    }
+  }
+
+  implicit val arbitraryIntermediaryVatCustomerInfo: Arbitrary[IntermediaryVatCustomerInfo] = {
+    Arbitrary {
+      for {
+        desAddress <- arbitraryDesAddress.arbitrary
+        registrationDate <- arbitraryDate.arbitrary
+        organisationName <- Gen.alphaStr
+        individualName <- Gen.alphaStr
+        singleMarketIndicator <- arbitrary[Boolean]
+      } yield {
+        IntermediaryVatCustomerInfo(
+          desAddress = desAddress,
+          registrationDate = Some(registrationDate),
           organisationName = Some(organisationName),
           individualName = Some(individualName),
           singleMarketIndicator = singleMarketIndicator,

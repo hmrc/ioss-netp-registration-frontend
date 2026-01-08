@@ -27,7 +27,7 @@ case class EtmpIntermediaryDisplayRegistration(
                                                 tradingNames: Seq[EtmpTradingName],
                                                 clientDetails: Seq[EtmpClientDetails],
                                                 intermediaryDetails: Option[EtmpIntermediaryDetails],
-                                                otherAddress: Option[EtmpIntermediaryOtherAddress],
+                                                otherAddress: Option[EtmpOtherAddress],
                                                 schemeDetails: EtmpIntermediaryDisplaySchemeDetails,
                                                 exclusions: Seq[EtmpExclusion],
                                                 bankDetails: EtmpBankDetails,

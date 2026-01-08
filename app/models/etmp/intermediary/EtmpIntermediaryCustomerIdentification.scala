@@ -16,6 +16,7 @@
 
 package models.etmp.intermediary
 
+import models.etmp.EtmpIdType
 import play.api.libs.json.{Json, OFormat}
 
 case class EtmpIntermediaryCustomerIdentification(idType: EtmpIdType, idValue: String)
