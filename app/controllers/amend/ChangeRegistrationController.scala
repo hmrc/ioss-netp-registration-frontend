@@ -87,7 +87,7 @@ class ChangeRegistrationController @Inject()(
       val isExcluded = maybeExclusion.isDefined
 
       val exclusionDeadline: Option[String] = maybeExclusion.flatMap { exclusion =>
-        val deadline = exclusion.effectiveDate.withDayOfMonth(exclusion.effectiveDate.lengthOfMonth())
+        val deadline = exclusion.effectiveDate.minusDays(1)
         if (LocalDate.now().isBefore(deadline) || LocalDate.now().isEqual(deadline)) {
           Some(deadline.format(dateFormatter))
         } else {
