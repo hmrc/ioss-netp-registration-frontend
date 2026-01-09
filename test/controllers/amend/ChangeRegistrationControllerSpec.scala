@@ -351,6 +351,137 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               )(request, messages(application)).toString
           }
         }
+        "A NETP has an active TRADER exclusion within deadline" in {
+          val effectiveDate = LocalDate.now().plusMonths(1)
+          val exclusionWithinDeadline = models.etmp.EtmpExclusion(
+            exclusionReason = models.etmp.EtmpExclusionReason.VoluntarilyLeaves,
+            effectiveDate = effectiveDate,
+            decisionDate = LocalDate.now().minusDays(5),
+            quarantine = false
+          )
+
+          val registrationWrapperWithExclusion = registrationWrapperWithoutExclusions.copy(
+            etmpDisplayRegistration = registrationWrapperWithoutExclusions.etmpDisplayRegistration.copy(
+              exclusions = Seq(exclusionWithinDeadline)
+            )
+          )
+
+          val application = applicationBuilder(
+            userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo),
+            registrationWrapper = Some(registrationWrapperWithExclusion)
+          ).build()
+
+          running(application) {
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+            implicit val msgs: Messages = messages(application)
+            val result = route(application, request).value
+
+            status(result) mustBe OK
+
+            val content = contentAsString(result)
+            content must include("You removed")
+            content must include("If you wish to undo this removal")
+            content must include(effectiveDate.minusDays(1).format(formats.Format.dateFormatter))
+          }
+        }
+
+        "A NETP has an expired TRADER exclusion past the reversal deadline" in {
+          val effectiveDate = LocalDate.now().minusDays(5)
+          val expiredExclusion = models.etmp.EtmpExclusion(
+            exclusionReason = models.etmp.EtmpExclusionReason.VoluntarilyLeaves,
+            effectiveDate = effectiveDate,
+            decisionDate = effectiveDate.minusDays(10),
+            quarantine = false
+          )
+
+          val registrationWrapperWithExclusion = registrationWrapperWithoutExclusions.copy(
+            etmpDisplayRegistration = registrationWrapperWithoutExclusions.etmpDisplayRegistration.copy(
+              exclusions = Seq(expiredExclusion)
+            )
+          )
+
+          val application = applicationBuilder(
+            userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo),
+            registrationWrapper = Some(registrationWrapperWithExclusion)
+          ).build()
+
+          running(application) {
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+            implicit val msgs: Messages = messages(application)
+            val result = route(application, request).value
+
+            status(result) mustBe OK
+
+            val content = contentAsString(result)
+            content must include("You removed")
+            content must not include ("If you wish to undo this removal")
+          }
+        }
+
+        "A NETP has an HMRC exclusion" in {
+          val effectiveDate = LocalDate.now().plusMonths(1)
+          val hmrcExclusion = models.etmp.EtmpExclusion(
+            exclusionReason = models.etmp.EtmpExclusionReason.NoLongerMeetsConditions,
+            effectiveDate = effectiveDate,
+            decisionDate = LocalDate.now().minusDays(5),
+            quarantine = false
+          )
+
+          val registrationWrapperWithExclusion = registrationWrapperWithoutExclusions.copy(
+            etmpDisplayRegistration = registrationWrapperWithoutExclusions.etmpDisplayRegistration.copy(
+              exclusions = Seq(hmrcExclusion)
+            )
+          )
+
+          val application = applicationBuilder(
+            userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo),
+            registrationWrapper = Some(registrationWrapperWithExclusion)
+          ).build()
+
+          running(application) {
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+            implicit val msgs: Messages = messages(application)
+            val result = route(application, request).value
+
+            status(result) mustBe OK
+
+            val content = contentAsString(result)
+            content must include("We removed")
+            content must not include ("If you wish to undo this removal")
+          }
+        }
+
+        "A NETP has a Reversal exclusion and no warning is shown" in {
+          val reversalExclusion = models.etmp.EtmpExclusion(
+            exclusionReason = models.etmp.EtmpExclusionReason.Reversal,
+            effectiveDate = LocalDate.now().plusMonths(1),
+            decisionDate = LocalDate.now().minusDays(5),
+            quarantine = false
+          )
+
+          val registrationWrapperWithExclusion = registrationWrapperWithoutExclusions.copy(
+            etmpDisplayRegistration = registrationWrapperWithoutExclusions.etmpDisplayRegistration.copy(
+              exclusions = Seq(reversalExclusion)
+            )
+          )
+
+          val application = applicationBuilder(
+            userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo),
+            registrationWrapper = Some(registrationWrapperWithExclusion)
+          ).build()
+
+          running(application) {
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+            implicit val msgs: Messages = messages(application)
+            val result = route(application, request).value
+
+            status(result) mustBe OK
+
+            val content = contentAsString(result)
+            content must not include ("You removed")
+            content must not include ("We removed")
+          }
+        }
       }
     }
 
