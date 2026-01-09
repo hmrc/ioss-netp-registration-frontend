@@ -50,16 +50,15 @@ class DataRequiredActionImpl @Inject()(
         Future.successful(Left(Redirect(routes.JourneyRecoveryController.onPageLoad())))
 
       case Some(data) =>
-
-        val iossNumber = data.get(IossNumberQuery).getOrElse {
-          logger.warn(s"The ioss number is required for ${request.userId} to complete journey")
-          throw new IllegalStateException(s"The ioss Number is required for ${request.userId}")
-        }
-        
         val eventualMaybeRegistrationWrapper: Future[Option[RegistrationWrapper]] = {
           if (isInAmendMode) {
             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request.request, request.session)
 
+            val iossNumber = data.get(IossNumberQuery).getOrElse {
+              logger.warn(s"The ioss number is required for ${request.userId} to complete journey")
+              throw new IllegalStateException(s"The ioss Number is required for ${request.userId}")
+            }
+            
             registrationConnector.displayRegistrationNetp(iossNumber)(hc).flatMap {
               case Left(error: ErrorResponse) =>
                 Future.failed(new RuntimeException(s"Failed to retrieve registration whilst in amend mode: ${error.body}"))
@@ -77,7 +76,7 @@ class DataRequiredActionImpl @Inject()(
             userId = request.userId,
             userAnswers = data,
             intermediaryNumber = intermediaryNumber,
-            iossNumber = Some(iossNumber),
+            iossNumber = data.get(IossNumberQuery),
             registrationWrapper = maybeWrapper
           ))
         }
