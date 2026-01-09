@@ -351,6 +351,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               )(request, messages(application)).toString
           }
         }
+
         "A NETP has an active TRADER exclusion within deadline" in {
           val effectiveDate = LocalDate.now().plusMonths(1)
           val exclusionWithinDeadline = models.etmp.EtmpExclusion(
@@ -374,14 +375,32 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
           running(application) {
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
             implicit val msgs: Messages = messages(application)
+
             val result = route(application, request).value
+            val view = application.injector.instanceOf[ChangeRegistrationView]
+
+            val registrationList = SummaryListViewModel(
+              rows = getUkBasedWithVatNumRegistrationDetailsListExcluded(ukBasedCompleteUserAnswersWithVatInfo)
+            )
+
+            val importOneStopShopDetailsList = SummaryListViewModel(
+              rows = getImportOneStopShopDetailsListExcluded(ukBasedCompleteUserAnswersWithVatInfo, existingPreviousRegistrations)
+            )
+
+            val expectedDeadline = Some(effectiveDate.minusDays(1).format(formats.Format.dateFormatter))
 
             status(result) mustBe OK
-
-            val content = contentAsString(result)
-            content must include("You removed")
-            content must include("If you wish to undo this removal")
-            content must include(effectiveDate.minusDays(1).format(formats.Format.dateFormatter))
+            contentAsString(result) mustBe view(
+              waypoints,
+              vatCustomerInfo.organisationName.get,
+              iossNumber,
+              registrationList,
+              importOneStopShopDetailsList,
+              isValid = false,
+              isExcluded = true,
+              maybeExclusion = Some(exclusionWithinDeadline),
+              exclusionDeadline = expectedDeadline
+            )(request, messages(application)).toString
           }
         }
 
@@ -408,13 +427,30 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
           running(application) {
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
             implicit val msgs: Messages = messages(application)
+
             val result = route(application, request).value
+            val view = application.injector.instanceOf[ChangeRegistrationView]
+
+            val registrationList = SummaryListViewModel(
+              rows = getUkBasedWithVatNumRegistrationDetailsListExcluded(ukBasedCompleteUserAnswersWithVatInfo)
+            )
+
+            val importOneStopShopDetailsList = SummaryListViewModel(
+              rows = getImportOneStopShopDetailsListExcluded(ukBasedCompleteUserAnswersWithVatInfo, existingPreviousRegistrations)
+            )
 
             status(result) mustBe OK
-
-            val content = contentAsString(result)
-            content must include("You removed")
-            content must not include ("If you wish to undo this removal")
+            contentAsString(result) mustBe view(
+              waypoints,
+              vatCustomerInfo.organisationName.get,
+              iossNumber,
+              registrationList,
+              importOneStopShopDetailsList,
+              isValid = false,
+              isExcluded = true,
+              maybeExclusion = Some(expiredExclusion),
+              exclusionDeadline = None
+            )(request, messages(application)).toString
           }
         }
 
@@ -441,13 +477,30 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
           running(application) {
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
             implicit val msgs: Messages = messages(application)
+
             val result = route(application, request).value
+            val view = application.injector.instanceOf[ChangeRegistrationView]
+
+            val registrationList = SummaryListViewModel(
+              rows = getUkBasedWithVatNumRegistrationDetailsListExcluded(ukBasedCompleteUserAnswersWithVatInfo)
+            )
+
+            val importOneStopShopDetailsList = SummaryListViewModel(
+              rows = getImportOneStopShopDetailsListExcluded(ukBasedCompleteUserAnswersWithVatInfo, existingPreviousRegistrations)
+            )
 
             status(result) mustBe OK
-
-            val content = contentAsString(result)
-            content must include("We removed")
-            content must not include ("If you wish to undo this removal")
+            contentAsString(result) mustBe view(
+              waypoints,
+              vatCustomerInfo.organisationName.get,
+              iossNumber,
+              registrationList,
+              importOneStopShopDetailsList,
+              isValid = false,
+              isExcluded = true,
+              maybeExclusion = Some(hmrcExclusion),
+              exclusionDeadline = None
+            )(request, messages(application)).toString
           }
         }
 
@@ -473,13 +526,30 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
           running(application) {
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
             implicit val msgs: Messages = messages(application)
+
             val result = route(application, request).value
+            val view = application.injector.instanceOf[ChangeRegistrationView]
+
+            val registrationList = SummaryListViewModel(
+              rows = getUkBasedWithVatNumRegistrationDetailsList(ukBasedCompleteUserAnswersWithVatInfo)
+            )
+
+            val importOneStopShopDetailsList = SummaryListViewModel(
+              rows = getImportOneStopShopDetailsSummaryList(ukBasedCompleteUserAnswersWithVatInfo, existingPreviousRegistrations)
+            )
 
             status(result) mustBe OK
-
-            val content = contentAsString(result)
-            content must not include ("You removed")
-            content must not include ("We removed")
+            contentAsString(result) mustBe view(
+              waypoints,
+              vatCustomerInfo.organisationName.get,
+              iossNumber,
+              registrationList,
+              importOneStopShopDetailsList,
+              isValid = false,
+              isExcluded = false,
+              maybeExclusion = None,
+              exclusionDeadline = None
+            )(request, messages(application)).toString
           }
         }
       }
@@ -706,6 +776,65 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       formattedHasFixedEstablishmentSummaryRow,
       euDetailsSummaryRow,
       WebsiteSummary.checkAnswersRow(waypoints, answers, amendYourAnswersPage),
+      formattedContactName,
+      formattedTelephoneNumber,
+      formattedEmailAddress
+    ).flatten
+  }
+
+  private def getUkBasedWithVatNumRegistrationDetailsListExcluded(answers: UserAnswers)(implicit msgs: Messages): Seq[SummaryListRow] = {
+    Seq(
+      BusinessBasedInUKSummary.rowWithoutAction(waypoints, answers),
+      ClientHasVatNumberSummary.rowWithoutAction(waypoints, answers),
+      ClientVatNumberSummary.rowWithoutAction(waypoints, answers),
+      VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, answers, amendYourAnswersPage)
+    ).flatten
+  }
+
+  private def getImportOneStopShopDetailsListExcluded(answers: UserAnswers, previousRegistrations: Seq[PreviousRegistration])
+                                                     (implicit msgs: Messages): Seq[SummaryListRow] = {
+    val maybeHasTradingNameSummaryRow = HasTradingNameSummary.rowWithoutAction(answers, waypoints)
+    val tradingNameSummaryRow = TradingNameSummary.checkAnswersRowWithoutAction(waypoints, answers)
+    val formattedHasTradingNameSummary = maybeHasTradingNameSummaryRow.map { nonOptHasTradingNameSummaryRow =>
+      if (tradingNameSummaryRow.nonEmpty) {
+        nonOptHasTradingNameSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+      } else {
+        nonOptHasTradingNameSummaryRow
+      }
+    }
+
+    val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRowWithoutAction(answers, previousRegistrations, waypoints)
+    val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.rowWithoutAction(answers, waypoints)
+    val formattedPreviouslyRegisteredSummaryRow = previouslyRegisteredSummaryRow.map { nonOptPreviouslyRegisteredSummaryRow =>
+      if (previousRegistrationSummaryRow.isDefined) {
+        nonOptPreviouslyRegisteredSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+      } else {
+        nonOptPreviouslyRegisteredSummaryRow
+      }
+    }
+
+    val hasFixedEstablishmentSummaryRow = HasFixedEstablishmentSummary.rowWithoutAction(waypoints, answers)
+    val euDetailsSummaryRow = EuDetailsSummary.checkAnswersRowWithoutAction(waypoints, answers)
+    val formattedHasFixedEstablishmentSummaryRow = hasFixedEstablishmentSummaryRow.map { nonOptHasFixedEstablishmentSummaryRow =>
+      if (euDetailsSummaryRow.nonEmpty) {
+        nonOptHasFixedEstablishmentSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+      } else {
+        nonOptHasFixedEstablishmentSummaryRow.withCssClass("govuk-summary-list")
+      }
+    }
+
+    val formattedContactName = BusinessContactDetailsSummary.rowFullName(waypoints, answers, amendYourAnswersPage).map(_.withCssClass("govuk-summary-list__row--no-border"))
+    val formattedTelephoneNumber = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, answers, amendYourAnswersPage).map(_.withCssClass("govuk-summary-list__row--no-border"))
+    val formattedEmailAddress = BusinessContactDetailsSummary.rowEmailAddress(waypoints, answers, amendYourAnswersPage)
+
+    Seq(
+      formattedHasTradingNameSummary,
+      tradingNameSummaryRow,
+      formattedPreviouslyRegisteredSummaryRow,
+      previousRegistrationSummaryRow,
+      formattedHasFixedEstablishmentSummaryRow,
+      euDetailsSummaryRow,
+      WebsiteSummary.checkAnswersRowWithoutAction(waypoints, answers),
       formattedContactName,
       formattedTelephoneNumber,
       formattedEmailAddress
