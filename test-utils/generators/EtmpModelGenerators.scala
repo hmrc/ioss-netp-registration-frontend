@@ -19,8 +19,10 @@ package generators
 import models.PreviousScheme
 import models.domain.{PreviousRegistration, PreviousSchemeDetails, PreviousSchemeNumbers}
 import models.etmp.*
+import models.etmp.EtmpIdType
 import models.etmp.amend.EtmpAmendRegistrationChangeLog
 import models.etmp.display.{EtmpDisplayCustomerIdentification, EtmpDisplayEuRegistrationDetails, EtmpDisplayRegistration, EtmpDisplaySchemeDetails, RegistrationWrapper}
+import models.etmp.intermediary.{EtmpIntermediaryCustomerIdentification, EtmpIntermediaryDisplayRegistration, EtmpIntermediaryDisplaySchemeDetails, IntermediaryRegistrationWrapper}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 
@@ -414,6 +416,82 @@ trait EtmpModelGenerators {
       } yield {
         RegistrationWrapper(
           vatInfo = Some(vatInfo),
+          etmpDisplayRegistration = etmpDisplayRegistration
+        )
+      }
+    }
+  }
+
+  implicit lazy val arbitraryEtmpIntermediaryCustomerIdentification: Arbitrary[EtmpIntermediaryCustomerIdentification] = {
+    Arbitrary {
+      for {
+        etmpIdType <- Gen.oneOf(EtmpIdType.values)
+        vrn <- Gen.alphaStr
+      } yield EtmpIntermediaryCustomerIdentification(etmpIdType, vrn)
+    }
+  }
+
+  implicit lazy val arbitraryEtmpIntermediaryDisplaySchemeDetails: Arbitrary[EtmpIntermediaryDisplaySchemeDetails] = {
+    Arbitrary {
+      for {
+        commencementDate <- arbitrary[LocalDate].map(_.toString)
+        euRegistrationDetails <- Gen.listOfN(3, arbitraryEtmpDisplayEuRegistrationDetails.arbitrary)
+        contactName <- Gen.alphaStr
+        businessTelephoneNumber <- Gen.alphaNumStr
+        businessEmailId <- Gen.alphaStr
+        unusableStatus <- arbitrary[Boolean]
+        nonCompliant <- Gen.oneOf("1", "2")
+      } yield {
+        EtmpIntermediaryDisplaySchemeDetails(
+          commencementDate = commencementDate,
+          euRegistrationDetails = euRegistrationDetails,
+          contactName = contactName,
+          businessTelephoneNumber = businessTelephoneNumber,
+          businessEmailId = businessEmailId,
+          unusableStatus = unusableStatus,
+          nonCompliantReturns = Some(nonCompliant),
+          nonCompliantPayments = Some(nonCompliant)
+        )
+      }
+    }
+  }
+
+  implicit lazy val arbitraryEtmpDisplayIntermediaryRegistration: Arbitrary[EtmpIntermediaryDisplayRegistration] = {
+    Arbitrary {
+      for {
+        customerIdentification <- arbitraryEtmpIntermediaryCustomerIdentification.arbitrary
+        tradingNames <- Gen.listOfN(3, arbitraryEtmpTradingName.arbitrary)
+        clientDetails <- Gen.listOfN(3, arbitraryEtmpClientDetails.arbitrary)
+        intermediaryDetails <- arbitraryEtmpIntermediaryDetails.arbitrary
+        otherAddress <- arbitraryEtmpOtherAddress.arbitrary
+        schemeDetails <- arbitraryEtmpIntermediaryDisplaySchemeDetails.arbitrary
+        exclusions <- Gen.listOfN(1, arbitraryEtmpExclusion.arbitrary)
+        bankDetails <- arbitraryEtmpBankDetails.arbitrary
+        adminUse <- arbitraryEtmpAdminUse.arbitrary
+      } yield {
+        EtmpIntermediaryDisplayRegistration(
+          customerIdentification = customerIdentification,
+          tradingNames = tradingNames,
+          clientDetails = clientDetails,
+          intermediaryDetails =  Some(intermediaryDetails),
+          otherAddress = Some(otherAddress),
+          schemeDetails = schemeDetails,
+          exclusions = exclusions,
+          bankDetails = bankDetails,
+          adminUse = adminUse
+        )
+      }
+    }
+  }
+
+  implicit lazy val arbitraryIntermediaryRegistrationWrapper: Arbitrary[IntermediaryRegistrationWrapper] = {
+    Arbitrary {
+      for {
+        vatInfo <- arbitraryIntermediaryVatCustomerInfo.arbitrary
+        etmpDisplayRegistration <- arbitraryEtmpDisplayIntermediaryRegistration.arbitrary
+      } yield {
+        IntermediaryRegistrationWrapper(
+          vatInfo = vatInfo,
           etmpDisplayRegistration = etmpDisplayRegistration
         )
       }

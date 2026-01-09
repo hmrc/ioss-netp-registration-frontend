@@ -143,6 +143,7 @@ trait SpecBase
         bind[NetpValidationFilterProvider].to[FakeNetpValidationFilterProvider],
         bind[DataRequiredAction].toInstance(new FakeDataRequiredAction(userAnswers, intermediaryNumber.getOrElse(this.intermediaryNumber), registrationWrapper.getOrElse(this.registrationWrapper))),
         bind[RegistrationRequiredAction].toInstance(new FakeRegistrationRequiredAction(userAnswers, iossNumber.getOrElse(this.iossNumber), registrationWrapper.getOrElse(this.registrationWrapper))),
+        bind[CheckExcludedIntermediaryFilterProvider].toInstance(new FakeCheckExcludedIntermediaryFilterProvider()),
         bind[Clock].toInstance(clockToBind)
       )
   }

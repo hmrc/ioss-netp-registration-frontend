@@ -53,17 +53,13 @@ class DataRequiredActionImpl @Inject()(
         val eventualMaybeRegistrationWrapper: Future[Option[RegistrationWrapper]] = {
           if (isInAmendMode) {
             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request.request, request.session)
-            val registrationFuture: Future[EtmpDisplayRegistrationResponse] = data.get(IossNumberQuery) match {
-              case Some(iossNumber) =>
-                logger.info(s"Fetching NETP client registration: $iossNumber")
-                registrationConnector.displayRegistrationNetp(iossNumber)(hc)
 
-              case None =>
-                logger.info(s"Fetching intermediary registration: $intermediaryNumber")
-                registrationConnector.displayRegistrationIntermediary(intermediaryNumber)(hc)
+            val iossNumber = data.get(IossNumberQuery).getOrElse {
+              logger.warn(s"The ioss number is required for ${request.userId} to complete journey")
+              throw new IllegalStateException(s"The ioss Number is required for ${request.userId}")
             }
-
-            registrationFuture.flatMap {
+            
+            registrationConnector.displayRegistrationNetp(iossNumber)(hc).flatMap {
               case Left(error: ErrorResponse) =>
                 Future.failed(new RuntimeException(s"Failed to retrieve registration whilst in amend mode: ${error.body}"))
               case Right(registrationWrapper: RegistrationWrapper) =>

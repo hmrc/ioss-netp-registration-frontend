@@ -22,6 +22,7 @@ import models.{PendingRegistrationRequest, SavedPendingRegistration, UserAnswers
 import models.domain.VatCustomerInfo
 import models.etmp.amend.{AmendRegistrationResponse, EtmpAmendRegistrationRequest}
 import models.etmp.display.RegistrationWrapper
+import models.etmp.intermediary.IntermediaryRegistrationWrapper
 import models.iossRegistration.IossEtmpDisplayRegistration
 import models.ossRegistration.{OssExcludedTrader, OssRegistration}
 import models.responses.*
@@ -907,7 +908,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
       val displayRegistrationUrl: String = s"/ioss-intermediary-registration/get-registration/$intermediaryNumber"
 
-      val displayRegistrationWrapper: RegistrationWrapper = arbitraryRegistrationWrapper.arbitrary.sample.value
+      val displayRegistrationWrapper: IntermediaryRegistrationWrapper = arbitraryIntermediaryRegistrationWrapper.arbitrary.sample.value
 
       "must return Right(RegistrationWrapper) when the server returns a successful response and JSON is parsed correctly" in {
 
@@ -924,7 +925,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
           val connector = application.injector.instanceOf[RegistrationConnector]
 
-          val result = connector.displayRegistrationIntermediary(intermediaryNumber).futureValue
+          val result = connector.displayIntermediaryRegistration(intermediaryNumber).futureValue
 
           result mustBe Right(displayRegistrationWrapper)
         }
@@ -945,7 +946,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
           val connector = application.injector.instanceOf[RegistrationConnector]
 
-          val result = connector.displayRegistrationIntermediary(intermediaryNumber).futureValue
+          val result = connector.displayIntermediaryRegistration(intermediaryNumber).futureValue
 
           result mustBe Left(InvalidJson)
         }
@@ -964,7 +965,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
           val connector = application.injector.instanceOf[RegistrationConnector]
 
-          val result = connector.displayRegistrationIntermediary(intermediaryNumber).futureValue
+          val result = connector.displayIntermediaryRegistration(intermediaryNumber).futureValue
 
           result mustBe Left(InternalServerError)
         }

@@ -31,9 +31,8 @@ import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, StringContextOps}
-
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -101,6 +100,6 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
   def displayRegistrationNetp(iossNumber: String)(implicit hc: HeaderCarrier): Future[EtmpDisplayRegistrationResponse] =
     httpClientV2.get(url"$baseUrl/registrations/$iossNumber").execute[EtmpDisplayRegistrationResponse]
 
-  def displayRegistrationIntermediary(intermediaryNumber: String)(implicit hc: HeaderCarrier): Future[EtmpDisplayRegistrationResponse] =
-    httpClientV2.get(url"$intermediaryUrl/get-registration/$intermediaryNumber").execute[EtmpDisplayRegistrationResponse]
+  def displayIntermediaryRegistration(intermediaryNumber: String)(implicit hc: HeaderCarrier): Future[EtmpDisplayIntermediaryRegistrationResponse] =
+    httpClientV2.get(url"$intermediaryUrl/get-registration/$intermediaryNumber").execute[EtmpDisplayIntermediaryRegistrationResponse]
 }
