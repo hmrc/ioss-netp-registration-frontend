@@ -33,7 +33,7 @@
 
 @layout(pageTitle = title(form, messages("previousEuCountry.title"))) {
 
-    @formHelper(action = controllers.previousRegistrations.routes.PreviousEuCountryController.onSubmit(waypoints, index)) {
+    @formHelper(action = controllers.previousRegistrations.routes.PreviousEuCountryController.onSubmit(waypoints, index), Symbol("autoComplete") -> "off") {
 
         @if(form.errors.nonEmpty) {
             @govukErrorSummary(ErrorSummaryViewModel(form))

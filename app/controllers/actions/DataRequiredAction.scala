@@ -17,7 +17,6 @@
 package controllers.actions
 
 import connectors.RegistrationConnector
-import connectors.RegistrationHttpParser.EtmpDisplayRegistrationResponse
 import controllers.routes
 import logging.Logging
 import models.etmp.display.RegistrationWrapper
