@@ -230,7 +230,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 importOneStopShopDetailsList,
                 isValid = false,
                 isExcluded = false,
-                effectiveDate = None
+                maybeExclusion= None,
+                exclusionDeadline = None
               )(request, messages(application)).toString
           }
         }
@@ -268,7 +269,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 importOneStopShopDetailsList,
                 isValid = false,
                 isExcluded = false,
-                effectiveDate = None
+                maybeExclusion= None,
+                exclusionDeadline = None
               )(request, messages(application)).toString
           }
         }
@@ -305,7 +307,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               importOneStopShopDetailsList,
               isValid = false,
               isExcluded = false,
-              effectiveDate = None
+              maybeExclusion= None,
+              exclusionDeadline = None
             )(request, messages(application)).toString
           }
         }
@@ -343,8 +346,210 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 importOneStopShopDetailsList,
                 isValid = false,
                 isExcluded = false,
-                effectiveDate = None
+                maybeExclusion= None,
+                exclusionDeadline = None
               )(request, messages(application)).toString
+          }
+        }
+
+        "A NETP has an active TRADER exclusion within deadline" in {
+          val effectiveDate = LocalDate.now().plusMonths(1)
+          val exclusionWithinDeadline = models.etmp.EtmpExclusion(
+            exclusionReason = models.etmp.EtmpExclusionReason.VoluntarilyLeaves,
+            effectiveDate = effectiveDate,
+            decisionDate = LocalDate.now().minusDays(5),
+            quarantine = false
+          )
+
+          val registrationWrapperWithExclusion = registrationWrapperWithoutExclusions.copy(
+            etmpDisplayRegistration = registrationWrapperWithoutExclusions.etmpDisplayRegistration.copy(
+              exclusions = Seq(exclusionWithinDeadline)
+            )
+          )
+
+          val application = applicationBuilder(
+            userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo),
+            registrationWrapper = Some(registrationWrapperWithExclusion)
+          ).build()
+
+          running(application) {
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+            implicit val msgs: Messages = messages(application)
+
+            val result = route(application, request).value
+            val view = application.injector.instanceOf[ChangeRegistrationView]
+
+            val registrationList = SummaryListViewModel(
+              rows = getUkBasedWithVatNumRegistrationDetailsListExcluded(ukBasedCompleteUserAnswersWithVatInfo)
+            )
+
+            val importOneStopShopDetailsList = SummaryListViewModel(
+              rows = getImportOneStopShopDetailsListExcluded(ukBasedCompleteUserAnswersWithVatInfo, existingPreviousRegistrations)
+            )
+
+            val expectedDeadline = Some(effectiveDate.minusDays(1).format(formats.Format.dateFormatter))
+
+            status(result) mustBe OK
+            contentAsString(result) mustBe view(
+              waypoints,
+              vatCustomerInfo.organisationName.get,
+              iossNumber,
+              registrationList,
+              importOneStopShopDetailsList,
+              isValid = false,
+              isExcluded = true,
+              maybeExclusion = Some(exclusionWithinDeadline),
+              exclusionDeadline = expectedDeadline
+            )(request, messages(application)).toString
+          }
+        }
+
+        "A NETP has an expired TRADER exclusion past the reversal deadline" in {
+          val effectiveDate = LocalDate.now().minusDays(5)
+          val expiredExclusion = models.etmp.EtmpExclusion(
+            exclusionReason = models.etmp.EtmpExclusionReason.VoluntarilyLeaves,
+            effectiveDate = effectiveDate,
+            decisionDate = effectiveDate.minusDays(10),
+            quarantine = false
+          )
+
+          val registrationWrapperWithExclusion = registrationWrapperWithoutExclusions.copy(
+            etmpDisplayRegistration = registrationWrapperWithoutExclusions.etmpDisplayRegistration.copy(
+              exclusions = Seq(expiredExclusion)
+            )
+          )
+
+          val application = applicationBuilder(
+            userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo),
+            registrationWrapper = Some(registrationWrapperWithExclusion)
+          ).build()
+
+          running(application) {
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+            implicit val msgs: Messages = messages(application)
+
+            val result = route(application, request).value
+            val view = application.injector.instanceOf[ChangeRegistrationView]
+
+            val registrationList = SummaryListViewModel(
+              rows = getUkBasedWithVatNumRegistrationDetailsListExcluded(ukBasedCompleteUserAnswersWithVatInfo)
+            )
+
+            val importOneStopShopDetailsList = SummaryListViewModel(
+              rows = getImportOneStopShopDetailsListExcluded(ukBasedCompleteUserAnswersWithVatInfo, existingPreviousRegistrations)
+            )
+
+            status(result) mustBe OK
+            contentAsString(result) mustBe view(
+              waypoints,
+              vatCustomerInfo.organisationName.get,
+              iossNumber,
+              registrationList,
+              importOneStopShopDetailsList,
+              isValid = false,
+              isExcluded = true,
+              maybeExclusion = Some(expiredExclusion),
+              exclusionDeadline = None
+            )(request, messages(application)).toString
+          }
+        }
+
+        "A NETP has an HMRC exclusion" in {
+          val effectiveDate = LocalDate.now().plusMonths(1)
+          val hmrcExclusion = models.etmp.EtmpExclusion(
+            exclusionReason = models.etmp.EtmpExclusionReason.NoLongerMeetsConditions,
+            effectiveDate = effectiveDate,
+            decisionDate = LocalDate.now().minusDays(5),
+            quarantine = false
+          )
+
+          val registrationWrapperWithExclusion = registrationWrapperWithoutExclusions.copy(
+            etmpDisplayRegistration = registrationWrapperWithoutExclusions.etmpDisplayRegistration.copy(
+              exclusions = Seq(hmrcExclusion)
+            )
+          )
+
+          val application = applicationBuilder(
+            userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo),
+            registrationWrapper = Some(registrationWrapperWithExclusion)
+          ).build()
+
+          running(application) {
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+            implicit val msgs: Messages = messages(application)
+
+            val result = route(application, request).value
+            val view = application.injector.instanceOf[ChangeRegistrationView]
+
+            val registrationList = SummaryListViewModel(
+              rows = getUkBasedWithVatNumRegistrationDetailsListExcluded(ukBasedCompleteUserAnswersWithVatInfo)
+            )
+
+            val importOneStopShopDetailsList = SummaryListViewModel(
+              rows = getImportOneStopShopDetailsListExcluded(ukBasedCompleteUserAnswersWithVatInfo, existingPreviousRegistrations)
+            )
+
+            status(result) mustBe OK
+            contentAsString(result) mustBe view(
+              waypoints,
+              vatCustomerInfo.organisationName.get,
+              iossNumber,
+              registrationList,
+              importOneStopShopDetailsList,
+              isValid = false,
+              isExcluded = true,
+              maybeExclusion = Some(hmrcExclusion),
+              exclusionDeadline = None
+            )(request, messages(application)).toString
+          }
+        }
+
+        "A NETP has a Reversal exclusion and no warning is shown" in {
+          val reversalExclusion = models.etmp.EtmpExclusion(
+            exclusionReason = models.etmp.EtmpExclusionReason.Reversal,
+            effectiveDate = LocalDate.now().plusMonths(1),
+            decisionDate = LocalDate.now().minusDays(5),
+            quarantine = false
+          )
+
+          val registrationWrapperWithExclusion = registrationWrapperWithoutExclusions.copy(
+            etmpDisplayRegistration = registrationWrapperWithoutExclusions.etmpDisplayRegistration.copy(
+              exclusions = Seq(reversalExclusion)
+            )
+          )
+
+          val application = applicationBuilder(
+            userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo),
+            registrationWrapper = Some(registrationWrapperWithExclusion)
+          ).build()
+
+          running(application) {
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+            implicit val msgs: Messages = messages(application)
+
+            val result = route(application, request).value
+            val view = application.injector.instanceOf[ChangeRegistrationView]
+
+            val registrationList = SummaryListViewModel(
+              rows = getUkBasedWithVatNumRegistrationDetailsList(ukBasedCompleteUserAnswersWithVatInfo)
+            )
+
+            val importOneStopShopDetailsList = SummaryListViewModel(
+              rows = getImportOneStopShopDetailsSummaryList(ukBasedCompleteUserAnswersWithVatInfo, existingPreviousRegistrations)
+            )
+
+            status(result) mustBe OK
+            contentAsString(result) mustBe view(
+              waypoints,
+              vatCustomerInfo.organisationName.get,
+              iossNumber,
+              registrationList,
+              importOneStopShopDetailsList,
+              isValid = false,
+              isExcluded = false,
+              maybeExclusion = None,
+              exclusionDeadline = None
+            )(request, messages(application)).toString
           }
         }
       }
@@ -571,6 +776,65 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       formattedHasFixedEstablishmentSummaryRow,
       euDetailsSummaryRow,
       WebsiteSummary.checkAnswersRow(waypoints, answers, amendYourAnswersPage),
+      formattedContactName,
+      formattedTelephoneNumber,
+      formattedEmailAddress
+    ).flatten
+  }
+
+  private def getUkBasedWithVatNumRegistrationDetailsListExcluded(answers: UserAnswers)(implicit msgs: Messages): Seq[SummaryListRow] = {
+    Seq(
+      BusinessBasedInUKSummary.rowWithoutAction(waypoints, answers),
+      ClientHasVatNumberSummary.rowWithoutAction(waypoints, answers),
+      ClientVatNumberSummary.rowWithoutAction(waypoints, answers),
+      VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, answers, amendYourAnswersPage)
+    ).flatten
+  }
+
+  private def getImportOneStopShopDetailsListExcluded(answers: UserAnswers, previousRegistrations: Seq[PreviousRegistration])
+                                                     (implicit msgs: Messages): Seq[SummaryListRow] = {
+    val maybeHasTradingNameSummaryRow = HasTradingNameSummary.rowWithoutAction(answers, waypoints)
+    val tradingNameSummaryRow = TradingNameSummary.checkAnswersRowWithoutAction(waypoints, answers)
+    val formattedHasTradingNameSummary = maybeHasTradingNameSummaryRow.map { nonOptHasTradingNameSummaryRow =>
+      if (tradingNameSummaryRow.nonEmpty) {
+        nonOptHasTradingNameSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+      } else {
+        nonOptHasTradingNameSummaryRow
+      }
+    }
+
+    val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRowWithoutAction(answers, previousRegistrations, waypoints)
+    val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.rowWithoutAction(answers, waypoints)
+    val formattedPreviouslyRegisteredSummaryRow = previouslyRegisteredSummaryRow.map { nonOptPreviouslyRegisteredSummaryRow =>
+      if (previousRegistrationSummaryRow.isDefined) {
+        nonOptPreviouslyRegisteredSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+      } else {
+        nonOptPreviouslyRegisteredSummaryRow
+      }
+    }
+
+    val hasFixedEstablishmentSummaryRow = HasFixedEstablishmentSummary.rowWithoutAction(waypoints, answers)
+    val euDetailsSummaryRow = EuDetailsSummary.checkAnswersRowWithoutAction(waypoints, answers)
+    val formattedHasFixedEstablishmentSummaryRow = hasFixedEstablishmentSummaryRow.map { nonOptHasFixedEstablishmentSummaryRow =>
+      if (euDetailsSummaryRow.nonEmpty) {
+        nonOptHasFixedEstablishmentSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+      } else {
+        nonOptHasFixedEstablishmentSummaryRow.withCssClass("govuk-summary-list")
+      }
+    }
+
+    val formattedContactName = BusinessContactDetailsSummary.rowFullName(waypoints, answers, amendYourAnswersPage).map(_.withCssClass("govuk-summary-list__row--no-border"))
+    val formattedTelephoneNumber = BusinessContactDetailsSummary.rowTelephoneNumber(waypoints, answers, amendYourAnswersPage).map(_.withCssClass("govuk-summary-list__row--no-border"))
+    val formattedEmailAddress = BusinessContactDetailsSummary.rowEmailAddress(waypoints, answers, amendYourAnswersPage)
+
+    Seq(
+      formattedHasTradingNameSummary,
+      tradingNameSummaryRow,
+      formattedPreviouslyRegisteredSummaryRow,
+      previousRegistrationSummaryRow,
+      formattedHasFixedEstablishmentSummaryRow,
+      euDetailsSummaryRow,
+      WebsiteSummary.checkAnswersRowWithoutAction(waypoints, answers),
       formattedContactName,
       formattedTelephoneNumber,
       formattedEmailAddress

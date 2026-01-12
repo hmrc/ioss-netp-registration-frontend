@@ -25,7 +25,7 @@ import models.audit.NetpAmendRegistrationAuditModel
 import models.audit.RegistrationAuditType.AmendRegistration
 import models.audit.SubmissionResult.{Failure, Success}
 import models.domain.PreviousRegistration
-import models.etmp.EtmpPreviousEuRegistrationDetails
+import models.etmp.{EtmpPreviousEuRegistrationDetails, EtmpExclusion}
 import models.requests.AuthenticatedMandatoryRegistrationRequest
 import models.{CheckMode, Country, InternationalAddress, UserAnswers}
 import pages.*
@@ -48,6 +48,7 @@ import viewmodels.previousRegistrations.{PreviousRegistrationSummary, Previously
 import views.html.ChangeRegistrationView
 
 import javax.inject.Inject
+import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
 class ChangeRegistrationController @Inject()(
@@ -76,10 +77,22 @@ class ChangeRegistrationController @Inject()(
       val existingPreviousRegistrations: Seq[EtmpPreviousEuRegistrationDetails] = request.registrationWrapper
         .etmpDisplayRegistration.schemeDetails.previousEURegistrationDetails
 
-      val isExcluded = request.registrationWrapper.etmpDisplayRegistration.isExcluded
+      val maybeExclusion: Option[EtmpExclusion] = request.registrationWrapper.etmpDisplayRegistration.exclusions.lastOption.flatMap { exclusion =>
+        exclusion.exclusionReason match {
+          case models.etmp.EtmpExclusionReason.Reversal => None
+          case _ => Some(exclusion)
+        }
+      }
 
-      val effectiveDate: Option[String] = request.registrationWrapper.etmpDisplayRegistration.exclusions.headOption.map { exclusion =>
-        exclusion.effectiveDate.format(dateFormatter)
+      val isExcluded = maybeExclusion.isDefined
+
+      val exclusionDeadline: Option[String] = maybeExclusion.flatMap { exclusion =>
+        val deadline = exclusion.effectiveDate.minusDays(1)
+        if (LocalDate.now().isBefore(deadline) || LocalDate.now().isEqual(deadline)) {
+          Some(deadline.format(dateFormatter))
+        } else {
+          None
+        }
       }
 
       getClientCompanyName(waypoints) { companyName =>
@@ -156,7 +169,7 @@ class ChangeRegistrationController @Inject()(
 
         val isValid: Boolean = validate()(request.request)
 
-        Ok(view(waypoints, companyName, request.iossNumber, registrationDetailsList, importOneStopShopDetailsList, isValid, isExcluded, effectiveDate)).toFuture
+        Ok(view(waypoints, companyName, request.iossNumber, registrationDetailsList, importOneStopShopDetailsList, isValid, isExcluded, maybeExclusion, exclusionDeadline)).toFuture
       }(request.request)
   }
 

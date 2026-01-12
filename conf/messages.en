@@ -558,7 +558,9 @@ changeRegistration.intermediaryNumber = IOSS number: {0}
 changeRegistration.registrationDetails.heading = Registration details
 changeRegistration.iossDetails.heading = Import One Stop Shop details
 changeRegistration.info.p1 = Confirm these changes to save them to your client''s account.
-changeRegistration.removedClient.text = You removed {0} from your account on {1}.
+changeRegistration.removedClient.intermediary = You removed {0} from your account on {1}.
+changeRegistration.removedClient.intermediary.undo = If you wish to undo this removal, you must contact <a href="mailto:vatoss.contact@hmrc.gov.uk" class="govuk-link">vatoss.contact@hmrc.gov.uk</a> by {0}.
+changeRegistration.removedClient.hmrc = We removed {0} from your account on {1}.
 
 savedProgress.title = We have saved your progress
 savedProgress.subtitle =We will keep the registration details until {0}
