@@ -15,6 +15,7 @@ site.processing = We are processing your registration.
 site.confirm = Confirm
 site.add = Add
 site.warning = Warning
+site.joinScheme = Join the scheme
 
 date.day = Day
 date.month = Month
@@ -508,9 +509,11 @@ clientCodeEntry.checkEmail.p2 = Check your spam or junk folder. If it still has 
 
 clientDeclaration.title = Declaration
 clientDeclaration.heading = Declaration
-clientDeclaration.information.p1 = I, {0}, wish to appoint {1} as my intermediary on the VAT Import One Stop Shop scheme.
-clientDeclaration.information.p2 = I understand that we are joint and severally liable for any debts that we may incur on my registration.
-clientDeclaration.checkbox.text = I agree to register my business.
+clientDeclaration.heading = Declaration
+clientDeclaration.agree.p1 = You must agree to these statements to join the VAT Import One Stop Shop scheme:
+clientDeclaration.information.p1 = I, {0}, appoint {1} to act as my intermediary for the VAT Import One Stop Shop scheme.
+clientDeclaration.information.p2 = I understand that we are joint and severally liable for any VAT debts incurred on this registration.
+clientDeclaration.checkbox.text = I agree to the statements
 clientDeclaration.error.required = Agree to the declaration to continue
 clientDeclaration.change.hidden = ClientDeclaration
 
