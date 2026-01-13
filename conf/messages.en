@@ -275,7 +275,7 @@ declaration.li2 = I understand that we are joint and severally liable for any VA
 declaration.li3 = The information I''ve provided is correct and complete to the best of my knowledge.
 declaration.checkbox.text = I agree to the statements
 declaration.error.required = Agree to the declaration to continue
-declaration.confirm = Confirm and register
+declaration.confirm = Confirm and proceed
 
 applicationComplete.title = Request pending
 applicationComplete.heading = Request pending
