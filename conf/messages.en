@@ -514,7 +514,7 @@ clientDeclaration.agree.p1 = You must agree to these statements to join the VAT 
 clientDeclaration.information.p1 = I, {0}, appoint {1} to act as my intermediary for the VAT Import One Stop Shop scheme.
 clientDeclaration.information.p2 = I understand that we are joint and severally liable for any VAT debts incurred on this registration.
 clientDeclaration.checkbox.text = I agree to the statements
-clientDeclaration.error.required = Agree to the declaration to continue
+clientDeclaration.error.required = Agree to the statements to continue
 clientDeclaration.change.hidden = ClientDeclaration
 
 clientSuccessfulRegistration.title = Registration successful
