@@ -51,10 +51,13 @@ intermediaryName: String
 
         <h1 class="govuk-heading-l govuk-!-margin-bottom-3">@messages("clientDeclaration.heading")</h1>
 
-        <p class="govuk-body">@messages("clientDeclaration.information.p1", clientName, intermediaryName)</p>
+        <p class="govuk-body">@messages("clientDeclaration.agree.p1")</p>
 
-        <p class="govuk-body">@messages("clientDeclaration.information.p2")</p>
+        <ul class="govuk-list govuk-list--bullet">
+            <li class="govuk-body govuk-!-margin-bottom-4">@messages("clientDeclaration.information.p1", clientName, intermediaryName)</li>
 
+            <li class="govuk-body govuk-!-margin-bottom-4">@messages("clientDeclaration.information.p2")</li>
+        </ul>
 
     @govukCheckboxes(
         Checkboxes(
@@ -74,7 +77,7 @@ intermediaryName: String
         )
     )
 
-    @button("site.agree", ClientDeclarationPage.route(waypoints).url, waypoints)
+    @button("site.joinScheme", ClientDeclarationPage.route(waypoints).url, waypoints)
 
     }
 <div id="processing-wheel" hidden>
