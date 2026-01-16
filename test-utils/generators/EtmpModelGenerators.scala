@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -388,7 +388,6 @@ trait EtmpModelGenerators {
       for {
         customerIdentification <- arbitraryEtmpCustomerIdentification.arbitrary
         tradingNames <- Gen.listOfN(3, arbitraryEtmpTradingName.arbitrary)
-        clientDetails <- Gen.listOfN(3, arbitraryEtmpClientDetails.arbitrary)
         otherAddress <- arbitraryEtmpOtherAddress.arbitrary
         schemeDetails <- arbitraryEtmpDisplaySchemeDetails.arbitrary
         exclusions <- Gen.listOfN(1, arbitraryEtmpExclusion.arbitrary)
@@ -398,7 +397,6 @@ trait EtmpModelGenerators {
         EtmpDisplayRegistration(
           customerIdentification = customerIdentification,
           tradingNames = tradingNames,
-          clientDetails = clientDetails,
           otherAddress = Some(otherAddress),
           schemeDetails = schemeDetails,
           exclusions = exclusions,
