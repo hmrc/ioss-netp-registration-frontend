@@ -112,7 +112,7 @@ clientCountryBased.title = Which country is your client''s business based in?
 clientCountryBased.heading = Which country is your client''s business based in?
 clientCountryBased.checkYourAnswersLabel = Country based in
 clientCountryBased.amend.checkYourAnswersLabel = Country they are based in
-clientCountryBased.error.required = Select the country where your client''s business is based
+clientCountryBased.error.required = Select a country from the list
 clientCountryBased.change.hidden = Country based in
 
 clientUKBusinessName.title = What name does your client trade under?
@@ -178,7 +178,7 @@ clientsNinoNumber.checkYourAnswersLabel = National Insurance number (NINO)
 clientsNinoNumber.error.nino.required = Enter your client''s National Insurance number (NINO)
 clientsNinoNumber.error.nino.length = National Insurance number must be 9 characters long
 clientsNinoNumber.error.nino.special.character = National Insurance number must only include letters a to z and numbers 0 to 9
-clientsNinoNumber.error.nino.invalid = Enter a valid National Insurance number
+clientsNinoNumber.error.nino.invalid = Enter a National Insurance number in the correct format
 clientsNinoNumber.change.hidden = National Insurance number (NINO)
 clientsNinoNumber.hint = For example, ‘QQ 12 34 56 C’.
 
@@ -304,7 +304,7 @@ previouslyRegistered.change.hidden = Select yes if your client''s business has e
 
 previousEuCountry.title = Which country was it registered in?
 previousEuCountry.heading = Which country was it registered in?
-previousEuCountry.error.required = Select a country
+previousEuCountry.error.required = Select a country from the list
 previousEuCountry.error.duplicate = You selected this country already. Select a different one.
 
 previousRegistrations.checkYourAnswersLabel = Countries registered in
@@ -358,7 +358,7 @@ previousIossNumber.heading = Enter your client''s previous IOSS registration num
 previousIossNumber.iossNumber.hint = {0}
 previousIossNumber.checkYourAnswersLabel = Registration number
 previousIossNumber.error.schemeNumber.required = Enter your client''s previous IOSS registration number for {0}
-previousIossNumber.error.invalid = Enter a valid IOSS registration number
+previousIossNumber.error.invalid = Enter an IOSS registration number in the correct format
 
 deletePreviousScheme.title = Remove this registration for {0}
 deletePreviousScheme.heading = Removing {0}''s registration
@@ -388,7 +388,7 @@ deleteAllPreviousRegistrations.error.required = Select yes if you want to remove
 
 euCountry.title = Which country is their fixed establishment in?
 euCountry.heading = Which country is their fixed establishment in?
-euCountry.error.required = Please select which country their fixed establishment is in
+euCountry.error.required = Select a country from the list
 euCountry.error.duplicate = You selected this country already. Select a different one
 euCountry.checkYourAnswersLabel = Country
 euCountry.change.hidden = Country
