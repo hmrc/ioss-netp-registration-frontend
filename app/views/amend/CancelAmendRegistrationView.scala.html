@@ -37,17 +37,21 @@
             @govukErrorSummary(ErrorSummaryViewModel(form))
         }
 
-        @govukRadios(
-            RadiosViewModel.yesNo(
-                field = form("value"),
-                legend = LegendViewModel(messages("cancelAmendRegistration.heading")).asPageHeading()
-            )
-        )
+        <h1 class="govuk-heading-l">
+            @messages("cancelAmendRegistration.heading")
+        </h1>
 
         @govukWarningText(WarningText(
             iconFallbackText = Option(messages("site.warning")),
             content = Text(messages("cancelAmendRegistration.warning"))
         ))
+
+        @govukRadios(
+            RadiosViewModel.yesNo(
+                field = form("value"),
+                legend = LegendViewModel(messages("cancelAmendRegistration.heading")).withCssClass("govuk-visually-hidden")
+            )
+        )
 
         @button("site.continue",  CancelAmendRegistrationPage.route(waypoints).url, waypoints)
     }

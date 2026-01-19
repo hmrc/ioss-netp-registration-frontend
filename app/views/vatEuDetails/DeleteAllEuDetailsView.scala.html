@@ -37,17 +37,21 @@
             @govukErrorSummary(ErrorSummaryViewModel(form))
         }
 
-        @govukRadios(
-            RadiosViewModel.yesNo(
-                field = form("value"),
-                legend = LegendViewModel(messages("deleteAllEuDetails.heading")).asPageHeading()
-            )
-        )
+        <h1 class="govuk-heading-l">
+            @messages("deleteAllEuDetails.heading")
+        </h1>
 
         @govukWarningText(WarningText(
             iconFallbackText = Option(messages("site.warning")),
             content = Text(messages("deleteAllEuDetails.warning"))
         ))
+
+        @govukRadios(
+            RadiosViewModel.yesNo(
+                field = form("value"),
+                legend = LegendViewModel(messages("deleteAllEuDetails.heading")).withCssClass("govuk-visually-hidden")
+            )
+        )
         
         @button("site.continue", DeleteAllEuDetailsPage.route(waypoints).url, waypoints)
     }
