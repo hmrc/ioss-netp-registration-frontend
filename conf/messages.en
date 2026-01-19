@@ -16,6 +16,7 @@ site.confirm = Confirm
 site.add = Add
 site.warning = Warning
 site.joinScheme = Join the scheme
+site.selectCountry = Select a country
 
 date.day = Day
 date.month = Month
