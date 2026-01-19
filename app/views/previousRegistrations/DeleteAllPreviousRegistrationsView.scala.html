@@ -37,18 +37,22 @@
             @govukErrorSummary(ErrorSummaryViewModel(form))
         }
 
-        @govukRadios(
-            RadiosViewModel.yesNo(
-                field = form("value"),
-                legend = LegendViewModel(messages("deleteAllPreviousRegistrations.heading")).asPageHeading()
-            )
-        )
+        <h1 class="govuk-heading-l">
+            @messages("deleteAllPreviousRegistrations.heading")
+        </h1>
 
         @govukWarningText(WarningText(
             iconFallbackText = Option(messages("site.warning")),
             content = Text(messages("deleteAllPreviousRegistrations.warning"))
         ))
-        
+
+        @govukRadios(
+            RadiosViewModel.yesNo(
+                field = form("value"),
+                legend = LegendViewModel(messages("deleteAllPreviousRegistrations.heading")).withCssClass("govuk-visually-hidden")
+            )
+        )
+
         @button("site.continue", DeleteAllPreviousRegistrationsPage.route(waypoints).url, waypoints)
     }
 }
