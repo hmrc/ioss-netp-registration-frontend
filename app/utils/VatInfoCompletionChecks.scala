@@ -56,7 +56,7 @@ object VatInfoCompletionChecks extends CompletionChecks {
 
   def incompleteHasVatNumberRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
     request.userAnswers.get(BusinessBasedInUKPage) match {
-      case Some(true) if request.userAnswers.get(ClientHasVatNumberPage).isEmpty =>
+      case Some(_) if request.userAnswers.get(ClientHasVatNumberPage).isEmpty =>
         Some(Redirect(controllers.routes.ClientHasVatNumberController.onPageLoad(waypoints)))
       case _ =>
         None

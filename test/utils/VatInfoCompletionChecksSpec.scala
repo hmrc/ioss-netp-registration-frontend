@@ -180,7 +180,7 @@ class VatInfoCompletionChecksSpec extends SpecBase with MockitoSugar {
         }
       }
 
-      "must return None when BusinessBasedInUKPage is false" in {
+      "must return None when BusinessBasedInUKPage is false and ClientHasVatNumber is not defined" in {
         val userAnswers = emptyUserAnswersWithVatInfo
           .set(BusinessBasedInUKPage, false).success.value
 
@@ -192,7 +192,7 @@ class VatInfoCompletionChecksSpec extends SpecBase with MockitoSugar {
 
           val result = vatInfoCompletionChecks.incompleteHasVatNumberRedirect(waypoints)
 
-          result mustBe None
+          result mustBe Some(Redirect(controllers.routes.ClientHasVatNumberController.onPageLoad(waypoints)))
         }
       }
 

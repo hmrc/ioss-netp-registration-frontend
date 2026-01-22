@@ -94,6 +94,35 @@ trait CompletionChecks {
       ).headOption
   }
 
+  def validateVatInfo()(implicit request: DataRequest[AnyContent]): Boolean = {
+    isBasedInUk() &&
+      hasUkVatNumber() &&
+      ukVatNumberDefined() &&
+      clientCountryBasedDefined() &&
+      hasClientBusinessName() &&
+      hasUtrNumber() &&
+      utrNumberDefined() &&
+      ninoNumberDefined() &&
+      clientTaxReferenceDefined() &&
+      clientBusinessAddressDefined()
+  }
+
+  def getFirstValidationVatInfoErrorRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
+    
+    Seq(
+      incompleteBusinessBasedInUkRedirect(waypoints),
+      incompleteHasVatNumberRedirect(waypoints),
+      incompleteClientVatNumberRedirect(waypoints),
+      incompleteClientCountryRedirect(waypoints),
+      incompleteClientTaxReferenceRedirect(waypoints),
+      incompleteClientBusinessNameRedirect(waypoints),
+      incompleteHasUtrNumberRedirect(waypoints),
+      incompleteClientUtrNumberRedirect(waypoints),
+      incompleteClientsNinoNumberRedirect(waypoints),
+      incompleteBusinessAddressRedirect(waypoints)
+    ).flatten.headOption
+  }
+
   private def hasWebsiteValid()(implicit request: DataRequest[AnyContent]): Boolean = {
     request.userAnswers.get(AllWebsites).getOrElse(List.empty).nonEmpty
   }
