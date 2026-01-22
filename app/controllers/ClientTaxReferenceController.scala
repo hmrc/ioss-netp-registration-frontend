@@ -81,8 +81,8 @@ class ClientTaxReferenceController @Inject()(
               case _ if waypoints.inAmend =>
                 updateAnswersAndRedirect(waypoints, request, value)
 
-              case Some(activeMatch) if activeMatch.isActiveTrader =>
-                Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
+              case Some(activeMatch) if activeMatch.isActiveTrader(clock) =>
+                Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad(activeMatch.getEffectiveDate)).toFuture
 
               case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
                 Redirect(

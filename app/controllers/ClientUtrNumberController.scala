@@ -26,8 +26,8 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import utils.FutureSyntax.FutureOps
 import utils.AmendWaypoints.AmendWaypointsOps
+import utils.FutureSyntax.FutureOps
 import views.html.ClientUtrNumberView
 
 import java.time.Clock
@@ -46,7 +46,7 @@ class ClientUtrNumberController @Inject()(
   val form: Form[String] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend, checkAmendAccess = Some(ClientUtrNumberPage))  {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend, checkAmendAccess = Some(ClientUtrNumberPage)) {
     implicit request =>
 
       val preparedForm = request.userAnswers.get(ClientUtrNumberPage) match {
@@ -62,13 +62,13 @@ class ClientUtrNumberController @Inject()(
 
       form.bindFromRequest().fold(
         formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, waypoints))),
+          BadRequest(view(formWithErrors, waypoints)).toFuture,
 
         value =>
           coreRegistrationValidationService.searchTraderId(value).flatMap {
 
-            case Some(activeMatch) if activeMatch.isActiveTrader =>
-              Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
+            case Some(activeMatch) if activeMatch.isActiveTrader(clock) =>
+              Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad(activeMatch.getEffectiveDate)).toFuture
 
             case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
               Redirect(

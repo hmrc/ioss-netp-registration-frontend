@@ -48,24 +48,24 @@ class EuVatNumberController @Inject()(
 
   def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] =
     cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(EuVatNumberPage(countryIndex))).async {
-    implicit request =>
+      implicit request =>
 
-      getCountryWithIndex(waypoints, countryIndex) { country =>
+        getCountryWithIndex(waypoints, countryIndex) { country =>
 
-        val form: Form[String] = formProvider(country)
+          val form: Form[String] = formProvider(country)
 
-        val preparedForm = request.userAnswers.get(EuVatNumberPage(countryIndex)) match {
-          case None => form
-          case Some(value) => form.fill(value)
+          val preparedForm = request.userAnswers.get(EuVatNumberPage(countryIndex)) match {
+            case None => form
+            case Some(value) => form.fill(value)
+          }
+
+          CountryWithValidationDetails.euCountriesWithVRNValidationRules.filter(_.country.code == country.code).head match {
+            case countryWithValidationDetails: CountryWithValidationDetails =>
+
+              Ok(view(preparedForm, waypoints, countryIndex, countryWithValidationDetails)).toFuture
+          }
         }
-
-        CountryWithValidationDetails.euCountriesWithVRNValidationRules.filter(_.country.code == country.code).head match {
-          case countryWithValidationDetails: CountryWithValidationDetails =>
-
-            Ok(view(preparedForm, waypoints, countryIndex, countryWithValidationDetails)).toFuture
-        }
-      }
-  }
+    }
 
   def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
@@ -83,8 +83,8 @@ class EuVatNumberController @Inject()(
 
               euVrn =>
                 coreRegistrationValidationService.searchEuVrn(euVrn, country.code).flatMap {
-                  case Some(activeMatch) if activeMatch.isActiveTrader && !waypoints.inAmend =>
-                    Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
+                  case Some(activeMatch) if activeMatch.isActiveTrader(clock) && !waypoints.inAmend =>
+                    Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad(activeMatch.getEffectiveDate)).toFuture
 
                   case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) && !waypoints.inAmend =>
                     Redirect(

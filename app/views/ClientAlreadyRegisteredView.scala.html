@@ -19,20 +19,13 @@
         govukButton: GovukButton
 )
 
-@(companyName: Option[String])(implicit request: Request[_], messages: Messages)
+@(companyName: String, exclusionDate: String, intermediaryYourAccountUrl: String)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = titleNoForm(messages("clientAlreadyRegistered.title")), showBackLink = false) {
+@layout(pageTitle = titleNoForm(messages("clientAlreadyRegistered.title", companyName, exclusionDate)), showBackLink = false) {
 
-    <h1 class="govuk-heading-l">@messages("clientAlreadyRegistered.heading")</h1>
+    <h1 class="govuk-heading-l">@messages("clientAlreadyRegistered.heading", companyName, exclusionDate)</h1>
 
-    @companyName match {
-        case Some(name) if name.nonEmpty => {
-            <p class="govuk-body">@Html(messages("clientAlreadyRegistered.p1.companyName", name))</p>
-        }
-        case _ => {
-            <p class="govuk-body">@Html(messages("clientAlreadyRegistered.p1"))</p>
-        }
-    }
+    <p class="govuk-body">@messages("clientAlreadyRegistered.p1")</p>
 
-    <p class="govuk-body">@Html(messages("clientAlreadyRegistered.p2"))</p>
+    <p class="govuk-body">@Html(messages("clientAlreadyRegistered.returnToAccount", intermediaryYourAccountUrl))</p>
 }

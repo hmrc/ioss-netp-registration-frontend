@@ -26,8 +26,8 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import utils.FutureSyntax.FutureOps
 import utils.AmendWaypoints.AmendWaypointsOps
+import utils.FutureSyntax.FutureOps
 import views.html.ClientsNinoNumberView
 
 import java.time.Clock
@@ -62,13 +62,13 @@ class ClientsNinoNumberController @Inject()(
 
       form.bindFromRequest().fold(
         formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, waypoints))),
+          BadRequest(view(formWithErrors, waypoints)).toFuture,
 
         value =>
           coreRegistrationValidationService.searchTraderId(value).flatMap {
 
-            case Some(activeMatch) if activeMatch.isActiveTrader =>
-              Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
+            case Some(activeMatch) if activeMatch.isActiveTrader(clock) =>
+              Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad(activeMatch.getEffectiveDate)).toFuture
 
             case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
               Redirect(

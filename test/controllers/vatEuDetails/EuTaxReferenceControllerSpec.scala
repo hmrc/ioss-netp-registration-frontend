@@ -17,11 +17,15 @@
 package controllers.vatEuDetails
 
 import base.SpecBase
+import controllers.routes as normalRoutes
 import forms.vatEuDetails.EuTaxReferenceFormProvider
-import models.{Country, UserAnswers}
+import models.core.TraderId
 import models.vatEuDetails.RegistrationType
+import models.{Country, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito
+import org.mockito.Mockito.{times, verify, verifyNoInteractions, when}
+import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import pages.JourneyRecoveryPage
 import pages.vatEuDetails.*
@@ -31,18 +35,19 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
 import services.core.CoreRegistrationValidationService
-import views.html.vatEuDetails.EuTaxReferenceView
+import testutils.CreateMatchResponse.createMatchResponse
 import utils.FutureSyntax.FutureOps
+import views.html.vatEuDetails.EuTaxReferenceView
 
-import scala.concurrent.Future
+import java.time.{Clock, Instant, ZoneId}
 
-class EuTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
+class EuTaxReferenceControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
   private val country: Country = arbitraryCountry.arbitrary.sample.value
 
   private val euTaxReference: String = genEuTaxReference.sample.value
 
-  private val formProvider = new EuTaxReferenceFormProvider()
+  private val formProvider: EuTaxReferenceFormProvider = new EuTaxReferenceFormProvider()
   private val form: Form[String] = formProvider(country)
 
   private val updatedAnswers: UserAnswers = emptyUserAnswersWithVatInfo
@@ -50,11 +55,15 @@ class EuTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
     .set(EuCountryPage(countryIndex(0)), country).success.value
     .set(RegistrationTypePage(countryIndex(0)), RegistrationType.TaxId).success.value
 
-  private val mockCoreRegistrationValidationService = mock[CoreRegistrationValidationService]
+  private val mockCoreRegistrationValidationService: CoreRegistrationValidationService = mock[CoreRegistrationValidationService]
 
-  val validAnswer = 0
+  private val validAnswer: Int = 0
 
-  lazy val euTaxReferenceRoute: String = routes.EuTaxReferenceController.onPageLoad(waypoints, countryIndex(0)).url
+  private lazy val euTaxReferenceRoute: String = routes.EuTaxReferenceController.onPageLoad(waypoints, countryIndex(0)).url
+
+  override def beforeEach(): Unit = {
+    Mockito.reset(mockCoreRegistrationValidationService)
+  }
 
   "EuTaxReference Controller" - {
 
@@ -69,8 +78,8 @@ class EuTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
 
         val view = application.injector.instanceOf[EuTaxReferenceView]
 
-        status(result) mustEqual OK
-        contentAsString(result) mustEqual view(form, waypoints, countryIndex(0), country)(request, messages(application)).toString
+        status(result) `mustBe` OK
+        contentAsString(result) `mustBe` view(form, waypoints, countryIndex(0), country)(request, messages(application)).toString
       }
     }
 
@@ -87,8 +96,8 @@ class EuTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) mustEqual OK
-        contentAsString(result) mustEqual view(form.fill(euTaxReference), waypoints, countryIndex(0), country)(request, messages(application)).toString
+        status(result) `mustBe` OK
+        contentAsString(result) `mustBe` view(form.fill(euTaxReference), waypoints, countryIndex(0), country)(request, messages(application)).toString
       }
     }
 
@@ -96,7 +105,7 @@ class EuTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
 
       val mockSessionRepository = mock[SessionRepository]
 
-      when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
       val application =
         applicationBuilder(userAnswers = Some(updatedAnswers))
@@ -119,10 +128,92 @@ class EuTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
         val expectedAnswers: UserAnswers = updatedAnswers
           .set(EuTaxReferencePage(countryIndex(0)), euTaxReference).success.value
 
-        status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual EuTaxReferencePage(countryIndex(0))
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` EuTaxReferencePage(countryIndex(0))
           .navigate(waypoints, updatedAnswers, expectedAnswers).url
         verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
+      }
+    }
+
+    "must not save the answers and redirect to Client Already Registered page when an active non-intermediary trader is found with exclusion pending" in {
+
+      val today: Instant = Instant.now(stubClockAtArbitraryDate)
+      val todayClock: Clock = Clock.fixed(today, ZoneId.systemDefault())
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+
+      val application =
+        applicationBuilder(
+          userAnswers = Some(updatedAnswers),
+          clock = Some(todayClock)
+        )
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+          )
+          .build()
+
+      running(application) {
+
+        val activeRegistrationMatch = createMatchResponse(
+          traderId = TraderId("IM0987654321"),
+          exclusionEffectiveDate = Some(today.atZone(ZoneId.systemDefault()).toLocalDate.plusDays(1).toString)
+        )
+
+        when(mockCoreRegistrationValidationService.searchEuTaxId(any(), any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
+
+        val request =
+          FakeRequest(POST, euTaxReferenceRoute)
+            .withFormUrlEncodedBody(("value", euTaxReference))
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` normalRoutes.ClientAlreadyRegisteredController.onPageLoad(activeRegistrationMatch.getEffectiveDate).url
+        verifyNoInteractions(mockSessionRepository)
+        verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(country.code))(any(), any())
+      }
+    }
+
+    "must not save the answers and redirect to Other Country Excluded And Quarantined page when a quarantined intermediary trader is found" in {
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+
+      val application =
+        applicationBuilder(userAnswers = Some(updatedAnswers))
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+          )
+          .build()
+
+      running(application) {
+
+        val quarantinedIntermediaryMatch = createMatchResponse(
+          traderId = TraderId("IM0987654321"),
+          exclusionStatusCode = Some(4)
+        )
+
+        when(mockCoreRegistrationValidationService.searchEuTaxId(any(), any())(any(), any())) thenReturn
+          Some(quarantinedIntermediaryMatch).toFuture
+
+        val request =
+          FakeRequest(POST, euTaxReferenceRoute)
+            .withFormUrlEncodedBody(("value", euTaxReference))
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` normalRoutes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+          quarantinedIntermediaryMatch.memberState,
+          quarantinedIntermediaryMatch.getEffectiveDate
+        ).url
+        verifyNoInteractions(mockSessionRepository)
+        verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(country.code))(any(), any())
       }
     }
 
@@ -141,8 +232,8 @@ class EuTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) mustEqual BAD_REQUEST
-        contentAsString(result) mustEqual view(boundForm, waypoints, countryIndex(0), country)(request, messages(application)).toString
+        status(result) `mustBe` BAD_REQUEST
+        contentAsString(result) `mustBe` view(boundForm, waypoints, countryIndex(0), country)(request, messages(application)).toString
       }
     }
 
@@ -155,8 +246,8 @@ class EuTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustEqual JourneyRecoveryPage.route(waypoints).url
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` JourneyRecoveryPage.route(waypoints).url
       }
     }
 
@@ -171,9 +262,9 @@ class EuTaxReferenceControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
-        status(result) mustEqual SEE_OTHER
+        status(result) `mustBe` SEE_OTHER
 
-        redirectLocation(result).value mustEqual JourneyRecoveryPage.route(waypoints).url
+        redirectLocation(result).value `mustBe` JourneyRecoveryPage.route(waypoints).url
       }
     }
   }

@@ -84,8 +84,8 @@ class PreviousIossNumberController @Inject()(
               intermediaryNumber = None,
               countryCode = country.code
             ).flatMap {
-              case Some(activeMatch) if activeMatch.isActiveTrader && !waypoints.inAmend =>
-                Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
+              case Some(activeMatch) if activeMatch.isActiveTrader(clock) && !waypoints.inAmend =>
+                Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad(activeMatch.getEffectiveDate)).toFuture
 
               case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) && !waypoints.inAmend =>
                 Redirect(

@@ -17,15 +17,20 @@
 package controllers
 
 import base.SpecBase
-import models.ClientBusinessName
+import config.FrontendAppConfig
+import formats.Format.dateFormatter
+import models.{ClientBusinessName, UserAnswers}
 import pages.ClientBusinessNamePage
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import views.html.ClientAlreadyRegisteredView
 
+import java.time.LocalDate
+
 class ClientAlreadyRegisteredControllerSpec extends SpecBase {
 
   private val clientBusinessName: ClientBusinessName = ClientBusinessName(vatCustomerInfo.organisationName.value)
+  private val exclusionEffectiveDate: String = arbitraryEtmpExclusion.arbitrary.sample.value.effectiveDate.toString
 
   private val userAnswers = emptyUserAnswersWithVatInfo
     .set(ClientBusinessNamePage, clientBusinessName).success.value
@@ -37,14 +42,41 @@ class ClientAlreadyRegisteredControllerSpec extends SpecBase {
       val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
 
       running(application) {
-        val request = FakeRequest(GET, routes.ClientAlreadyRegisteredController.onPageLoad().url)
+        val request = FakeRequest(GET, routes.ClientAlreadyRegisteredController.onPageLoad(exclusionEffectiveDate).url)
 
         val result = route(application, request).value
 
         val view = application.injector.instanceOf[ClientAlreadyRegisteredView]
 
+        val config = application.injector.instanceOf[FrontendAppConfig]
+
+        val formattedExclusionEffectiveDate: String = LocalDate.parse(exclusionEffectiveDate).format(dateFormatter)
+
         status(result) `mustBe` OK
-        contentAsString(result) mustBe view(Some(clientBusinessName.name))(request, messages(application)).toString
+        contentAsString(result) `mustBe` view(clientBusinessName.name, formattedExclusionEffectiveDate, config.intermediaryYourAccountUrl)(request, messages(application)).toString
+      }
+    }
+
+    "must return OK and the correct view for a GET when there is no retrievable company name information" in {
+
+      val userAnswersWithoutCompanyName: UserAnswers = userAnswers
+        .remove(ClientBusinessNamePage).success.value
+
+      val application = applicationBuilder(userAnswers = Some(userAnswersWithoutCompanyName)).build()
+
+      running(application) {
+        val request = FakeRequest(GET, routes.ClientAlreadyRegisteredController.onPageLoad(exclusionEffectiveDate).url)
+
+        val result = route(application, request).value
+
+        val view = application.injector.instanceOf[ClientAlreadyRegisteredView]
+
+        val config = application.injector.instanceOf[FrontendAppConfig]
+
+        val formattedExclusionEffectiveDate: String = LocalDate.parse(exclusionEffectiveDate).format(dateFormatter)
+
+        status(result) `mustBe` OK
+        contentAsString(result) `mustBe` view(clientBusinessName.name, formattedExclusionEffectiveDate, config.intermediaryYourAccountUrl)(request, messages(application)).toString
       }
     }
   }

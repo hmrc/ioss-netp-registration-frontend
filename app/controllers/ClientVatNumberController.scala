@@ -25,13 +25,13 @@ import models.responses.VatCustomerNotFound
 import pages.{ClientVatNumberPage, UkVatNumberNotFoundPage, VatApiDownPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.I18nSupport
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import play.api.mvc.Results.Redirect
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import utils.FutureSyntax.FutureOps
 import utils.AmendWaypoints.AmendWaypointsOps
+import utils.FutureSyntax.FutureOps
 import views.html.ClientVatNumberView
 
 import java.time.{Clock, LocalDate}
@@ -72,8 +72,8 @@ class ClientVatNumberController @Inject()(
         ukVatNumber =>
           coreRegistrationValidationService.searchUkVrn(Vrn(ukVatNumber)).flatMap {
 
-            case Some(activeMatch) if activeMatch.isActiveTrader =>
-              Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
+            case Some(activeMatch) if activeMatch.isActiveTrader(clock) =>
+              Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad(activeMatch.getEffectiveDate)).toFuture
 
             case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
               Redirect(

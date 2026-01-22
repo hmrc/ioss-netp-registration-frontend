@@ -16,34 +16,39 @@
 
 package controllers
 
+import config.FrontendAppConfig
 import controllers.actions.*
+import formats.Format.dateFormatter
 import logging.Logging
 import models.UserAnswers
 import models.requests.DataRequest
-
-import javax.inject.Inject
-import play.api.i18n.{I18nSupport, MessagesApi}
 import pages.ClientBusinessNamePage
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.ClientAlreadyRegisteredView
 
+import java.time.LocalDate
+import javax.inject.Inject
+
 class ClientAlreadyRegisteredController @Inject()(
-                                       override val messagesApi: MessagesApi,
-                                       cc: AuthenticatedControllerComponents,
-                                       view: ClientAlreadyRegisteredView
-                                     ) extends FrontendBaseController with I18nSupport with Logging {
+                                                   override val messagesApi: MessagesApi,
+                                                   cc: AuthenticatedControllerComponents,
+                                                   frontendAppConfig: FrontendAppConfig,
+                                                   view: ClientAlreadyRegisteredView
+                                                 ) extends FrontendBaseController with I18nSupport with Logging {
 
   protected val controllerComponents: MessagesControllerComponents = cc
-  
-  def onPageLoad: Action[AnyContent] = cc.identifyAndGetData() {
+
+  def onPageLoad(exclusionEffectiveDate: String): Action[AnyContent] = cc.identifyAndGetData() {
     implicit request: DataRequest[_] =>
 
+      val formattedExclusionEffectiveDate: String = LocalDate.parse(exclusionEffectiveDate).format(dateFormatter)
+
       getOrganisationName(request.userAnswers) match {
-        case Some(clientCompanyName) =>
-          Ok(view(Some(clientCompanyName)))
-        case _ =>
-          Ok(view(None))
+        case maybeClientCompanyName =>
+          val companyName: String = maybeClientCompanyName.getOrElse(Messages("clientAlreadyRegistered.yourClient"))
+          Ok(view(companyName, formattedExclusionEffectiveDate, frontendAppConfig.intermediaryYourAccountUrl))
       }
   }
 

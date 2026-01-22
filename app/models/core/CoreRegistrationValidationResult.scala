@@ -20,8 +20,8 @@ import models.ossRegistration.ExclusionReason
 import play.api.i18n.Lang.logger.logger
 import play.api.libs.json.*
 
-import java.time.{Clock, LocalDate}
 import java.time.format.DateTimeFormatter
+import java.time.{Clock, LocalDate}
 
 case class CoreRegistrationValidationResult(
                                              searchId: String,
@@ -57,9 +57,12 @@ case class Match(
     }
   }
 
-  def isActiveTrader: Boolean = {
+  def isActiveTrader(clock: Clock): Boolean = {
+    val today: LocalDate = LocalDate.now(clock)
+    
     traderId.isAnIOSSNetp &&
-      exclusionStatusCode.isEmpty || exclusionStatusCode.contains(-1)
+      (exclusionStatusCode.isEmpty || exclusionStatusCode.contains(-1)) &&
+      today.isBefore(LocalDate.parse(getEffectiveDate))
   }
 
   def isQuarantinedTrader(clock: Clock): Boolean = {
