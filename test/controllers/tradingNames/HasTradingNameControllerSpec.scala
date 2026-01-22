@@ -187,21 +187,5 @@ class HasTradingNameControllerSpec extends SpecBase with MockitoSugar {
         redirectLocation(result).value mustBe JourneyRecoveryPage.route(waypoints).url
       }
     }
-
-    "must redirect to Journey Recovery when vatInfo is None" in {
-
-      val userAnswers = emptyUserAnswersWithVatInfo.copy(vatInfo = None)
-
-      val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
-
-      running(application) {
-        val request = FakeRequest(GET, hasTradingNameRoute)
-
-        val result = route(application, request).value
-
-        status(result) mustBe SEE_OTHER
-        redirectLocation(result).value mustBe JourneyRecoveryPage.route(waypoints).url
-      }
-    }
   }
 }

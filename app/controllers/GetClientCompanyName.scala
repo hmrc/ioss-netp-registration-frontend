@@ -19,6 +19,7 @@ package controllers
 import models.ClientBusinessName
 import models.requests.*
 import pages.{ClientBusinessNamePage, JourneyRecoveryPage, Waypoints}
+import play.api.i18n.Messages
 import play.api.mvc.Result
 import play.api.mvc.Results.Redirect
 import utils.FutureSyntax.FutureOps
@@ -29,7 +30,10 @@ trait GetClientCompanyName {
 
   def getClientCompanyName(waypoints: Waypoints)
                           (block: String => Future[Result])
-                          (implicit request: DataRequest[_]): Future[Result] = {
+                          (implicit request: DataRequest[_], messages: Messages): Future[Result] = {
+
+    val defaultClientName = messages("site.defaultClientName")
+    
     request.userAnswers.vatInfo match {
       case Some(vatCustomerInfo) =>
 
@@ -42,9 +46,9 @@ trait GetClientCompanyName {
         }
 
       case _ =>
-        request.userAnswers.get(ClientBusinessNamePage).map { companyName =>
-          block(companyName.name)
-        }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
+        request.userAnswers.get(ClientBusinessNamePage)
+          .map(companyName => block(companyName.name))
+          .getOrElse(block(defaultClientName))
     }
   }
 }

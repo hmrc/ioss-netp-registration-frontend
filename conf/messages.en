@@ -17,6 +17,7 @@ site.add = Add
 site.warning = Warning
 site.joinScheme = Join the scheme
 site.selectCountry = Select a country
+site.defaultClientName = your client
 
 date.day = Day
 date.month = Month
