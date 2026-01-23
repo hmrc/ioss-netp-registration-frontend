@@ -32,7 +32,7 @@
 
     <h1 class="govuk-heading-l">@messages("confirmClientVatDetails.heading", companyName)</h1>
 
-    @formHelper(action = routes.CheckVatDetailsController.onSubmit(waypoints)) {
+    @formHelper(action = routes.CheckVatDetailsController.onSubmit(waypoints, incompletePrompt = false)) {
 
         @govukSummaryList(summaryList)
 

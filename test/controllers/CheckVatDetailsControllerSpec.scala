@@ -64,6 +64,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
   private val checkVatDetailsPage = CheckVatDetailsPage()
   private val updatedAnswersNonUK = emptyUserAnswers
     .set(BusinessBasedInUKPage, false).success.value
+    .set(ClientHasVatNumberPage, false).success.value
     .set(ClientCountryBasedPage, country).success.value
     .set(ClientBusinessNamePage, ClientBusinessName(companyName)).success.value
     .set(ClientTaxReferencePage, taxReference).success.value
@@ -91,7 +92,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
     .set(ClientVatNumberPage, vatNumber).success.value
 
   lazy val checkVatDetailsRoute: String = routes.CheckVatDetailsController.onPageLoad(waypoints).url
-  lazy val checkVatDetailsPostRoute: String = routes.CheckVatDetailsController.onSubmit(waypoints).url
+  lazy val checkVatDetailsPostRoute: String = routes.CheckVatDetailsController.onSubmit(waypoints, incompletePrompt = false).url
 
   "CheckVatDetails Controller" - {
 
@@ -113,6 +114,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
           val summaryList: SummaryList = SummaryListViewModel(
             rows = Seq(
               BusinessBasedInUKSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage),
+              ClientHasVatNumberSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage),
               ClientCountryBasedSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage),
               ClientTaxReferenceSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage),
               ClientBusinessNameSummary.row(waypoints, updatedAnswersNonUK, checkVatDetailsPage),
@@ -121,7 +123,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
           )
 
           status(result) `mustBe` OK
-          contentAsString(result) mustBe view(waypoints, None, summaryList, companyName, isBasedInUk = false, hasVatNumber = false)(request, messages(application)).toString
+          contentAsString(result) mustBe view(waypoints, None, summaryList, companyName, isBasedInUk = false, hasVatNumber = false, isValid = true)(request, messages(application)).toString
 
         }
       }
@@ -171,7 +173,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
         running(application) {
           val request =
-            FakeRequest(POST, checkVatDetailsRoute)
+            FakeRequest(POST, checkVatDetailsPostRoute)
               .withFormUrlEncodedBody(("value", "answer"))
 
           val result = route(application, request).value
@@ -215,7 +217,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
               )
 
               status(result) `mustBe` OK
-              contentAsString(result) `mustBe` view(waypoints, None, summaryList, companyName, isBasedInUk = true, hasVatNumber = false)(request, messages(application)).toString
+              contentAsString(result) `mustBe` view(waypoints, None, summaryList, companyName, isBasedInUk = true, hasVatNumber = false, isValid = true)(request, messages(application)).toString
             }
           }
 
@@ -264,7 +266,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
             running(application) {
               val request =
-                FakeRequest(POST, checkVatDetailsRoute)
+                FakeRequest(POST, checkVatDetailsPostRoute)
                   .withFormUrlEncodedBody(("value", "answer"))
 
               val result = route(application, request).value
@@ -302,7 +304,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
               )
 
               status(result) `mustBe` OK
-              contentAsString(result) `mustBe` view(waypoints, None, summaryList, companyName, isBasedInUk = true, hasVatNumber = false)(request, messages(application)).toString
+              contentAsString(result) `mustBe` view(waypoints, None, summaryList, companyName, isBasedInUk = true, hasVatNumber = false, isValid = true)(request, messages(application)).toString
             }
           }
 
@@ -351,7 +353,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
 
             running(application) {
               val request =
-                FakeRequest(POST, checkVatDetailsRoute)
+                FakeRequest(POST, checkVatDetailsPostRoute)
                   .withFormUrlEncodedBody(("value", "answer"))
 
               val result = route(application, request).value
@@ -395,7 +397,7 @@ class CheckVatDetailsControllerSpec extends SpecBase with MockitoSugar {
             val companyName = vatCustomerInfo.organisationName.get
 
             status(result) `mustBe` OK
-            contentAsString(result) `mustBe` view(waypoints, Some(viewModel), summaryList, companyName, isBasedInUk = true, hasVatNumber = true)(request, messages(application)).toString
+            contentAsString(result) `mustBe` view(waypoints, Some(viewModel), summaryList, companyName, isBasedInUk = true, hasVatNumber = true, isValid = true)(request, messages(application)).toString
           }
         }
 

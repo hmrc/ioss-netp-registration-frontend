@@ -27,6 +27,7 @@ import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import utils.AmendWaypoints.AmendWaypointsOps
+import utils.CompletionChecks
 import viewmodels.CheckVatDetailsViewModel
 import viewmodels.checkAnswers.*
 import viewmodels.govuk.all.SummaryListViewModel
@@ -38,7 +39,7 @@ class CheckVatDetailsController @Inject()(
                                            override val messagesApi: MessagesApi,
                                            cc: AuthenticatedControllerComponents,
                                            view: CheckVatDetailsView
-                                         )() extends FrontendBaseController with I18nSupport with GetClientCompanyName with Logging {
+                                         )() extends FrontendBaseController with I18nSupport with GetClientCompanyName with Logging with CompletionChecks {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -49,6 +50,7 @@ class CheckVatDetailsController @Inject()(
       val hasVatNumber = request.userAnswers.get(ClientHasVatNumberPage).getOrElse(false)
       val summaryList = buildSummaryList(waypoints, request.userAnswers, CheckVatDetailsPage())
       val ukVatNumber = request.userAnswers.get(ClientVatNumberPage).getOrElse("")
+      val isValid: Boolean = validateVatInfo()
 
       getClientCompanyName(waypoints) { clientCompanyName =>
 
@@ -58,21 +60,26 @@ class CheckVatDetailsController @Inject()(
 
               val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatCustomerInfo)
 
-              Ok(view(waypoints, Some(viewModel), summaryList, clientCompanyName, isBasedInUk, hasVatNumber)).toFuture
+              Ok(view(waypoints, Some(viewModel), summaryList, clientCompanyName, isBasedInUk, hasVatNumber, isValid)).toFuture
 
             case None =>
               Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
           }
         } else {
-          Ok(view(waypoints, None, summaryList, clientCompanyName, isBasedInUk, hasVatNumber)).toFuture
+          Ok(view(waypoints, None, summaryList, clientCompanyName, isBasedInUk, hasVatNumber, isValid)).toFuture
         }
       }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onSubmit(waypoints: Waypoints, incompletePrompt: Boolean): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
-      Redirect(CheckVatDetailsPage().navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
 
+      getFirstValidationVatInfoErrorRedirect(waypoints) match {
+        case Some(errorRedirect) =>
+          errorRedirect.toFuture
+        case None =>
+          Redirect(CheckVatDetailsPage().navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
+      }
   }
 
   private def buildSummaryList(

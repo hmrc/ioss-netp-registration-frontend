@@ -73,25 +73,54 @@ trait CompletionChecks {
   }
 
   def getFirstValidationErrorRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
-    (incompleteBusinessBasedInUkRedirect(waypoints) ++
-      incompleteHasVatNumberRedirect(waypoints) ++
-      incompleteClientVatNumberRedirect(waypoints) ++
-      incompleteClientCountryRedirect(waypoints) ++
-      incompleteClientBusinessNameRedirect(waypoints) ++
-      incompleteHasUtrNumberRedirect(waypoints) ++
-      incompleteClientUtrNumberRedirect(waypoints) ++
-      incompleteClientsNinoNumberRedirect(waypoints) ++
-      incompleteClientTaxReferenceRedirect(waypoints) ++
-      incompleteBusinessAddressRedirect(waypoints) ++
-      incompleteHasTradingNameRedirect(waypoints) ++
-      incompleteTradingNameRedirect(waypoints) ++
-      emptyPreviousRegistrationRedirect(waypoints) ++
-      incompletePreviousRegistrationRedirect(waypoints) ++
-      emptyEuDetailsRedirect(waypoints) ++
-      incompleteEuDetailsRedirect(waypoints) ++
-      incompleteWebsiteUrlsRedirect(waypoints) ++
+    Seq(incompleteBusinessBasedInUkRedirect(waypoints),
+      incompleteHasVatNumberRedirect(waypoints),
+      incompleteClientVatNumberRedirect(waypoints),
+      incompleteClientCountryRedirect(waypoints),
+      incompleteClientTaxReferenceRedirect(waypoints),
+      incompleteClientBusinessNameRedirect(waypoints),
+      incompleteHasUtrNumberRedirect(waypoints),
+      incompleteClientUtrNumberRedirect(waypoints),
+      incompleteClientsNinoNumberRedirect(waypoints),
+      incompleteBusinessAddressRedirect(waypoints),
+      incompleteHasTradingNameRedirect(waypoints),
+      incompleteTradingNameRedirect(waypoints),
+      emptyPreviousRegistrationRedirect(waypoints),
+      incompletePreviousRegistrationRedirect(waypoints),
+      emptyEuDetailsRedirect(waypoints),
+      incompleteEuDetailsRedirect(waypoints),
+      incompleteWebsiteUrlsRedirect(waypoints),
       emptyContactDetails(waypoints)
-      ).headOption
+      ).flatten.headOption
+  }
+
+  def validateVatInfo()(implicit request: DataRequest[AnyContent]): Boolean = {
+    isBasedInUk() &&
+      hasUkVatNumber() &&
+      ukVatNumberDefined() &&
+      clientCountryBasedDefined() &&
+      hasClientBusinessName() &&
+      hasUtrNumber() &&
+      utrNumberDefined() &&
+      ninoNumberDefined() &&
+      clientTaxReferenceDefined() &&
+      clientBusinessAddressDefined()
+  }
+
+  def getFirstValidationVatInfoErrorRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
+
+    Seq(
+      incompleteBusinessBasedInUkRedirect(waypoints),
+      incompleteHasVatNumberRedirect(waypoints),
+      incompleteClientVatNumberRedirect(waypoints),
+      incompleteClientCountryRedirect(waypoints),
+      incompleteClientTaxReferenceRedirect(waypoints),
+      incompleteClientBusinessNameRedirect(waypoints),
+      incompleteHasUtrNumberRedirect(waypoints),
+      incompleteClientUtrNumberRedirect(waypoints),
+      incompleteClientsNinoNumberRedirect(waypoints),
+      incompleteBusinessAddressRedirect(waypoints)
+    ).flatten.headOption
   }
 
   private def hasWebsiteValid()(implicit request: DataRequest[AnyContent]): Boolean = {

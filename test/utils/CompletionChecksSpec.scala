@@ -75,7 +75,19 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
     .set(WebsitePage(Index(0)), Website("www.test-website.com")).success.value
     .set(BusinessContactDetailsPage, BusinessContactDetails("fullName", "555999111", "test@test.com")).success.value
 
-
+  private val validVatInfoAnswers: UserAnswers = emptyUserAnswersWithVatInfo
+    .set(BusinessBasedInUKPage, true).success.value
+    .set(ClientHasVatNumberPage, true).success.value
+    .set(ClientVatNumberPage, vatNumber).success.value
+    .set(ClientCountryBasedPage, country).success.value
+    .set(ClientHasUtrNumberPage, true).success.value
+    .set(ClientUtrNumberPage, utr).success.value
+    .set(ClientsNinoNumberPage, nino).success.value
+    .set(ClientTaxReferencePage, taxReference).success.value
+    .set(ClientBusinessNamePage, clientBusinessName).success.value
+    .set(ClientBusinessAddressPage, businessAddress).success.value
+  
+  
   "CompletionChecks" - {
 
     ".validate" - {
@@ -183,6 +195,117 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
           when(request.userAnswers) thenReturn validAnswers
 
           val result = CompletionChecksTests.getFirstValidationErrorRedirect(waypoints)
+
+          result `mustBe` None
+        }
+      }
+    }
+
+    ".validateVatInfo" - {
+
+      "must validate and return true when valid data is present" in {
+
+        val application = applicationBuilder(userAnswers = Some(validVatInfoAnswers)).build()
+
+        running(application) {
+          implicit val request: DataRequest[AnyContent] = mock[DataRequest[AnyContent]]
+
+          when(request.userAnswers) thenReturn validVatInfoAnswers
+
+          val result = CompletionChecksTests.validateVatInfo()
+
+          result `mustBe` true
+        }
+      }
+
+      "must validate and return false when invalid data is present" in {
+
+        val invalidAnswers: UserAnswers = validVatInfoAnswers
+          .remove(ClientVatNumberPage).success.value
+
+        val application = applicationBuilder(userAnswers = Some(invalidAnswers)).build()
+
+        running(application) {
+          implicit val request: DataRequest[AnyContent] = mock[DataRequest[AnyContent]]
+
+          when(request.userAnswers) thenReturn invalidAnswers
+
+          val result = CompletionChecksTests.validateVatInfo()
+
+          result `mustBe` false
+        }
+      }
+
+      "must validate and return false when contact details are missing" in {
+
+        val invalidAnswers = validVatInfoAnswers.remove(ClientVatNumberPage).success.value
+
+        val application = applicationBuilder(userAnswers = Some(invalidAnswers)).build()
+
+        running(application) {
+          implicit val request: DataRequest[AnyContent] = mock[DataRequest[AnyContent]]
+
+          when(request.userAnswers) thenReturn invalidAnswers
+
+          val result = CompletionChecksTests.validateVatInfo()
+
+          result `mustBe` false
+        }
+      }
+    }
+
+    ".getFirstValidationVatInfoErrorRedirect" - {
+
+      "must obtain the first validation error and redirect to the correct page" - {
+
+        "when there is only one validation error present" in {
+
+          val invalidAnswers: UserAnswers = validVatInfoAnswers
+            .remove(ClientVatNumberPage).success.value
+
+          val application = applicationBuilder(userAnswers = Some(invalidAnswers)).build()
+
+          running(application) {
+            implicit val request: DataRequest[AnyContent] = mock[DataRequest[AnyContent]]
+
+            when(request.userAnswers) thenReturn invalidAnswers
+
+            val result = CompletionChecksTests.getFirstValidationVatInfoErrorRedirect(waypoints)
+
+            result `mustBe` Some(Redirect(controllers.routes.ClientVatNumberController.onPageLoad(waypoints)))
+          }
+        }
+
+        "when there are multiple validation errors present" in {
+
+          val invalidAnswers: UserAnswers = validVatInfoAnswers
+            .remove(ClientVatNumberPage).success.value
+            .remove(ClientBusinessNamePage).success.value
+
+          val application = applicationBuilder(userAnswers = Some(invalidAnswers)).build()
+
+          running(application) {
+            implicit val request: DataRequest[AnyContent] = mock[DataRequest[AnyContent]]
+
+            when(request.userAnswers) thenReturn invalidAnswers
+
+            val result = CompletionChecksTests.getFirstValidationVatInfoErrorRedirect(waypoints)
+
+            result `mustBe` Some(Redirect(controllers.routes.ClientVatNumberController.onPageLoad(waypoints)))
+          }
+        }
+      }
+
+      "must return None when there are no validation errors present" in {
+
+        val application = applicationBuilder(userAnswers = Some(validVatInfoAnswers)).build()
+
+        running(application) {
+
+          implicit val request: DataRequest[AnyContent] = mock[DataRequest[AnyContent]]
+          when(request.userAnswers) thenReturn validVatInfoAnswers
+
+          val result = CompletionChecksTests.getFirstValidationVatInfoErrorRedirect(waypoints)
 
           result `mustBe` None
         }

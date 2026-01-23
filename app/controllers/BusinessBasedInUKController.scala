@@ -61,10 +61,17 @@ class BusinessBasedInUKController @Inject()(
 
         value =>
           val originalAnswers: UserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
-          for {
-            updatedAnswers <- Future.fromTry(originalAnswers.set(BusinessBasedInUKPage, value))
-            _ <- cc.sessionRepository.set(updatedAnswers)
-          } yield Redirect(BusinessBasedInUKPage.navigate(waypoints, originalAnswers, updatedAnswers).route)
+
+          val existingAnswers: Option[Boolean] = originalAnswers.get(BusinessBasedInUKPage)
+          
+          if (existingAnswers.contains(value)) {
+            Future.successful(Redirect(CheckVatDetailsPage().route(waypoints)))
+          } else {
+            for {
+              updatedAnswers <- Future.fromTry(originalAnswers.set(BusinessBasedInUKPage, value))
+              _ <- cc.sessionRepository.set(updatedAnswers)
+            } yield Redirect(BusinessBasedInUKPage.navigate(waypoints, originalAnswers, updatedAnswers).route)
+          }
       )
   }
 }

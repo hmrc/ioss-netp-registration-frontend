@@ -18,7 +18,7 @@ package controllers
 
 import controllers.actions.*
 import forms.ClientHasVatNumberFormProvider
-import pages.{ClientHasVatNumberPage, Waypoints}
+import pages.{CheckVatDetailsPage, ClientHasVatNumberPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -58,10 +58,17 @@ class ClientHasVatNumberController @Inject()(
           Future.successful(BadRequest(view(formWithErrors, waypoints))),
 
         value =>
-          for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientHasVatNumberPage, value))
-            _              <- cc.sessionRepository.set(updatedAnswers)
-          } yield Redirect(ClientHasVatNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+          val originalAnswers = request.userAnswers
+          val existingAnswers = originalAnswers.get(ClientHasVatNumberPage)
+
+          if (existingAnswers.contains(value)) {
+            Future.successful(Redirect(CheckVatDetailsPage().route(waypoints)))
+          } else {
+            for {
+              updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientHasVatNumberPage, value))
+              _ <- cc.sessionRepository.set(updatedAnswers)
+            } yield Redirect(ClientHasVatNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+          }
       )
   }
 }
