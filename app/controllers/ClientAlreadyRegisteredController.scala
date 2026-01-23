@@ -40,10 +40,10 @@ class ClientAlreadyRegisteredController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(exclusionEffectiveDate: String): Action[AnyContent] = cc.identifyAndGetData() {
+  def onPageLoad(exclusionEffectiveDate: Option[String]): Action[AnyContent] = cc.identifyAndGetData() {
     implicit request: DataRequest[_] =>
-
-      val formattedExclusionEffectiveDate: String = LocalDate.parse(exclusionEffectiveDate).format(dateFormatter)
+      
+      val formattedExclusionEffectiveDate: Option[String] = exclusionEffectiveDate.map(LocalDate.parse(_).format(dateFormatter))
 
       getOrganisationName(request.userAnswers) match {
         case maybeClientCompanyName =>

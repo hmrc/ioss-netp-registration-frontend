@@ -19,11 +19,25 @@
         govukButton: GovukButton
 )
 
-@(companyName: String, exclusionDate: String, intermediaryYourAccountUrl: String)(implicit request: Request[_], messages: Messages)
+@(companyName: String, exclusionEffectiveDate: Option[String], intermediaryYourAccountUrl: String)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = titleNoForm(messages("clientAlreadyRegistered.title", companyName, exclusionDate)), showBackLink = false) {
+@titleText = @{
+    exclusionEffectiveDate match {
+        case Some(date) => messages("clientAlreadyRegistered.title.withExclusionDate", companyName, date)
+        case _ => messages("clientAlreadyRegistered.title", companyName)
+    }
+}
 
-    <h1 class="govuk-heading-l">@messages("clientAlreadyRegistered.heading", companyName, exclusionDate)</h1>
+@headingText = @{
+    exclusionEffectiveDate match {
+        case Some(date) => messages("clientAlreadyRegistered.heading.withExclusionDate", companyName, date)
+        case _ => messages("clientAlreadyRegistered.heading", companyName)
+    }
+}
+
+@layout(pageTitle = titleNoForm(titleText), showBackLink = false) {
+
+    <h1 class="govuk-heading-l">@headingText</h1>
 
     <p class="govuk-body">@messages("clientAlreadyRegistered.p1")</p>
 

@@ -175,7 +175,7 @@ POST        /remove-all-tax-details                                         cont
 
 GET         /other-country-excluded-and-quarantined                         controllers.OtherCountryExcludedAndQuarantinedController.onPageLoad(countryCode: String, exclusionEffectiveDate: String)
 
-GET         /client-already-registered                                      controllers.ClientAlreadyRegisteredController.onPageLoad(exclusionDate: String)
+GET         /client-already-registered                                      controllers.ClientAlreadyRegisteredController.onPageLoad(exclusionEffectiveDate: Option[String])
 
 
 # Netp Declaration Section

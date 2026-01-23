@@ -26,7 +26,7 @@ object CreateMatchResponse {
                            memberState: String = "DE",
                            exclusionStatusCode: Option[Int] = None,
                            nonCompliantDetails: Option[NonCompliantDetails] = None,
-                           exclusionEffectiveDate: Option[String] = Some("2022-10-10")
+                           exclusionEffectiveDate: Option[String] = None
                          ): Match = Match(
     traderId = traderId,
     intermediary = None,

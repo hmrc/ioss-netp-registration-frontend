@@ -41,7 +41,7 @@ import testutils.CreateMatchResponse.createMatchResponse
 import utils.FutureSyntax.FutureOps
 import views.html.vatEuDetails.EuVatNumberView
 
-import java.time.{Clock, Instant, ZoneId}
+import java.time.{Clock, Instant, LocalDate, ZoneId}
 
 class EuVatNumberControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
@@ -178,7 +178,42 @@ class EuVatNumberControllerSpec extends SpecBase with MockitoSugar with BeforeAn
         val result = route(application, request).value
 
         status(result) `mustBe` SEE_OTHER
-        redirectLocation(result).value `mustBe` normalRoutes.ClientAlreadyRegisteredController.onPageLoad(activeRegistrationMatch.getEffectiveDate).url
+        redirectLocation(result).value `mustBe` normalRoutes.ClientAlreadyRegisteredController.onPageLoad(activeRegistrationMatch.exclusionEffectiveDate).url
+        verifyNoInteractions(mockSessionRepository)
+        verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVatNumber), eqTo(countryCode))(any(), any())
+      }
+    }
+
+    "must not save the answers and redirect to Client Already Registered page when a non-intermediary user is already registered on another service with no exclusion pending" in {
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+
+      val application =
+        applicationBuilder(userAnswers = Some(updatedAnswers))
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+          )
+          .build()
+
+      running(application) {
+
+        val activeRegistrationMatch = createMatchResponse(
+          traderId = TraderId("IM0987654321")
+        )
+
+        when(mockCoreRegistrationValidationService.searchEuVrn(any(), any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
+
+        val request =
+          FakeRequest(POST, euVatNumberRoute)
+            .withFormUrlEncodedBody(("value", euVatNumber))
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` normalRoutes.ClientAlreadyRegisteredController.onPageLoad(None).url
         verifyNoInteractions(mockSessionRepository)
         verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVatNumber), eqTo(countryCode))(any(), any())
       }
@@ -202,7 +237,8 @@ class EuVatNumberControllerSpec extends SpecBase with MockitoSugar with BeforeAn
 
         val quarantinedIntermediaryMatch = createMatchResponse(
           traderId = TraderId("IM0987654321"),
-          exclusionStatusCode = Some(4)
+          exclusionStatusCode = Some(4),
+          exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
         )
 
         when(mockCoreRegistrationValidationService.searchEuVrn(any(), any())(any(), any())) thenReturn Some(quarantinedIntermediaryMatch).toFuture

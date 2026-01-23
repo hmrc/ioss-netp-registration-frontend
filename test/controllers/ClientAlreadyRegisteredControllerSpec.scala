@@ -42,7 +42,7 @@ class ClientAlreadyRegisteredControllerSpec extends SpecBase {
       val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
 
       running(application) {
-        val request = FakeRequest(GET, routes.ClientAlreadyRegisteredController.onPageLoad(exclusionEffectiveDate).url)
+        val request = FakeRequest(GET, routes.ClientAlreadyRegisteredController.onPageLoad(Some(exclusionEffectiveDate)).url)
 
         val result = route(application, request).value
 
@@ -53,7 +53,7 @@ class ClientAlreadyRegisteredControllerSpec extends SpecBase {
         val formattedExclusionEffectiveDate: String = LocalDate.parse(exclusionEffectiveDate).format(dateFormatter)
 
         status(result) `mustBe` OK
-        contentAsString(result) `mustBe` view(clientBusinessName.name, formattedExclusionEffectiveDate, config.intermediaryYourAccountUrl)(request, messages(application)).toString
+        contentAsString(result) `mustBe` view(clientBusinessName.name, Some(formattedExclusionEffectiveDate), config.intermediaryYourAccountUrl)(request, messages(application)).toString
       }
     }
 
@@ -65,7 +65,7 @@ class ClientAlreadyRegisteredControllerSpec extends SpecBase {
       val application = applicationBuilder(userAnswers = Some(userAnswersWithoutCompanyName)).build()
 
       running(application) {
-        val request = FakeRequest(GET, routes.ClientAlreadyRegisteredController.onPageLoad(exclusionEffectiveDate).url)
+        val request = FakeRequest(GET, routes.ClientAlreadyRegisteredController.onPageLoad(Some(exclusionEffectiveDate)).url)
 
         val result = route(application, request).value
 
@@ -76,7 +76,28 @@ class ClientAlreadyRegisteredControllerSpec extends SpecBase {
         val formattedExclusionEffectiveDate: String = LocalDate.parse(exclusionEffectiveDate).format(dateFormatter)
 
         status(result) `mustBe` OK
-        contentAsString(result) `mustBe` view(clientBusinessName.name, formattedExclusionEffectiveDate, config.intermediaryYourAccountUrl)(request, messages(application)).toString
+        contentAsString(result) `mustBe` view(clientBusinessName.name, Some(formattedExclusionEffectiveDate), config.intermediaryYourAccountUrl)(request, messages(application)).toString
+      }
+    }
+
+    "must return OK and the correct view for a GET when there is no exclusion effective date" in {
+
+      val userAnswersWithoutCompanyName: UserAnswers = userAnswers
+        .remove(ClientBusinessNamePage).success.value
+
+      val application = applicationBuilder(userAnswers = Some(userAnswersWithoutCompanyName)).build()
+
+      running(application) {
+        val request = FakeRequest(GET, routes.ClientAlreadyRegisteredController.onPageLoad(None).url)
+
+        val result = route(application, request).value
+
+        val view = application.injector.instanceOf[ClientAlreadyRegisteredView]
+
+        val config = application.injector.instanceOf[FrontendAppConfig]
+
+        status(result) `mustBe` OK
+        contentAsString(result) `mustBe` view(clientBusinessName.name, None, config.intermediaryYourAccountUrl)(request, messages(application)).toString
       }
     }
   }

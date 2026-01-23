@@ -73,7 +73,7 @@ class ClientVatNumberController @Inject()(
           coreRegistrationValidationService.searchUkVrn(Vrn(ukVatNumber)).flatMap {
 
             case Some(activeMatch) if activeMatch.isActiveTrader(clock) =>
-              Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad(activeMatch.getEffectiveDate)).toFuture
+              Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad(activeMatch.exclusionEffectiveDate)).toFuture
 
             case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
               Redirect(

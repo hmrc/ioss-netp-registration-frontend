@@ -184,10 +184,16 @@ class CoreRegistrationValidationResultSpec extends AnyFreeSpec with Matchers wit
         "when today is after exclusion effective date" in {
 
           val activeMatchExcluded = activeMatch.copy(
+            exclusionStatusCode = Some(3),
             exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).toString)
           )
 
           activeMatchExcluded.isActiveTrader(stubClockAtArbitraryDate) mustBe false
+        }
+
+        "when there is no effective date or exclusion status code" in {
+
+          activeMatch.isActiveTrader(stubClockAtArbitraryDate) mustBe true
         }
       }
     }

@@ -61,8 +61,8 @@ case class Match(
     val today: LocalDate = LocalDate.now(clock)
     
     traderId.isAnIOSSNetp &&
-      (exclusionStatusCode.isEmpty || exclusionStatusCode.contains(-1)) &&
-      today.isBefore(LocalDate.parse(getEffectiveDate))
+      (exclusionStatusCode.isEmpty || exclusionStatusCode.contains(-1) ||
+      today.isBefore(LocalDate.parse(getEffectiveDate)))
   }
 
   def isQuarantinedTrader(clock: Clock): Boolean = {
