@@ -52,6 +52,8 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
 
   def checkExcludedIntermediary: CheckExcludedIntermediaryFilterProvider
 
+  def checkIntermediaryAccess: CheckIntermediaryAccessFilterProvider
+
   def identifyAndGetData(inAmend: Boolean = false, checkAmendAccess: Option[Page] = None): ActionBuilder[DataRequest, AnyContent] = {
     val baseActions = identifyAndGetOptionalData(inAmend, checkAmendAccess) andThen
       requireData(inAmend)
@@ -62,11 +64,16 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
     }
   }
 
-  def identifyAndGetOptionalData(inAmend: Boolean = false, checkAmendAccess: Option[Page] = None): ActionBuilder[OptionalDataRequest, AnyContent] = {
+  def identifyAndGetOptionalData(
+                                  inAmend: Boolean = false,
+                                  checkAmendAccess: Option[Page] = None,
+                                  iossNumber: Option[String] = None
+                                ): ActionBuilder[OptionalDataRequest, AnyContent] = {
     val baseActions = actionBuilder andThen
       identify andThen
       getData andThen
-      checkExcludedIntermediary()
+      checkExcludedIntermediary() andThen
+      checkIntermediaryAccess(iossNumber)
 
     (inAmend, checkAmendAccess) match {
       case (true, Some(page)) => baseActions andThen this.checkAmendAccess.forOptionalData(page)
@@ -80,7 +87,6 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
     identifyAndGetData(inAmend) andThen
       requireRegistration()
   }
-  
 }
 
 case class DefaultAuthenticatedControllerComponents @Inject()(
@@ -101,5 +107,6 @@ case class DefaultAuthenticatedControllerComponents @Inject()(
                                                                clientGetData: ClientDataRetrievalAction,
                                                                requireRegistration: RegistrationRequiredAction,
                                                                checkAmendAccess: CheckAmendPageAccessFilter,
-                                                               checkExcludedIntermediary: CheckExcludedIntermediaryFilterProvider
+                                                               checkExcludedIntermediary: CheckExcludedIntermediaryFilterProvider,
+                                                               checkIntermediaryAccess: CheckIntermediaryAccessFilterProvider
                                                              ) extends AuthenticatedControllerComponents
