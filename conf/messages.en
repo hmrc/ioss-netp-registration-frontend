@@ -635,3 +635,5 @@ cannotUseNotAnNetp.heading = You cannot access this page
 
 individualSecureMessage.title = Message Details
 
+accessDenied.title = You cannot access this page
+accessDenied.heading = You cannot access this page

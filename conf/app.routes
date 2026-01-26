@@ -235,3 +235,5 @@ GET         /cannot-use-not-an-netp                                         cont
 GET         /individual-secure-message/:id                                  controllers.secureMessages.IndividualSecureMessageController.onPageLoad(id: String)
 
 GET         /no-registration-found                                          controllers.NoRegistrationFoundController.onPageLoad()
+
+GET         /access-denied                                                  controllers.AccessDeniedController.onPageLoad()
