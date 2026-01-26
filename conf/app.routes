@@ -230,8 +230,6 @@ POST        /clients-continue-registration-selection                        cont
 
 GET         /secure-messages                                                controllers.secureMessages.SecureMessagesController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 
-GET         /cannot-use-not-an-netp                                         controllers.secureMessages.CannotUseNotAnNetpController.onPageLoad()
-
 GET         /individual-secure-message/:id                                  controllers.secureMessages.IndividualSecureMessageController.onPageLoad(id: String)
 
 GET         /no-registration-found                                          controllers.NoRegistrationFoundController.onPageLoad()

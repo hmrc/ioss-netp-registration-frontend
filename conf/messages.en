@@ -630,9 +630,6 @@ secureMessages.table.headContent.column1 = Subject
 secureMessages.table.headContent.column2 = Date
 redDot = <span class="dot-unread"></span>
 
-cannotUseNotAnNetp.title = You cannot access this page
-cannotUseNotAnNetp.heading = You cannot access this page
-
 individualSecureMessage.title = Message Details
 
 accessDenied.title = You cannot access this page
