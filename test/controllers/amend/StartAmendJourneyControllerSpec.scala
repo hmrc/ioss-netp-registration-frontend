@@ -19,6 +19,7 @@ package controllers.amend
 import base.SpecBase
 import connectors.RegistrationConnector
 import models.etmp.display.RegistrationWrapper
+import models.etmp.intermediary.IntermediaryRegistrationWrapper
 import models.responses.NotFound
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.*
@@ -45,11 +46,23 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
       mockRegistrationConnector,
       mockRegistrationService
     )
-  
+
+  def intermediaryRegistrationWithClients(iossNumbers: Seq[String]): IntermediaryRegistrationWrapper = {
+    arbitraryIntermediaryRegistrationWrapper.arbitrary.sample.value.copy(
+      etmpDisplayRegistration = arbitraryEtmpDisplayIntermediaryRegistration.arbitrary.sample.value.copy(
+        clientDetails = iossNumbers.map { ioss =>
+          arbitraryEtmpClientDetails.arbitrary.sample.value.copy(clientIossID = ioss)
+        }
+      )
+    )
+  }
+
   "StartAmendJourneyController" - {
 
     "must return OK" in {
 
+      when(mockRegistrationConnector.displayIntermediaryRegistration(any())(any())) thenReturn
+        Right(intermediaryRegistrationWithClients(Seq(iossNumber))).toFuture
       when(mockRegistrationConnector.displayRegistrationNetp(any())(any())) thenReturn Right(registrationWrapper).toFuture
       when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn basicUserAnswersWithVatInfo.toFuture
 
@@ -71,6 +84,8 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
 
     "must throw an Exception when the RegistrationConnector throws an error" in {
 
+      when(mockRegistrationConnector.displayIntermediaryRegistration(any())(any())) thenReturn
+        Right(intermediaryRegistrationWithClients(Seq(iossNumber))).toFuture
       when(mockRegistrationConnector.displayRegistrationNetp(any())(any())) thenReturn Left(NotFound).toFuture
 
       val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
@@ -95,6 +110,8 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
 
       val errorMessage: String = "ERROR"
 
+      when(mockRegistrationConnector.displayIntermediaryRegistration(any())(any())) thenReturn
+        Right(intermediaryRegistrationWithClients(Seq(iossNumber))).toFuture
       when(mockRegistrationConnector.displayRegistrationNetp(any())(any())) thenReturn Right(registrationWrapper).toFuture
       when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn Future.failed(Exception(errorMessage))
 
