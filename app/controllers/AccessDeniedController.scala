@@ -14,23 +14,26 @@
  * limitations under the License.
  */
 
-package controllers.secureMessages
+package controllers
 
+import controllers.actions.AuthenticatedControllerComponents
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import views.html.secureMessages.CannotUseNotAnNetpView
+import views.html.AccessDeniedView
 
 import javax.inject.Inject
 
-class CannotUseNotAnNetpController @Inject()(
-                                       override val messagesApi: MessagesApi,
-                                       val controllerComponents: MessagesControllerComponents,
-                                       view: CannotUseNotAnNetpView
-                                     ) extends FrontendBaseController with I18nSupport {
+class AccessDeniedController @Inject()(
+                                                      override val messagesApi: MessagesApi,
+                                                      cc: AuthenticatedControllerComponents,
+                                                      val controllerComponents: MessagesControllerComponents,
+                                                      view: AccessDeniedView
+                                                    ) extends FrontendBaseController with I18nSupport {
 
-  def onPageLoad: Action[AnyContent] = Action {
+  def onPageLoad: Action[AnyContent] = (cc.actionBuilder andThen cc.identify) {
     implicit request =>
+
       Ok(view())
   }
 }
