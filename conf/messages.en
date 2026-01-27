@@ -250,7 +250,6 @@ deleteAllTradingNames.title = Remove all your client''s alternative trading name
 deleteAllTradingNames.heading = Remove all your client''s alternative trading names from this scheme?
 deleteAllTradingNames.warning = This will delete all the trading names you have added.
 deleteAllTradingNames.error.required = Select yes if you want to remove all your client''s alternative trading names from this scheme
-deleteAllTradingNames.change.hidden = Remove all your client''s alternative trading names from this scheme
 
 businessContactDetails.title = Contact details for {0}
 businessContactDetails.heading = Contact details for {0}
@@ -268,9 +267,9 @@ businessContactDetails.error.emailAddress.length = Email address must be 50 char
 businessContactDetails.error.fullName.invalid = Contact name must only include letters, numbers, hyphens, spaces and apostrophes
 businessContactDetails.error.telephoneNumber.invalid = Enter a telephone number in the correct format, like 01642 123 456, 07777777777 or +33 1 23 45 67 88
 businessContactDetails.error.emailAddress.invalid = Enter an email address in the correct format, like yourname@example.com
-businessContactDetails.change.fullName.hidden = their contact name
-businessContactDetails.change.telephoneNumber.hidden = their telephone number
-businessContactDetails.change.emailAddress.hidden = their email address
+businessContactDetails.change.fullName.hidden = Contact name
+businessContactDetails.change.telephoneNumber.hidden = Telephone number
+businessContactDetails.change.emailAddress.hidden = Email address
 
 declaration.title = Declaration
 declaration.heading = Declaration
@@ -514,7 +513,6 @@ clientDeclaration.information.p1 = I, {0}, appoint {1} to act as my intermediary
 clientDeclaration.information.p2 = I understand that we are joint and severally liable for any VAT debts incurred on this registration.
 clientDeclaration.checkbox.text = I agree to the statements
 clientDeclaration.error.required = Agree to the statements to continue
-clientDeclaration.change.hidden = ClientDeclaration
 
 clientSuccessfulRegistration.title = Registration successful
 clientSuccessfulRegistration.heading = Registration successful
