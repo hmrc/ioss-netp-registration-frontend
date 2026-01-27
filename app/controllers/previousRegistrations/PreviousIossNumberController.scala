@@ -16,7 +16,7 @@
 
 package controllers.previousRegistrations
 
-import controllers.GetCountry
+import controllers.{SetActiveTraderResult, GetCountry}
 import controllers.actions.*
 import forms.previousRegistrations.PreviousIossNumberFormProvider
 import logging.Logging
@@ -46,10 +46,10 @@ class PreviousIossNumberController @Inject()(
                                               view: PreviousIossNumberView,
                                               coreRegistrationValidationService: CoreRegistrationValidationService,
                                               clock: Clock
-                                            )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetCountry with PreviousNonComplianceAnswers {
+                                            )(implicit ec: ExecutionContext)
+  extends FrontendBaseController with I18nSupport with Logging with GetCountry with PreviousNonComplianceAnswers with SetActiveTraderResult {
 
   protected val controllerComponents: MessagesControllerComponents = cc
-
 
   def onPageLoad(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] =
     cc.identifyAndGetData(inAmend = waypoints.inAmend, checkAmendAccess = Some(PreviousIossNumberPage(countryIndex, schemeIndex))).async {
@@ -85,7 +85,11 @@ class PreviousIossNumberController @Inject()(
               countryCode = country.code
             ).flatMap {
               case Some(activeMatch) if activeMatch.isActiveTrader(clock) && !waypoints.inAmend =>
-                Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad(activeMatch.exclusionEffectiveDate)).toFuture
+                setActiveTraderResultAndRedirect(
+                  activeMatch = activeMatch,
+                  sessionRepository = cc.sessionRepository,
+                  redirect = controllers.routes.ClientAlreadyRegisteredController.onPageLoad()
+                )
 
               case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) && !waypoints.inAmend =>
                 Redirect(

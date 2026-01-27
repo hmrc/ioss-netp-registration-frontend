@@ -20,11 +20,12 @@ import config.FrontendAppConfig
 import controllers.actions.*
 import formats.Format.dateFormatter
 import logging.Logging
-import models.UserAnswers
 import models.requests.DataRequest
+import models.{ActiveTraderResult, UserAnswers}
 import pages.ClientBusinessNamePage
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.ActiveTraderResultQuery
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.ClientAlreadyRegisteredView
 
@@ -40,15 +41,24 @@ class ClientAlreadyRegisteredController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(exclusionEffectiveDate: Option[String]): Action[AnyContent] = cc.identifyAndGetData() {
+  def onPageLoad(): Action[AnyContent] = cc.identifyAndGetData() {
     implicit request: DataRequest[_] =>
-      
-      val formattedExclusionEffectiveDate: Option[String] = exclusionEffectiveDate.map(LocalDate.parse(_).format(dateFormatter))
+
+      val activeTrader: ActiveTraderResult = request.userAnswers.get(ActiveTraderResultQuery) match {
+        case Some(answers) => answers
+        case _ =>
+          val message: String = "No active trader result retrieved"
+          val exception: Exception = new Exception(message)
+          logger.error(message)
+          throw exception
+      }
+
+      val formattedExclusionEffectiveDate: Option[String] = activeTrader.exclusionEffectiveDate.map(LocalDate.parse(_).format(dateFormatter))
 
       getOrganisationName(request.userAnswers) match {
         case maybeClientCompanyName =>
           val companyName: String = maybeClientCompanyName.getOrElse(Messages("clientAlreadyRegistered.yourClient"))
-          Ok(view(companyName, formattedExclusionEffectiveDate, frontendAppConfig.intermediaryYourAccountUrl))
+          Ok(view(companyName, formattedExclusionEffectiveDate, frontendAppConfig.intermediaryYourAccountUrl, activeTrader.isReversal))
       }
   }
 

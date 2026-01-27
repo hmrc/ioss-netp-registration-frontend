@@ -16,8 +16,8 @@
 
 package controllers.vatEuDetails
 
-import controllers.GetCountry
 import controllers.actions.*
+import controllers.{GetCountry, SetActiveTraderResult}
 import forms.vatEuDetails.EuVatNumberFormProvider
 import models.{CountryWithValidationDetails, Index}
 import pages.Waypoints
@@ -42,7 +42,8 @@ class EuVatNumberController @Inject()(
                                        view: EuVatNumberView,
                                        coreRegistrationValidationService: CoreRegistrationValidationService,
                                        clock: Clock
-                                     )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
+                                     )(implicit ec: ExecutionContext)
+  extends FrontendBaseController with I18nSupport with GetCountry with SetActiveTraderResult {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -83,9 +84,14 @@ class EuVatNumberController @Inject()(
 
               euVrn =>
                 coreRegistrationValidationService.searchEuVrn(euVrn, country.code).flatMap {
+                  
                   case Some(activeMatch) if activeMatch.isActiveTrader(clock) && !waypoints.inAmend =>
-                    Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad(activeMatch.exclusionEffectiveDate)).toFuture
-
+                    setActiveTraderResultAndRedirect(
+                      activeMatch = activeMatch,
+                      sessionRepository = cc.sessionRepository,
+                      redirect = controllers.routes.ClientAlreadyRegisteredController.onPageLoad()
+                    )
+                    
                   case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) && !waypoints.inAmend =>
                     Redirect(
                       controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(

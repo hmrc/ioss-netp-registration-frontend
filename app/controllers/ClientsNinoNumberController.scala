@@ -41,7 +41,8 @@ class ClientsNinoNumberController @Inject()(
                                              view: ClientsNinoNumberView,
                                              coreRegistrationValidationService: CoreRegistrationValidationService,
                                              clock: Clock
-                                           )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetCountry {
+                                           )(implicit ec: ExecutionContext)
+  extends FrontendBaseController with I18nSupport with Logging with GetCountry with SetActiveTraderResult {
 
   val form: Form[String] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -68,8 +69,12 @@ class ClientsNinoNumberController @Inject()(
           coreRegistrationValidationService.searchTraderId(value).flatMap {
 
             case Some(activeMatch) if activeMatch.isActiveTrader(clock) =>
-              Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad(activeMatch.exclusionEffectiveDate)).toFuture
-
+              setActiveTraderResultAndRedirect(
+                activeMatch = activeMatch,
+                sessionRepository = cc.sessionRepository,
+                redirect = controllers.routes.ClientAlreadyRegisteredController.onPageLoad()
+              )
+              
             case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
               Redirect(
                 controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(

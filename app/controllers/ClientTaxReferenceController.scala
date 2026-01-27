@@ -41,7 +41,8 @@ class ClientTaxReferenceController @Inject()(
                                               view: ClientTaxReferenceView,
                                               coreRegistrationValidationService: CoreRegistrationValidationService,
                                               clock: Clock
-                                    )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry with Logging {
+                                    )(implicit ec: ExecutionContext)
+  extends FrontendBaseController with I18nSupport with GetCountry with SetActiveTraderResult with Logging {
 
   protected val controllerComponents: MessagesControllerComponents = cc
   
@@ -82,7 +83,11 @@ class ClientTaxReferenceController @Inject()(
                 updateAnswersAndRedirect(waypoints, request, value)
 
               case Some(activeMatch) if activeMatch.isActiveTrader(clock) =>
-                Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad(activeMatch.exclusionEffectiveDate)).toFuture
+                setActiveTraderResultAndRedirect(
+                  activeMatch = activeMatch,
+                  sessionRepository = cc.sessionRepository,
+                  redirect = controllers.routes.ClientAlreadyRegisteredController.onPageLoad()
+                )
 
               case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
                 Redirect(

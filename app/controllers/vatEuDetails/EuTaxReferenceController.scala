@@ -16,8 +16,8 @@
 
 package controllers.vatEuDetails
 
-import controllers.GetCountry
 import controllers.actions.*
+import controllers.{GetCountry, SetActiveTraderResult}
 import forms.vatEuDetails.EuTaxReferenceFormProvider
 import models.Index
 import models.requests.DataRequest
@@ -42,7 +42,8 @@ class EuTaxReferenceController @Inject()(
                                           view: EuTaxReferenceView,
                                           coreRegistrationValidationService: CoreRegistrationValidationService,
                                           clock: Clock
-                                        )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
+                                        )(implicit ec: ExecutionContext)
+  extends FrontendBaseController with I18nSupport with GetCountry with SetActiveTraderResult {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -81,8 +82,12 @@ class EuTaxReferenceController @Inject()(
                 updateAnswersAndRedirect(waypoints, countryIndex, request, value)
 
               case Some(activeMatch) if activeMatch.isActiveTrader(clock) =>
-                Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad(activeMatch.exclusionEffectiveDate)).toFuture
-
+                setActiveTraderResultAndRedirect(
+                  activeMatch = activeMatch,
+                  sessionRepository = cc.sessionRepository,
+                  redirect = controllers.routes.ClientAlreadyRegisteredController.onPageLoad()
+                )
+                
               case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
                 Redirect(
                   controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(

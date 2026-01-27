@@ -20,7 +20,7 @@ import base.SpecBase
 import controllers.routes as normalRoutes
 import forms.ClientTaxReferenceFormProvider
 import models.core.TraderId
-import models.{ClientBusinessName, Country, UserAnswers}
+import models.{ActiveTraderResult, ClientBusinessName, Country, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{times, verify, verifyNoInteractions, when}
@@ -32,6 +32,7 @@ import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import queries.ActiveTraderResultQuery
 import repositories.SessionRepository
 import services.core.CoreRegistrationValidationService
 import testutils.CreateMatchResponse.createMatchResponse
@@ -132,18 +133,27 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
       }
     }
 
-    "must not save the answers and redirect to Client Already Registered page when an active non-intermediary trader is found with exclusion pending" in {
+    "must not save the answer but save the active match result and redirect to Client Already Registered page when an active non-intermediary trader is found with exclusion pending" in {
 
       val today: Instant = Instant.now(stubClockAtArbitraryDate)
       val todayClock: Clock = Clock.fixed(today, ZoneId.systemDefault())
+      val exclusionEffectiveDate: Option[String] = Some(today.atZone(ZoneId.systemDefault()).toLocalDate.plusDays(1).toString)
 
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
+      val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
+        isReversal = false,
+        exclusionEffectiveDate = exclusionEffectiveDate
+      )
+
+      val answersWithActiveTraderResult: UserAnswers = updatedAnswers
+        .set(ActiveTraderResultQuery, activeTraderResult).success.value
+
       val application =
         applicationBuilder(
-          userAnswers = Some(updatedAnswers),
+          userAnswers = Some(answersWithActiveTraderResult),
           clock = Some(todayClock)
         )
           .overrides(
@@ -156,7 +166,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
 
         val activeRegistrationMatch = createMatchResponse(
           traderId = TraderId("IM0987654321"),
-          exclusionEffectiveDate = Some(today.atZone(ZoneId.systemDefault()).toLocalDate.plusDays(1).toString)
+          exclusionEffectiveDate = exclusionEffectiveDate
         )
 
         when(mockCoreRegistrationValidationService.searchForeignTaxReference(any(), any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
@@ -168,21 +178,29 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
         val result = route(application, request).value
 
         status(result) `mustBe` SEE_OTHER
-        redirectLocation(result).value `mustBe` normalRoutes.ClientAlreadyRegisteredController.onPageLoad(activeRegistrationMatch.exclusionEffectiveDate).url
-        verifyNoInteractions(mockSessionRepository)
+        redirectLocation(result).value `mustBe` normalRoutes.ClientAlreadyRegisteredController.onPageLoad().url
+        verify(mockSessionRepository, times(1)).set(eqTo(answersWithActiveTraderResult))
         verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(taxReference), eqTo(country.code))(any(), any())
       }
     }
 
-    "must not save the answers and redirect to Client Already Registered page when an active non-intermediary trader is found with no exclusion pending" in {
+    "must not save the answer but save the active match result and redirect to Client Already Registered page when an active non-intermediary trader is found with no exclusion pending" in {
 
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
+      val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
+        isReversal = false,
+        exclusionEffectiveDate = None
+      )
+
+      val answersWithActiveTraderResult: UserAnswers = updatedAnswers
+        .set(ActiveTraderResultQuery, activeTraderResult).success.value
+
       val application =
         applicationBuilder(
-          userAnswers = Some(updatedAnswers))
+          userAnswers = Some(answersWithActiveTraderResult))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
@@ -204,8 +222,60 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
         val result = route(application, request).value
 
         status(result) `mustBe` SEE_OTHER
-        redirectLocation(result).value `mustBe` normalRoutes.ClientAlreadyRegisteredController.onPageLoad(None).url
-        verifyNoInteractions(mockSessionRepository)
+        redirectLocation(result).value `mustBe` normalRoutes.ClientAlreadyRegisteredController.onPageLoad().url
+        verify(mockSessionRepository, times(1)).set(eqTo(answersWithActiveTraderResult))
+        verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(taxReference), eqTo(country.code))(any(), any())
+      }
+    }
+
+    "must not save the answer but save the active match result and redirect to Client Already Registered page when an active non-intermediary trader is found with a reversal pending" in {
+
+      val today: Instant = Instant.now(stubClockAtArbitraryDate)
+      val todayClock: Clock = Clock.fixed(today, ZoneId.systemDefault())
+      val exclusionEffectiveDate: Option[String] = Some(today.atZone(ZoneId.systemDefault()).toLocalDate.plusDays(1).toString)
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+
+      val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
+        isReversal = true,
+        exclusionEffectiveDate = exclusionEffectiveDate
+      )
+
+      val answersWithActiveTraderResult: UserAnswers = updatedAnswers
+        .set(ActiveTraderResultQuery, activeTraderResult).success.value
+
+      val application =
+        applicationBuilder(
+          userAnswers = Some(answersWithActiveTraderResult),
+          clock = Some(todayClock)
+        )
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+          )
+          .build()
+
+      running(application) {
+
+        val activeRegistrationMatch = createMatchResponse(
+          traderId = TraderId("IM0987654321"),
+          exclusionEffectiveDate = exclusionEffectiveDate,
+          exclusionStatusCode = Some(-1)
+        )
+
+        when(mockCoreRegistrationValidationService.searchForeignTaxReference(any(), any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
+
+        val request =
+          FakeRequest(POST, clientTaxReferenceRoute)
+            .withFormUrlEncodedBody(("value", taxReference))
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` normalRoutes.ClientAlreadyRegisteredController.onPageLoad().url
+        verify(mockSessionRepository, times(1)).set(eqTo(answersWithActiveTraderResult))
         verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(taxReference), eqTo(country.code))(any(), any())
       }
     }

@@ -19,10 +19,11 @@
         govukButton: GovukButton
 )
 
-@(companyName: String, exclusionEffectiveDate: Option[String], intermediaryYourAccountUrl: String)(implicit request: Request[_], messages: Messages)
+@(companyName: String, exclusionEffectiveDate: Option[String], intermediaryYourAccountUrl: String, isReversal: Boolean)(implicit request: Request[_], messages: Messages)
 
 @titleText = @{
     exclusionEffectiveDate match {
+        case Some(date) if isReversal => messages("clientAlreadyRegistered.title", companyName)
         case Some(date) => messages("clientAlreadyRegistered.title.withExclusionDate", companyName, date)
         case _ => messages("clientAlreadyRegistered.title", companyName)
     }
@@ -30,6 +31,7 @@
 
 @headingText = @{
     exclusionEffectiveDate match {
+        case Some(date) if isReversal => messages("clientAlreadyRegistered.heading", companyName)
         case Some(date) => messages("clientAlreadyRegistered.heading.withExclusionDate", companyName, date)
         case _ => messages("clientAlreadyRegistered.heading", companyName)
     }

@@ -45,7 +45,7 @@ class ClientVatNumberController @Inject()(
                                            view: ClientVatNumberView,
                                            clock: Clock,
                                            coreRegistrationValidationService: CoreRegistrationValidationService
-                                         )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
+                                         )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with SetActiveTraderResult {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -73,7 +73,11 @@ class ClientVatNumberController @Inject()(
           coreRegistrationValidationService.searchUkVrn(Vrn(ukVatNumber)).flatMap {
 
             case Some(activeMatch) if activeMatch.isActiveTrader(clock) =>
-              Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad(activeMatch.exclusionEffectiveDate)).toFuture
+              setActiveTraderResultAndRedirect(
+                activeMatch = activeMatch,
+                sessionRepository = cc.sessionRepository,
+                redirect = controllers.routes.ClientAlreadyRegisteredController.onPageLoad()
+              )
 
             case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
               Redirect(

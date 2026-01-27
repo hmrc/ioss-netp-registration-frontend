@@ -23,7 +23,7 @@ import models.PreviousScheme.IOSSWOI
 import models.core.TraderId
 import models.domain.PreviousSchemeNumbers
 import models.previousRegistrations.NonCompliantDetails
-import models.{Country, Index, PreviousScheme, UserAnswers}
+import models.{ActiveTraderResult, Country, Index, PreviousScheme, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{times, verify, verifyNoInteractions, when}
@@ -35,6 +35,7 @@ import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import queries.ActiveTraderResultQuery
 import queries.previousRegistrations.NonCompliantDetailsQuery
 import repositories.SessionRepository
 import services.core.CoreRegistrationValidationService
@@ -154,19 +155,29 @@ class PreviousIossNumberControllerSpec
       }
     }
 
-    "must not save the answers and redirect to Client Already Registered page when an active non-intermediary trader is found with exclusion pending" in {
+    "must not save the answer but save the active match result and redirect to Client Already Registered page when an active non-intermediary trader is found with exclusion pending" in {
 
       val previousIossNumber: String = "IM0401234567"
 
       val today: Instant = Instant.now(stubClockAtArbitraryDate)
       val todayClock: Clock = Clock.fixed(today, ZoneId.systemDefault())
+      val exclusionEffectiveDate: Option[String] = Some(today.atZone(ZoneId.systemDefault()).toLocalDate.plusDays(1).toString)
 
       val mockSessionRepository = mock[SessionRepository]
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
+      val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
+        isReversal = false,
+        exclusionEffectiveDate = exclusionEffectiveDate
+      )
+
+      val answersWithActiveTraderResult: UserAnswers = emptyUserAnswers
+        .set(PreviousEuCountryPage(index), country).success.value
+        .set(ActiveTraderResultQuery, activeTraderResult).success.value
+
       val application =
         applicationBuilder(
-          userAnswers = Some(baseAnswers),
+          userAnswers = Some(answersWithActiveTraderResult),
           clock = Some(todayClock)
         )
           .overrides(
@@ -179,7 +190,7 @@ class PreviousIossNumberControllerSpec
 
         val activeRegistrationMatch = createMatchResponse(
           traderId = TraderId("IM0987654321"),
-          exclusionEffectiveDate = Some(today.atZone(ZoneId.systemDefault()).toLocalDate.plusDays(1).toString)
+          exclusionEffectiveDate = exclusionEffectiveDate
         )
 
         when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
@@ -190,22 +201,32 @@ class PreviousIossNumberControllerSpec
         val result = route(application, request).value
 
         status(result) `mustBe` SEE_OTHER
-        redirectLocation(result).value `mustBe` controllers.routes.ClientAlreadyRegisteredController.onPageLoad(activeRegistrationMatch.exclusionEffectiveDate).url
-        verifyNoInteractions(mockSessionRepository)
+        redirectLocation(result).value `mustBe` controllers.routes.ClientAlreadyRegisteredController.onPageLoad().url
+        verify(mockSessionRepository, times(1)).set(eqTo(answersWithActiveTraderResult))
         verify(mockCoreRegistrationValidationService, times(1))
           .searchScheme(eqTo(previousIossNumber), eqTo(IOSSWOI), eqTo(None), eqTo(country.code))(any(), any())
       }
     }
 
-    "must not save the answers and redirect to Client Already Registered page when an active non-intermediary trader is found with no exclusion pending" in {
+    "must not save the answer but save the active match result and redirect to Client Already Registered page when an active non-intermediary trader is found with no exclusion pending" in {
 
       val previousIossNumber: String = "IM0401234567"
 
       val mockSessionRepository = mock[SessionRepository]
+
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
+      val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
+        isReversal = false,
+        exclusionEffectiveDate = None
+      )
+
+      val answersWithActiveTraderResult: UserAnswers = emptyUserAnswers
+        .set(PreviousEuCountryPage(index), country).success.value
+        .set(ActiveTraderResultQuery, activeTraderResult).success.value
+
       val application =
-        applicationBuilder(userAnswers = Some(baseAnswers))
+        applicationBuilder(userAnswers = Some(answersWithActiveTraderResult))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
@@ -226,8 +247,62 @@ class PreviousIossNumberControllerSpec
         val result = route(application, request).value
 
         status(result) `mustBe` SEE_OTHER
-        redirectLocation(result).value `mustBe` controllers.routes.ClientAlreadyRegisteredController.onPageLoad(None).url
-        verifyNoInteractions(mockSessionRepository)
+        redirectLocation(result).value `mustBe` controllers.routes.ClientAlreadyRegisteredController.onPageLoad().url
+        verify(mockSessionRepository, times(1)).set(eqTo(answersWithActiveTraderResult))
+        verify(mockCoreRegistrationValidationService, times(1))
+          .searchScheme(eqTo(previousIossNumber), eqTo(IOSSWOI), eqTo(None), eqTo(country.code))(any(), any())
+      }
+    }
+
+    "must not save the answer but save the active match result and redirect to Client Already Registered page when an active non-intermediary trader is found with reversal pending" in {
+
+      val previousIossNumber: String = "IM0401234567"
+
+      val today: Instant = Instant.now(stubClockAtArbitraryDate)
+      val todayClock: Clock = Clock.fixed(today, ZoneId.systemDefault())
+      val exclusionEffectiveDate: Option[String] = Some(today.atZone(ZoneId.systemDefault()).toLocalDate.plusDays(1).toString)
+
+      val mockSessionRepository = mock[SessionRepository]
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+
+      val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
+        isReversal = true,
+        exclusionEffectiveDate = exclusionEffectiveDate
+      )
+
+      val answersWithActiveTraderResult: UserAnswers = emptyUserAnswers
+        .set(PreviousEuCountryPage(index), country).success.value
+        .set(ActiveTraderResultQuery, activeTraderResult).success.value
+
+      val application =
+        applicationBuilder(
+          userAnswers = Some(answersWithActiveTraderResult),
+          clock = Some(todayClock)
+        )
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+          )
+          .build()
+
+      running(application) {
+
+        val activeRegistrationMatch = createMatchResponse(
+          traderId = TraderId("IM0987654321"),
+          exclusionEffectiveDate = exclusionEffectiveDate,
+          exclusionStatusCode = Some(-1)
+        )
+
+        when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
+
+        val request = FakeRequest(POST, previousIossNumberRoute)
+          .withFormUrlEncodedBody(("value", previousIossNumber))
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` controllers.routes.ClientAlreadyRegisteredController.onPageLoad().url
+        verify(mockSessionRepository, times(1)).set(eqTo(answersWithActiveTraderResult))
         verify(mockCoreRegistrationValidationService, times(1))
           .searchScheme(eqTo(previousIossNumber), eqTo(IOSSWOI), eqTo(None), eqTo(country.code))(any(), any())
       }
