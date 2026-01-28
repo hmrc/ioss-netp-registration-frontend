@@ -26,8 +26,8 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import utils.FutureSyntax.FutureOps
 import utils.AmendWaypoints.AmendWaypointsOps
+import utils.FutureSyntax.FutureOps
 import views.html.ClientsNinoNumberView
 
 import java.time.Clock
@@ -41,7 +41,8 @@ class ClientsNinoNumberController @Inject()(
                                              view: ClientsNinoNumberView,
                                              coreRegistrationValidationService: CoreRegistrationValidationService,
                                              clock: Clock
-                                           )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetCountry {
+                                           )(implicit ec: ExecutionContext)
+  extends FrontendBaseController with I18nSupport with Logging with GetCountry with SetActiveTraderResult {
 
   val form: Form[String] = formProvider()
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -62,14 +63,18 @@ class ClientsNinoNumberController @Inject()(
 
       form.bindFromRequest().fold(
         formWithErrors =>
-          Future.successful(BadRequest(view(formWithErrors, waypoints))),
+          BadRequest(view(formWithErrors, waypoints)).toFuture,
 
         value =>
           coreRegistrationValidationService.searchTraderId(value).flatMap {
 
-            case Some(activeMatch) if activeMatch.isActiveTrader =>
-              Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
-
+            case Some(activeMatch) if activeMatch.isActiveTrader(clock) =>
+              setActiveTraderResultAndRedirect(
+                activeMatch = activeMatch,
+                sessionRepository = cc.sessionRepository,
+                redirect = controllers.routes.ClientAlreadyRegisteredController.onPageLoad()
+              )
+              
             case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
               Redirect(
                 controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(

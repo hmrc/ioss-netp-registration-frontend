@@ -16,34 +16,49 @@
 
 package controllers
 
+import config.FrontendAppConfig
 import controllers.actions.*
+import formats.Format.dateFormatter
 import logging.Logging
-import models.UserAnswers
 import models.requests.DataRequest
-
-import javax.inject.Inject
-import play.api.i18n.{I18nSupport, MessagesApi}
+import models.{ActiveTraderResult, UserAnswers}
 import pages.ClientBusinessNamePage
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.ActiveTraderResultQuery
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.ClientAlreadyRegisteredView
 
+import java.time.LocalDate
+import javax.inject.Inject
+
 class ClientAlreadyRegisteredController @Inject()(
-                                       override val messagesApi: MessagesApi,
-                                       cc: AuthenticatedControllerComponents,
-                                       view: ClientAlreadyRegisteredView
-                                     ) extends FrontendBaseController with I18nSupport with Logging {
+                                                   override val messagesApi: MessagesApi,
+                                                   cc: AuthenticatedControllerComponents,
+                                                   frontendAppConfig: FrontendAppConfig,
+                                                   view: ClientAlreadyRegisteredView
+                                                 ) extends FrontendBaseController with I18nSupport with Logging {
 
   protected val controllerComponents: MessagesControllerComponents = cc
-  
-  def onPageLoad: Action[AnyContent] = cc.identifyAndGetData() {
+
+  def onPageLoad(): Action[AnyContent] = cc.identifyAndGetData() {
     implicit request: DataRequest[_] =>
 
-      getOrganisationName(request.userAnswers) match {
-        case Some(clientCompanyName) =>
-          Ok(view(Some(clientCompanyName)))
+      val activeTrader: ActiveTraderResult = request.userAnswers.get(ActiveTraderResultQuery) match {
+        case Some(answers) => answers
         case _ =>
-          Ok(view(None))
+          val message: String = "No active trader result retrieved"
+          val exception: Exception = new Exception(message)
+          logger.error(message)
+          throw exception
+      }
+
+      val formattedExclusionEffectiveDate: Option[String] = activeTrader.exclusionEffectiveDate.map(LocalDate.parse(_).format(dateFormatter))
+
+      getOrganisationName(request.userAnswers) match {
+        case maybeClientCompanyName =>
+          val companyName: String = maybeClientCompanyName.getOrElse(Messages("clientAlreadyRegistered.yourClient"))
+          Ok(view(companyName, formattedExclusionEffectiveDate, frontendAppConfig.intermediaryYourAccountUrl, activeTrader.isReversal))
       }
   }
 

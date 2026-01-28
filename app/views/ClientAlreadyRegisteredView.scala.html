@@ -19,20 +19,29 @@
         govukButton: GovukButton
 )
 
-@(companyName: Option[String])(implicit request: Request[_], messages: Messages)
+@(companyName: String, exclusionEffectiveDate: Option[String], intermediaryYourAccountUrl: String, isReversal: Boolean)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = titleNoForm(messages("clientAlreadyRegistered.title")), showBackLink = false) {
-
-    <h1 class="govuk-heading-l">@messages("clientAlreadyRegistered.heading")</h1>
-
-    @companyName match {
-        case Some(name) if name.nonEmpty => {
-            <p class="govuk-body">@Html(messages("clientAlreadyRegistered.p1.companyName", name))</p>
-        }
-        case _ => {
-            <p class="govuk-body">@Html(messages("clientAlreadyRegistered.p1"))</p>
-        }
+@titleText = @{
+    exclusionEffectiveDate match {
+        case Some(date) if isReversal => messages("clientAlreadyRegistered.title", companyName)
+        case Some(date) => messages("clientAlreadyRegistered.title.withExclusionDate", companyName, date)
+        case _ => messages("clientAlreadyRegistered.title", companyName)
     }
+}
 
-    <p class="govuk-body">@Html(messages("clientAlreadyRegistered.p2"))</p>
+@headingText = @{
+    exclusionEffectiveDate match {
+        case Some(date) if isReversal => messages("clientAlreadyRegistered.heading", companyName)
+        case Some(date) => messages("clientAlreadyRegistered.heading.withExclusionDate", companyName, date)
+        case _ => messages("clientAlreadyRegistered.heading", companyName)
+    }
+}
+
+@layout(pageTitle = titleNoForm(titleText), showBackLink = false) {
+
+    <h1 class="govuk-heading-l">@headingText</h1>
+
+    <p class="govuk-body">@messages("clientAlreadyRegistered.p1")</p>
+
+    <p class="govuk-body">@Html(messages("clientAlreadyRegistered.returnToAccount", intermediaryYourAccountUrl))</p>
 }

@@ -19,54 +19,55 @@ package controllers.previousRegistrations
 import base.SpecBase
 import controllers.routes
 import forms.previousRegistrations.PreviousIossNumberFormProvider
-import models.{Country, Index, PreviousScheme}
-import models.core.{Match, TraderId}
+import models.PreviousScheme.IOSSWOI
+import models.core.TraderId
 import models.domain.PreviousSchemeNumbers
 import models.previousRegistrations.NonCompliantDetails
+import models.{ActiveTraderResult, Country, Index, PreviousScheme, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito
+import org.mockito.Mockito.{times, verify, verifyNoInteractions, when}
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.mockito.MockitoSugar
 import pages.previousRegistrations.{PreviousEuCountryPage, PreviousIossNumberPage, PreviousSchemePage}
+import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import queries.ActiveTraderResultQuery
 import queries.previousRegistrations.NonCompliantDetailsQuery
 import repositories.SessionRepository
 import services.core.CoreRegistrationValidationService
+import testutils.CreateMatchResponse.createMatchResponse
 import utils.FutureSyntax.FutureOps
 import views.html.previousRegistrations.PreviousIossNumberView
 
-class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with TableDrivenPropertyChecks {
+import java.time.{Clock, Instant, LocalDate, ZoneId}
 
-  private val index = Index(0)
+class PreviousIossNumberControllerSpec
+  extends SpecBase
+    with MockitoSugar
+    with TableDrivenPropertyChecks
+    with BeforeAndAfterEach {
 
-  private val country = Country.euCountries.head
-  private val formProvider = new PreviousIossNumberFormProvider()
-  private val form = formProvider(country)
+  private val index: Index = Index(0)
 
-  private lazy val previousIossNumberRoute = controllers.previousRegistrations.routes.PreviousIossNumberController.onPageLoad(waypoints, index, index).url
+  private val country: Country = Country.euCountries.head
+  private val formProvider: PreviousIossNumberFormProvider = new PreviousIossNumberFormProvider()
+  private val form: Form[String] = formProvider(country)
 
-  private val iossHintText = "This will start with IM040 followed by 7 numbers"
+  private lazy val previousIossNumberRoute: String = controllers.previousRegistrations.routes.PreviousIossNumberController.onPageLoad(waypoints, index, index).url
 
-  private val baseAnswers = emptyUserAnswersWithVatInfo.set(PreviousEuCountryPage(index), country).success.value
+  private val iossHintText: String = "This will start with IM040 followed by 7 numbers"
 
-  private val mockCoreRegistartionValidationService = mock[CoreRegistrationValidationService]
+  private val baseAnswers: UserAnswers = emptyUserAnswersWithVatInfo.set(PreviousEuCountryPage(index), country).success.value
 
-  def createMatchResponse(
-                           traderId: TraderId = TraderId("IM0987654321"),
-                           exclusionStatusCode: Option[Int] = None,
-                           nonCompliantDetails: Option[NonCompliantDetails] = None
-                         ): Match = Match(
-    traderId = traderId,
-    intermediary = None,
-    memberState = "DE",
-    exclusionStatusCode = exclusionStatusCode,
-    exclusionDecisionDate = None,
-    exclusionEffectiveDate = Some("2022-10-10"),
-    nonCompliantReturns = nonCompliantDetails.flatMap(_.nonCompliantReturns),
-    nonCompliantPayments = nonCompliantDetails.flatMap(_.nonCompliantPayments)
-  )
+  private val mockCoreRegistrationValidationService: CoreRegistrationValidationService = mock[CoreRegistrationValidationService]
+
+  override def beforeEach(): Unit = {
+    Mockito.reset(mockCoreRegistrationValidationService)
+  }
 
   "PreviousIossNumber Controller" - {
 
@@ -154,16 +155,81 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with T
       }
     }
 
-    "must Redirect to ClientAlreadyRegistered for a post if an active non-intermediary trader is found" in {
+    "must not save the answer but save the active match result and redirect to Client Already Registered page when an active non-intermediary trader is found with exclusion pending" in {
+
+      val previousIossNumber: String = "IM0401234567"
+
+      val today: Instant = Instant.now(stubClockAtArbitraryDate)
+      val todayClock: Clock = Clock.fixed(today, ZoneId.systemDefault())
+      val exclusionEffectiveDate: Option[String] = Some(today.atZone(ZoneId.systemDefault()).toLocalDate.plusDays(1).toString)
 
       val mockSessionRepository = mock[SessionRepository]
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
+      val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
+        isReversal = false,
+        exclusionEffectiveDate = exclusionEffectiveDate
+      )
+
+      val answersWithActiveTraderResult: UserAnswers = emptyUserAnswers
+        .set(PreviousEuCountryPage(index), country).success.value
+        .set(ActiveTraderResultQuery, activeTraderResult).success.value
+
       val application =
-        applicationBuilder(userAnswers = Some(baseAnswers))
+        applicationBuilder(
+          userAnswers = Some(answersWithActiveTraderResult),
+          clock = Some(todayClock)
+        )
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistartionValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+          )
+          .build()
+
+      running(application) {
+
+        val activeRegistrationMatch = createMatchResponse(
+          traderId = TraderId("IM0987654321"),
+          exclusionEffectiveDate = exclusionEffectiveDate
+        )
+
+        when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
+
+        val request = FakeRequest(POST, previousIossNumberRoute)
+          .withFormUrlEncodedBody(("value", previousIossNumber))
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` controllers.routes.ClientAlreadyRegisteredController.onPageLoad().url
+        verify(mockSessionRepository, times(1)).set(eqTo(answersWithActiveTraderResult))
+        verify(mockCoreRegistrationValidationService, times(1))
+          .searchScheme(eqTo(previousIossNumber), eqTo(IOSSWOI), eqTo(None), eqTo(country.code))(any(), any())
+      }
+    }
+
+    "must not save the answer but save the active match result and redirect to Client Already Registered page when an active non-intermediary trader is found with no exclusion pending" in {
+
+      val previousIossNumber: String = "IM0401234567"
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+
+      val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
+        isReversal = false,
+        exclusionEffectiveDate = None
+      )
+
+      val answersWithActiveTraderResult: UserAnswers = emptyUserAnswers
+        .set(PreviousEuCountryPage(index), country).success.value
+        .set(ActiveTraderResultQuery, activeTraderResult).success.value
+
+      val application =
+        applicationBuilder(userAnswers = Some(answersWithActiveTraderResult))
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
           )
           .build()
 
@@ -173,19 +239,78 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with T
           traderId = TraderId("IM0987654321")
         )
 
-        when(mockCoreRegistartionValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
+        when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
 
         val request = FakeRequest(POST, previousIossNumberRoute)
-          .withFormUrlEncodedBody(("value", "IM0401234567"))
+          .withFormUrlEncodedBody(("value", previousIossNumber))
 
         val result = route(application, request).value
 
-        status(result) `mustEqual` SEE_OTHER
-        redirectLocation(result).value mustEqual controllers.routes.ClientAlreadyRegisteredController.onPageLoad().url
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` controllers.routes.ClientAlreadyRegisteredController.onPageLoad().url
+        verify(mockSessionRepository, times(1)).set(eqTo(answersWithActiveTraderResult))
+        verify(mockCoreRegistrationValidationService, times(1))
+          .searchScheme(eqTo(previousIossNumber), eqTo(IOSSWOI), eqTo(None), eqTo(country.code))(any(), any())
       }
     }
 
-    "must redirect to OtherCountryExcludedAndQuarantined for a POST if a quarantined intermediary trader is found" in {
+    "must not save the answer but save the active match result and redirect to Client Already Registered page when an active non-intermediary trader is found with reversal pending" in {
+
+      val previousIossNumber: String = "IM0401234567"
+
+      val today: Instant = Instant.now(stubClockAtArbitraryDate)
+      val todayClock: Clock = Clock.fixed(today, ZoneId.systemDefault())
+      val exclusionEffectiveDate: Option[String] = Some(today.atZone(ZoneId.systemDefault()).toLocalDate.plusDays(1).toString)
+
+      val mockSessionRepository = mock[SessionRepository]
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+
+      val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
+        isReversal = true,
+        exclusionEffectiveDate = exclusionEffectiveDate
+      )
+
+      val answersWithActiveTraderResult: UserAnswers = emptyUserAnswers
+        .set(PreviousEuCountryPage(index), country).success.value
+        .set(ActiveTraderResultQuery, activeTraderResult).success.value
+
+      val application =
+        applicationBuilder(
+          userAnswers = Some(answersWithActiveTraderResult),
+          clock = Some(todayClock)
+        )
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+          )
+          .build()
+
+      running(application) {
+
+        val activeRegistrationMatch = createMatchResponse(
+          traderId = TraderId("IM0987654321"),
+          exclusionEffectiveDate = exclusionEffectiveDate,
+          exclusionStatusCode = Some(-1)
+        )
+
+        when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
+
+        val request = FakeRequest(POST, previousIossNumberRoute)
+          .withFormUrlEncodedBody(("value", previousIossNumber))
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` controllers.routes.ClientAlreadyRegisteredController.onPageLoad().url
+        verify(mockSessionRepository, times(1)).set(eqTo(answersWithActiveTraderResult))
+        verify(mockCoreRegistrationValidationService, times(1))
+          .searchScheme(eqTo(previousIossNumber), eqTo(IOSSWOI), eqTo(None), eqTo(country.code))(any(), any())
+      }
+    }
+
+    "must not save the answers and redirect to Other Country Excluded And Quarantined page when a quarantined intermediary trader is found" in {
+
+      val previousIossNumber: String = "IM0401234567"
 
       val mockSessionRepository = mock[SessionRepository]
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
@@ -194,7 +319,7 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with T
         applicationBuilder(userAnswers = Some(baseAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistartionValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
           )
           .build()
 
@@ -202,20 +327,24 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with T
 
         val quarantinedIntermediaryMatch = createMatchResponse(
           traderId = TraderId("IM0987654321"),
-          exclusionStatusCode = Some(4)
+          exclusionStatusCode = Some(4),
+          exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
         )
 
-        when(mockCoreRegistartionValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn
+        when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn
           Some(quarantinedIntermediaryMatch).toFuture
 
         val request = FakeRequest(POST, previousIossNumberRoute)
-          .withFormUrlEncodedBody(("value", "IM0401234567"))
+          .withFormUrlEncodedBody(("value", previousIossNumber))
 
         val result = route(application, request).value
 
-        status(result) `mustEqual` SEE_OTHER
-        redirectLocation(result).value mustEqual controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
           quarantinedIntermediaryMatch.memberState, quarantinedIntermediaryMatch.getEffectiveDate).url
+        verifyNoInteractions(mockSessionRepository)
+        verify(mockCoreRegistrationValidationService, times(1))
+          .searchScheme(eqTo(previousIossNumber), eqTo(IOSSWOI), eqTo(None), eqTo(country.code))(any(), any())
       }
     }
 
@@ -230,7 +359,7 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with T
         applicationBuilder(userAnswers = Some(baseAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistartionValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
           )
           .build()
 
@@ -239,10 +368,11 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with T
         val activeMatch = createMatchResponse(
           traderId = TraderId("IM0987654321"),
           exclusionStatusCode = Some(6),
+          exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).toString),
           nonCompliantDetails = Some(nonCompliantDetails)
         )
 
-        when(mockCoreRegistartionValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn
+        when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn
           Some(activeMatch).toFuture
 
         val request = FakeRequest(POST, previousIossNumberRoute)
@@ -255,8 +385,8 @@ class PreviousIossNumberControllerSpec extends SpecBase with MockitoSugar with T
           .set(PreviousSchemePage(index, index), PreviousScheme.IOSSWOI).success.value
           .set(NonCompliantDetailsQuery(index, index), nonCompliantDetails).success.value
 
-        status(result) `mustEqual` SEE_OTHER
-        redirectLocation(result).value mustEqual controllers.previousRegistrations.routes.CheckPreviousSchemeAnswersController.onPageLoad(waypoints, index).url
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` controllers.previousRegistrations.routes.CheckPreviousSchemeAnswersController.onPageLoad(waypoints, index).url
         verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }

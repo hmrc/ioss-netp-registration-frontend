@@ -16,8 +16,8 @@
 
 package controllers.vatEuDetails
 
-import controllers.GetCountry
 import controllers.actions.*
+import controllers.{GetCountry, SetActiveTraderResult}
 import forms.vatEuDetails.EuTaxReferenceFormProvider
 import models.Index
 import models.requests.DataRequest
@@ -42,7 +42,8 @@ class EuTaxReferenceController @Inject()(
                                           view: EuTaxReferenceView,
                                           coreRegistrationValidationService: CoreRegistrationValidationService,
                                           clock: Clock
-                                        )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetCountry {
+                                        )(implicit ec: ExecutionContext)
+  extends FrontendBaseController with I18nSupport with GetCountry with SetActiveTraderResult {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -72,7 +73,7 @@ class EuTaxReferenceController @Inject()(
 
         form.bindFromRequest().fold(
           formWithErrors =>
-            Future.successful(BadRequest(view(formWithErrors, waypoints, countryIndex, country))),
+            BadRequest(view(formWithErrors, waypoints, countryIndex, country)).toFuture,
 
           value =>
             coreRegistrationValidationService.searchEuTaxId(value, country.code).flatMap {
@@ -80,9 +81,13 @@ class EuTaxReferenceController @Inject()(
               case _ if waypoints.inAmend =>
                 updateAnswersAndRedirect(waypoints, countryIndex, request, value)
 
-              case Some(activeMatch) if activeMatch.isActiveTrader =>
-                Redirect(controllers.routes.ClientAlreadyRegisteredController.onPageLoad()).toFuture
-
+              case Some(activeMatch) if activeMatch.isActiveTrader(clock) =>
+                setActiveTraderResultAndRedirect(
+                  activeMatch = activeMatch,
+                  sessionRepository = cc.sessionRepository,
+                  redirect = controllers.routes.ClientAlreadyRegisteredController.onPageLoad()
+                )
+                
               case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
                 Redirect(
                   controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(

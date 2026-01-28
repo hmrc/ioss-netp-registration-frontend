@@ -18,12 +18,14 @@ package controllers
 
 import base.SpecBase
 import connectors.RegistrationConnector
+import controllers.routes as normalRoutes
 import forms.ClientVatNumberFormProvider
-import models.UserAnswers
+import models.core.TraderId
 import models.responses.{InternalServerError, VatCustomerNotFound}
+import models.{ActiveTraderResult, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
-import org.mockito.Mockito.{times, verify, verifyNoInteractions, when}
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{ClientVatNumberPage, EmptyWaypoints, UkVatNumberNotFoundPage, VatApiDownPage, Waypoints}
@@ -31,12 +33,15 @@ import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import queries.ActiveTraderResultQuery
 import repositories.SessionRepository
 import services.core.CoreRegistrationValidationService
+import testutils.CreateMatchResponse.createMatchResponse
+import uk.gov.hmrc.domain.Vrn
 import utils.FutureSyntax.FutureOps
 import views.html.ClientVatNumberView
 
-import java.time.LocalDate
+import java.time.{Clock, Instant, LocalDate, ZoneId}
 import scala.concurrent.Future
 
 class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
@@ -47,14 +52,17 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
   private val mockCoreRegistrationValidationService = mock[CoreRegistrationValidationService]
 
-  val formProvider = new ClientVatNumberFormProvider()
-  val form: Form[String] = formProvider()
+  private val formProvider: ClientVatNumberFormProvider = new ClientVatNumberFormProvider()
+  private val form: Form[String] = formProvider()
 
   private lazy val clientVatNumberRoute: String = routes.ClientVatNumberController.onPageLoad(waypoints).url
   private lazy val clientVatNumberSubmitRoute: String = routes.ClientVatNumberController.onSubmit(waypoints).url
 
   override def beforeEach(): Unit = {
-    Mockito.reset(mockRegistrationConnector)
+    Mockito.reset(
+      mockRegistrationConnector,
+      mockCoreRegistrationValidationService
+    )
   }
 
   "ClientVatNumber Controller" - {
@@ -129,6 +137,196 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
         redirectLocation(result).value `mustBe` ClientVatNumberPage.navigate(waypoints, emptyUserAnswers, expectedAnswers).url
         verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
         verify(mockRegistrationConnector, times(1)).getVatCustomerInfo(eqTo(ukVatNumber))(any())
+      }
+    }
+
+    "must not save the answer but save the active match result and redirect to Client Already Registered page when a non-intermediary user is already registered on another service with exclusion pending" in {
+
+      val today: Instant = Instant.now(stubClockAtArbitraryDate)
+      val todayClock: Clock = Clock.fixed(today, ZoneId.systemDefault())
+      val exclusionEffectiveDate: Option[String] = Some(today.atZone(ZoneId.systemDefault()).toLocalDate.plusDays(1).toString)
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
+
+      val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
+        isReversal = false,
+        exclusionEffectiveDate = exclusionEffectiveDate
+      )
+
+      val answersWithActiveTraderResult: UserAnswers = emptyUserAnswers
+        .set(ActiveTraderResultQuery, activeTraderResult).success.value
+
+      val application =
+        applicationBuilder(
+          userAnswers = Some(answersWithActiveTraderResult),
+          clock = Some(todayClock)
+        )
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+          )
+          .build()
+
+      running(application) {
+
+        val activeRegistrationMatch = createMatchResponse(
+          traderId = TraderId("IM0987654321"),
+          exclusionEffectiveDate = exclusionEffectiveDate
+        )
+
+        when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
+
+        val request =
+          FakeRequest(POST, clientVatNumberRoute)
+            .withFormUrlEncodedBody(("value", ukVatNumber))
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` normalRoutes.ClientAlreadyRegisteredController.onPageLoad().url
+        verify(mockSessionRepository, times(1)).set(eqTo(answersWithActiveTraderResult))
+        verifyNoInteractions(mockRegistrationConnector)
+        verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(Vrn(ukVatNumber)))(any(), any())
+      }
+    }
+
+    "must not save the answer but save the active match result and redirect to Client Already Registered page when a non-intermediary user is already registered on another service with no exclusion pending" in {
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
+
+      val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
+        isReversal = false,
+        exclusionEffectiveDate = None
+      )
+
+      val answersWithActiveTraderResult: UserAnswers = emptyUserAnswers
+        .set(ActiveTraderResultQuery, activeTraderResult).success.value
+
+      val application =
+        applicationBuilder(userAnswers = Some(answersWithActiveTraderResult))
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+          )
+          .build()
+
+      running(application) {
+
+        val activeRegistrationMatch = createMatchResponse(
+          traderId = TraderId("IM0987654321")
+        )
+
+        when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
+
+        val request =
+          FakeRequest(POST, clientVatNumberRoute)
+            .withFormUrlEncodedBody(("value", ukVatNumber))
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` normalRoutes.ClientAlreadyRegisteredController.onPageLoad().url
+        verify(mockSessionRepository, times(1)).set(eqTo(answersWithActiveTraderResult))
+        verifyNoInteractions(mockRegistrationConnector)
+        verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(Vrn(ukVatNumber)))(any(), any())
+      }
+    }
+
+    "must not save the answer but save the active match result and redirect to Client Already Registered page when a non-intermediary user is already registered on another service with a reversal pending" in {
+
+      val today: Instant = Instant.now(stubClockAtArbitraryDate)
+      val todayClock: Clock = Clock.fixed(today, ZoneId.systemDefault())
+      val exclusionEffectiveDate: Option[String] = Some(today.atZone(ZoneId.systemDefault()).toLocalDate.plusDays(1).toString)
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
+
+      val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
+        isReversal = true,
+        exclusionEffectiveDate = exclusionEffectiveDate
+      )
+
+      val answersWithActiveTraderResult: UserAnswers = emptyUserAnswers
+        .set(ActiveTraderResultQuery, activeTraderResult).success.value
+
+      val application =
+        applicationBuilder(
+          userAnswers = Some(answersWithActiveTraderResult),
+          clock = Some(todayClock)
+        )
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+          )
+          .build()
+
+      running(application) {
+
+        val activeRegistrationMatch = createMatchResponse(
+          traderId = TraderId("IM0987654321"),
+          exclusionEffectiveDate = exclusionEffectiveDate,
+          exclusionStatusCode = Some(-1)
+        )
+
+        when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn Some(activeRegistrationMatch).toFuture
+
+        val request =
+          FakeRequest(POST, clientVatNumberRoute)
+            .withFormUrlEncodedBody(("value", ukVatNumber))
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` normalRoutes.ClientAlreadyRegisteredController.onPageLoad().url
+        verify(mockSessionRepository, times(1)).set(eqTo(answersWithActiveTraderResult))
+        verifyNoInteractions(mockRegistrationConnector)
+        verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(Vrn(ukVatNumber)))(any(), any())
+      }
+    }
+
+    "must not save the answers and redirect to Other Country Excluded And Quarantined page when a quarantined intermediary trader is found" in {
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
+
+      val application =
+        applicationBuilder(userAnswers = Some(emptyUserAnswers))
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+          )
+          .build()
+
+      running(application) {
+
+        val quarantinedIntermediaryMatch = createMatchResponse(
+          traderId = TraderId("IM0987654321"),
+          exclusionStatusCode = Some(4),
+          exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
+        )
+
+        when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn Some(quarantinedIntermediaryMatch).toFuture
+
+        val request =
+          FakeRequest(POST, clientVatNumberRoute)
+            .withFormUrlEncodedBody(("value", ukVatNumber))
+
+        val result = route(application, request).value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` normalRoutes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+          quarantinedIntermediaryMatch.memberState,
+          quarantinedIntermediaryMatch.getEffectiveDate
+        ).url
+        verifyNoInteractions(mockSessionRepository)
+        verifyNoInteractions(mockRegistrationConnector)
+        verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(Vrn(ukVatNumber)))(any(), any())
       }
     }
 

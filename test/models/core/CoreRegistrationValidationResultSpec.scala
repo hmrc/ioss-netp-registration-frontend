@@ -19,7 +19,7 @@ package models.core
 import base.SpecBase
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import play.api.libs.json.{JsError, Json, JsSuccess}
+import play.api.libs.json.{JsError, JsSuccess, Json}
 
 import java.time.LocalDate
 
@@ -67,8 +67,8 @@ class CoreRegistrationValidationResultSpec extends AnyFreeSpec with Matchers wit
             ))
         )
 
-        Json.toJson(coreRegistrationValidationResult) mustEqual expectedJson
-        expectedJson.validate[CoreRegistrationValidationResult] mustEqual JsSuccess(coreRegistrationValidationResult)
+        Json.toJson(coreRegistrationValidationResult) `mustBe` expectedJson
+        expectedJson.validate[CoreRegistrationValidationResult] `mustBe` JsSuccess(coreRegistrationValidationResult)
       }
 
       "with all optional fields missing" in {
@@ -101,8 +101,8 @@ class CoreRegistrationValidationResultSpec extends AnyFreeSpec with Matchers wit
             ))
         )
 
-        Json.toJson(coreRegistrationValidationResult) mustEqual expectedJson
-        expectedJson.validate[CoreRegistrationValidationResult] mustEqual JsSuccess(coreRegistrationValidationResult)
+        Json.toJson(coreRegistrationValidationResult) `mustBe` expectedJson
+        expectedJson.validate[CoreRegistrationValidationResult] `mustBe` JsSuccess(coreRegistrationValidationResult)
       }
 
     }
@@ -157,21 +157,43 @@ class CoreRegistrationValidationResultSpec extends AnyFreeSpec with Matchers wit
     "isActiveTrader" - {
 
       "must return true for active match types" in {
-        activeMatch.isActiveTrader mustBe true
-        quarantinedMatch.isActiveTrader mustBe false
+
+        activeMatch
+          .copy(exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).plusDays(1).toString))
+          .isActiveTrader(stubClockAtArbitraryDate) mustBe true
+        quarantinedMatch.isActiveTrader(stubClockAtArbitraryDate) mustBe false
       }
 
       "must return false" - {
 
         "for not active status codes" in {
+
           val nonActiveStatusCodes = Seq(1, 2, 3, 4, 5, 6)
 
           for (nonActiveStatusCode <- nonActiveStatusCodes) {
 
-            val nonActiveMatch = activeMatch.copy(exclusionStatusCode = Some(nonActiveStatusCode))
+            val nonActiveMatch = activeMatch.copy(
+              exclusionStatusCode = Some(nonActiveStatusCode),
+              exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).toString)
+            )
 
-            nonActiveMatch.isActiveTrader mustBe false
+            nonActiveMatch.isActiveTrader(stubClockAtArbitraryDate) mustBe false
           }
+        }
+
+        "when today is after exclusion effective date" in {
+
+          val activeMatchExcluded = activeMatch.copy(
+            exclusionStatusCode = Some(3),
+            exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).toString)
+          )
+
+          activeMatchExcluded.isActiveTrader(stubClockAtArbitraryDate) mustBe false
+        }
+
+        "when there is no effective date or exclusion status code" in {
+
+          activeMatch.isActiveTrader(stubClockAtArbitraryDate) mustBe true
         }
       }
     }
@@ -180,7 +202,7 @@ class CoreRegistrationValidationResultSpec extends AnyFreeSpec with Matchers wit
 
       "must return true for quarantined match types" in {
         quarantinedMatch.isQuarantinedTrader(stubClockAtArbitraryDate) mustBe true
-        quarantinedMatch.isActiveTrader mustBe false
+        quarantinedMatch.isActiveTrader(stubClockAtArbitraryDate) mustBe false
       }
 
       "must return false for a quarantined that's less than two years" in {
