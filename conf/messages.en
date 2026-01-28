@@ -397,6 +397,7 @@ hasFixedEstablishment.title = Does your client''s business have a fixed establis
 hasFixedEstablishment.heading = Does your client''s business have a fixed establishment in an EU country?
 hasFixedEstablishment.checkYourAnswersLabel = Fixed establishments in other countries
 hasFixedEstablishment.error.required = Select yes if your business has a fixed establishment in an EU country
+hasFixedEstablishment.change.hidden = Fixed establishments in other countries
 
 registrationType.title = What sort of registration does your client have in {0}?
 registrationType.heading = What sort of registration does your client have in {0}?
@@ -478,6 +479,8 @@ euDetails.change.hidden = Countries established in
 euDetails.amended = EU tax details changed
 euDetails.removed = EU tax details removed
 euDetails.added = EU tax details added
+remove.euDetails.hidden = EU tax details for {0}
+change.euDetails.hidden = EU tax details for {0}
 
 error.missing_answers = Some of your information is missing. You must complete this before you can submit your changes.
 error.missing_answers_header = Some information is missing.
