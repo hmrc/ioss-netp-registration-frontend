@@ -479,8 +479,8 @@ euDetails.change.hidden = Countries established in
 euDetails.amended = EU tax details changed
 euDetails.removed = EU tax details removed
 euDetails.added = EU tax details added
-remove.euDetails.hidden = EU tax details for {0}
-change.euDetails.hidden = EU tax details for {0}
+remove.euDetails.hidden = details for {0}
+change.euDetails.hidden = details for {0}
 
 error.missing_answers = Some of your information is missing. You must complete this before you can submit your changes.
 error.missing_answers_header = Some information is missing.
