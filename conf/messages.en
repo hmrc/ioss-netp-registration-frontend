@@ -67,7 +67,7 @@ website.error.required = Enter a website address
 website.error.length = Website address must be 250 characters or less
 website.error.duplicate = You entered this website address already. Enter a different one.
 website.error.invalid = Enter a website address in the correct format, like https://www.gov.uk
-website.change.hidden = website address
+website.change.hidden = Trading websites
 website.change.heading = What is your client''s website address?
 
 addWebsite.name.singular = website address
@@ -93,13 +93,13 @@ businessBasedInUK.title = Is your client''s business based in the UK?
 businessBasedInUK.heading = Is your client''s business based in the UK?
 businessBasedInUK.checkYourAnswersLabel = Based in UK
 businessBasedInUK.error.required = Select yes if your client''s business is based in the UK
-businessBasedInUK.change.hidden = Client''s business based in the UK
+businessBasedInUK.change.hidden = Based in UK
 
 clientHasVatNumber.title = Does your client have a UK VAT number?
 clientHasVatNumber.heading = Does your client have a UK VAT number?
 clientHasVatNumber.checkYourAnswersLabel = Has UK VAT registration number
 clientHasVatNumber.error.required = Select yes if your client has a UK VAT number
-clientHasVatNumber.change.hidden = client have a UK VAT number
+clientHasVatNumber.change.hidden = Has UK VAT registration number
 
 clientVatNumber.title = What is your client''s UK VAT number?
 clientVatNumber.heading = What is your client''s UK VAT number?
@@ -107,7 +107,7 @@ clientVatNumber.checkYourAnswersLabel = UK VAT registration number
 clientVatNumber.error.required = Enter your client''s VAT number
 clientVatNumber.error.length = VAT number must be 9 digits
 clientVatNumber.error.invalid = Enter a VAT number in the correct format
-clientVatNumber.change.hidden = VAT number
+clientVatNumber.change.hidden = UK VAT registration number
 clientVatNumber.hint = This is 9 numbers, sometimes with ‘GB’ at the start, for example 123456789 or GB123456789.
 
 clientCountryBased.title = Which country is your client''s business based in?
@@ -126,7 +126,8 @@ clientBusinessName.checkYourAnswersLabel = Trading name
 clientBusinessName.amended.checkYourAnswersLabel = Primary trading name
 clientBusinessName.error.required = Enter your client''s trading name
 clientBusinessName.error.length = Client''s trading name must be 40 characters or less
-clientBusinessName.change.hidden = your Client's trading name
+clientBusinessName.change.hidden = Trading name
+clientBusinessName.change.withCountry.hidden = Trading name in {0}
 clientBusinessName.error.invalid = Trading name must only include letters, numbers, hyphens, spaces and apostrophes
 
 clientTaxReference.title = What is your client''s national tax number in {0}?
@@ -136,7 +137,7 @@ clientTaxReference.amend.checkYourAnswersLabel = Tax reference
 clientTaxReference.error.required = Enter your client''s tax reference number in {0}
 clientTaxReference.error.length = Tax reference number must be 50 characters or less
 clientTaxReference.error.format = Tax reference number must only include letters, numbers and spaces
-clientTaxReference.change.hidden = your client''s tax reference number
+clientTaxReference.change.hidden = National tax number
 
 clientBusinessAddress.title = What is your client''s business address?
 clientBusinessAddress.heading = What is your client''s business address?
@@ -146,6 +147,7 @@ clientBusinessAddress.townOrCity = Town or city
 clientBusinessAddress.stateOrRegion = Region or state (optional)
 clientBusinessAddress.postCode = Postcode (optional)
 clientBusinessAddress.checkYourAnswersLabel = Principal place of business address
+clientBusinessAddress.change.hidden = Principal place of business address
 clientBusinessAddress.error.line1.required = Enter address line 1
 clientBusinessAddress.error.townOrCity.required = Enter the town or city
 clientBusinessAddress.error.line1.length = Address line 1 must be 35 characters or less
@@ -163,7 +165,7 @@ clientHasUtrNumber.title = Does your client''s business have a Unique Taxpayer R
 clientHasUtrNumber.heading = Does your client''s business have a Unique Taxpayer Reference (UTR) number?
 clientHasUtrNumber.checkYourAnswersLabel = Has Unique Taxpayer Reference (UTR) number
 clientHasUtrNumber.error.required = Select yes if your client has a UTR number
-clientHasUtrNumber.change.hidden = Client Unique Taxpayer Reference (UTR) number
+clientHasUtrNumber.change.hidden = Has Unique Taxpayer Reference (UTR) number
 
 clientUtrNumber.title = What is your client''s business Unique Taxpayer Reference number (UTR)?
 clientUtrNumber.heading = What is your client''s business Unique Taxpayer Reference number (UTR)?
@@ -216,7 +218,7 @@ hasTradingName.title = Does your client''s business trade using a name that is d
 hasTradingName.heading = Does your client''s business trade using a name that is different from {0}?
 hasTradingName.checkYourAnswersLabel = Have a different trading name
 hasTradingName.error.required = Select yes if they use a different trading name
-hasTradingName.change.hidden = if they have a different trading name
+hasTradingName.change.hidden = Have a different trading name
 
 tradingName.title = What is your client''s other trading name?
 tradingName.heading = What is your client''s other trading name?
@@ -227,7 +229,7 @@ tradingName.error.required = Enter your client''s other trading name
 tradingName.error.length = Trading name must be 100 characters or less
 tradingName.error.duplicate = You have entered this trading name already. Enter a different one.
 tradingName.error.invalid = Trading name must only include letters, numbers, hyphens, spaces and apostrophes
-tradingName.change.hidden = your client''s other trading name
+tradingName.change.hidden = Other trading names
 
 addTradingName.title.singular = You have added one other trading name
 addTradingName.title.plural = You have added {0} other trading names
@@ -235,8 +237,8 @@ addTradingName.heading.singular = You have added one other trading name
 addTradingName.heading.plural = You have added {0} other trading names
 addTradingName.maximumReached = You have added the maximum number of trading names.
 addTradingName.error.required = Select yes if you want to add another trading name
-addTradingName.change.hidden = Change {0}
-addTradingName.remove.hidden = Remove {0}
+addTradingName.change.hidden = {0}
+addTradingName.remove.hidden = {0}
 addTradingName.addAnother = Add another trading name?
 addTradingName.addAnother.hint = You can add up to 10 trading names.
 
@@ -248,7 +250,6 @@ deleteAllTradingNames.title = Remove all your client''s alternative trading name
 deleteAllTradingNames.heading = Remove all your client''s alternative trading names from this scheme?
 deleteAllTradingNames.warning = This will delete all the trading names you have added.
 deleteAllTradingNames.error.required = Select yes if you want to remove all your client''s alternative trading names from this scheme
-deleteAllTradingNames.change.hidden = Remove all your client''s alternative trading names from this scheme
 
 businessContactDetails.title = Contact details for {0}
 businessContactDetails.heading = Contact details for {0}
@@ -266,9 +267,9 @@ businessContactDetails.error.emailAddress.length = Email address must be 50 char
 businessContactDetails.error.fullName.invalid = Contact name must only include letters, numbers, hyphens, spaces and apostrophes
 businessContactDetails.error.telephoneNumber.invalid = Enter a telephone number in the correct format, like 01642 123 456, 07777777777 or +33 1 23 45 67 88
 businessContactDetails.error.emailAddress.invalid = Enter an email address in the correct format, like yourname@example.com
-businessContactDetails.change.fullName.hidden = their contact name
-businessContactDetails.change.telephoneNumber.hidden = their telephone number
-businessContactDetails.change.emailAddress.hidden = their email address
+businessContactDetails.change.fullName.hidden = Contact name
+businessContactDetails.change.telephoneNumber.hidden = Telephone number
+businessContactDetails.change.emailAddress.hidden = Email address
 
 declaration.title = Declaration
 declaration.heading = Declaration
@@ -302,7 +303,7 @@ previouslyRegistered.heading = Has your client''s business ever registered for a
 previouslyRegistered.hint = This includes One Stop Shop (OSS) schemes.
 previouslyRegistered.checkYourAnswersLabel = Other One Stop Shop registrations
 previouslyRegistered.error.required = Select yes if your client''s business has ever registered for an Import One Stop Shop scheme
-previouslyRegistered.change.hidden = Select yes if your client''s business has ever registered for an Import One Stop Shop scheme
+previouslyRegistered.change.hidden = Other One Stop Shop registrations
 
 previousEuCountry.title = Which country was it registered in?
 previousEuCountry.heading = Which country was it registered in?
@@ -319,7 +320,6 @@ previousScheme.title = Which scheme did your client''s business register for?
 previousScheme.heading = Which scheme did your client''s business register for?
 previousScheme.checkYourAnswersLabel = Scheme
 previousScheme.error.required = Select which scheme your client''s business registered for
-previousScheme.change.hidden = Which scheme did your client''s business register for
 previousScheme.remove.hidden = {0}
 previousScheme.oss.exceed.error = Cannot select another OSS registration for {0}
 previousScheme.ioss.exceed.error = Cannot select another IOSS registration for {0}
@@ -335,14 +335,12 @@ clientHasIntermediary.title = Did your client use an intermediary?
 clientHasIntermediary.heading = Did your client use an intermediary?
 clientHasIntermediary.hint = An intermediary is a business that manages your IOSS VAT returns for you.
 clientHasIntermediary.error.required = Select yes if your client used an intermediary
-clientHasIntermediary.change.hidden = your client used an intermediary
 
 previousSchemeNumber.checkYourAnswersLabel = Registration number
 
 checkPreviousSchemeAnswers.title = Check your answers for {0}
 checkPreviousSchemeAnswers.heading = Check your answers for {0}
 checkPreviousSchemeAnswers.error.required = Select yes if you want to add another scheme registration for {0}
-checkPreviousSchemeAnswers.remove.hidden = Remove {0}
 checkPreviousSchemeAnswers.addAnother = Add another scheme registration from {0}?
 checkPreviousSchemeAnswers.maximumReached = You have added details for every scheme in {0}
 
@@ -399,7 +397,7 @@ hasFixedEstablishment.title = Does your client''s business have a fixed establis
 hasFixedEstablishment.heading = Does your client''s business have a fixed establishment in an EU country?
 hasFixedEstablishment.checkYourAnswersLabel = Fixed establishments in other countries
 hasFixedEstablishment.error.required = Select yes if your business has a fixed establishment in an EU country
-hasFixedEstablishment.change.hidden = if your business has a fixed establishment in an EU country
+hasFixedEstablishment.change.hidden = Fixed establishments in other countries
 
 registrationType.title = What sort of registration does your client have in {0}?
 registrationType.heading = What sort of registration does your client have in {0}?
@@ -407,7 +405,7 @@ registrationType.vatNumber = VAT number
 registrationType.taxId = Tax ID number
 registrationType.checkYourAnswersLabel = Tax registration type
 registrationType.error.required = Select a registration type for {0}
-registrationType.change.hidden = your client''s registration type
+registrationType.change.hidden = Tax registration type
 
 euVatNumber.title = What is your client''s VAT registration number for {0}?
 euVatNumber.heading = What is your client''s VAT registration number for {0}?
@@ -415,7 +413,7 @@ euVatNumber.hint = This will start with {0}, for example {0}{1}.
 euVatNumber.checkYourAnswersLabel = VAT number
 euVatNumber.error.required = Enter your client''s VAT registration number for {0}
 euVatNumber.error.invalid = Enter a registration number in the correct format
-euVatNumber.change.hidden = your client''s VAT registration number
+euVatNumber.change.hidden = VAT number
 
 euTaxReference.title = What is your client''s business tax identification number for {0}?
 euTaxReference.heading = What is your client''s business tax identification number for {0}?
@@ -423,7 +421,7 @@ euTaxReference.error.required = Enter your client''s business tax identification
 euTaxReference.error.length = Tax identification number must be 20 characters or less
 euTaxReference.error.format = Tax identification number must only include letters, numbers and spaces
 euTaxReference.checkYourAnswersLabel = Tax ID Number
-euTaxReference.change.hidden = your client''s Tax ID Number
+euTaxReference.change.hidden = Tax ID Number
 
 tradingNameAndBusinessAddress.title = What is your client''s business trading name and address in {0}?
 tradingNameAndBusinessAddress.heading = What is your client''s business trading name and address in {0}?
@@ -434,10 +432,10 @@ tradingNameAndBusinessAddress.townOrCity = Town or city
 tradingNameAndBusinessAddress.stateOrRegion = Region or state (optional)
 tradingNameAndBusinessAddress.postCode = Postcode (optional)
 tradingNameAndBusinessAddress.checkYourAnswersLabel = Trading name and address
+TradingNameAndBusinessAddress.change.hidden = Trading name and address
 tradingNameAndBusinessAddress.error.tradingName.required = Enter your trading name
 tradingNameAndBusinessAddress.error.tradingName.length = Trading name must be 40 characters or less
 tradingNameAndBusinessAddress.error.tradingName.invalid = Trading name must only include letters, numbers, hyphens, spaces and apostrophes
-tradingNameAndBusinessAddress.change.tradingName.hidden = your trading name
 tradingNameAndBusinessAddress.error.line1.required = Enter address line 1
 tradingNameAndBusinessAddress.error.townOrCity.required = Enter the town or city
 tradingNameAndBusinessAddress.error.line1.length = Address line 1 must be 35 characters or less
@@ -450,6 +448,7 @@ tradingNameAndBusinessAddress.error.stateOrRegion.length = State or region must 
 tradingNameAndBusinessAddress.error.stateOrRegion.format = State or region must only include letters, numbers, hyphens, spaces and apostrophes
 tradingNameAndBusinessAddress.error.postCode.length = Postcode must be 40 characters or less
 tradingNameAndBusinessAddress.error.postCode.invalid = Postcode must only include letters, numbers and spaces
+
 
 checkEuDetailsAnswers.title = Check your answers for {0}
 checkEuDetailsAnswers.heading = Check your answers for {0}
@@ -476,11 +475,12 @@ euDetails.checkYourAnswersLabel = Countries established in
 euDetails.checkYourAnswersLabel.amended = EU tax details added
 euDetails.checkYourAnswersLabel.changed = EU tax details changed
 euDetails.checkYourAnswersLabel.removed = EU tax details removed
-euDetails.change.hidden = EU tax registration details added
-euDetails.remove.hidden = tax details for {0}
+euDetails.change.hidden = Countries established in
 euDetails.amended = EU tax details changed
 euDetails.removed = EU tax details removed
 euDetails.added = EU tax details added
+remove.euDetails.hidden = details for {0}
+change.euDetails.hidden = details for {0}
 
 error.missing_answers = Some of your information is missing. You must complete this before you can submit your changes.
 error.missing_answers_header = Some information is missing.
@@ -506,7 +506,6 @@ clientCodeEntry.heading = Enter your activation code
 clientCodeEntry.hint = This is the 6-digit code we emailed to {0}
 clientCodeEntry.hint.sent = We have emailed your 6-digit code to {0}
 clientCodeEntry.error = The code you entered is incorrect. Check the code and try again.
-clientCodeEntry.change.hidden = The code you entered is incorrect. Check the code and try again.
 clientCodeEntry.emailNotReceived.detail = I have not received the email
 clientCodeEntry.checkEmail.p1 = Check the above email address is correct. If not, your intermediary can correct it in their Import One Stop Shop service.
 clientCodeEntry.checkEmail.p2 = Check your spam or junk folder. If it still has not arrived we can <a class="govuk-link" rel="govuk-link" href={0}>send the code again.</a>
@@ -519,7 +518,6 @@ clientDeclaration.information.p1 = I, {0}, appoint {1} to act as my intermediary
 clientDeclaration.information.p2 = I understand that we are joint and severally liable for any VAT debts incurred on this registration.
 clientDeclaration.checkbox.text = I agree to the statements
 clientDeclaration.error.required = Agree to the statements to continue
-clientDeclaration.change.hidden = ClientDeclaration
 
 clientSuccessfulRegistration.title = Registration successful
 clientSuccessfulRegistration.heading = Registration successful
