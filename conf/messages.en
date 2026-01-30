@@ -290,6 +290,7 @@ applicationComplete.p2 = We will also email your client a code, using the addres
 applicationComplete.p3 = Once they have confirmed this, you must manage their monthly IOSS VAT returns and pay any VAT due.
 applicationComplete.p4 = Your client must confirm their activation by {0}. If not, you will need to register them again.
 applicationComplete.returnToYourAccount = <a class="govuk-link" href={0}>Return to your account</a>
+applicationComplete.copyLinkBtn = Copy link
 
 errorSubmittingPendingRegistration.title = We have a problem with our service right now
 errorSubmittingPendingRegistration.heading = The registration is not submitted
