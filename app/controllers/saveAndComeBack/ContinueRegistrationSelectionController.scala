@@ -52,26 +52,41 @@ class ContinueRegistrationSelectionController @Inject()(
     implicit request =>
 
       val userAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
+      val intermediaryNumber = request.intermediaryNumber.get
 
       val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
 
       saveAndComeBackService.getSavedContinueRegistrationJourneys(userAnswers, request.intermediaryNumber.get).flatMap {
         case SingleRegistration(singleJourneyId) =>
 
-          saveAndComeBackService.retrieveSingleSavedUserAnswers(singleJourneyId, waypoints).flatMap { enrichedUserAnswers =>
+          val continueRegistrationSelectionJourneyId = (userAnswers.data \ "continueRegistrationSelection").as[String]
 
-            for {
-              _ <- cc.sessionRepository.set(enrichedUserAnswers)
-            } yield Redirect(controllers.saveAndComeBack.routes.ContinueRegistrationController.onPageLoad())
+          if (continueRegistrationSelectionJourneyId == singleJourneyId) {
+            saveAndComeBackService.retrieveSingleSavedUserAnswers(singleJourneyId, waypoints).flatMap { enrichedUserAnswers =>
 
+              for {
+                _ <- cc.sessionRepository.set(enrichedUserAnswers)
+              } yield Redirect(controllers.saveAndComeBack.routes.ContinueRegistrationController.onPageLoad())
+
+            }
+          } else {
+            Redirect(controllers.routes.AccessDeniedController.onPageLoad().url).toFuture
           }
 
         case MultipleRegistrations(multipleRegistrations) =>
-          saveAndComeBackService.createTaxReferenceInfoForSavedUserAnswers(multipleRegistrations).flatMap { seqTaxReferenceInfo =>
-            for {
-              updatedAnswers <- Future.fromTry(userAnswers.set(ContinueRegistrationList, seqTaxReferenceInfo))
-              _ <- cc.sessionRepository.set(updatedAnswers)
-            } yield Ok(view(seqTaxReferenceInfo, form, waypoints))
+
+          val hasAccess = multipleRegistrations.exists(_.intermediaryNumber == intermediaryNumber)
+
+          if (hasAccess) {
+            saveAndComeBackService.createTaxReferenceInfoForSavedUserAnswers(multipleRegistrations).flatMap { seqTaxReferenceInfo =>
+
+              for {
+                updatedAnswers <- Future.fromTry(userAnswers.set(ContinueRegistrationList, seqTaxReferenceInfo))
+                _ <- cc.sessionRepository.set(updatedAnswers)
+              } yield Ok(view(seqTaxReferenceInfo, form, waypoints))
+            }
+          } else {
+            Redirect(controllers.routes.AccessDeniedController.onPageLoad().url).toFuture
           }
 
         case NoRegistrations =>

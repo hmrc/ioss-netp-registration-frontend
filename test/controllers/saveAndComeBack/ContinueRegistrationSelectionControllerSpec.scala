@@ -35,7 +35,6 @@ import services.SaveAndComeBackService
 import utils.FutureSyntax.FutureOps
 import views.html.saveAndComeBack.ContinueRegistrationSelectionView
 
-
 class ContinueRegistrationSelectionControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
   private val mockSaveAndComeBackService = mock[SaveAndComeBackService]
@@ -58,7 +57,9 @@ class ContinueRegistrationSelectionControllerSpec extends SpecBase with MockitoS
   private val seqTaxReference: Seq[TaxReferenceInformation] = Seq(genericTaxReference, genericTaxReference, genericTaxReference)
 
   private val testArbitraryUserAnswers: UserAnswers = arbitraryUserAnswers.arbitrary.sample.value
-  private val testArbitrarySavedUserAnswers: SavedUserAnswers = arbitrarySavedUserAnswers.arbitrary.sample.value
+  private val testArbitrarySavedUserAnswers: SavedUserAnswers = arbitrarySavedUserAnswers.arbitrary.sample.value.copy(
+    intermediaryNumber = intermediaryNumber
+  )
   private val seqSavedUserAnswers: Seq[SavedUserAnswers] = Seq(testArbitrarySavedUserAnswers, testArbitrarySavedUserAnswers, testArbitrarySavedUserAnswers)
   private val singleRegistration: SingleRegistration = SingleRegistration(singleJourneyId = "journeyID")
   private val multipleRegistrations: MultipleRegistrations = MultipleRegistrations(multipleRegistrations = seqSavedUserAnswers)
@@ -70,11 +71,12 @@ class ContinueRegistrationSelectionControllerSpec extends SpecBase with MockitoS
   }
 
   "ContinueRegistrationSelectionController" - {
+
     ".onPageLoad" - {
 
       "when a single registration is returned from the service should set the user answers and redirect to continue registration page" in {
 
-        val answers: UserAnswers = emptyUserAnswers
+        val answers: UserAnswers = emptyUserAnswers.set(ContinueRegistrationSelectionPage, "journeyID").success.value
 
         when(mockSaveAndComeBackService.getSavedContinueRegistrationJourneys(any(), any())(any())) thenReturn singleRegistration.toFuture
         when(mockSaveAndComeBackService.retrieveSingleSavedUserAnswers(any(), any())(any(), any())) thenReturn testArbitraryUserAnswers.toFuture
@@ -151,9 +153,66 @@ class ContinueRegistrationSelectionControllerSpec extends SpecBase with MockitoS
         }
       }
 
+      "must redirect to AccessDenied page" - {
+
+        "when the journeyId does not match for a single registration" in {
+
+          val registrationWithDifferentJourneyId = singleRegistration.copy(singleJourneyId = "invalid")
+
+          val answers: UserAnswers = emptyUserAnswers.set(ContinueRegistrationSelectionPage, "journeyID").success.value
+
+          when(mockSaveAndComeBackService.getSavedContinueRegistrationJourneys(any(), any())(any())) thenReturn registrationWithDifferentJourneyId.toFuture
+          when(mockSaveAndComeBackService.retrieveSingleSavedUserAnswers(any(), any())(any(), any())) thenReturn testArbitraryUserAnswers.toFuture
+
+          val application = applicationBuilder(userAnswers = Some(answers))
+            .overrides(bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService))
+            .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
+            .build()
+
+          running(application) {
+
+            val request = FakeRequest(GET, continueSelectionOnPageLoad)
+
+            val result = route(application, request).value
+
+            status(result) `mustBe` SEE_OTHER
+            redirectLocation(result).value mustEqual controllers.routes.AccessDeniedController.onPageLoad().url
+            verify(mockSaveAndComeBackService, times(1)).getSavedContinueRegistrationJourneys(any(), any())(any())
+          }
+        }
+
+        "when the intermediaryNumber does not match for multiple registrations" in {
+
+          val savedUserAnswersWithDifferentIntermediaryNumber = testArbitrarySavedUserAnswers.copy(intermediaryNumber = "invalidIntNum")
+          val multipleRegistrationsWithDifferentIntermediaryNumber =
+            MultipleRegistrations(multipleRegistrations = Seq(savedUserAnswersWithDifferentIntermediaryNumber))
+
+          val answers: UserAnswers = emptyUserAnswers
+
+          when(mockSaveAndComeBackService.getSavedContinueRegistrationJourneys(any(), any())(any())) thenReturn
+            multipleRegistrationsWithDifferentIntermediaryNumber.toFuture
+
+          val application = applicationBuilder(userAnswers = Some(answers))
+            .overrides(bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService))
+            .build()
+
+          running(application) {
+
+            val request = FakeRequest(GET, continueSelectionOnPageLoad)
+
+            val result = route(application, request).value
+
+            status(result) `mustBe` SEE_OTHER
+            redirectLocation(result).value `mustBe` controllers.routes.AccessDeniedController.onPageLoad().url
+            verify(mockSaveAndComeBackService, times(1)).getSavedContinueRegistrationJourneys(any(), any())(any())
+          }
+        }
+      }
+
     }
 
     ".onSubmit" - {
+
       "when a valid form is submitted" - {
 
         "should update the userAnswers and recursively call the ContinueRegistrationSelection controller" in {
@@ -179,6 +238,7 @@ class ContinueRegistrationSelectionControllerSpec extends SpecBase with MockitoS
           }
         }
       }
+
       "when a invalid form is submitted" - {
 
         "should draw the list of registrations from user answers and return bad request and errors" in {
