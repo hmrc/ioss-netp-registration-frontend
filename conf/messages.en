@@ -217,7 +217,7 @@ cannotUseNotAnIntermediary.heading = You cannot use this service
 hasTradingName.title = Does {0} trade under any other names?
 hasTradingName.heading = Does {0} trade under any other names?
 hasTradingName.checkYourAnswersLabel = Have a different trading name
-hasTradingName.error.required = Select yes if they use a different trading name
+hasTradingName.error.required = Select yes if they trade under any other names
 hasTradingName.change.hidden = Have a different trading name
 
 tradingName.title = What is your client''s other trading name?
