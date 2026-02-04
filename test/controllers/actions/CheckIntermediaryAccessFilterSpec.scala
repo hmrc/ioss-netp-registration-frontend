@@ -28,6 +28,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Result
 import play.api.mvc.Results.{Redirect, Unauthorized}
 import play.api.test.FakeRequest
+import services.IntermediaryRegistrationService
 import uk.gov.hmrc.auth.core.Enrolments
 import utils.FutureSyntax.FutureOps
 
@@ -37,11 +38,13 @@ import scala.concurrent.Future
 class CheckIntermediaryAccessFilterSpec extends SpecBase with MockitoSugar with EtmpModelGenerators {
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
+  private val mockIntermediaryRegistrationService: IntermediaryRegistrationService = mock[IntermediaryRegistrationService]
 
   class Harness(
              iossNumber: Option[String],
-             registrationConnector: RegistrationConnector
-             ) extends CheckIntermediaryAccessFilterImpl(iossNumber, registrationConnector) {
+             registrationConnector: RegistrationConnector,
+             intermediaryRegistrationService: IntermediaryRegistrationService
+             ) extends CheckIntermediaryAccessFilterImpl(iossNumber, registrationConnector, intermediaryRegistrationService) {
 
     def callFilter[A](request: OptionalDataRequest[A]): Future[Option[Result]] = filter(request)
   }
@@ -60,7 +63,7 @@ class CheckIntermediaryAccessFilterSpec extends SpecBase with MockitoSugar with 
 
     "must redirect to AccessDenied page" - {
 
-      "when an intermediary does not have access to an IOSS client" in {
+      "when an active intermediary does not have access to an IOSS client" in {
 
         val request = OptionalDataRequest(
           request = FakeRequest(),
@@ -73,8 +76,37 @@ class CheckIntermediaryAccessFilterSpec extends SpecBase with MockitoSugar with 
 
         when(mockRegistrationConnector.displayIntermediaryRegistration(any())(any())) thenReturn
           Right(intermediaryRegistrationWithClients(iossNumbers = Seq("ioss-not-registered-to-intermediary"))).toFuture
+        when(mockIntermediaryRegistrationService.getPreviousRegistrations()(any())) thenReturn
+          Seq(previousIntermediaryRegistration).toFuture
 
-        val action = new Harness(Some(iossNumber), mockRegistrationConnector)
+        val action = new Harness(Some(iossNumber), mockRegistrationConnector, mockIntermediaryRegistrationService)
+
+        val result = action.callFilter(request).futureValue
+
+        result.value mustBe Redirect(controllers.routes.AccessDeniedController.onPageLoad().url)
+      }
+
+      "when a previously registered intermediary does not have access to an IOSS client" in {
+
+        val previousIntermediary = previousIntermediaryRegistration.copy(
+          intermediaryNumber = "IN900111111"
+        )
+
+        val request = OptionalDataRequest(
+          request = FakeRequest(),
+          userId = userAnswersId,
+          userAnswers = None,
+          intermediaryNumber = Some(intermediaryNumber),
+          enrolments = enrolments,
+          registrationWrapper = Some(registrationWrapper)
+        )
+
+        when(mockRegistrationConnector.displayIntermediaryRegistration(eqTo("IN900111111"))(any())) thenReturn
+          Right(intermediaryRegistrationWithClients(iossNumbers = Seq("ioss-not-registered-to-intermediary"))).toFuture
+        when(mockIntermediaryRegistrationService.getPreviousRegistrations()(any())) thenReturn
+          Seq(previousIntermediary).toFuture
+
+        val action = new Harness(Some(iossNumber), mockRegistrationConnector, mockIntermediaryRegistrationService)
 
         val result = action.callFilter(request).futureValue
 
@@ -97,8 +129,10 @@ class CheckIntermediaryAccessFilterSpec extends SpecBase with MockitoSugar with 
 
         when(mockRegistrationConnector.displayIntermediaryRegistration(eqTo(intermediaryNumber))(any())) thenReturn
           Right(intermediaryRegistrationWithClients(iossNumbers = Seq(iossNumber))).toFuture
+        when(mockIntermediaryRegistrationService.getPreviousRegistrations()(any())) thenReturn
+          Seq.empty.toFuture
 
-        val action = new Harness(Some(iossNumber), mockRegistrationConnector)
+        val action = new Harness(Some(iossNumber), mockRegistrationConnector, mockIntermediaryRegistrationService)
 
         val result = action.callFilter(request).futureValue
 
@@ -119,7 +153,7 @@ class CheckIntermediaryAccessFilterSpec extends SpecBase with MockitoSugar with 
         when(mockRegistrationConnector.displayIntermediaryRegistration(eqTo(intermediaryNumber))(any())) thenReturn
           Right(intermediaryRegistrationWithClients(Seq(iossNumber))).toFuture
 
-        val action = new Harness(iossNumber = None, mockRegistrationConnector)
+        val action = new Harness(iossNumber = None, mockRegistrationConnector, mockIntermediaryRegistrationService)
 
         val result = action.callFilter(request).futureValue
 
@@ -142,8 +176,10 @@ class CheckIntermediaryAccessFilterSpec extends SpecBase with MockitoSugar with 
 
         when(mockRegistrationConnector.displayIntermediaryRegistration(eqTo(intermediaryNumber))(any())) thenReturn
           Right(intermediaryRegistrationWithClients(Seq.empty)).toFuture
+        when(mockIntermediaryRegistrationService.getPreviousRegistrations()(any())) thenReturn
+          Seq.empty.toFuture
 
-        val action = new Harness(Some(iossNumber), mockRegistrationConnector)
+        val action = new Harness(Some(iossNumber), mockRegistrationConnector, mockIntermediaryRegistrationService)
 
         val result = action.callFilter(request).futureValue
 
@@ -163,8 +199,10 @@ class CheckIntermediaryAccessFilterSpec extends SpecBase with MockitoSugar with 
 
         when(mockRegistrationConnector.displayIntermediaryRegistration(eqTo(intermediaryNumber))(any())) thenReturn
           Right(intermediaryRegistrationWithClients(Seq.empty)).toFuture
+        when(mockIntermediaryRegistrationService.getPreviousRegistrations()(any())) thenReturn
+          Seq.empty.toFuture
 
-        val action = new Harness(iossNumber = None, mockRegistrationConnector)
+        val action = new Harness(iossNumber = None, mockRegistrationConnector, mockIntermediaryRegistrationService)
 
         val result = action.callFilter(request).futureValue
 
@@ -188,7 +226,7 @@ class CheckIntermediaryAccessFilterSpec extends SpecBase with MockitoSugar with 
         when(mockRegistrationConnector.displayIntermediaryRegistration(any())(any())) thenReturn
           Left(InternalServerError).toFuture
 
-        val action = Harness(Some(iossNumber), mockRegistrationConnector)
+        val action = Harness(Some(iossNumber), mockRegistrationConnector, mockIntermediaryRegistrationService)
 
         val failedResult = intercept[Exception] {
           action.callFilter(request).futureValue
