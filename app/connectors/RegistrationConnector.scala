@@ -26,6 +26,7 @@ import logging.Logging
 import models.PendingRegistrationRequest
 import models.etmp.EtmpRegistrationRequest
 import models.etmp.amend.EtmpAmendRegistrationRequest
+import models.intermediaries.EACDEnrolments
 import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue
@@ -102,4 +103,7 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
 
   def displayIntermediaryRegistration(intermediaryNumber: String)(implicit hc: HeaderCarrier): Future[EtmpDisplayIntermediaryRegistrationResponse] =
     httpClientV2.get(url"$intermediaryUrl/get-registration/$intermediaryNumber").execute[EtmpDisplayIntermediaryRegistrationResponse]
+    
+  def getPreviousIntermediaryAccounts()(implicit hc: HeaderCarrier): Future[EACDEnrolments] =
+    httpClientV2.get(url"$intermediaryUrl/accounts").execute[EACDEnrolments]
 }
