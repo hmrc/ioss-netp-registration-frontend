@@ -20,6 +20,7 @@ import base.SpecBase
 import com.google.inject.Inject
 import config.FrontendAppConfig
 import controllers.routes
+import controllers.auth.routes as authRoutes
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.mockito.MockitoSugar
@@ -128,7 +129,7 @@ class IdentifierActionSpec extends SpecBase with MockitoSugar {
           val result = controller.onPageLoad()(FakeRequest())
 
           status(result) mustBe SEE_OTHER
-          redirectLocation(result).value mustBe routes.UnauthorisedController.onPageLoad().url
+          redirectLocation(result).value mustBe authRoutes.AuthController.insufficientEnrolments().url
         }
       }
     }

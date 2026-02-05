@@ -20,6 +20,7 @@ import com.google.inject.Inject
 import config.Constants.intermediaryEnrolmentKey
 import config.FrontendAppConfig
 import controllers.routes
+import controllers.auth.routes as authRoutes
 import logging.Logging
 import models.requests.{IdentifierRequest, SessionRequest}
 import play.api.mvc.*
@@ -64,7 +65,7 @@ class AuthenticatedIdentifierAction @Inject()(
                 block(IdentifierRequest(request, internalId, enrolments, vrn, intermediaryNumber))
               case None =>
                 logger.error(s"No VAT customer info found for VRN: ${vrn.vrn}")
-                Future.failed(new IllegalStateException("Missing VAT customer info"))
+                Future.successful(Redirect(routes.NoRegistrationFoundController.onPageLoad()))
             }
 
           case None =>
@@ -75,6 +76,9 @@ class AuthenticatedIdentifierAction @Inject()(
     } recover {
       case _: NoActiveSession =>
         Redirect(config.loginUrl, Map("continue" -> Seq(urlBuilderService.loginContinueUrl(request).get(redirectPolicy).url)))
+      case _: InsufficientEnrolments =>
+        logger.info("Insufficient enrolments")
+        Redirect(authRoutes.AuthController.insufficientEnrolments())
       case _: AuthorisationException =>
         Redirect(routes.UnauthorisedController.onPageLoad())
     }
@@ -85,7 +89,7 @@ class AuthenticatedIdentifierAction @Inject()(
       .flatMap(_.identifiers.find(id => id.key == "VRN").map(e => Vrn(e.value)))
       .getOrElse {
         logger.warn("User does not have a valid VAT enrolment")
-        throw new IllegalStateException("Missing VAT enrolment")
+        throw InsufficientEnrolments()
       }
   }
 

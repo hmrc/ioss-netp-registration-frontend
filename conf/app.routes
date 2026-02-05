@@ -21,6 +21,7 @@ GET         /account/sign-out-survey                                        cont
 GET         /account/sign-out                                               controllers.auth.AuthController.signOutNoSurvey()
 GET         /account/signed-out                                             controllers.auth.SignedOutController.onPageLoad()
 GET         /account/login                                                  controllers.auth.AuthController.redirectToLogin(redirectUrl: RedirectUrl)
+GET         /credential-unsupported                                         controllers.auth.AuthController.insufficientEnrolments()
 
 GET         /unauthorised                                                   controllers.UnauthorisedController.onPageLoad()
 
@@ -232,3 +233,5 @@ GET         /secure-messages                                                cont
 GET         /cannot-use-not-an-netp                                         controllers.secureMessages.CannotUseNotAnNetpController.onPageLoad()
 
 GET         /individual-secure-message/:id                                  controllers.secureMessages.IndividualSecureMessageController.onPageLoad(id: String)
+
+GET         /no-registration-found                                          controllers.NoRegistrationFoundController.onPageLoad()

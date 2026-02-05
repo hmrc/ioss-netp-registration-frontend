@@ -58,6 +58,12 @@ signedOut.guidance = We did not save your answers.
 unauthorised.title = You can’t access this service with this account
 unauthorised.heading = You can’t access this service with this account
 
+insufficientEnrolments.title = You cannot use this service
+insufficientEnrolments.heading = You cannot use this service
+
+noRegistrationFound.title = Sorry, there is a problem with the service
+noRegistrationFound.heading = Sorry, there is a problem with the service
+
 website.title = Enter a website your client uses to sell goods
 website.heading = Enter a website your client uses to sell goods
 website.checkYourAnswersLabel = Trading websites
