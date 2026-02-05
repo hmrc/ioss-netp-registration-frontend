@@ -52,25 +52,34 @@ class ContinueRegistrationSelectionController @Inject()(
     implicit request =>
 
       val userAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
-      val intermediaryNumber = request.intermediaryNumber.get
+      val intermediaryNumber = request.intermediaryNumber.getOrElse("")
 
       val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
 
       saveAndComeBackService.getSavedContinueRegistrationJourneys(userAnswers, request.intermediaryNumber.get).flatMap {
         case SingleRegistration(singleJourneyId) =>
 
-          val continueRegistrationSelectionJourneyId = (userAnswers.data \ "continueRegistrationSelection").as[String]
+          val continueRegistrationSelectionId: Option[String] = userAnswers.get(ContinueRegistrationSelectionPage)
 
-          if (continueRegistrationSelectionJourneyId == singleJourneyId) {
-            saveAndComeBackService.retrieveSingleSavedUserAnswers(singleJourneyId, waypoints).flatMap { enrichedUserAnswers =>
+          continueRegistrationSelectionId match {
+            case Some(journeyId) =>
 
-              for {
-                _ <- cc.sessionRepository.set(enrichedUserAnswers)
-              } yield Redirect(controllers.saveAndComeBack.routes.ContinueRegistrationController.onPageLoad())
+              if (journeyId == singleJourneyId) {
+                saveAndComeBackService.retrieveSingleSavedUserAnswers(singleJourneyId, waypoints).flatMap { enrichedUserAnswers =>
 
-            }
-          } else {
-            Redirect(controllers.routes.AccessDeniedController.onPageLoad().url).toFuture
+                  for {
+                    _ <- cc.sessionRepository.set(enrichedUserAnswers)
+                  } yield Redirect(controllers.saveAndComeBack.routes.ContinueRegistrationController.onPageLoad())
+                }
+
+              } else {
+                Redirect(controllers.routes.AccessDeniedController.onPageLoad().url).toFuture
+              }
+
+            case None =>
+              val errorMessage = s"No registrations in progress"
+              logger.error(errorMessage)
+              throw new Exception(errorMessage)
           }
 
         case MultipleRegistrations(multipleRegistrations) =>
@@ -85,6 +94,7 @@ class ContinueRegistrationSelectionController @Inject()(
                 _ <- cc.sessionRepository.set(updatedAnswers)
               } yield Ok(view(seqTaxReferenceInfo, form, waypoints))
             }
+
           } else {
             Redirect(controllers.routes.AccessDeniedController.onPageLoad().url).toFuture
           }
