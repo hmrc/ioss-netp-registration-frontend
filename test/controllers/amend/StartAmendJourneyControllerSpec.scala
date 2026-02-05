@@ -20,6 +20,7 @@ import base.SpecBase
 import connectors.RegistrationConnector
 import models.etmp.display.RegistrationWrapper
 import models.etmp.intermediary.IntermediaryRegistrationWrapper
+import models.intermediaries.EACDEnrolments
 import models.responses.NotFound
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.*
@@ -29,7 +30,7 @@ import play.api.http.Status.SEE_OTHER
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET, defaultAwaitTimeout, route, running, status, writeableOf_AnyContentAsEmpty}
-import services.RegistrationService
+import services.{IntermediaryRegistrationService, RegistrationService}
 import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.Future
@@ -38,13 +39,15 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
   private val mockRegistrationService: RegistrationService = mock[RegistrationService]
+  private val mockIntermediaryRegistrationService: IntermediaryRegistrationService = mock[IntermediaryRegistrationService]
 
   private val registrationWrapper: RegistrationWrapper = arbitraryRegistrationWrapper.arbitrary.sample.value
 
   override def beforeEach(): Unit =
     reset(
       mockRegistrationConnector,
-      mockRegistrationService
+      mockRegistrationService,
+      mockIntermediaryRegistrationService
     )
 
   def intermediaryRegistrationWithClients(iossNumbers: Seq[String]): IntermediaryRegistrationWrapper = {
@@ -57,6 +60,8 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
     )
   }
 
+  private val previousEnrolments = EACDEnrolments(Seq.empty)
+
   "StartAmendJourneyController" - {
 
     "must return OK" in {
@@ -65,6 +70,10 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
         Right(intermediaryRegistrationWithClients(Seq(iossNumber))).toFuture
       when(mockRegistrationConnector.displayRegistrationNetp(any())(any())) thenReturn Right(registrationWrapper).toFuture
       when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn basicUserAnswersWithVatInfo.toFuture
+      when(mockIntermediaryRegistrationService.getPreviousRegistrations()(any())) thenReturn
+        Seq(previousIntermediaryRegistration).toFuture
+      when(mockRegistrationConnector.getPreviousIntermediaryAccounts()(any())) thenReturn
+        previousEnrolments.toFuture
 
       val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
         .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
@@ -79,6 +88,7 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
         status(result) mustBe SEE_OTHER
         verify(mockRegistrationConnector, times(1)).displayRegistrationNetp(eqTo(iossNumber))(any())
         verify(mockRegistrationService, times(1)).toUserAnswers(eqTo(userAnswersId), eqTo(registrationWrapper))
+        verify(mockRegistrationConnector, times(1)).getPreviousIntermediaryAccounts()(any())
       }
     }
 
@@ -87,6 +97,8 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
       when(mockRegistrationConnector.displayIntermediaryRegistration(any())(any())) thenReturn
         Right(intermediaryRegistrationWithClients(Seq(iossNumber))).toFuture
       when(mockRegistrationConnector.displayRegistrationNetp(any())(any())) thenReturn Left(NotFound).toFuture
+      when(mockRegistrationConnector.getPreviousIntermediaryAccounts()(any())) thenReturn
+        previousEnrolments.toFuture
 
       val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
         .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
@@ -102,6 +114,7 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
           exp.getMessage `mustBe` NotFound.body
         }
         verify(mockRegistrationConnector, times(1)).displayRegistrationNetp(eqTo(iossNumber))(any())
+        verify(mockRegistrationConnector, times(1)).getPreviousIntermediaryAccounts()(any())
         verifyNoInteractions(mockRegistrationService)
       }
     }
@@ -114,6 +127,8 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
         Right(intermediaryRegistrationWithClients(Seq(iossNumber))).toFuture
       when(mockRegistrationConnector.displayRegistrationNetp(any())(any())) thenReturn Right(registrationWrapper).toFuture
       when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn Future.failed(Exception(errorMessage))
+      when(mockRegistrationConnector.getPreviousIntermediaryAccounts()(any())) thenReturn
+        previousEnrolments.toFuture
 
       val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
         .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
@@ -131,6 +146,7 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
         }
         verify(mockRegistrationConnector, times(1)).displayRegistrationNetp(eqTo(iossNumber))(any())
         verify(mockRegistrationService, times(1)).toUserAnswers(eqTo(userAnswersId), eqTo(registrationWrapper))
+        verify(mockRegistrationConnector, times(1)).getPreviousIntermediaryAccounts()(any())
       }
     }
   }
