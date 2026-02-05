@@ -167,19 +167,19 @@ clientBusinessAddress.error.stateOrRegion.format = State or region must only inc
 clientBusinessAddress.error.postCode.length = Postcode must be 40 characters or less
 clientBusinessAddress.error.postCode.invalid = Postcode must only include letters, numbers and spaces
 
-clientHasUtrNumber.title = Does your client''s business have a Unique Taxpayer Reference (UTR) number?
-clientHasUtrNumber.heading = Does your client''s business have a Unique Taxpayer Reference (UTR) number?
-clientHasUtrNumber.checkYourAnswersLabel = Has Unique Taxpayer Reference (UTR) number
-clientHasUtrNumber.error.required = Select yes if your client has a UTR number
-clientHasUtrNumber.change.hidden = Has Unique Taxpayer Reference (UTR) number
+clientHasUtrNumber.title = Does your client''s business have a Unique Taxpayer Reference (UTR)?
+clientHasUtrNumber.heading = Does your client''s business have a Unique Taxpayer Reference (UTR)?
+clientHasUtrNumber.checkYourAnswersLabel = Has Unique Taxpayer Reference (UTR)
+clientHasUtrNumber.error.required = Select yes if your client has a UTR
+clientHasUtrNumber.change.hidden = Client Unique Taxpayer Reference (UTR)
 
-clientUtrNumber.title = What is your client''s business Unique Taxpayer Reference number (UTR)?
-clientUtrNumber.heading = What is your client''s business Unique Taxpayer Reference number (UTR)?
-clientUtrNumber.checkYourAnswersLabel = UTR number
-clientUtrNumber.error.required = Enter your client''s business Unique Taxpayer Reference number (UTR)
+clientUtrNumber.title = What is your client''s Unique Taxpayer Reference (UTR)?
+clientUtrNumber.heading = What is your client''s Unique Taxpayer Reference (UTR)?
+clientUtrNumber.checkYourAnswersLabel = UTR
+clientUtrNumber.error.required = Enter your client''s Unique Taxpayer Reference (UTR)
 clientUtrNumber.error.length = Enter a UTR that is 10 or 13 digits long
 clientUtrNumber.error.invalid = Enter a UTR in the correct format
-clientUtrNumber.change.hidden = UTR Number
+clientUtrNumber.change.hidden = UTR
 clientUtrNumber.hint = Your UTR can be 10 or 13 digits long, for example 1234567890.
 
 clientsNinoNumber.title = What is your client''s National Insurance number (NINO)?
@@ -220,10 +220,10 @@ ukVatNumberNotFound.tryAgain = Check you have entered it correctly and try again
 cannotUseNotAnIntermediary.title = You cannot use this service
 cannotUseNotAnIntermediary.heading = You cannot use this service
 
-hasTradingName.title = Does your client''s business trade using a name that is different from {0}?
-hasTradingName.heading = Does your client''s business trade using a name that is different from {0}?
+hasTradingName.title = Does {0} trade under any other names?
+hasTradingName.heading = Does {0} trade under any other names?
 hasTradingName.checkYourAnswersLabel = Have a different trading name
-hasTradingName.error.required = Select yes if they use a different trading name
+hasTradingName.error.required = Select yes if they trade under any other names
 hasTradingName.change.hidden = Have a different trading name
 
 tradingName.title = What is your client''s other trading name?
@@ -296,6 +296,7 @@ applicationComplete.p2 = We will also email your client a code, using the addres
 applicationComplete.p3 = Once they have confirmed this, you must manage their monthly IOSS VAT returns and pay any VAT due.
 applicationComplete.p4 = Your client must confirm their activation by {0}. If not, you will need to register them again.
 applicationComplete.returnToYourAccount = <a class="govuk-link" href={0}>Return to your account</a>
+applicationComplete.copyLinkBtn = Copy link
 
 errorSubmittingPendingRegistration.title = We have a problem with our service right now
 errorSubmittingPendingRegistration.heading = The registration is not submitted
@@ -426,8 +427,8 @@ euTaxReference.heading = What is your client''s business tax identification numb
 euTaxReference.error.required = Enter your client''s business tax identification number for {0}
 euTaxReference.error.length = Tax identification number must be 20 characters or less
 euTaxReference.error.format = Tax identification number must only include letters, numbers and spaces
-euTaxReference.checkYourAnswersLabel = Tax ID Number
-euTaxReference.change.hidden = Tax ID Number
+euTaxReference.checkYourAnswersLabel = Tax ID number
+euTaxReference.change.hidden = your client''s Tax ID number
 
 tradingNameAndBusinessAddress.title = What is your client''s business trading name and address in {0}?
 tradingNameAndBusinessAddress.heading = What is your client''s business trading name and address in {0}?
@@ -454,7 +455,6 @@ tradingNameAndBusinessAddress.error.stateOrRegion.length = State or region must 
 tradingNameAndBusinessAddress.error.stateOrRegion.format = State or region must only include letters, numbers, hyphens, spaces and apostrophes
 tradingNameAndBusinessAddress.error.postCode.length = Postcode must be 40 characters or less
 tradingNameAndBusinessAddress.error.postCode.invalid = Postcode must only include letters, numbers and spaces
-
 
 checkEuDetailsAnswers.title = Check your answers for {0}
 checkEuDetailsAnswers.heading = Check your answers for {0}
@@ -626,7 +626,7 @@ secureMessages.heading = Your Import One Stop Shop secure messages
 secureMessages.clientName = {0} <br> IOSS number: {1}
 secureMessages.subject.read = <a class="govuk-link" href="{1}">{0}</a>
 secureMessages.subject.unread = <a class="govuk-link" href="{1}"><span class="govuk-visually-hidden">Unread message</span><span class="govuk-!-font-weight-bold">{0}</span></a>
-secureMessages.table.headContent.column1 = Messages
+secureMessages.table.headContent.column1 = Subject
 secureMessages.table.headContent.column2 = Date
 redDot = <span class="dot-unread"></span>
 

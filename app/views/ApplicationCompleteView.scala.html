@@ -14,6 +14,7 @@
  * limitations under the License.
  *@
 
+@import views.html.helper.CSPNonce
 @this(
         layout: templates.Layout,
         govukButton: GovukButton
@@ -38,6 +39,12 @@
   <h2 class="govuk-heading-m">@messages("applicationComplete.next")</h2>
 
   <p class="govuk-body">@Html(messages("applicationComplete.clientLink", clientDeclarationLink, code))</p>
+
+  <span id="copy-to-clip" data-code="@clientDeclarationLink"></span>
+    <button id="copy-to-clip-button" class="govuk-button govuk-button--secondary" data-module="govuk-button">
+        @messages("applicationComplete.copyLinkBtn")
+    </button>
+    <script @CSPNonce.attr src='@routes.Assets.versioned("javascripts/copy-button.js")'></script>
 
   <p class="govuk-body">@messages("applicationComplete.p2")</p>
 
