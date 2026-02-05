@@ -31,7 +31,7 @@ class AccessDeniedController @Inject()(
                                                       view: AccessDeniedView
                                                     ) extends FrontendBaseController with I18nSupport {
 
-  def onPageLoad: Action[AnyContent] = (cc.actionBuilder andThen cc.identify) {
+  def onPageLoad: Action[AnyContent] = Action {
     implicit request =>
 
       Ok(view())
