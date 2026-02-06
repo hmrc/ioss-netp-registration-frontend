@@ -20,7 +20,6 @@ import controllers.actions.*
 import generators.Generators
 import models.domain.VatCustomerInfo
 import models.etmp.display.RegistrationWrapper
-import models.intermediaries.{EACDEnrolments, PreviousIntermediaryRegistration, StandardPeriod}
 import models.{BusinessContactDetails, CheckMode, Index, IntermediaryDetails, UserAnswers, Website}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
@@ -43,7 +42,7 @@ import uk.gov.hmrc.auth.core.{Enrolment, Enrolments}
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.Vrn
 
-import java.time.{Clock, Instant, LocalDate, YearMonth, ZoneId}
+import java.time.{Clock, Instant, LocalDate, ZoneId}
 import java.util.UUID
 
 trait SpecBase
@@ -127,14 +126,6 @@ trait SpecBase
 
   val enrolments = Enrolments(Set(Enrolment("HMRC-IOSS-INT", Seq.empty, "Activated")))
 
-  private val eACDEnrolments: EACDEnrolments = arbitraryEACDEnrolments.arbitrary.sample.value
-  
-  val previousIntermediaryRegistration: PreviousIntermediaryRegistration = PreviousIntermediaryRegistration(
-    intermediaryNumber = eACDEnrolments.enrolments.head.identifiers.head.value,
-    startPeriod = StandardPeriod(YearMonth.from(eACDEnrolments.enrolments.head.activationDate.get)),
-    endPeriod = StandardPeriod(YearMonth.from(eACDEnrolments.enrolments.head.activationDate.get.minusMonths(1)))
-  )
-  
   protected def applicationBuilder(
                                     userAnswers: Option[UserAnswers] = None,
                                     clock: Option[Clock] = None,
