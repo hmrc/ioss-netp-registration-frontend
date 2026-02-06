@@ -22,7 +22,6 @@ import models.requests.OptionalDataRequest
 import models.responses.ErrorResponse
 import play.api.mvc.Results.{Redirect, Unauthorized}
 import play.api.mvc.{ActionFilter, Result}
-import services.IntermediaryRegistrationService
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
@@ -33,77 +32,58 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class CheckIntermediaryAccessFilterImpl(
                                         iossNumber: Option[String],
-                                        registrationConnector: RegistrationConnector,
-                                        intermediaryRegistrationService: IntermediaryRegistrationService
+                                        registrationConnector: RegistrationConnector
                                        )(implicit val executionContext: ExecutionContext) extends ActionFilter[OptionalDataRequest] with Logging {
   
   override protected def filter[A](request: OptionalDataRequest[A]): Future[Option[Result]] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 
-    iossNumber match {
-      case Some(ioss) =>
-        intermediaryRegistrationService.getPreviousRegistrations().flatMap {
+    val allIntermediaryEnrolments: Seq[String] = findIntermediariesFromEnrolments(request.enrolments)
 
-          case Nil =>
-            request.intermediaryNumber match {
-              case Some(intermediaryNumber) =>
-                registrationConnector.displayIntermediaryRegistration(intermediaryNumber).flatMap {
-                  case Right(intermediaryRegistration) =>
-                    val availableIossNumbers = intermediaryRegistration.etmpDisplayRegistration.clientDetails.map(_.clientIossID)
+    (allIntermediaryEnrolments, request.intermediaryNumber, iossNumber) match {
 
-                    if(availableIossNumbers.contains(ioss)) {
-                      None.toFuture
+      case (enrolments, Some(intermediary), Some(ioss)) if enrolments.size <= 1 =>
 
-                    } else {
-                      val errorMessage =
-                        s"Intermediary $intermediaryNumber tried to access iossNumber $ioss, but they aren't the intermediary of this ioss number"
-                      logger.error(errorMessage)
-                      Some(Redirect(controllers.routes.AccessDeniedController.onPageLoad().url)).toFuture
-                    }
+        registrationConnector.displayIntermediaryRegistration(intermediary).flatMap {
+          case Right(intermediaryRegistration) =>
+            val availableIossNumbers = intermediaryRegistration.etmpDisplayRegistration.clientDetails.map(_.clientIossID)
 
-                  case Left(error) =>
-                    val errorMessage = s"Error retrieving intermediary registration: ${error.body}"
-                    logger.error(errorMessage, error)
-                    throw new Exception(errorMessage)
-                }
+            if(availableIossNumbers.contains(ioss)) {
+              None.toFuture
 
-              case None =>
-                logger.warn("No intermediary number present")
-                Some(Unauthorized).toFuture
+            } else {
+              val errorMessage =
+                s"Intermediary $intermediary tried to access iossNumber $ioss, but they aren't the intermediary of this ioss number"
+              logger.error(errorMessage)
+              Some(Redirect(controllers.routes.AccessDeniedController.onPageLoad().url)).toFuture
             }
 
-          case _ =>
-            request.intermediaryNumber match {
-              case Some(intermediaryNumber) =>
-                val allIntermediaryEnrolments: Seq[String] = findIntermediariesFromEnrolments(request.enrolments)
-
-                findAuthorisedIntermediaryForIossClient(allIntermediaryEnrolments, ioss).flatMap {
-                  case Some(authorisedIntermediaryNumber) =>
-                    None.toFuture
-
-                  case None =>
-                    val errorMessage =
-                      s"Intermediary $intermediaryNumber tried to access iossNumber $ioss, but they aren't the intermediary of this ioss number"
-                    logger.error(errorMessage)
-                    Some(Redirect(controllers.routes.AccessDeniedController.onPageLoad().url)).toFuture
-                }
-
-              case None =>
-                logger.warn("No intermediary number present")
-                Some(Unauthorized).toFuture
-            }
-
+          case Left(error) =>
+            val errorMessage = s"Error retrieving intermediary registration: ${error.body}"
+            logger.error(errorMessage, error)
+            throw new Exception(errorMessage)
         }
 
-      case None =>
-        request.intermediaryNumber match {
-          case Some(value) => None.toFuture
+      case (enrolments, Some(intermediary), Some(ioss)) if enrolments.size > 1 =>
+
+        findAuthorisedIntermediaryForIossClient(allIntermediaryEnrolments, ioss).flatMap {
+          case Some(authorisedIntermediary) =>
+            None.toFuture
 
           case None =>
-            logger.warn("No intermediary number present")
-            Some(Unauthorized).toFuture
+            val errorMessage =
+              s"Intermediary $intermediary tried to access iossNumber $ioss, but they aren't the intermediary of this ioss number"
+            logger.error(errorMessage)
+            Some(Redirect(controllers.routes.AccessDeniedController.onPageLoad().url)).toFuture
         }
+
+      case (_, Some(intermediary), None) =>
+        None.toFuture
+
+      case _ =>
+        logger.warn("No intermediary number present")
+        Some(Unauthorized).toFuture
     }
   }
 
@@ -131,10 +111,9 @@ class CheckIntermediaryAccessFilterImpl(
 }
 
 class CheckIntermediaryAccessFilterProvider@Inject()(
-                                                      registrationConnector: RegistrationConnector,
-                                                      intermediaryRegistrationService: IntermediaryRegistrationService
+                                                      registrationConnector: RegistrationConnector
                                                     )(implicit executionContext: ExecutionContext) {
 
   def apply(iossNumber: Option[String]): CheckIntermediaryAccessFilterImpl =
-    new CheckIntermediaryAccessFilterImpl(iossNumber, registrationConnector, intermediaryRegistrationService)
+    new CheckIntermediaryAccessFilterImpl(iossNumber, registrationConnector)
 }
