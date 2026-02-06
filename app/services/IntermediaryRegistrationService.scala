@@ -17,11 +17,9 @@
 package services
 
 import connectors.RegistrationConnector
-import models.domain.{PreviousRegistration, VatCustomerInfo}
-import models.intermediaries.{PreviousIntermediaryRegistration, StandardPeriod}
+import models.domain.VatCustomerInfo
 import uk.gov.hmrc.http.HeaderCarrier
 
-import java.time.YearMonth
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,25 +32,5 @@ class IntermediaryRegistrationService @Inject()(
         case Right(vatInfo) => Some(vatInfo)
         case Left(error) => None
       }
-    
-  }
-  
-  def getPreviousRegistrations()(implicit hc: HeaderCarrier): Future[Seq[PreviousIntermediaryRegistration]] = {
-    registrationConnector.getPreviousIntermediaryAccounts().map { accounts =>
-
-      val accountDetails: Seq[(YearMonth, String)] = accounts
-        .enrolments.map(e => e.activationDate -> e.identifiers.find(_.key == "IntNumber").map(_.value))
-        .collect {
-          case (Some(activationDate), Some(intermediaryNumber)) => YearMonth.from(activationDate) -> intermediaryNumber
-        }.sortBy(_._1)
-
-      accountDetails.zip(accountDetails.drop(1)).map { case ((activationDate, intermediaryNumber), (nextActivationDate, _)) =>
-        PreviousIntermediaryRegistration(
-          startPeriod = StandardPeriod(activationDate),
-          endPeriod = StandardPeriod(nextActivationDate.minusMonths(1)),
-          intermediaryNumber = intermediaryNumber
-        )
-      }
-    }
   }
 }
