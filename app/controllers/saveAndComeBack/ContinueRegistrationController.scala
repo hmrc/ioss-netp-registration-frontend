@@ -16,33 +16,29 @@
 
 package controllers.saveAndComeBack
 
+import config.FrontendAppConfig
+import controllers.SetActiveTraderResult
 import controllers.actions.*
 import forms.saveAndComeBack.ContinueRegistrationFormProvider
 import logging.Logging
-import models.saveAndComeBack.{ContinueRegistration, TaxReferenceInformation}
-import pages.{ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, SavedProgressPage, UkVatNumberNotFoundPage, VatApiDownPage, Waypoints}
-import play.api.data.Form
-import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.libs.json.Format.GenericFormat
-import play.api.mvc.{Action, AnyContent, Call, MessagesControllerComponents, Result}
-import services.SaveAndComeBackService
-import uk.gov.hmrc.http.HttpVerbs.GET
-import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
-import utils.FutureSyntax.FutureOps
-import views.html.saveAndComeBack.ContinueRegistrationView
-import config.FrontendAppConfig
-import models.responses.VatCustomerNotFound
-import pages.previousRegistrations.PreviousIossNumberPage
-import pages.vatEuDetails.EuVatNumberPage
-import queries.previousRegistrations.AllPreviousRegistrationsRawQuery
-import services.core.CoreRegistrationValidationService
-import uk.gov.hmrc.domain.Vrn
-import connectors.RegistrationConnector
-import controllers.SetActiveTraderResult
-import models.Index
 import models.core.Match
 import models.domain.VatCustomerInfo
 import models.requests.DataRequest
+import models.saveAndComeBack.{ContinueRegistration, TaxReferenceInformation}
+import pages.{ClientUtrNumberPage, ClientVatNumberPage, Page, SavedProgressPage, Waypoints}
+import play.api.data.Form
+import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.libs.json.Format.GenericFormat
+import play.api.libs.json.Reads
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
+import queries.Gettable
+import services.SaveAndComeBackService
+import services.core.CoreRegistrationValidationService
+import uk.gov.hmrc.domain.Vrn
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
+import utils.FutureSyntax.FutureOps
+import views.html.saveAndComeBack.ContinueRegistrationView
 
 import java.time.{Clock, LocalDate}
 import javax.inject.Inject
@@ -56,9 +52,7 @@ class ContinueRegistrationController @Inject()(
                                                 frontendAppConfig: FrontendAppConfig,
                                                 saveAndComeBackService: SaveAndComeBackService,
                                                 coreRegistrationValidationService: CoreRegistrationValidationService,
-                                                clock: Clock,
-                                                registrationConnector: RegistrationConnector,
-
+                                                clock: Clock
                                               )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with SetActiveTraderResult {
 
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -69,7 +63,7 @@ class ContinueRegistrationController @Inject()(
     implicit request =>
 
       request.userAnswers.get(ClientVatNumberPage) match {
-        case None => {
+        case None =>
           val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(request.userAnswers)
 
           request.userAnswers.get(SavedProgressPage).map { _ =>
@@ -79,7 +73,6 @@ class ContinueRegistrationController @Inject()(
             logger.error(exception.getMessage, exception)
             throw exception
           }
-        }
 
         case Some(clientVatNumber) =>
 
@@ -98,7 +91,6 @@ class ContinueRegistrationController @Inject()(
             }
           }
       }
-
   }
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
@@ -106,9 +98,7 @@ class ContinueRegistrationController @Inject()(
 
       val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(request.userAnswers)
       val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
-      val alreadyRegisteredRedirect = controllers.routes.ClientAlreadyRegisteredController.onPageLoad().url
-      val vatExpiredRedirect = controllers.routes.ExpiredVrnDateController.onPageLoad(waypoints).url
-      
+
       form.bindFromRequest().fold(
         formWithErrors =>
           BadRequest(view(taxReferenceInformation, formWithErrors, waypoints)).toFuture,
@@ -116,20 +106,15 @@ class ContinueRegistrationController @Inject()(
         value1 =>
           (value1, request.userAnswers.get(SavedProgressPage)) match {
             case (ContinueRegistration.Continue, Some(url)) =>
-              request.userAnswers.get(ClientVatNumberPage) match {
-                case Some(vatNumber) =>
-                  coreRegistrationValidationService.searchUkVrn(Vrn(vatNumber)).flatMap {
-                    case Some(activeMatch: Match) => 
-                      if(checkIfVatRegistered(activeMatch)) then deleteAndRedirect(request,taxReferenceInformation,alreadyRegisteredRedirect)
-                      else if(checkIfQuarantined(activeMatch)) then deleteAndRedirect(request, taxReferenceInformation, controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(activeMatch.memberState, activeMatch.getEffectiveDate).url)
-                      else logger.info("VAT Number is still valid")
-                    case _ =>
-                      if(checkVatExpired(request.userAnswers.vatInfo)) then deleteAndRedirect(request, taxReferenceInformation, vatExpiredRedirect)
-                      else logger.info("VAT has not expired")
-                  }
-              }
-              
-            case (ContinueRegistration.Delete, _) =>
+              // TODO -> Call new service method checkAndValidateSavedUserAnswers
+
+              // TODO -> Check these redirects
+              val alreadyRegisteredRedirect = controllers.routes.ClientAlreadyRegisteredController.onPageLoad().url
+
+              deleteAndRedirect(taxReferenceInformation, alreadyRegisteredRedirect)
+
+            case (ContinueRegistration.Delete, _)
+            =>
               for {
                 _ <- cc.sessionRepository.clear(request.userId)
                 _ <- saveAndComeBackService.deleteSavedUserAnswers(taxReferenceInformation.journeyId)
@@ -140,34 +125,69 @@ class ContinueRegistrationController @Inject()(
               logger.error(exception.getMessage, exception)
               throw exception
           }
-      )
 
+      )
   }
-  
-  
-  private def checkIfVatRegistered(activeMatch: Match): Boolean = {
-    activeMatch.isActiveTrader(clock)
-  }
-  
-  private def checkIfQuarantined(activeMActh: Match): Boolean = {
-    activeMatch.isQuarantinedTrader(clock)
-  }
-  
+
   private def checkVatExpired(vatCustomerInfo: Option[VatCustomerInfo]): Boolean = {
+    vatCustomerInfo match {
       case Some(vatCustomerInfo) =>
-        val today = LocalDate.now(clock)
-        val isExpired = vatCustomerInfo.deregistrationDecisionDate.exists(!_.isAfter(today))
-        isExpired
-      case None => logger.info("No VAT number found for the user, cannot check if it is expired")
+        val today: LocalDate = LocalDate.now(clock)
+        vatCustomerInfo.deregistrationDecisionDate.exists(!_.isAfter(today))
+
+      case None =>
+        val message: String = "VAT Info not retrieved"
+        logger.warn(message)
+        val exception: Exception = new Exception(message)
+        throw exception
+    }
   }
-  
-  
-  private def deleteAndRedirect(request: DataRequest[AnyContent], taxReferenceInformation: TaxReferenceInformation, redirectUrl: String)
-                               (implicit ec: ExecutionContext): Future[Result] = cc.identifyAndGetData().async {
+
+
+  private def deleteAndRedirect(
+                                 taxReferenceInformation: TaxReferenceInformation,
+                                 redirectUrl: String
+                               )(implicit ec: ExecutionContext, request: DataRequest[_]): Future[Result] = {
     for {
       _ <- cc.sessionRepository.clear(request.userId)
       _ <- saveAndComeBackService.deleteSavedUserAnswers(taxReferenceInformation.journeyId)
     } yield Redirect(redirectUrl)
   }
 
+
+  // ClientVatNumberPage -> searchUkVrn
+  // ClientUtrNumberPage -> searchTraderId
+  // ClientsNinoNumberPage -> searchTraderId
+  // ClientTaxReferencePage -> searchForeignTaxReference
+
+  // USE THE MODELS FOR THESE -> LOOK AT IOSS-REG
+  // EuTaxReferencePage -> searchEuTaxId
+  // EuVatNumberPage -> searchEuVrn
+  // PreviousIossNumberPage -> searchScheme
+  // PreviousOssNumberPage -> searchScheme
+
+
+  //  private def determineSearchType[A](
+  //                                   pages: List[Gettable[A]]
+  //                                 )(implicit hc: HeaderCarrier, request: DataRequest[_], rds: Reads[A]) = {
+  //    for {
+  //      page <- pages
+  //    } yield {
+  //      if (request.userAnswers.get(page).nonEmpty) {
+  //        val x = request.userAnswers.get(page)
+  //        page match {
+  //          case _: ClientVatNumberPage.type =>
+  //            coreRegistrationValidationService.searchUkVrn()
+  //
+  //          case _: ClientUtrNumberPage.type =>
+  //              coreRegistrationValidationService.searchTraderId()
+  //        }
+  //      } else {
+  //        // TODO -> Nothing in page
+  //        ???
+  //      }
+  //    }
+  //  }
 }
+
+
