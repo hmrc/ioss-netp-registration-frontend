@@ -22,7 +22,6 @@ import models.domain.ModelHelpers.normaliseSpaces
 import models.domain.VatCustomerInfo
 import models.etmp.SchemeType
 import models.etmp.intermediary.IntermediaryVatCustomerInfo
-import models.intermediaries.{EACDEnrolment, EACDEnrolments, EACDIdentifiers}
 import models.iossRegistration.*
 import models.ossRegistration.*
 import models.previousRegistrations.NonCompliantDetails
@@ -642,40 +641,4 @@ trait ModelGenerators extends EitherValues with EtmpModelGenerators {
         )
       }
     }
-
-  implicit val arbitraryEACDIdentifiers: Arbitrary[EACDIdentifiers] = {
-    Arbitrary {
-      for {
-        value <- Gen.alphaStr
-      } yield EACDIdentifiers(
-        key = "IntNumber",
-        value = value
-      )
-    }
-  }
-  
-  implicit val arbitraryEACDEnrolment: Arbitrary[EACDEnrolment] = {
-    Arbitrary {
-      for {
-        service <- Gen.alphaStr
-        state <- Gen.alphaStr
-        identifiers <- Gen.listOfN(2, arbitraryEACDIdentifiers.arbitrary)
-      } yield EACDEnrolment(
-        service = service,
-        state = state,
-        activationDate = Some(LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS)),
-        identifiers = identifiers
-      )
-    }
-  }
-  
-  implicit lazy val arbitraryEACDEnrolments: Arbitrary[EACDEnrolments] = {
-    Arbitrary {
-      for {
-        enrolments <- Gen.listOfN(2, arbitraryEACDEnrolment.arbitrary)
-      } yield EACDEnrolments(
-        enrolments = enrolments
-      )
-    }
-  }
 }
