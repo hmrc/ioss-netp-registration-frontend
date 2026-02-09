@@ -52,51 +52,27 @@ class ContinueRegistrationSelectionController @Inject()(
     implicit request =>
 
       val userAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
-      val intermediaryNumber = request.intermediaryNumber.getOrElse("")
 
       val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
 
       saveAndComeBackService.getSavedContinueRegistrationJourneys(userAnswers, request.intermediaryNumber.get).flatMap {
         case SingleRegistration(singleJourneyId) =>
 
-          val continueRegistrationSelectionId: Option[String] = userAnswers.get(ContinueRegistrationSelectionPage)
+          saveAndComeBackService.retrieveSingleSavedUserAnswers(singleJourneyId, waypoints).flatMap { enrichedUserAnswers =>
 
-          continueRegistrationSelectionId match {
-            case Some(journeyId) =>
+            for {
+              _ <- cc.sessionRepository.set(enrichedUserAnswers)
+            } yield Redirect(controllers.saveAndComeBack.routes.ContinueRegistrationController.onPageLoad())
 
-              if (journeyId == singleJourneyId) {
-                saveAndComeBackService.retrieveSingleSavedUserAnswers(singleJourneyId, waypoints).flatMap { enrichedUserAnswers =>
-
-                  for {
-                    _ <- cc.sessionRepository.set(enrichedUserAnswers)
-                  } yield Redirect(controllers.saveAndComeBack.routes.ContinueRegistrationController.onPageLoad())
-                }
-
-              } else {
-                Redirect(controllers.routes.AccessDeniedController.onPageLoad().url).toFuture
-              }
-
-            case None =>
-              val errorMessage = s"No registrations in progress"
-              logger.error(errorMessage)
-              throw new Exception(errorMessage)
           }
 
         case MultipleRegistrations(multipleRegistrations) =>
 
-          val hasAccess = multipleRegistrations.exists(_.intermediaryNumber == intermediaryNumber)
-
-          if (hasAccess) {
-            saveAndComeBackService.createTaxReferenceInfoForSavedUserAnswers(multipleRegistrations).flatMap { seqTaxReferenceInfo =>
-
-              for {
-                updatedAnswers <- Future.fromTry(userAnswers.set(ContinueRegistrationList, seqTaxReferenceInfo))
-                _ <- cc.sessionRepository.set(updatedAnswers)
-              } yield Ok(view(seqTaxReferenceInfo, form, waypoints))
-            }
-
-          } else {
-            Redirect(controllers.routes.AccessDeniedController.onPageLoad().url).toFuture
+          saveAndComeBackService.createTaxReferenceInfoForSavedUserAnswers(multipleRegistrations).flatMap { seqTaxReferenceInfo =>
+            for {
+              updatedAnswers <- Future.fromTry(userAnswers.set(ContinueRegistrationList, seqTaxReferenceInfo))
+              _ <- cc.sessionRepository.set(updatedAnswers)
+            } yield Ok(view(seqTaxReferenceInfo, form, waypoints))
           }
 
         case NoRegistrations =>
@@ -107,8 +83,7 @@ class ContinueRegistrationSelectionController @Inject()(
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
-
-
+      
       form.bindFromRequest().fold(
         formWithErrors =>
           request.userAnswers.get(ContinueRegistrationList) match
@@ -130,4 +105,3 @@ class ContinueRegistrationSelectionController @Inject()(
       )
   }
 }
-
