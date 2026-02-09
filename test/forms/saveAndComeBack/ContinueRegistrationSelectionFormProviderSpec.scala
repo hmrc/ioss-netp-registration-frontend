@@ -17,14 +17,18 @@
 package forms.saveAndComeBack
 
 import forms.behaviours.StringFieldBehaviours
+import models.SavedUserAnswers
+import org.scalacheck.Gen
 import play.api.data.FormError
 
 class ContinueRegistrationSelectionFormProviderSpec extends StringFieldBehaviours {
 
+  private val savedUserAnswers: SavedUserAnswers = arbitrarySavedUserAnswers.arbitrary.sample.value
+  
   val errorKey = "continueRegistrationSelection.error.required"
-  val form = new ContinueRegistrationSelectionFormProvider()()
+  val form = new ContinueRegistrationSelectionFormProvider()(Seq(savedUserAnswers))
   val validData = "JourneyID12345678"
-
+ 
   ".ContinueRegistrationSelection" - {
 
     val fieldName = "value"
@@ -33,7 +37,7 @@ class ContinueRegistrationSelectionFormProviderSpec extends StringFieldBehaviour
     behave like fieldThatBindsValidData(
       form,
       fieldName,
-      validData
+      Gen.oneOf(Seq(savedUserAnswers)).map(_.journeyId)
     )
 
     behave like mandatoryField(

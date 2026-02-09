@@ -17,14 +17,16 @@
 package forms.saveAndComeBack
 
 import forms.mappings.Mappings
+import models.SavedUserAnswers
 import play.api.data.Form
 
 import javax.inject.Inject
 
 class ContinueRegistrationSelectionFormProvider @Inject() extends Mappings {
 
-  def apply(): Form[String] =
+  def apply(savedUserAnswers: Seq[SavedUserAnswers]): Form[String] =
     Form(
       "value" -> text("continueRegistrationSelection.error.required")
+        .verifying("continueRegistrationSelection.error.required", value => savedUserAnswers.exists(_.journeyId == value))
     )
 }
