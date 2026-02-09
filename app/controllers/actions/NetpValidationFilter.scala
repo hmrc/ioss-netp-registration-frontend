@@ -36,7 +36,7 @@ class NetpValidationFilter()
     if hasNetpEnrolment then
       Future.successful(None)
     else
-      Future.successful(Some(Redirect(controllers.secureMessages.routes.CannotUseNotAnNetpController.onPageLoad())))
+      Future.successful(Some(Redirect(controllers.routes.AccessDeniedController.onPageLoad())))
   }
 }
 

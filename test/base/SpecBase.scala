@@ -38,6 +38,7 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.CSRFTokenHelper.CSRFRequest
 import play.api.test.FakeRequest
 import queries.IntermediaryDetailsQuery
+import uk.gov.hmrc.auth.core.{Enrolment, Enrolments}
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.Vrn
 
@@ -122,6 +123,8 @@ trait SpecBase
     BusinessContactDetails(fullName = "name", telephoneNumber = "0111 2223334", emailAddress = "email@example.com")
 
   val registrationWrapper: RegistrationWrapper = arbitraryRegistrationWrapper.arbitrary.sample.value
+
+  val enrolments = Enrolments(Set(Enrolment("HMRC-IOSS-INT", Seq.empty, "Activated")))
 
   protected def applicationBuilder(
                                     userAnswers: Option[UserAnswers] = None,

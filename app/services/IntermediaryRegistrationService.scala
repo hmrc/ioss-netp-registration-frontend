@@ -20,7 +20,6 @@ import connectors.RegistrationConnector
 import models.domain.VatCustomerInfo
 import uk.gov.hmrc.http.HeaderCarrier
 
-
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -33,6 +32,5 @@ class IntermediaryRegistrationService @Inject()(
         case Right(vatInfo) => Some(vatInfo)
         case Left(error) => None
       }
-    
   }
 }
