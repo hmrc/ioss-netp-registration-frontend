@@ -55,7 +55,7 @@ class ClientHasIntermediaryController @Inject()(
       Ok(view(preparedForm, waypoints, countryIndex, schemeIndex))
   }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index, schemeIndex: Index): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend).async {
     implicit request =>
 
       form.bindFromRequest().fold(

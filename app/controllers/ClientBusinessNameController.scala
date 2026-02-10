@@ -72,7 +72,7 @@ class ClientBusinessNameController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend).async {
     implicit request =>
 
       val isUKBased = request.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
