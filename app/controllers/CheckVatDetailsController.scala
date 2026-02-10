@@ -71,7 +71,7 @@ class CheckVatDetailsController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints, incompletePrompt: Boolean): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onSubmit(waypoints: Waypoints, incompletePrompt: Boolean): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend).async {
     implicit request =>
 
       getFirstValidationVatInfoErrorRedirect(waypoints) match {

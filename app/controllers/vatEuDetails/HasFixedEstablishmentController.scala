@@ -55,7 +55,7 @@ class HasFixedEstablishmentController @Inject()(
       Ok(view(preparedForm, waypoints)).toFuture
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend).async {
     implicit request =>
 
       val form: Form[Boolean] = formProvider()

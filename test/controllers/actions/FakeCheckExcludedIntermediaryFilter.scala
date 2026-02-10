@@ -24,7 +24,7 @@ import play.api.mvc.Result
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeCheckExcludedIntermediaryFilter
-  extends CheckExcludedIntermediaryFilter(mock[RegistrationConnector])(ExecutionContext.Implicits.global) {
+  extends CheckExcludedIntermediaryFilter(mock[RegistrationConnector], isInAmendMode = false)(ExecutionContext.Implicits.global) {
 
   override protected def filter[A](request: OptionalDataRequest[A]): Future[Option[Result]] = {
     Future.successful(None)
@@ -33,5 +33,5 @@ class FakeCheckExcludedIntermediaryFilter
 
 class FakeCheckExcludedIntermediaryFilterProvider
   extends CheckExcludedIntermediaryFilterProvider(mock[RegistrationConnector])(ExecutionContext.Implicits.global) {
-  override def apply(): CheckExcludedIntermediaryFilter = new FakeCheckExcludedIntermediaryFilter()
+  override def apply(isInAmendMode: Boolean): CheckExcludedIntermediaryFilter = new FakeCheckExcludedIntermediaryFilter()
 }

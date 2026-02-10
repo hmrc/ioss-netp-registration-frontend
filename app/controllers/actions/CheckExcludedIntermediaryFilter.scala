@@ -29,7 +29,10 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import utils.FutureSyntax.FutureOps
 
-class CheckExcludedIntermediaryFilter(registrationConnector: RegistrationConnector)
+class CheckExcludedIntermediaryFilter(
+                                       registrationConnector: RegistrationConnector,
+                                       isInAmendMode: Boolean
+                                     )
                                      (implicit val executionContext: ExecutionContext)
   extends ActionFilter[OptionalDataRequest] with Logging {
 
@@ -39,18 +42,22 @@ class CheckExcludedIntermediaryFilter(registrationConnector: RegistrationConnect
 
     request.intermediaryNumber match {
       case Some(intermediaryNumber) =>
-        registrationConnector.displayIntermediaryRegistration(intermediaryNumber).flatMap {
-          case Right(intermediaryRegistration) =>
-            if (intermediaryRegistration.etmpDisplayRegistration.exclusions.nonEmpty) {
-              Some(Redirect(routes.CannotUseNotAnIntermediaryController.onPageLoad())).toFuture
-            } else {
-              None.toFuture
-            }
+        if(isInAmendMode) {
+          None.toFuture
+        } else {
+          registrationConnector.displayIntermediaryRegistration(intermediaryNumber).flatMap {
+            case Right(intermediaryRegistration) =>
+              if (intermediaryRegistration.etmpDisplayRegistration.exclusions.nonEmpty) {
+                Some(Redirect(routes.CannotUseNotAnIntermediaryController.onPageLoad())).toFuture
+              } else {
+                None.toFuture
+              }
 
-          case Left(error) =>
-            val errorMessage = s"Error retrieving registration: ${error.body}"
-            logger.error(errorMessage, error)
-            throw new Exception(errorMessage)
+            case Left(error) =>
+              val errorMessage = s"Error retrieving registration: ${error.body}"
+              logger.error(errorMessage, error)
+              throw new Exception(errorMessage)
+          }
         }
 
       case None =>
@@ -62,5 +69,5 @@ class CheckExcludedIntermediaryFilter(registrationConnector: RegistrationConnect
 
 class CheckExcludedIntermediaryFilterProvider @Inject()(registrationConnector: RegistrationConnector)
                                                        (implicit executionContext: ExecutionContext) {
-  def apply(): CheckExcludedIntermediaryFilter = new CheckExcludedIntermediaryFilter(registrationConnector)
+  def apply(isInAmendMode: Boolean): CheckExcludedIntermediaryFilter = new CheckExcludedIntermediaryFilter(registrationConnector, isInAmendMode)
 }

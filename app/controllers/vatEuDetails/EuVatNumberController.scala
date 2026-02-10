@@ -68,7 +68,7 @@ class EuVatNumberController @Inject()(
         }
     }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend).async {
     implicit request =>
 
       getCountryWithIndex(waypoints, countryIndex) { country =>

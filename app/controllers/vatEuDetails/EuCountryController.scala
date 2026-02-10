@@ -57,7 +57,7 @@ class EuCountryController @Inject()(
       Ok(view(preparedForm, waypoints, countryIndex))
   }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData().async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend).async {
     implicit request =>
  
       val form: Form[Country] = formProvider(countryIndex, request.userAnswers.get(AllEuDetailsQuery)
