@@ -72,7 +72,7 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
     val baseActions = actionBuilder andThen
       identify andThen
       getData andThen
-      checkExcludedIntermediary() andThen
+      checkExcludedIntermediary(inAmend) andThen
       checkIntermediaryAccess(iossNumber)
 
     (inAmend, checkAmendAccess) match {
