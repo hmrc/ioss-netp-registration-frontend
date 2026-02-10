@@ -53,7 +53,9 @@ class ClientNotActivatedController @Inject()(
 
       registrationConnector.getPendingRegistration(journeyId).map {
         case Right(pendingRegistration) =>
-          
+
+          if (pendingRegistration.intermediaryDetails.intermediaryNumber == request.intermediaryNumber) {
+
             val emailAddress = pendingRegistration.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
 
             val isBasedInUk = pendingRegistration.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
@@ -82,6 +84,9 @@ class ClientNotActivatedController @Inject()(
             } else {
               Ok(view(waypoints, None, registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage))
             }
+          } else {
+            Redirect(controllers.routes.AccessDeniedController.onPageLoad().url)
+          }
 
         case Left(errors) =>
           val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given intermediary number: $errors."

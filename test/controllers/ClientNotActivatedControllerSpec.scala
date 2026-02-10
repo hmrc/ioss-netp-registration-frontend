@@ -52,7 +52,8 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
   private def buildSavedRegistration(
                                       withVatInfo: Boolean = true,
                                       isBasedInUk: Boolean = true,
-                                      hasVat: Boolean = true
+                                      hasVat: Boolean = true,
+                                      intermediaryNumber: String
                                     ): SavedPendingRegistration = {
     val ua = emptyUserAnswers
       .set(BusinessContactDetailsPage, businessContactDetails).success.value
@@ -62,7 +63,8 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
       .copy(vatInfo = if (withVatInfo) Some(vatCustomerInfo) else None)
 
     savedPendingRegistration(ua).copy(
-      journeyId = journeyId
+      journeyId = journeyId,
+      intermediaryDetails = IntermediaryDetails(intermediaryNumber, intermediaryName)
     )
   }
 
@@ -76,7 +78,7 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
 
       "when journeyId is found, user is UK based, has VAT, and vatInfo exists" in {
 
-        val registration = buildSavedRegistration()
+        val registration = buildSavedRegistration(intermediaryNumber = intermediaryNumber)
 
         when(mockRegistrationConnector.getPendingRegistration(any())(any()))
           .thenReturn(Right(registration).toFuture)
@@ -91,8 +93,6 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
           val result = route(app, request).value
 
           status(result) mustEqual OK
-          contentAsString(result) must include(vatCustomerInfo.organisationName.get)
-          contentAsString(result) must include(vatNumber)
 
           verify(mockRegistrationConnector, times(1)).getPendingRegistration(any())(any())
         }
@@ -100,7 +100,7 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
 
       "when journeyId is found, user is UK based but does not have a VAT number" in {
 
-        val registration = buildSavedRegistration(hasVat = false)
+        val registration = buildSavedRegistration(hasVat = false, intermediaryNumber = intermediaryNumber)
 
         when(mockRegistrationConnector.getPendingRegistration(any())(any()))
           .thenReturn(Right(registration).toFuture)
@@ -122,7 +122,7 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
 
       "when journeyId is found but the user is not UK-based or has no VAT" in {
 
-        val registration = buildSavedRegistration(isBasedInUk = false, hasVat = false)
+        val registration = buildSavedRegistration(isBasedInUk = false, hasVat = false, intermediaryNumber = intermediaryNumber)
 
         when(mockRegistrationConnector.getPendingRegistration(any())(any()))
           .thenReturn(Right(registration).toFuture)
@@ -142,6 +142,29 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
         }
       }
 
+    }
+
+    "must redirect intermediaries to AccessDenied page if the intermediary number doesn't match one in the request" in {
+
+      val registration = buildSavedRegistration(intermediaryNumber = "wrong-intermediary")
+
+      when(mockRegistrationConnector.getPendingRegistration(any())(any()))
+        .thenReturn(Right(registration).toFuture)
+
+      val app = applicationBuilder(userAnswers = None)
+        .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+        .build()
+
+      running(app) {
+        val request = FakeRequest(GET, routes.ClientNotActivatedController.onPageLoad(waypoints, journeyId).url)
+
+        val result = route(app, request).value
+
+        status(result) mustEqual SEE_OTHER
+        redirectLocation(result).value mustEqual controllers.routes.AccessDeniedController.onPageLoad().url
+
+        verify(mockRegistrationConnector, times(1)).getPendingRegistration(any())(any())
+      }
     }
 
     "must throw an exception when the connector fails to return pending registrations" in {

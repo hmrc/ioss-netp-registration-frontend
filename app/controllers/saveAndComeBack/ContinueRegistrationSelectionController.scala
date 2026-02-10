@@ -17,6 +17,7 @@
 package controllers.saveAndComeBack
 
 import config.FrontendAppConfig
+import connectors.SaveForLaterConnector
 import controllers.actions.AuthenticatedControllerComponents
 import forms.saveAndComeBack.ContinueRegistrationSelectionFormProvider
 import logging.Logging
@@ -41,12 +42,11 @@ class ContinueRegistrationSelectionController @Inject()(
                                                          formProvider: ContinueRegistrationSelectionFormProvider,
                                                          saveAndComeBackService: SaveAndComeBackService,
                                                          frontendAppConfig: FrontendAppConfig,
-                                                         view: ContinueRegistrationSelectionView
+                                                         view: ContinueRegistrationSelectionView,
+                                                         saveForLaterConnector: SaveForLaterConnector
                                                        )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
 
   protected val controllerComponents: MessagesControllerComponents = cc
-
-  val form: Form[String] = formProvider()
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetOptionalData().async {
     implicit request =>
@@ -67,6 +67,8 @@ class ContinueRegistrationSelectionController @Inject()(
           }
 
         case MultipleRegistrations(multipleRegistrations) =>
+          val form: Form[String] = formProvider(multipleRegistrations)
+
           saveAndComeBackService.createTaxReferenceInfoForSavedUserAnswers(multipleRegistrations).flatMap { seqTaxReferenceInfo =>
             for {
               updatedAnswers <- Future.fromTry(userAnswers.set(ContinueRegistrationList, seqTaxReferenceInfo))
@@ -83,26 +85,37 @@ class ContinueRegistrationSelectionController @Inject()(
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
+      saveForLaterConnector.getAllByIntermediary(request.intermediaryNumber).flatMap {
+        case Right(savedUserAnswers) =>
+          val form = formProvider(savedUserAnswers)
+          
+          form.bindFromRequest().fold(
+            formWithErrors =>
+              request.userAnswers.get(ContinueRegistrationList) match
+                case Some(seqTaxRefInfo) =>
+                  BadRequest(view(seqTaxRefInfo, formWithErrors, waypoints)).toFuture
+                case None =>
+                  val message: String = s"Received an unexpected error as no registration list found"
+                  val exception: IllegalStateException = new IllegalStateException(message)
+                  logger.error(exception.getMessage, exception)
+                  throw exception,
 
-      form.bindFromRequest().fold(
-        formWithErrors =>
-          request.userAnswers.get(ContinueRegistrationList) match
-            case Some(seqTaxRefInfo) =>
-              BadRequest(view(seqTaxRefInfo, formWithErrors, waypoints)).toFuture
-            case None =>
-              val message: String = s"Received an unexpected error as no registration list found"
-              val exception: IllegalStateException = new IllegalStateException(message)
-              logger.error(exception.getMessage, exception)
-              throw exception,
-
-        value =>
-          for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(ContinueRegistrationSelectionPage, value))
-            _ <- cc.sessionRepository.set(updatedAnswers)
-          } yield {
-            Redirect(ContinueRegistrationSelectionPage.route(waypoints).url)
-          }
-      )
+            value =>
+              for {
+                updatedAnswers <- Future.fromTry(request.userAnswers.set(ContinueRegistrationSelectionPage, value))
+                _ <- cc.sessionRepository.set(updatedAnswers)
+              } yield {
+                Redirect(ContinueRegistrationSelectionPage.route(waypoints).url)
+              }
+          )
+          
+        case Left(error) =>
+          val message: String = s"Received an unexpected error when trying to retrieve uncompleted " +
+            s"registrations for the intermediary ID: ${request.intermediaryNumber}. \nWith Errors: $error"
+          val exception: Exception = new Exception(message)
+          logger.error(exception.getMessage, exception)
+          throw exception
+      }
+      
   }
 }
-

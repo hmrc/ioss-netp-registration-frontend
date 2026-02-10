@@ -17,10 +17,11 @@
 package controllers.saveAndComeBack
 
 import base.SpecBase
+import connectors.SaveForLaterConnector
 import forms.saveAndComeBack.ContinueRegistrationSelectionFormProvider
 import models.saveAndComeBack.*
 import models.{SavedUserAnswers, UserAnswers}
-import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -35,17 +36,16 @@ import services.SaveAndComeBackService
 import utils.FutureSyntax.FutureOps
 import views.html.saveAndComeBack.ContinueRegistrationSelectionView
 
-
 class ContinueRegistrationSelectionControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
-
   private val mockSaveAndComeBackService = mock[SaveAndComeBackService]
   private val mockSessionRepository = mock[SessionRepository]
+  private val mockSaveForLaterConnector: SaveForLaterConnector = mock[SaveForLaterConnector]
 
   private lazy val continueSelectionOnPageLoad: String = routes.ContinueRegistrationSelectionController.onPageLoad(waypoints).url
   private lazy val continueSelectionOnSubmitRoute: String = routes.ContinueRegistrationSelectionController.onSubmit(waypoints).url
 
   private val formProvider = new ContinueRegistrationSelectionFormProvider()
-  private val form = formProvider()
+
 
   private val genericTaxReference: TaxReferenceInformation =
     TaxReferenceInformation(
@@ -58,23 +58,29 @@ class ContinueRegistrationSelectionControllerSpec extends SpecBase with MockitoS
   private val seqTaxReference: Seq[TaxReferenceInformation] = Seq(genericTaxReference, genericTaxReference, genericTaxReference)
 
   private val testArbitraryUserAnswers: UserAnswers = arbitraryUserAnswers.arbitrary.sample.value
-  private val testArbitrarySavedUserAnswers: SavedUserAnswers = arbitrarySavedUserAnswers.arbitrary.sample.value
+  private val testArbitrarySavedUserAnswers: SavedUserAnswers = arbitrarySavedUserAnswers.arbitrary.sample.value.copy(
+    intermediaryNumber = intermediaryNumber
+  )
   private val seqSavedUserAnswers: Seq[SavedUserAnswers] = Seq(testArbitrarySavedUserAnswers, testArbitrarySavedUserAnswers, testArbitrarySavedUserAnswers)
   private val singleRegistration: SingleRegistration = SingleRegistration(singleJourneyId = "journeyID")
   private val multipleRegistrations: MultipleRegistrations = MultipleRegistrations(multipleRegistrations = seqSavedUserAnswers)
   private val noRegistrations: NoRegistrations.type = NoRegistrations
 
+  private val form = formProvider(seqSavedUserAnswers)
+
   override def beforeEach(): Unit = {
     Mockito.reset(mockSaveAndComeBackService)
     Mockito.reset(mockSessionRepository)
+    Mockito.reset(mockSaveForLaterConnector)
   }
 
   "ContinueRegistrationSelectionController" - {
+
     ".onPageLoad" - {
 
       "when a single registration is returned from the service should set the user answers and redirect to continue registration page" in {
 
-        val answers: UserAnswers = emptyUserAnswers
+        val answers: UserAnswers = emptyUserAnswers.set(ContinueRegistrationSelectionPage, "journeyID").success.value
 
         when(mockSaveAndComeBackService.getSavedContinueRegistrationJourneys(any(), any())(any())) thenReturn singleRegistration.toFuture
         when(mockSaveAndComeBackService.retrieveSingleSavedUserAnswers(any(), any())(any(), any())) thenReturn testArbitraryUserAnswers.toFuture
@@ -150,20 +156,23 @@ class ContinueRegistrationSelectionControllerSpec extends SpecBase with MockitoS
           verify(mockSaveAndComeBackService, times(1)).getSavedContinueRegistrationJourneys(any(), any())(any())
         }
       }
-
     }
 
     ".onSubmit" - {
+
       "when a valid form is submitted" - {
 
         "should update the userAnswers and recursively call the ContinueRegistrationSelection controller" in {
 
           val answers: UserAnswers = emptyUserAnswers
 
+          when(mockSaveForLaterConnector.getAllByIntermediary(eqTo(intermediaryNumber))(any())) thenReturn
+            Right(seqSavedUserAnswers).toFuture
           when(mockSessionRepository.set(any())) thenReturn true.toFuture
 
           val application = applicationBuilder(userAnswers = Some(answers))
             .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
+            .overrides(bind[SaveForLaterConnector].toInstance(mockSaveForLaterConnector))
             .build()
 
           running(application) {
@@ -179,14 +188,19 @@ class ContinueRegistrationSelectionControllerSpec extends SpecBase with MockitoS
           }
         }
       }
+
       "when a invalid form is submitted" - {
 
         "should draw the list of registrations from user answers and return bad request and errors" in {
+
+          when(mockSaveForLaterConnector.getAllByIntermediary(eqTo(intermediaryNumber))(any())) thenReturn
+            Right(seqSavedUserAnswers).toFuture
 
           val answers: UserAnswers = emptyUserAnswers
             .set(ContinueRegistrationList, seqTaxReference).success.value
 
           val application = applicationBuilder(userAnswers = Some(answers))
+            .overrides(bind[SaveForLaterConnector].toInstance(mockSaveForLaterConnector))
             .build()
 
           running(application) {
@@ -208,7 +222,11 @@ class ContinueRegistrationSelectionControllerSpec extends SpecBase with MockitoS
         "and an unexpected error has occurred storing the list of registrations should throw an exception [Edge Case]" in {
           val answers: UserAnswers = emptyUserAnswers
 
+          when(mockSaveForLaterConnector.getAllByIntermediary(eqTo(intermediaryNumber))(any())) thenReturn
+            Right(seqSavedUserAnswers).toFuture
+
           val application = applicationBuilder(userAnswers = Some(answers))
+            .overrides(bind[SaveForLaterConnector].toInstance(mockSaveForLaterConnector))
             .build()
 
           running(application) {

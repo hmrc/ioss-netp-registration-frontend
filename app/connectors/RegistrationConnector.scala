@@ -102,4 +102,5 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
 
   def displayIntermediaryRegistration(intermediaryNumber: String)(implicit hc: HeaderCarrier): Future[EtmpDisplayIntermediaryRegistrationResponse] =
     httpClientV2.get(url"$intermediaryUrl/get-registration/$intermediaryNumber").execute[EtmpDisplayIntermediaryRegistrationResponse]
+
 }

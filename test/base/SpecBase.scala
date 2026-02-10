@@ -125,7 +125,7 @@ trait SpecBase
   val registrationWrapper: RegistrationWrapper = arbitraryRegistrationWrapper.arbitrary.sample.value
 
   val enrolments = Enrolments(Set(Enrolment("HMRC-IOSS-INT", Seq.empty, "Activated")))
-
+  
   protected def applicationBuilder(
                                     userAnswers: Option[UserAnswers] = None,
                                     clock: Option[Clock] = None,
