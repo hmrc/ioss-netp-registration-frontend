@@ -5,12 +5,14 @@ import jakarta.inject.Inject
 import logging.Logging
 import models.Country
 import models.core.Match
-import models.domain.VatCustomerInfo
+import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
 import models.requests.DataRequest
 import models.vatEuDetails.EuDetails
+import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.{ClientCountryBasedPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, Waypoints}
 import queries.euDetails.AllEuDetailsQuery
+import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.FutureSyntax.FutureOps
@@ -63,14 +65,19 @@ class CoreSavedAnswersRevalidationService @Inject()(
                   case _ =>
                     request.userAnswers.get(HasFixedEstablishmentPage) match {
                       case Some(true) =>
-                        val euDetails = request.userAnswers.get(AllEuDetailsQuery).getOrElse(List.empty)
-                        // TODO -> Should this be raw details as user may have only saved partial EuDetails?
+                        val euDetails: List[EuDetails] = request.userAnswers.get(AllEuDetailsQuery).getOrElse(List.empty)
                         checkAllEuDetails(euDetails)
 
                       case _ =>
-                        // TODO -> Call method to iterate through List[PrevReg]
-                        // TODO -> Must return None when all avenues exhausted and user can continue with reg
-                        None.toFuture
+                        request.userAnswers.get(PreviouslyRegisteredPage) match {
+                          case Some(true) =>
+                            val previousRegistrations: List[PreviousRegistration] = request.userAnswers.get(AllPreviousRegistrationsQuery).getOrElse(List.empty)
+                            println(s"WAZZA -> $previousRegistrations")
+                            checkAllPreviousRegistrations(previousRegistrations, Some(request.intermediaryNumber))
+                            
+                          case _ =>
+                            None.toFuture
+                        }
                     }
                 }
             }
@@ -136,13 +143,65 @@ class CoreSavedAnswersRevalidationService @Inject()(
     }
   }
 
-  private def revalidateEuTaxId(euTaxReference: String, countryCode: String)(implicit hc: HeaderCarrier, request: DataRequest[_]) = {
+  private def checkAllPreviousRegistrations(
+                                             allPreviousRegistrations: List[PreviousRegistration],
+                                             intermediaryNumber: Option[String]
+                                           )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
+
+    allPreviousRegistrations match {
+      case ::(currentPreviousRegistration, remaining) =>
+        revalidatePreviousSchemeDetails(
+          countryCode = currentPreviousRegistration.previousEuCountry.code,
+          allPreviousSchemeDetails = currentPreviousRegistration.previousSchemesDetails,
+          intermediaryNumber = intermediaryNumber
+        ).flatMap {
+          case Some(urlString) => Some(urlString).toFuture
+          case _ =>
+            checkAllPreviousRegistrations(remaining, intermediaryNumber)
+        }
+
+      case Nil => None.toFuture
+    }
+  }
+
+  private def revalidatePreviousSchemeDetails(
+                                               countryCode: String,
+                                               allPreviousSchemeDetails: Seq[PreviousSchemeDetails],
+                                               intermediaryNumber: Option[String]
+                                             )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
+    allPreviousSchemeDetails match {
+      case ::(currentSchemeDetails, remaining) =>
+        coreRegistrationValidationService.searchScheme(
+          searchNumber = currentSchemeDetails.previousSchemeNumbers.previousSchemeNumber,
+          previousScheme = currentSchemeDetails.previousScheme,
+          intermediaryNumber = intermediaryNumber,
+          countryCode = countryCode
+        ).flatMap { maybeActiveMatch =>
+          activeMatchRedirectUrl(maybeActiveMatch).flatMap {
+            case Some(urlString) =>
+              Some(urlString).toFuture
+            case _ =>
+              revalidatePreviousSchemeDetails(countryCode, remaining, intermediaryNumber)
+          }
+        }
+
+      case Nil => None.toFuture
+    }
+  }
+
+  private def revalidateEuTaxId(
+                                 euTaxReference: String,
+                                 countryCode: String
+                               )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
     coreRegistrationValidationService.searchEuTaxId(euTaxReference, countryCode).flatMap { maybeActiveMatch =>
       activeMatchRedirectUrl(maybeActiveMatch)
     }
   }
 
-  private def revalidateEuVrn(euVrn: String, countryCode: String)(implicit hc: HeaderCarrier, request: DataRequest[_]) = {
+  private def revalidateEuVrn(
+                               euVrn: String,
+                               countryCode: String
+                             )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
     coreRegistrationValidationService.searchEuVrn(euVrn, countryCode).flatMap { maybeActiveMatch =>
       activeMatchRedirectUrl(maybeActiveMatch)
     }
