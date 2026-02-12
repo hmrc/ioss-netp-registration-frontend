@@ -2,8 +2,10 @@ package services.core
 
 import base.SpecBase
 import controllers.routes
+import models.PreviousScheme.{IOSSWI, OSSNU, OSSU}
+import models.PreviousSchemeType.{IOSS, OSS}
 import models.core.{Match, TraderId}
-import models.domain.VatCustomerInfo
+import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
 import models.ossRegistration.ExclusionReason
 import models.requests.DataRequest
 import models.vatEuDetails.RegistrationType.{TaxId, VatNumber}
@@ -15,6 +17,7 @@ import org.mockito.Mockito.*
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.{BeforeAndAfterEach, PrivateMethodTester}
 import org.scalatestplus.mockito.MockitoSugar.mock
+import pages.previousRegistrations.{AddPreviousRegistrationPage, ClientHasIntermediaryPage, PreviousEuCountryPage, PreviousIossNumberPage, PreviousOssNumberPage, PreviousSchemePage, PreviousSchemeTypePage, PreviouslyRegisteredPage}
 import pages.vatEuDetails.*
 import pages.{ClientCountryBasedPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage}
 import play.api.mvc.AnyContent
@@ -39,9 +42,40 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
   implicit private val dataRequest: DataRequest[AnyContent] =
     DataRequest(request, vrn.vrn, emptyUserAnswersWithVatInfo, intermediaryDetails.intermediaryNumber, None)
 
-  private val aMatch: Match = arbitraryMatch.arbitrary.sample.value.copy(intermediary = Some(intermediaryDetails.intermediaryNumber))
+  private val intermediaryNumber: String = request.intermediaryNumber
+
+  private val aMatch: Match = arbitraryMatch.arbitrary.sample.value.copy(intermediary = Some(intermediaryNumber))
 
   private val index: Index = Index(0)
+
+  private val previousEuCountry1: Country = arbitraryCountry.arbitrary.sample.value
+  private val previousEuCountry2: Country = arbitraryCountry.arbitrary.retryUntil(_.code != previousEuCountry1.code).sample.value
+  private val previousSchemeDetails1: PreviousSchemeDetails = arbitraryPreviousSchemeDetails.arbitrary.sample.value
+    .copy(
+      previousScheme = IOSSWI
+    )
+
+  private val previousSchemeDetails2: PreviousSchemeDetails = previousSchemeDetails1
+    .copy(
+      previousScheme = OSSU,
+      previousSchemeNumbers = arbitraryPreviousSchemeNumbers.arbitrary.sample.value
+    )
+
+  private val previousSchemeDetails3: PreviousSchemeDetails = previousSchemeDetails2
+    .copy(
+      previousScheme = OSSNU,
+      previousSchemeNumbers = arbitraryPreviousSchemeNumbers.arbitrary.sample.value
+    )
+
+  private val previousRegistration1: PreviousRegistration = PreviousRegistration(
+    previousEuCountry = previousEuCountry1,
+    previousSchemesDetails = Seq(previousSchemeDetails1, previousSchemeDetails2, previousSchemeDetails3)
+  )
+
+  private val previousRegistration2: PreviousRegistration = previousRegistration1
+    .copy(
+      previousEuCountry = previousEuCountry2
+    )
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockCoreRegistrationValidationService)
@@ -330,7 +364,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
       "when checking AllEuDetails" - {
 
-        "must iterate through all existing EU Details and revalidate any EU VAT Numbers and EU Tax References in the user answers" - {
+        "must iterate through all existing EU Details and revalidate any EU VAT Numbers and EU Tax References present within the user answers" - {
 
           "and then return None when no active matches are found" in {
 
@@ -427,11 +461,97 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         }
       }
 
-      // TODO -> prev Reg
       "when checking AllPreviousRegistrations" - {
 
-        "must ????" in {
+        val updatedUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo
+          .set(PreviouslyRegisteredPage, true).success.value
+          .set(PreviousEuCountryPage(index), previousEuCountry1).success.value
+          .set(PreviousSchemePage(index, index), previousSchemeDetails1.previousScheme).success.value
+          .set(PreviousSchemeTypePage(index, index), IOSS).success.value
+          .set(ClientHasIntermediaryPage(index, index), true).success.value
+          .set(PreviousIossNumberPage(index, index), previousSchemeDetails1.previousSchemeNumbers).success.value
 
+          .set(PreviousSchemePage(index, index + 1), previousSchemeDetails2.previousScheme).success.value
+          .set(PreviousSchemeTypePage(index, index + 1), OSS).success.value
+          .set(ClientHasIntermediaryPage(index, index + 1), true).success.value
+          .set(PreviousOssNumberPage(index, index + 1), previousSchemeDetails2.previousSchemeNumbers).success.value
+
+          .set(PreviousSchemePage(index, index + 2), previousSchemeDetails3.previousScheme).success.value
+          .set(PreviousSchemeTypePage(index, index + 2), OSS).success.value
+          .set(ClientHasIntermediaryPage(index, index + 2), true).success.value
+          .set(PreviousOssNumberPage(index, index + 2), previousSchemeDetails3.previousSchemeNumbers).success.value
+          .set(AddPreviousRegistrationPage(), true).success.value
+
+          .set(PreviousEuCountryPage(index + 1), previousEuCountry2).success.value
+          .set(PreviousSchemePage(index + 1, index), previousSchemeDetails1.previousScheme).success.value
+          .set(PreviousSchemeTypePage(index + 1, index), IOSS).success.value
+          .set(ClientHasIntermediaryPage(index + 1, index), true).success.value
+          .set(PreviousIossNumberPage(index + 1, index), previousSchemeDetails1.previousSchemeNumbers).success.value
+
+          .set(PreviousSchemePage(index + 1, index + 1), previousSchemeDetails2.previousScheme).success.value
+          .set(PreviousSchemeTypePage(index + 1, index + 1), OSS).success.value
+          .set(ClientHasIntermediaryPage(index + 1, index + 1), true).success.value
+          .set(PreviousOssNumberPage(index + 1, index + 1), previousSchemeDetails2.previousSchemeNumbers).success.value
+
+          .set(PreviousSchemePage(index + 1, index + 2), previousSchemeDetails3.previousScheme).success.value
+          .set(PreviousSchemeTypePage(index + 1, index + 2), OSS).success.value
+          .set(ClientHasIntermediaryPage(index + 1, index + 2), true).success.value
+          .set(PreviousOssNumberPage(index + 1, index + 2), previousSchemeDetails3.previousSchemeNumbers).success.value
+          .set(AddPreviousRegistrationPage(), false).success.value
+
+
+        "must iterate through all existing Previous Registrations and revalidate any previous OSS and IOSS numbers present" - {
+
+          "and then return None when no active matches are found" in {
+
+            val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryDetails.intermediaryNumber, None)
+
+            implicit val dataRequest: DataRequest[AnyContent] =
+              DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryDetails.intermediaryNumber, None)
+
+            when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
+
+            val service: CoreSavedAnswersRevalidationService =
+              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+
+            val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+
+            result `mustBe` None
+            verify(mockCoreRegistrationValidationService, times(6)).searchScheme(any(), any(), any(), any())(any(), any())
+          }
+
+          "and then return the corresponding URL when an active match is found" in {
+
+            val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryDetails.intermediaryNumber, None)
+
+            implicit val dataRequest: DataRequest[AnyContent] =
+              DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryDetails.intermediaryNumber, None)
+
+            val activeMatch: Match = aMatch.copy(
+              traderId = TraderId(traderId = s"IM${previousRegistration2.previousSchemesDetails.head.previousSchemeNumbers.previousSchemeNumber}"),
+              memberState = previousRegistration2.previousEuCountry.code,
+              exclusionStatusCode = None,
+              exclusionEffectiveDate = None
+            )
+
+            when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
+            when(mockCoreRegistrationValidationService.searchScheme(
+              eqTo(previousRegistration2.previousSchemesDetails.head.previousSchemeNumbers.previousSchemeNumber),
+              eqTo(previousRegistration2.previousSchemesDetails.head.previousScheme),
+              eqTo(Some(intermediaryNumber)),
+              eqTo(previousRegistration2.previousEuCountry.code)
+            )(any(), any())) thenReturn Some(activeMatch).toFuture
+
+            val service: CoreSavedAnswersRevalidationService =
+              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+
+            val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+
+            result `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+            verify(mockCoreRegistrationValidationService, times(4)).searchScheme(any(), any(), any(), any())(any(), any())
+          }
+
+          // TODO -> DO IOSS Q and OSS Q and OSS active -> None
         }
       }
     }
@@ -453,7 +573,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(vrn))(any(), any())
       }
 
-      "must return the url for Expired Vrn Date page when the deregistration date is present and is on or before today" in {
+      "must return the URL for Expired Vrn Date page when the deregistration date is present and is on or before today" in {
 
         val today: LocalDate = LocalDate.now(stubClockAtArbitraryDate)
         val vatCustomerInfoWithDeregistration: VatCustomerInfo = vatCustomerInfo.copy(
@@ -505,7 +625,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(vrn))(any(), any())
       }
 
-      "must return the corresponding url when an  active match is found" in {
+      "must return the corresponding URL when an  active match is found" in {
 
         val activeVrn: Vrn = arbitraryVrn.arbitrary.sample.value
         val activeMatch: Match = aMatch.copy(
@@ -547,7 +667,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         verify(mockCoreRegistrationValidationService, times(1)).searchTraderId(eqTo(ukReferenceNumber))(any(), any())
       }
 
-      "must return the corresponding url when an active match is found" in {
+      "must return the corresponding URL when an active match is found" in {
 
         val ukReferenceNumber: String = arbitraryTraderId.arbitrary.sample.value.traderId
         val quarantinedMatch: Match = aMatch.copy(
@@ -593,7 +713,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(foreignTaxReference), eqTo(countryCode))(any(), any())
       }
 
-      "must return the corresponding url when an active match is found" in {
+      "must return the corresponding URL when an active match is found" in {
 
         val foreignTaxReference: String = arbitrary[String].sample.value
         val countryCode: String = arbitraryCountry.arbitrary.sample.value.code
@@ -638,7 +758,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(countryCode))(any(), any())
       }
 
-      "must return the corresponding url when an active match is found" in {
+      "must return the corresponding URL when an active match is found" in {
 
         val euTaxReference: String = arbitraryEuTaxReference.sample.value
         val countryCode: String = arbitraryCountry.arbitrary.sample.value.code
@@ -687,7 +807,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVrn), eqTo(countryCode))(any(), any())
       }
 
-      "must return the corresponding url when an active match is found" in {
+      "must return the corresponding URL when an active match is found" in {
 
         val euVrn: String = arbitraryEuVatNumber.sample.value
         val countryCode: String = euVrn.substring(0, 2)
@@ -897,7 +1017,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         verifyNoMoreInteractions(mockCoreRegistrationValidationService)
       }
 
-      "must return the corresponding url when an active match is found for an EU VAT number" in {
+      "must return the corresponding URL when an active match is found for an EU VAT number" in {
 
         val euVatNumber: String = arbitraryEuVatNumber.sample.value
         val euCountry: Country = Country.euCountries.find(_.code == euVatNumber.substring(0, 2)).head
@@ -928,7 +1048,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         verifyNoMoreInteractions(mockCoreRegistrationValidationService)
       }
 
-      "must return the corresponding url when an active match is found for an EU Tax Reference number" in {
+      "must return the corresponding URL when an active match is found for an EU Tax Reference number" in {
 
         val euTaxReference: String = arbitraryEuTaxReference.sample.value
         val euCountry: Country = arbitraryCountry.arbitrary.sample.value
@@ -985,7 +1105,315 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
       }
     }
 
-    // TODO => Methods to iterate through PrevReg -> searchScheme
+    ".checkAllPreviousRegistrations" - {
+
+      val allPreviousRegistrations: Seq[PreviousRegistration] = Seq(previousRegistration1, previousRegistration2)
+
+      "must iterate through all existing previous registrations and any encompassing previous scheme details" - {
+
+        "and return None when no active matches are found" in {
+
+          val previousEuCountry: Country = arbitraryCountry.arbitrary.sample.value
+          val previousSchemeDetails: PreviousSchemeDetails = arbitraryPreviousSchemeDetails.arbitrary.sample.value
+
+          val previousRegistration: PreviousRegistration = PreviousRegistration(
+            previousEuCountry = previousEuCountry,
+            previousSchemesDetails = Seq(previousSchemeDetails)
+          )
+
+          when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
+
+          val service: CoreSavedAnswersRevalidationService =
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+
+          val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("checkAllPreviousRegistrations"))
+
+          val result = service invokePrivate privateMethodCall(Seq(previousRegistration), Some(intermediaryNumber), hc, dataRequest)
+
+          result.futureValue `mustBe` None
+          verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
+            eqTo(previousSchemeDetails.previousSchemeNumbers.previousSchemeNumber),
+            eqTo(previousSchemeDetails.previousScheme),
+            eqTo(Some(intermediaryNumber)),
+            eqTo(previousEuCountry.code)
+          )(any(), any())
+        }
+
+        "when it is an OSS scheme" - {
+
+          "and return None when an active match is found" in {
+
+            val activeMatch: Match = aMatch.copy(
+              traderId = TraderId(traderId = previousRegistration2.previousSchemesDetails.tail.head.previousSchemeNumbers.previousSchemeNumber),
+              memberState = previousRegistration2.previousEuCountry.code,
+              exclusionStatusCode = None,
+              exclusionEffectiveDate = None
+            )
+
+            when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
+            when(mockCoreRegistrationValidationService.searchScheme(
+                eqTo(previousRegistration2.previousSchemesDetails.tail.head.previousSchemeNumbers.previousSchemeNumber),
+                eqTo(previousRegistration2.previousSchemesDetails.tail.head.previousScheme),
+                any(),
+                eqTo(previousRegistration2.previousEuCountry.code))
+              (any(), any())) thenReturn Some(activeMatch).toFuture
+
+            val service: CoreSavedAnswersRevalidationService =
+              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+
+            val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("checkAllPreviousRegistrations"))
+
+            val result = service invokePrivate privateMethodCall(allPreviousRegistrations, Some(intermediaryNumber), hc, dataRequest)
+
+            result.futureValue `mustBe` None
+            verify(mockCoreRegistrationValidationService, times(6)).searchScheme(any(), any(), any(), any())(any(), any())
+          }
+
+          "and return the corresponding URL when a quarantined match is found" in {
+
+            val quarantinedMatch: Match = aMatch.copy(
+              traderId = TraderId(traderId = previousRegistration2.previousSchemesDetails.tail.tail.head.previousSchemeNumbers.previousSchemeNumber),
+              memberState = previousRegistration2.previousEuCountry.code,
+              exclusionStatusCode = Some(ExclusionReason.FailsToComply.numberValue),
+              exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
+            )
+
+            when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
+            when(mockCoreRegistrationValidationService.searchScheme(
+                eqTo(previousRegistration2.previousSchemesDetails.tail.tail.head.previousSchemeNumbers.previousSchemeNumber),
+                eqTo(previousRegistration2.previousSchemesDetails.tail.tail.head.previousScheme),
+                any(),
+                eqTo(previousRegistration2.previousEuCountry.code))
+              (any(), any())) thenReturn Some(quarantinedMatch).toFuture
+
+            val service: CoreSavedAnswersRevalidationService =
+              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+
+            val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("checkAllPreviousRegistrations"))
+
+            val result = service invokePrivate privateMethodCall(allPreviousRegistrations, Some(intermediaryNumber), hc, dataRequest)
+
+            result.futureValue `mustBe` Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+              countryCode = quarantinedMatch.memberState,
+              exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+            ).url)
+            verify(mockCoreRegistrationValidationService, times(6)).searchScheme(any(), any(), any(), any())(any(), any())
+          }
+        }
+
+        "when it is an IOSS scheme" - {
+
+          "and return the corresponding URL when an active match is found" in {
+
+            val activeMatch: Match = aMatch.copy(
+              traderId = TraderId(traderId = s"IM${previousSchemeDetails1.previousSchemeNumbers.previousSchemeNumber}"),
+              memberState = previousRegistration1.previousEuCountry.code,
+              exclusionStatusCode = None,
+              exclusionEffectiveDate = None
+            )
+
+            when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeMatch).toFuture
+
+            val service: CoreSavedAnswersRevalidationService =
+              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+
+            val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("checkAllPreviousRegistrations"))
+
+            val result = service invokePrivate privateMethodCall(allPreviousRegistrations, Some(intermediaryNumber), hc, dataRequest)
+
+            result.futureValue `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+            verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
+              eqTo(previousRegistration1.previousSchemesDetails.head.previousSchemeNumbers.previousSchemeNumber),
+              eqTo(previousRegistration1.previousSchemesDetails.head.previousScheme),
+              eqTo(Some(intermediaryNumber)),
+              eqTo(previousRegistration1.previousEuCountry.code)
+            )(any(), any())
+          }
+
+          "and return the corresponding URL when a quarantined match is found" in {
+
+            val quarantinedMatch: Match = aMatch.copy(
+              traderId = TraderId(traderId = s"IM${previousRegistration2.previousSchemesDetails.head.previousSchemeNumbers.previousSchemeNumber}"),
+              memberState = previousRegistration2.previousEuCountry.code,
+              exclusionStatusCode = Some(ExclusionReason.FailsToComply.numberValue),
+              exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
+            )
+
+            when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
+            when(mockCoreRegistrationValidationService.searchScheme(
+              eqTo(previousRegistration2.previousSchemesDetails.head.previousSchemeNumbers.previousSchemeNumber),
+              eqTo(previousRegistration2.previousSchemesDetails.head.previousScheme),
+              eqTo(Some(intermediaryNumber)),
+              eqTo(previousRegistration2.previousEuCountry.code)
+            )(any(), any())) thenReturn Some(quarantinedMatch).toFuture
+
+            val service: CoreSavedAnswersRevalidationService =
+              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+
+            val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("checkAllPreviousRegistrations"))
+
+            val result = service invokePrivate privateMethodCall(Seq(previousRegistration1, previousRegistration2), Some(intermediaryNumber), hc, dataRequest)
+
+            result.futureValue `mustBe` Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+              countryCode = quarantinedMatch.memberState,
+              exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+            ).url)
+            verify(mockCoreRegistrationValidationService, times(4)).searchScheme(any(), any(), any(), any())(any(), any())
+          }
+        }
+      }
+    }
+
+    ".revalidatePreviousSchemeDetails" - {
+
+      val countryCode: String = arbitraryCountry.arbitrary.sample.value.code
+
+      val allPreviousSchemeDetails: Seq[PreviousSchemeDetails] = Seq(previousSchemeDetails1, previousSchemeDetails2, previousSchemeDetails3)
+
+      "must return None when no active matches are found" in {
+
+        val countryCode: String = arbitraryCountry.arbitrary.sample.value.code
+        val previousSchemeDetails: PreviousSchemeDetails = arbitraryPreviousSchemeDetails.arbitrary.sample.value
+
+        when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
+
+        val service: CoreSavedAnswersRevalidationService =
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+
+        val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidatePreviousSchemeDetails"))
+
+        val result = service invokePrivate privateMethodCall(countryCode, Seq(previousSchemeDetails), None, hc, dataRequest)
+
+        result.futureValue `mustBe` None
+        verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
+          eqTo(previousSchemeDetails.previousSchemeNumbers.previousSchemeNumber),
+          eqTo(previousSchemeDetails.previousScheme),
+          eqTo(None),
+          eqTo(countryCode)
+        )(any(), any())
+      }
+
+      "when it is an OSS scheme" - {
+
+        "must return None when an active match is found" in {
+
+          val activeMatch: Match = aMatch.copy(
+            traderId = TraderId(traderId = previousSchemeDetails3.previousSchemeNumbers.previousSchemeNumber),
+            memberState = countryCode,
+            exclusionStatusCode = None,
+            exclusionEffectiveDate = None
+          )
+
+          when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeMatch).toFuture
+
+          val service: CoreSavedAnswersRevalidationService =
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+
+          val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidatePreviousSchemeDetails"))
+
+          val result = service invokePrivate privateMethodCall(countryCode, allPreviousSchemeDetails, None, hc, dataRequest)
+
+          result.futureValue `mustBe` None
+          verify(mockCoreRegistrationValidationService, times(3)).searchScheme(
+            any(),
+            any(),
+            eqTo(None),
+            eqTo(countryCode)
+          )(any(), any())
+        }
+
+        "must return the corresponding URL when a quarantined match is found" in {
+
+          val quarantinedMatch: Match = aMatch.copy(
+            traderId = TraderId(traderId = previousSchemeDetails2.previousSchemeNumbers.previousSchemeNumber),
+            memberState = countryCode,
+            exclusionStatusCode = Some(ExclusionReason.FailsToComply.numberValue),
+            exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
+          )
+
+          when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
+          when(mockCoreRegistrationValidationService.searchScheme(
+            eqTo(previousSchemeDetails2.previousSchemeNumbers.previousSchemeNumber),
+            eqTo(previousSchemeDetails2.previousScheme),
+            any(),
+            any()
+          )(any(), any())) thenReturn Some(quarantinedMatch).toFuture
+
+          val service: CoreSavedAnswersRevalidationService =
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+
+          val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidatePreviousSchemeDetails"))
+
+          val result = service invokePrivate privateMethodCall(countryCode, allPreviousSchemeDetails, None, hc, dataRequest)
+
+          result.futureValue `mustBe` Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+            countryCode = quarantinedMatch.memberState,
+            exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+          ).url)
+          verify(mockCoreRegistrationValidationService, times(2)).searchScheme(any(), any(), eqTo(None), eqTo(countryCode))(any(), any())
+        }
+      }
+
+      "when it is an IOSS scheme" - {
+
+        "must return the corresponding URL when an active match is found" in {
+
+          val activeMatch: Match = aMatch.copy(
+            traderId = TraderId(traderId = s"IM${previousSchemeDetails1.previousSchemeNumbers.previousSchemeNumber}"),
+            memberState = countryCode,
+            exclusionStatusCode = None,
+            exclusionEffectiveDate = None
+          )
+
+          when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeMatch).toFuture
+
+          val service: CoreSavedAnswersRevalidationService =
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+
+          val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidatePreviousSchemeDetails"))
+
+          val result = service invokePrivate privateMethodCall(countryCode, allPreviousSchemeDetails, Some(intermediaryNumber), hc, dataRequest)
+
+          result.futureValue `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+          verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
+            eqTo(previousSchemeDetails1.previousSchemeNumbers.previousSchemeNumber),
+            eqTo(previousSchemeDetails1.previousScheme),
+            eqTo(Some(intermediaryNumber)),
+            eqTo(countryCode)
+          )(any(), any())
+        }
+
+        "must return the corresponding URL when a quarantined match is found" in {
+
+          val quarantinedMatch: Match = aMatch.copy(
+            traderId = TraderId(traderId = s"IM${previousSchemeDetails1.previousSchemeNumbers.previousSchemeNumber}"),
+            memberState = countryCode,
+            exclusionStatusCode = Some(ExclusionReason.FailsToComply.numberValue),
+            exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
+          )
+
+          when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(quarantinedMatch).toFuture
+
+          val service: CoreSavedAnswersRevalidationService =
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+
+          val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidatePreviousSchemeDetails"))
+
+          val result = service invokePrivate privateMethodCall(countryCode, allPreviousSchemeDetails, Some(intermediaryNumber), hc, dataRequest)
+
+          result.futureValue `mustBe` Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+            countryCode = quarantinedMatch.memberState,
+            exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+          ).url)
+          verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
+            eqTo(previousSchemeDetails1.previousSchemeNumbers.previousSchemeNumber),
+            eqTo(previousSchemeDetails1.previousScheme),
+            eqTo(Some(intermediaryNumber)),
+            eqTo(countryCode)
+          )(any(), any())
+        }
+      }
+    }
 
     ".activeMatchRedirectUrl" - {
 
@@ -1001,7 +1429,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         result.futureValue `mustBe` None
       }
 
-      "must return the url for Client Already Registered page when an active match exists and the trader is already registered" in {
+      "must return the URL for Client Already Registered page when an active match exists and the trader is already registered" in {
 
         val activeVrn: Vrn = arbitraryVrn.arbitrary.sample.value
         val activeMatch: Match = aMatch.copy(
@@ -1020,7 +1448,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         result.futureValue `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
       }
 
-      "must return the url for Other Country Excluded And Quarantined page when an active match exists and the trader is quarantined" in {
+      "must return the URL for Other Country Excluded And Quarantined page when an active match exists and the trader is quarantined" in {
 
         val activeVrn: Vrn = arbitraryVrn.arbitrary.sample.value
         val quarantinedMatch: Match = aMatch.copy(
