@@ -72,7 +72,6 @@ class CoreSavedAnswersRevalidationService @Inject()(
                         request.userAnswers.get(PreviouslyRegisteredPage) match {
                           case Some(true) =>
                             val previousRegistrations: List[PreviousRegistration] = request.userAnswers.get(AllPreviousRegistrationsQuery).getOrElse(List.empty)
-                            println(s"WAZZA -> $previousRegistrations")
                             checkAllPreviousRegistrations(previousRegistrations, Some(request.intermediaryNumber))
                             
                           case _ =>
@@ -155,7 +154,8 @@ class CoreSavedAnswersRevalidationService @Inject()(
           allPreviousSchemeDetails = currentPreviousRegistration.previousSchemesDetails,
           intermediaryNumber = intermediaryNumber
         ).flatMap {
-          case Some(urlString) => Some(urlString).toFuture
+          case Some(urlString) =>
+            Some(urlString).toFuture
           case _ =>
             checkAllPreviousRegistrations(remaining, intermediaryNumber)
         }
