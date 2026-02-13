@@ -18,12 +18,14 @@ package models.saveAndComeBack
 
 import play.api.libs.json.{Json, OFormat}
 
-case class TaxReferenceInformation (
-                                     organisationName: String,
-                                     taxReference: String,
-                                     referenceNumber: String,
-                                     journeyId: String)
+case class TaxReferenceInformation(
+                                    organisationName: String,
+                                    taxReference: String,
+                                    referenceNumber: String,
+                                    journeyId: String
+                                  )
 
 object TaxReferenceInformation {
+  
   implicit lazy val format: OFormat[TaxReferenceInformation] = Json.format[TaxReferenceInformation]
 }
