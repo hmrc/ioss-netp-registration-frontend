@@ -5,8 +5,9 @@ import controllers.routes
 import models.PreviousScheme.{IOSSWI, OSSNU, OSSU}
 import models.PreviousSchemeType.{IOSS, OSS}
 import models.core.{Match, TraderId}
-import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
+import models.domain.{PreviousSchemeNumbers, VatCustomerInfo}
 import models.ossRegistration.ExclusionReason
+import models.previousRegistrations.{PreviousRegistrationDetailsWithOptionalVatNumber, SchemeDetailsWithOptionalVatNumber}
 import models.requests.DataRequest
 import models.vatEuDetails.RegistrationType.{TaxId, VatNumber}
 import models.vatEuDetails.{EuDetails, RegistrationType, TradingNameAndBusinessAddress}
@@ -50,32 +51,30 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
   private val previousEuCountry1: Country = arbitraryCountry.arbitrary.sample.value
   private val previousEuCountry2: Country = arbitraryCountry.arbitrary.retryUntil(_.code != previousEuCountry1.code).sample.value
-  private val previousSchemeDetails1: PreviousSchemeDetails = arbitraryPreviousSchemeDetails.arbitrary.sample.value
+  private val previousSchemeDetails1: SchemeDetailsWithOptionalVatNumber = arbitrarySchemeDetailsWithOptionalVatNumber.arbitrary.sample.value
+    .copy(previousScheme = Some(IOSSWI))
+
+  private val previousSchemeDetails2: SchemeDetailsWithOptionalVatNumber = previousSchemeDetails1
     .copy(
-      previousScheme = IOSSWI
+      previousScheme = Some(OSSU),
+      previousSchemeNumbers = Some(arbitrarySchemeNumbersWithOptionalVatNumber.arbitrary.sample.value)
     )
 
-  private val previousSchemeDetails2: PreviousSchemeDetails = previousSchemeDetails1
+  private val previousSchemeDetails3: SchemeDetailsWithOptionalVatNumber = previousSchemeDetails2
     .copy(
-      previousScheme = OSSU,
-      previousSchemeNumbers = arbitraryPreviousSchemeNumbers.arbitrary.sample.value
+      previousScheme = Some(OSSNU),
+      previousSchemeNumbers = Some(arbitrarySchemeNumbersWithOptionalVatNumber.arbitrary.sample.value)
     )
 
-  private val previousSchemeDetails3: PreviousSchemeDetails = previousSchemeDetails2
-    .copy(
-      previousScheme = OSSNU,
-      previousSchemeNumbers = arbitraryPreviousSchemeNumbers.arbitrary.sample.value
-    )
-
-  private val previousRegistration1: PreviousRegistration = PreviousRegistration(
+  private val previousRegistration1: PreviousRegistrationDetailsWithOptionalVatNumber = PreviousRegistrationDetailsWithOptionalVatNumber(
     previousEuCountry = previousEuCountry1,
-    previousSchemesDetails = Seq(previousSchemeDetails1, previousSchemeDetails2, previousSchemeDetails3)
+    previousSchemesDetails = Some(List(previousSchemeDetails1, previousSchemeDetails2, previousSchemeDetails3))
   )
 
-  private val previousRegistration2: PreviousRegistration = previousRegistration1
-    .copy(
-      previousEuCountry = previousEuCountry2
-    )
+  private val previousRegistration2: PreviousRegistrationDetailsWithOptionalVatNumber = previousRegistration1
+    .copy(previousEuCountry = previousEuCountry2)
+
+  private val allPreviousRegistrations: List[PreviousRegistrationDetailsWithOptionalVatNumber] = List(previousRegistration1, previousRegistration2)
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockCoreRegistrationValidationService)
@@ -463,36 +462,60 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
       "when checking AllPreviousRegistrations" - {
 
+        val country1PreviousSchemeNumber1 = PreviousSchemeNumbers(
+          previousSchemeNumber = allPreviousRegistrations.head.previousSchemesDetails.value.head.previousSchemeNumbers.value.previousSchemeNumber.value
+        )
+
+        val country1PreviousSchemeNumber2 = PreviousSchemeNumbers(
+          previousSchemeNumber = allPreviousRegistrations.head.previousSchemesDetails.value.tail.head.previousSchemeNumbers.value.previousSchemeNumber.value
+        )
+
+        val country1PreviousSchemeNumber3 = PreviousSchemeNumbers(
+          previousSchemeNumber = allPreviousRegistrations.head.previousSchemesDetails.value.tail.tail.head.previousSchemeNumbers.value.previousSchemeNumber.value
+        )
+
+        val country2PreviousSchemeNumber1 = PreviousSchemeNumbers(
+          previousSchemeNumber = allPreviousRegistrations.tail.head.previousSchemesDetails.value.head.previousSchemeNumbers.value.previousSchemeNumber.value
+        )
+
+        val country2PreviousSchemeNumber2 = PreviousSchemeNumbers(
+          previousSchemeNumber = allPreviousRegistrations.tail.head.previousSchemesDetails.value.tail.head.previousSchemeNumbers.value.previousSchemeNumber.value
+        )
+
+        val country2PreviousSchemeNumber3 = PreviousSchemeNumbers(
+          previousSchemeNumber = allPreviousRegistrations.tail.head.previousSchemesDetails.value.tail.tail.head.previousSchemeNumbers.value.previousSchemeNumber.value
+        )
+
         val updatedUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo
           .set(PreviouslyRegisteredPage, true).success.value
-          .set(PreviousEuCountryPage(index), previousEuCountry1).success.value
-          .set(PreviousSchemePage(index, index), previousSchemeDetails1.previousScheme).success.value
+          .set(PreviousEuCountryPage(index), allPreviousRegistrations.head.previousEuCountry).success.value
+          .set(PreviousSchemePage(index, index), allPreviousRegistrations.head.previousSchemesDetails.value.head.previousScheme.value).success.value
           .set(PreviousSchemeTypePage(index, index), IOSS).success.value
           .set(ClientHasIntermediaryPage(index, index), true).success.value
-          .set(PreviousIossNumberPage(index, index), previousSchemeDetails1.previousSchemeNumbers).success.value
+          .set(PreviousIossNumberPage(index, index), country1PreviousSchemeNumber1).success.value
 
-          .set(PreviousSchemePage(index, index + 1), previousSchemeDetails2.previousScheme).success.value
+          .set(PreviousSchemePage(index, index + 1), allPreviousRegistrations.head.previousSchemesDetails.value.tail.head.previousScheme.value).success.value
           .set(PreviousSchemeTypePage(index, index + 1), OSS).success.value
-          .set(PreviousOssNumberPage(index, index + 1), previousSchemeDetails2.previousSchemeNumbers).success.value
+          .set(PreviousOssNumberPage(index, index + 1), country1PreviousSchemeNumber2).success.value
 
-          .set(PreviousSchemePage(index, index + 2), previousSchemeDetails3.previousScheme).success.value
+          .set(PreviousSchemePage(index, index + 2), allPreviousRegistrations.head.previousSchemesDetails.value.tail.tail.head.previousScheme.value).success.value
           .set(PreviousSchemeTypePage(index, index + 2), OSS).success.value
-          .set(PreviousOssNumberPage(index, index + 2), previousSchemeDetails3.previousSchemeNumbers).success.value
+          .set(PreviousOssNumberPage(index, index + 2), country1PreviousSchemeNumber3).success.value
           .set(AddPreviousRegistrationPage(), true).success.value
 
-          .set(PreviousEuCountryPage(index + 1), previousEuCountry2).success.value
-          .set(PreviousSchemePage(index + 1, index), previousSchemeDetails1.previousScheme).success.value
+          .set(PreviousEuCountryPage(index + 1), allPreviousRegistrations.tail.head.previousEuCountry).success.value
+          .set(PreviousSchemePage(index + 1, index), allPreviousRegistrations.tail.head.previousSchemesDetails.value.head.previousScheme.value).success.value
           .set(PreviousSchemeTypePage(index + 1, index), IOSS).success.value
           .set(ClientHasIntermediaryPage(index + 1, index), true).success.value
-          .set(PreviousIossNumberPage(index + 1, index), previousSchemeDetails1.previousSchemeNumbers).success.value
+          .set(PreviousIossNumberPage(index + 1, index), country2PreviousSchemeNumber1).success.value
 
-          .set(PreviousSchemePage(index + 1, index + 1), previousSchemeDetails2.previousScheme).success.value
+          .set(PreviousSchemePage(index + 1, index + 1), allPreviousRegistrations.tail.head.previousSchemesDetails.value.tail.head.previousScheme.value).success.value
           .set(PreviousSchemeTypePage(index + 1, index + 1), OSS).success.value
-          .set(PreviousOssNumberPage(index + 1, index + 1), previousSchemeDetails2.previousSchemeNumbers).success.value
+          .set(PreviousOssNumberPage(index + 1, index + 1), country2PreviousSchemeNumber2).success.value
 
-          .set(PreviousSchemePage(index + 1, index + 2), previousSchemeDetails3.previousScheme).success.value
+          .set(PreviousSchemePage(index + 1, index + 2), allPreviousRegistrations.tail.head.previousSchemesDetails.value.tail.tail.head.previousScheme.value).success.value
           .set(PreviousSchemeTypePage(index + 1, index + 2), OSS).success.value
-          .set(PreviousOssNumberPage(index + 1, index + 2), previousSchemeDetails3.previousSchemeNumbers).success.value
+          .set(PreviousOssNumberPage(index + 1, index + 2), country2PreviousSchemeNumber3).success.value
           .set(AddPreviousRegistrationPage(), false).success.value
 
         "must iterate through all existing Previous Registrations and revalidate any previous OSS and IOSS numbers present" - {
@@ -525,18 +548,18 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
                 DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
 
               val activeMatch: Match = aMatch.copy(
-                traderId = TraderId(traderId = previousRegistration2.previousSchemesDetails.tail.head.previousSchemeNumbers.previousSchemeNumber),
-                memberState = previousRegistration2.previousEuCountry.code,
+                traderId = TraderId(traderId = country2PreviousSchemeNumber2.previousSchemeNumber),
+                memberState = allPreviousRegistrations.tail.head.previousEuCountry.code,
                 exclusionStatusCode = None,
                 exclusionEffectiveDate = None
               )
 
               when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
               when(mockCoreRegistrationValidationService.searchScheme(
-                eqTo(previousRegistration2.previousSchemesDetails.tail.head.previousSchemeNumbers.previousSchemeNumber),
-                eqTo(previousRegistration2.previousSchemesDetails.tail.head.previousScheme),
+                eqTo(country2PreviousSchemeNumber2.previousSchemeNumber),
+                eqTo(allPreviousRegistrations.tail.head.previousSchemesDetails.value.tail.head.previousScheme.value),
                 any(),
-                eqTo(previousRegistration1.previousEuCountry.code)
+                eqTo(allPreviousRegistrations.tail.head.previousEuCountry.code)
               )(any(), any())) thenReturn Some(activeMatch).toFuture
 
               val service: CoreSavedAnswersRevalidationService =
@@ -557,18 +580,18 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               }
 
               val quarantinedMatch: Match = aMatch.copy(
-                traderId = TraderId(traderId = previousRegistration1.previousSchemesDetails.tail.head.previousSchemeNumbers.previousSchemeNumber),
-                memberState = previousRegistration1.previousEuCountry.code,
+                traderId = TraderId(traderId = country1PreviousSchemeNumber2.previousSchemeNumber),
+                memberState = allPreviousRegistrations.head.previousEuCountry.code,
                 exclusionStatusCode = Some(ExclusionReason.FailsToComply.numberValue),
                 exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
               )
 
               when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
               when(mockCoreRegistrationValidationService.searchScheme(
-                eqTo(previousRegistration1.previousSchemesDetails.tail.head.previousSchemeNumbers.previousSchemeNumber),
-                eqTo(previousRegistration1.previousSchemesDetails.tail.head.previousScheme),
+                eqTo(country1PreviousSchemeNumber2.previousSchemeNumber),
+                eqTo(allPreviousRegistrations.head.previousSchemesDetails.value.tail.head.previousScheme.value),
                 any(),
-                eqTo(previousRegistration1.previousEuCountry.code)
+                eqTo(allPreviousRegistrations.head.previousEuCountry.code)
               )(any(), any())) thenReturn Some(quarantinedMatch).toFuture
 
               val service: CoreSavedAnswersRevalidationService =
@@ -594,18 +617,18 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
                 DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
 
               val activeMatch: Match = aMatch.copy(
-                traderId = TraderId(traderId = s"IM${previousRegistration2.previousSchemesDetails.head.previousSchemeNumbers.previousSchemeNumber}"),
-                memberState = previousRegistration2.previousEuCountry.code,
+                traderId = TraderId(traderId = s"IM${country2PreviousSchemeNumber1.previousSchemeNumber}"),
+                memberState = allPreviousRegistrations.tail.head.previousEuCountry.code,
                 exclusionStatusCode = None,
                 exclusionEffectiveDate = None
               )
 
               when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
               when(mockCoreRegistrationValidationService.searchScheme(
-                eqTo(previousRegistration2.previousSchemesDetails.head.previousSchemeNumbers.previousSchemeNumber),
-                eqTo(previousRegistration2.previousSchemesDetails.head.previousScheme),
+                eqTo(country2PreviousSchemeNumber1.previousSchemeNumber),
+                eqTo(allPreviousRegistrations.tail.head.previousSchemesDetails.value.head.previousScheme.value),
                 eqTo(Some(intermediaryNumber)),
-                eqTo(previousRegistration2.previousEuCountry.code)
+                eqTo(allPreviousRegistrations.tail.head.previousEuCountry.code)
               )(any(), any())) thenReturn Some(activeMatch).toFuture
 
               val service: CoreSavedAnswersRevalidationService =
@@ -625,17 +648,17 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
                 DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
 
               val quarantinedMatch: Match = aMatch.copy(
-                traderId = TraderId(traderId = s"IM${previousRegistration1.previousSchemesDetails.head.previousSchemeNumbers.previousSchemeNumber}"),
-                memberState = previousRegistration1.previousEuCountry.code,
+                traderId = TraderId(traderId = s"IM${country1PreviousSchemeNumber1.previousSchemeNumber}"),
+                memberState = allPreviousRegistrations.head.previousEuCountry.code,
                 exclusionStatusCode = Some(ExclusionReason.FailsToComply.numberValue),
                 exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
               )
 
               when(mockCoreRegistrationValidationService.searchScheme(
-                eqTo(previousRegistration1.previousSchemesDetails.head.previousSchemeNumbers.previousSchemeNumber),
-                eqTo(previousRegistration1.previousSchemesDetails.head.previousScheme),
+                eqTo(country1PreviousSchemeNumber1.previousSchemeNumber),
+                eqTo(allPreviousRegistrations.head.previousSchemesDetails.value.head.previousScheme.value),
                 eqTo(Some(intermediaryNumber)),
-                eqTo(previousRegistration1.previousEuCountry.code)
+                eqTo(allPreviousRegistrations.head.previousEuCountry.code)
               )(any(), any())) thenReturn Some(quarantinedMatch).toFuture
 
               val service: CoreSavedAnswersRevalidationService =
@@ -1205,19 +1228,9 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
     ".checkAllPreviousRegistrations" - {
 
-      val allPreviousRegistrations: Seq[PreviousRegistration] = Seq(previousRegistration1, previousRegistration2)
-
       "must iterate through all existing previous registrations and any encompassing previous scheme details" - {
 
         "and return None when no active matches are found" in {
-
-          val previousEuCountry: Country = arbitraryCountry.arbitrary.sample.value
-          val previousSchemeDetails: PreviousSchemeDetails = arbitraryPreviousSchemeDetails.arbitrary.sample.value
-
-          val previousRegistration: PreviousRegistration = PreviousRegistration(
-            previousEuCountry = previousEuCountry,
-            previousSchemesDetails = Seq(previousSchemeDetails)
-          )
 
           when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
 
@@ -1226,14 +1239,34 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
           val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("checkAllPreviousRegistrations"))
 
-          val result = service invokePrivate privateMethodCall(Seq(previousRegistration), Some(intermediaryNumber), hc, dataRequest)
+          val result = service invokePrivate privateMethodCall(allPreviousRegistrations, Some(intermediaryNumber), hc, dataRequest)
+
+          result.futureValue `mustBe` None
+          verify(mockCoreRegistrationValidationService, times(6)).searchScheme(any(), any(), any(), any())(any(), any())
+        }
+
+        "and continue to iterate through the list when optional scheme details are missing and return None when no active matches are found" in {
+
+          val previousRegistrationWithoutOptionalSchemeDetails: PreviousRegistrationDetailsWithOptionalVatNumber = previousRegistration1
+            .copy(previousSchemesDetails = None)
+
+          val updatedAllPreviousRegistrations: List[PreviousRegistrationDetailsWithOptionalVatNumber] = List(previousRegistrationWithoutOptionalSchemeDetails, previousRegistration2)
+
+          when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
+
+          val service: CoreSavedAnswersRevalidationService =
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+
+          val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("checkAllPreviousRegistrations"))
+
+          val result = service invokePrivate privateMethodCall(updatedAllPreviousRegistrations, Some(intermediaryNumber), hc, dataRequest)
 
           result.futureValue `mustBe` None
           verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
-            eqTo(previousSchemeDetails.previousSchemeNumbers.previousSchemeNumber),
-            eqTo(previousSchemeDetails.previousScheme),
+            eqTo(updatedAllPreviousRegistrations.tail.head.previousSchemesDetails.value.head.previousSchemeNumbers.value.previousSchemeNumber.value),
+            eqTo(updatedAllPreviousRegistrations.tail.head.previousSchemesDetails.value.head.previousScheme.value),
             eqTo(Some(intermediaryNumber)),
-            eqTo(previousEuCountry.code)
+            eqTo(updatedAllPreviousRegistrations.tail.head.previousEuCountry.code)
           )(any(), any())
         }
 
@@ -1241,8 +1274,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
           "and return None when an active match is found" in {
 
+            val previousSchemeNumber: String = allPreviousRegistrations.tail.head.previousSchemesDetails.value.tail.head.previousSchemeNumbers.value.previousSchemeNumber.value
+
             val activeMatch: Match = aMatch.copy(
-              traderId = TraderId(traderId = previousRegistration2.previousSchemesDetails.tail.head.previousSchemeNumbers.previousSchemeNumber),
+              traderId = TraderId(traderId = previousSchemeNumber),
               memberState = previousRegistration2.previousEuCountry.code,
               exclusionStatusCode = None,
               exclusionEffectiveDate = None
@@ -1250,8 +1285,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
             when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
             when(mockCoreRegistrationValidationService.searchScheme(
-                eqTo(previousRegistration2.previousSchemesDetails.tail.head.previousSchemeNumbers.previousSchemeNumber),
-                eqTo(previousRegistration2.previousSchemesDetails.tail.head.previousScheme),
+                eqTo(previousSchemeNumber),
+                eqTo(allPreviousRegistrations.tail.head.previousSchemesDetails.value.tail.head.previousScheme.value),
                 any(),
                 eqTo(previousRegistration2.previousEuCountry.code))
               (any(), any())) thenReturn Some(activeMatch).toFuture
@@ -1269,8 +1304,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
           "and return the corresponding URL when a quarantined match is found" in {
 
+            val previousSchemeNumber: String = allPreviousRegistrations.tail.head.previousSchemesDetails.value.tail.tail.head.previousSchemeNumbers.value.previousSchemeNumber.value
+
             val quarantinedMatch: Match = aMatch.copy(
-              traderId = TraderId(traderId = previousRegistration2.previousSchemesDetails.tail.tail.head.previousSchemeNumbers.previousSchemeNumber),
+              traderId = TraderId(traderId = previousSchemeNumber),
               memberState = previousRegistration2.previousEuCountry.code,
               exclusionStatusCode = Some(ExclusionReason.FailsToComply.numberValue),
               exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
@@ -1278,8 +1315,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
             when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
             when(mockCoreRegistrationValidationService.searchScheme(
-                eqTo(previousRegistration2.previousSchemesDetails.tail.tail.head.previousSchemeNumbers.previousSchemeNumber),
-                eqTo(previousRegistration2.previousSchemesDetails.tail.tail.head.previousScheme),
+                eqTo(previousSchemeNumber),
+                eqTo(allPreviousRegistrations.tail.head.previousSchemesDetails.value.tail.tail.head.previousScheme.value),
                 any(),
                 eqTo(previousRegistration2.previousEuCountry.code))
               (any(), any())) thenReturn Some(quarantinedMatch).toFuture
@@ -1303,9 +1340,11 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
           "and return the corresponding URL when an active match is found" in {
 
+            val previousSchemeNumber: String = allPreviousRegistrations.head.previousSchemesDetails.value.head.previousSchemeNumbers.value.previousSchemeNumber.value
+
             val activeMatch: Match = aMatch.copy(
-              traderId = TraderId(traderId = s"IM${previousSchemeDetails1.previousSchemeNumbers.previousSchemeNumber}"),
-              memberState = previousRegistration1.previousEuCountry.code,
+              traderId = TraderId(traderId = s"IM$previousSchemeNumber"),
+              memberState = allPreviousRegistrations.head.previousEuCountry.code,
               exclusionStatusCode = None,
               exclusionEffectiveDate = None
             )
@@ -1321,28 +1360,30 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
             result.futureValue `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
             verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
-              eqTo(previousRegistration1.previousSchemesDetails.head.previousSchemeNumbers.previousSchemeNumber),
-              eqTo(previousRegistration1.previousSchemesDetails.head.previousScheme),
+              eqTo(previousSchemeNumber),
+              eqTo(allPreviousRegistrations.head.previousSchemesDetails.value.head.previousScheme.value),
               eqTo(Some(intermediaryNumber)),
-              eqTo(previousRegistration1.previousEuCountry.code)
+              eqTo(allPreviousRegistrations.head.previousEuCountry.code)
             )(any(), any())
           }
 
           "and return the corresponding URL when a quarantined match is found" in {
 
+            val previousSchemeNumber: String = allPreviousRegistrations.tail.head.previousSchemesDetails.value.head.previousSchemeNumbers.value.previousSchemeNumber.value
+
             val quarantinedMatch: Match = aMatch.copy(
-              traderId = TraderId(traderId = s"IM${previousRegistration2.previousSchemesDetails.head.previousSchemeNumbers.previousSchemeNumber}"),
-              memberState = previousRegistration2.previousEuCountry.code,
+              traderId = TraderId(traderId = s"IM$previousSchemeNumber"),
+              memberState = allPreviousRegistrations.tail.head.previousEuCountry.code,
               exclusionStatusCode = Some(ExclusionReason.FailsToComply.numberValue),
               exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
             )
 
             when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
             when(mockCoreRegistrationValidationService.searchScheme(
-              eqTo(previousRegistration2.previousSchemesDetails.head.previousSchemeNumbers.previousSchemeNumber),
-              eqTo(previousRegistration2.previousSchemesDetails.head.previousScheme),
+              eqTo(previousSchemeNumber),
+              eqTo(allPreviousRegistrations.tail.head.previousSchemesDetails.value.head.previousScheme.value),
               eqTo(Some(intermediaryNumber)),
-              eqTo(previousRegistration2.previousEuCountry.code)
+              eqTo(allPreviousRegistrations.tail.head.previousEuCountry.code)
             )(any(), any())) thenReturn Some(quarantinedMatch).toFuture
 
             val service: CoreSavedAnswersRevalidationService =
@@ -1366,12 +1407,9 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
       val countryCode: String = arbitraryCountry.arbitrary.sample.value.code
 
-      val allPreviousSchemeDetails: Seq[PreviousSchemeDetails] = Seq(previousSchemeDetails1, previousSchemeDetails2, previousSchemeDetails3)
+      val allPreviousSchemeDetails: List[SchemeDetailsWithOptionalVatNumber] = List(previousSchemeDetails1, previousSchemeDetails2, previousSchemeDetails3)
 
       "must return None when no active matches are found" in {
-
-        val countryCode: String = arbitraryCountry.arbitrary.sample.value.code
-        val previousSchemeDetails: PreviousSchemeDetails = arbitraryPreviousSchemeDetails.arbitrary.sample.value
 
         when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
 
@@ -1380,12 +1418,37 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidatePreviousSchemeDetails"))
 
-        val result = service invokePrivate privateMethodCall(countryCode, Seq(previousSchemeDetails), None, hc, dataRequest)
+        val result = service invokePrivate privateMethodCall(countryCode, allPreviousSchemeDetails, None, hc, dataRequest)
 
         result.futureValue `mustBe` None
         verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
-          eqTo(previousSchemeDetails.previousSchemeNumbers.previousSchemeNumber),
-          eqTo(previousSchemeDetails.previousScheme),
+          eqTo(allPreviousSchemeDetails.head.previousSchemeNumbers.head.previousSchemeNumber.value),
+          eqTo(allPreviousSchemeDetails.head.previousScheme.value),
+          any(),
+          eqTo(countryCode)
+        )(any(), any())
+      }
+
+      "must continue to iterate through the list when optional scheme number values are missing and then return None when no active matches are found" in {
+
+        val previousSchemeDetailsWithMissingVatNumber: SchemeDetailsWithOptionalVatNumber = previousSchemeDetails1.copy(
+          previousSchemeNumbers = None
+        )
+        val updatedAllPreviousSchemeDetails: List[SchemeDetailsWithOptionalVatNumber] = List(previousSchemeDetailsWithMissingVatNumber, previousSchemeDetails2, previousSchemeDetails3)
+
+        when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
+
+        val service: CoreSavedAnswersRevalidationService =
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+
+        val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidatePreviousSchemeDetails"))
+
+        val result = service invokePrivate privateMethodCall(countryCode, updatedAllPreviousSchemeDetails, None, hc, dataRequest)
+
+        result.futureValue `mustBe` None
+        verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
+          eqTo(allPreviousSchemeDetails.tail.head.previousSchemeNumbers.value.previousSchemeNumber.value),
+          eqTo(allPreviousSchemeDetails.tail.head.previousScheme.value),
           any(),
           eqTo(countryCode)
         )(any(), any())
@@ -1395,8 +1458,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         "must return None when an active match is found" in {
 
+          val previousSchemeNumber: String = allPreviousSchemeDetails.tail.tail.head.previousSchemeNumbers.value.previousSchemeNumber.value
+
           val activeMatch: Match = aMatch.copy(
-            traderId = TraderId(traderId = previousSchemeDetails3.previousSchemeNumbers.previousSchemeNumber),
+            traderId = TraderId(traderId = previousSchemeNumber),
             memberState = countryCode,
             exclusionStatusCode = None,
             exclusionEffectiveDate = None
@@ -1422,8 +1487,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         "must return the corresponding URL when a quarantined match is found" in {
 
+          val previousSchemeNumber: String = allPreviousSchemeDetails.tail.head.previousSchemeNumbers.value.previousSchemeNumber.value
+
           val quarantinedMatch: Match = aMatch.copy(
-            traderId = TraderId(traderId = previousSchemeDetails2.previousSchemeNumbers.previousSchemeNumber),
+            traderId = TraderId(traderId = previousSchemeNumber),
             memberState = countryCode,
             exclusionStatusCode = Some(ExclusionReason.FailsToComply.numberValue),
             exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
@@ -1431,8 +1498,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
           when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
           when(mockCoreRegistrationValidationService.searchScheme(
-            eqTo(previousSchemeDetails2.previousSchemeNumbers.previousSchemeNumber),
-            eqTo(previousSchemeDetails2.previousScheme),
+            eqTo(previousSchemeNumber),
+            eqTo(allPreviousSchemeDetails.tail.head.previousScheme.value),
             any(),
             any()
           )(any(), any())) thenReturn Some(quarantinedMatch).toFuture
@@ -1456,8 +1523,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         "must return the corresponding URL when an active match is found" in {
 
+          val previousSchemeNumber: String = allPreviousSchemeDetails.head.previousSchemeNumbers.value.previousSchemeNumber.value
+
           val activeMatch: Match = aMatch.copy(
-            traderId = TraderId(traderId = s"IM${previousSchemeDetails1.previousSchemeNumbers.previousSchemeNumber}"),
+            traderId = TraderId(traderId = s"IM$previousSchemeNumber"),
             memberState = countryCode,
             exclusionStatusCode = None,
             exclusionEffectiveDate = None
@@ -1474,8 +1543,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
           result.futureValue `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
           verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
-            eqTo(previousSchemeDetails1.previousSchemeNumbers.previousSchemeNumber),
-            eqTo(previousSchemeDetails1.previousScheme),
+            eqTo(previousSchemeNumber),
+            eqTo(allPreviousSchemeDetails.head.previousScheme.value),
             eqTo(Some(intermediaryNumber)),
             eqTo(countryCode)
           )(any(), any())
@@ -1483,8 +1552,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         "must return the corresponding URL when a quarantined match is found" in {
 
+          val previousSchemeNumber: String = allPreviousSchemeDetails.head.previousSchemeNumbers.value.previousSchemeNumber.value
+
           val quarantinedMatch: Match = aMatch.copy(
-            traderId = TraderId(traderId = s"IM${previousSchemeDetails1.previousSchemeNumbers.previousSchemeNumber}"),
+            traderId = TraderId(traderId = s"IM$previousSchemeNumber"),
             memberState = countryCode,
             exclusionStatusCode = Some(ExclusionReason.FailsToComply.numberValue),
             exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
@@ -1504,8 +1575,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
           ).url)
           verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
-            eqTo(previousSchemeDetails1.previousSchemeNumbers.previousSchemeNumber),
-            eqTo(previousSchemeDetails1.previousScheme),
+            eqTo(previousSchemeNumber),
+            eqTo(allPreviousSchemeDetails.head.previousScheme.value),
             eqTo(Some(intermediaryNumber)),
             eqTo(countryCode)
           )(any(), any())

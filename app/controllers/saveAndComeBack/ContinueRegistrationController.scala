@@ -102,6 +102,7 @@ class ContinueRegistrationController @Inject()(
           (value1, request.userAnswers.get(SavedProgressPage)) match {
             case (ContinueRegistration.Continue, Some(url)) =>
               // TODO -> Call new service method checkAndValidateSavedUserAnswers
+              // TODO -> TEST
               coreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(waypoints).flatMap {
                 case Some(redirectUrl) =>
                   deleteAndRedirect(taxReferenceInformation, redirectUrl)
