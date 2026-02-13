@@ -6,13 +6,14 @@ import logging.Logging
 import models.Country
 import models.core.Match
 import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
+import models.previousRegistrations.*
 import models.requests.DataRequest
 import models.vatEuDetails.EuDetails
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.{ClientCountryBasedPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, Waypoints}
 import queries.euDetails.AllEuDetailsQuery
-import queries.previousRegistrations.AllPreviousRegistrationsQuery
+import queries.previousRegistrations.{AllPreviousRegistrationsQuery, AllPreviousRegistrationsWithOptionalVatNumberQuery}
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.FutureSyntax.FutureOps
@@ -24,16 +25,6 @@ class CoreSavedAnswersRevalidationService @Inject()(
                                                      coreRegistrationValidationService: CoreRegistrationValidationService,
                                                      clock: Clock
                                                    )(implicit ec: ExecutionContext) extends Logging {
-
-  // ClientVatNumberPage -> searchUkVrn
-  // ClientUtrNumberPage -> searchTraderId
-  // ClientsNinoNumberPage -> searchTraderId
-  // ClientTaxReferencePage -> searchForeignTaxReference
-
-  // EuTaxReferencePage -> searchEuTaxId
-  // EuVatNumberPage -> searchEuVrn
-  // PreviousIossNumberPage -> searchScheme
-  // PreviousOssNumberPage -> searchScheme
 
   def checkAndValidateSavedUserAnswers(waypoints: Waypoints)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
     request.userAnswers.get(ClientVatNumberPage) match {
@@ -71,9 +62,10 @@ class CoreSavedAnswersRevalidationService @Inject()(
                       case _ =>
                         request.userAnswers.get(PreviouslyRegisteredPage) match {
                           case Some(true) =>
-                            val previousRegistrations: List[PreviousRegistration] = request.userAnswers.get(AllPreviousRegistrationsQuery).getOrElse(List.empty)
+                            // TODO -> NEED TO USE EITHER RAWQUERY OR OPTION
+                            val previousRegistrations: List[PreviousRegistrationDetailsWithOptionalVatNumber] = request.userAnswers.get(AllPreviousRegistrationsWithOptionalVatNumberQuery).getOrElse(List.empty)
                             checkAllPreviousRegistrations(previousRegistrations, Some(request.intermediaryNumber))
-                            
+
                           case _ =>
                             None.toFuture
                         }
@@ -143,22 +135,28 @@ class CoreSavedAnswersRevalidationService @Inject()(
   }
 
   private def checkAllPreviousRegistrations(
-                                             allPreviousRegistrations: List[PreviousRegistration],
+                                             allPreviousRegistrations: List[PreviousRegistrationDetailsWithOptionalVatNumber],
                                              intermediaryNumber: Option[String]
                                            )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
-
     allPreviousRegistrations match {
-      case ::(currentPreviousRegistration, remaining) =>
+      case ::(PreviousRegistrationDetailsWithOptionalVatNumber(
+        country,
+        Some(optionalSchemeDetails)
+      ), remaining) =>
         revalidatePreviousSchemeDetails(
-          countryCode = currentPreviousRegistration.previousEuCountry.code,
-          allPreviousSchemeDetails = currentPreviousRegistration.previousSchemesDetails,
+          countryCode = country.code,
+          allPreviousSchemeDetails = optionalSchemeDetails,
           intermediaryNumber = intermediaryNumber
         ).flatMap {
           case Some(urlString) =>
             Some(urlString).toFuture
+
           case _ =>
             checkAllPreviousRegistrations(remaining, intermediaryNumber)
         }
+
+      case ::(_, remaining) =>
+        checkAllPreviousRegistrations(remaining, intermediaryNumber)
 
       case Nil => None.toFuture
     }
@@ -166,24 +164,28 @@ class CoreSavedAnswersRevalidationService @Inject()(
 
   private def revalidatePreviousSchemeDetails(
                                                countryCode: String,
-                                               allPreviousSchemeDetails: Seq[PreviousSchemeDetails],
+                                               allPreviousSchemeDetails: List[SchemeDetailsWithOptionalVatNumber],
                                                intermediaryNumber: Option[String]
                                              )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
     allPreviousSchemeDetails match {
-      case ::(currentSchemeDetails, remaining) =>
+      case ::(SchemeDetailsWithOptionalVatNumber(Some(previousScheme), _, Some(SchemeNumbersWithOptionalVatNumber(Some(previousSchemeNumber)))), remaining) =>
         coreRegistrationValidationService.searchScheme(
-          searchNumber = currentSchemeDetails.previousSchemeNumbers.previousSchemeNumber,
-          previousScheme = currentSchemeDetails.previousScheme,
+          searchNumber = previousSchemeNumber,
+          previousScheme = previousScheme,
           intermediaryNumber = intermediaryNumber,
           countryCode = countryCode
         ).flatMap { maybeActiveMatch =>
           activeMatchRedirectUrl(maybeActiveMatch).flatMap {
             case Some(urlString) =>
               Some(urlString).toFuture
+
             case _ =>
               revalidatePreviousSchemeDetails(countryCode, remaining, intermediaryNumber)
           }
         }
+
+      case ::(_, remaining) =>
+        revalidatePreviousSchemeDetails(countryCode, remaining, intermediaryNumber)
 
       case Nil => None.toFuture
     }

@@ -19,10 +19,10 @@ package generators
 import models.PreviousScheme
 import models.domain.{PreviousRegistration, PreviousSchemeDetails, PreviousSchemeNumbers}
 import models.etmp.*
-import models.etmp.EtmpIdType
 import models.etmp.amend.EtmpAmendRegistrationChangeLog
-import models.etmp.display.{EtmpDisplayCustomerIdentification, EtmpDisplayEuRegistrationDetails, EtmpDisplayRegistration, EtmpDisplaySchemeDetails, RegistrationWrapper}
+import models.etmp.display.*
 import models.etmp.intermediary.{EtmpIntermediaryCustomerIdentification, EtmpIntermediaryDisplayRegistration, EtmpIntermediaryDisplaySchemeDetails, IntermediaryRegistrationWrapper}
+import models.previousRegistrations.{SchemeDetailsWithOptionalVatNumber, SchemeNumbersWithOptionalVatNumber}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 
@@ -54,7 +54,7 @@ trait EtmpModelGenerators {
         vrn <- Gen.alphaStr
       } yield EtmpDisplayCustomerIdentification(etmpIdType, vrn)
     }
-  
+
   implicit lazy val genIntermediaryNumber: Gen[String] = {
     for {
       intermediaryNumber <- Gen.listOfN(12, Gen.alphaChar).map(_.mkString)
@@ -147,7 +147,7 @@ trait EtmpModelGenerators {
       }
     }
   }
-  
+
   implicit lazy val arbitraryEtmpBankDetails: Arbitrary[EtmpBankDetails] = {
     Arbitrary {
       for {
@@ -209,7 +209,7 @@ trait EtmpModelGenerators {
       }
     }
   }
-  
+
   implicit lazy val arbitraryPreviousSchemeNumbers: Arbitrary[PreviousSchemeNumbers] = {
     Arbitrary {
       for {
@@ -221,7 +221,7 @@ trait EtmpModelGenerators {
       }
     }
   }
-  
+
   implicit lazy val arbitraryPreviousSchemeDetails: Arbitrary[PreviousSchemeDetails] = {
     Arbitrary {
       for {
@@ -236,7 +236,35 @@ trait EtmpModelGenerators {
       }
     }
   }
-  
+
+  implicit lazy val arbitrarySchemeDetailsWithOptionalVatNumber: Arbitrary[SchemeDetailsWithOptionalVatNumber] = {
+    Arbitrary {
+      for {
+        previousScheme <- Gen.oneOf(PreviousScheme.values)
+        clientHasIntermediary <- arbitrary[Boolean]
+        previousSchemeNumbers <- arbitrarySchemeNumbersWithOptionalVatNumber.arbitrary
+      } yield {
+        SchemeDetailsWithOptionalVatNumber(
+          previousScheme = Some(previousScheme),
+          clientHasIntermediary = Some(clientHasIntermediary),
+          previousSchemeNumbers = Some(previousSchemeNumbers)
+        )
+      }
+    }
+  }
+
+  implicit lazy val arbitrarySchemeNumbersWithOptionalVatNumber: Arbitrary[SchemeNumbersWithOptionalVatNumber] = {
+    Arbitrary {
+      for {
+        previousSchemeNumber <- arbitraryEuVatNumber
+      } yield {
+        SchemeNumbersWithOptionalVatNumber(
+          previousSchemeNumber = Some(previousSchemeNumber)
+        )
+      }
+    }
+  }
+
   implicit lazy val arbitraryPreviousRegistration: Arbitrary[PreviousRegistration] = {
     Arbitrary {
       for {
@@ -382,7 +410,7 @@ trait EtmpModelGenerators {
       } yield EtmpAdminUse(changeDate = changeDate)
     }
   }
-  
+
   implicit lazy val arbitraryEtmpDisplayRegistration: Arbitrary[EtmpDisplayRegistration] = {
     Arbitrary {
       for {
@@ -405,7 +433,7 @@ trait EtmpModelGenerators {
       }
     }
   }
-  
+
   implicit lazy val arbitraryRegistrationWrapper: Arbitrary[RegistrationWrapper] = {
     Arbitrary {
       for {
@@ -471,7 +499,7 @@ trait EtmpModelGenerators {
           customerIdentification = customerIdentification,
           tradingNames = tradingNames,
           clientDetails = clientDetails,
-          intermediaryDetails =  Some(intermediaryDetails),
+          intermediaryDetails = Some(intermediaryDetails),
           otherAddress = Some(otherAddress),
           schemeDetails = schemeDetails,
           exclusions = exclusions,
