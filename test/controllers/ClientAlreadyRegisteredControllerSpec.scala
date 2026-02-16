@@ -20,15 +20,25 @@ import base.SpecBase
 import config.FrontendAppConfig
 import formats.Format.dateFormatter
 import models.{ActiveTraderResult, ClientBusinessName, UserAnswers}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito
+import org.mockito.Mockito.{times, verify, verifyNoInteractions, when}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatestplus.mockito.MockitoSugar
 import pages.ClientBusinessNamePage
+import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import queries.ActiveTraderResultQuery
+import repositories.SessionRepository
+import utils.FutureSyntax.FutureOps
 import views.html.ClientAlreadyRegisteredView
 
 import java.time.LocalDate
 
-class ClientAlreadyRegisteredControllerSpec extends SpecBase {
+class ClientAlreadyRegisteredControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
+
+  private val mockSessionRepository: SessionRepository = mock[SessionRepository]
 
   private val clientBusinessName: ClientBusinessName = ClientBusinessName(vatCustomerInfo.organisationName.value)
   private val exclusionEffectiveDate: String = arbitraryEtmpExclusion.arbitrary.sample.value.effectiveDate.toString
@@ -42,11 +52,19 @@ class ClientAlreadyRegisteredControllerSpec extends SpecBase {
     .set(ClientBusinessNamePage, clientBusinessName).success.value
     .set(ActiveTraderResultQuery, activeTraderResult).success.value
 
+  override def beforeEach(): Unit = {
+    Mockito.reset(mockSessionRepository)
+  }
+
   "ClientAlreadyRegistered Controller" - {
 
-    "must return OK and the correct view for a GET" in {
+    "must delete the answers and return OK and the correct view for a GET" in {
 
-      val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
+      when(mockSessionRepository.clear(any())) thenReturn true.toFuture
+
+      val application = applicationBuilder(userAnswers = Some(userAnswers))
+        .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
+        .build()
 
       running(application) {
         val request = FakeRequest(GET, routes.ClientAlreadyRegisteredController.onPageLoad().url)
@@ -66,15 +84,20 @@ class ClientAlreadyRegisteredControllerSpec extends SpecBase {
           config.intermediaryYourAccountUrl,
           isReversal = false
         )(request, messages(application)).toString
+        verify(mockSessionRepository, times(1)).clear(eqTo(userAnswersId))
       }
     }
 
-    "must return OK and the correct view for a GET when there is no retrievable company name information" in {
+    "must delete the answers and return OK and the correct view for a GET when there is no retrievable company name information" in {
+
+      when(mockSessionRepository.clear(any())) thenReturn true.toFuture
 
       val userAnswersWithoutCompanyName: UserAnswers = userAnswers
         .remove(ClientBusinessNamePage).success.value
 
-      val application = applicationBuilder(userAnswers = Some(userAnswersWithoutCompanyName)).build()
+      val application = applicationBuilder(userAnswers = Some(userAnswersWithoutCompanyName))
+        .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
+        .build()
 
       running(application) {
         val request = FakeRequest(GET, routes.ClientAlreadyRegisteredController.onPageLoad().url)
@@ -94,10 +117,13 @@ class ClientAlreadyRegisteredControllerSpec extends SpecBase {
           config.intermediaryYourAccountUrl,
           isReversal = false
         )(request, messages(application)).toString
+        verify(mockSessionRepository, times(1)).clear(eqTo(userAnswersId))
       }
     }
 
-    "must return OK and the correct view for a GET when there is no exclusion effective date" in {
+    "must delete the answers and return OK and the correct view for a GET when there is no exclusion effective date" in {
+
+      when(mockSessionRepository.clear(any())) thenReturn true.toFuture
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = false,
@@ -107,7 +133,9 @@ class ClientAlreadyRegisteredControllerSpec extends SpecBase {
       val updatedAnswers = userAnswers
         .set(ActiveTraderResultQuery, activeTraderResult).success.value
 
-      val application = applicationBuilder(userAnswers = Some(updatedAnswers)).build()
+      val application = applicationBuilder(userAnswers = Some(updatedAnswers))
+        .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
+        .build()
 
       running(application) {
         val request = FakeRequest(GET, routes.ClientAlreadyRegisteredController.onPageLoad().url)
@@ -125,10 +153,13 @@ class ClientAlreadyRegisteredControllerSpec extends SpecBase {
           config.intermediaryYourAccountUrl,
           isReversal = false
         )(request, messages(application)).toString
+        verify(mockSessionRepository, times(1)).clear(eqTo(userAnswersId))
       }
     }
 
-    "must return OK and the correct view for a GET when there is an exclusion effective date but exclusion status code is -1" in {
+    "must delete the answers and return OK and the correct view for a GET when there is an exclusion effective date but exclusion status code is -1" in {
+
+      when(mockSessionRepository.clear(any())) thenReturn true.toFuture
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = true,
@@ -138,7 +169,9 @@ class ClientAlreadyRegisteredControllerSpec extends SpecBase {
       val updatedAnswers = userAnswers
         .set(ActiveTraderResultQuery, activeTraderResult).success.value
 
-      val application = applicationBuilder(userAnswers = Some(updatedAnswers)).build()
+      val application = applicationBuilder(userAnswers = Some(updatedAnswers))
+        .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
+        .build()
 
       running(application) {
         val request = FakeRequest(GET, routes.ClientAlreadyRegisteredController.onPageLoad().url)
@@ -155,7 +188,9 @@ class ClientAlreadyRegisteredControllerSpec extends SpecBase {
         contentAsString(result) `mustBe` view(
           clientBusinessName.name,
           Some(formattedExclusionEffectiveDate),
-          config.intermediaryYourAccountUrl, isReversal = true)(request, messages(application)).toString
+          config.intermediaryYourAccountUrl, isReversal = true
+        )(request, messages(application)).toString
+        verify(mockSessionRepository, times(1)).clear(eqTo(userAnswersId))
       }
     }
 
@@ -177,6 +212,7 @@ class ClientAlreadyRegisteredControllerSpec extends SpecBase {
           exp `mustBe` a[Exception]
           exp.getMessage `mustBe` errorMessage
         }
+        verifyNoInteractions(mockSessionRepository)
       }
     }
   }

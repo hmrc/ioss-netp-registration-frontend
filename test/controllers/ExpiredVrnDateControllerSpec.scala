@@ -17,17 +17,29 @@
 package controllers
 
 import base.SpecBase
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{times, verify, when}
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.inject.bind
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
+import repositories.SessionRepository
+import utils.FutureSyntax.FutureOps
 import views.html.ExpiredVrnDateView
 
-class ExpiredVrnDateControllerSpec extends SpecBase {
+class ExpiredVrnDateControllerSpec extends SpecBase with MockitoSugar {
 
   "ExpiredVrnDate Controller" - {
 
-    "must return OK and the correct view for a GET" in {
+    "must delete the answers and return OK and the correct view for a GET" in {
 
-      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
+      val mockSessionRepository: SessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.clear(any())) thenReturn true.toFuture
+
+      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers))
+        .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
+        .build()
 
       running(application) {
         val request = FakeRequest(GET, routes.ExpiredVrnDateController.onPageLoad().url)
@@ -36,8 +48,9 @@ class ExpiredVrnDateControllerSpec extends SpecBase {
 
         val view = application.injector.instanceOf[ExpiredVrnDateView]
 
-        status(result) mustEqual OK
-        contentAsString(result) mustEqual view()(request, messages(application)).toString
+        status(result) `mustBe` OK
+        contentAsString(result) `mustBe` view()(request, messages(application)).toString
+        verify(mockSessionRepository, times(1)).clear(eqTo(userAnswersId))
       }
     }
   }

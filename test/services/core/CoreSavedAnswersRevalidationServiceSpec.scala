@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package services.core
 
 import base.SpecBase
@@ -11,7 +27,7 @@ import models.previousRegistrations.{PreviousRegistrationDetailsWithOptionalVatN
 import models.requests.DataRequest
 import models.vatEuDetails.RegistrationType.{TaxId, VatNumber}
 import models.vatEuDetails.{EuDetails, RegistrationType, TradingNameAndBusinessAddress}
-import models.{Country, Index, UserAnswers}
+import models.{ActiveTraderResult, Country, Index, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.*
@@ -22,8 +38,11 @@ import pages.previousRegistrations.*
 import pages.vatEuDetails.*
 import pages.{ClientCountryBasedPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage}
 import play.api.mvc.AnyContent
+import play.api.mvc.Results.Redirect
 import play.api.test.FakeRequest
+import queries.ActiveTraderResultQuery
 import queries.euDetails.AllEuDetailsQuery
+import repositories.SessionRepository
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.FutureSyntax.FutureOps
@@ -37,15 +56,16 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
   private implicit val hc: HeaderCarrier = new HeaderCarrier()
 
   private val mockCoreRegistrationValidationService: CoreRegistrationValidationService = mock[CoreRegistrationValidationService]
+  private val mockSessionRepository: SessionRepository = mock[SessionRepository]
 
   private val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, emptyUserAnswersWithVatInfo, intermediaryNumber, None)
 
   implicit private val dataRequest: DataRequest[AnyContent] =
     DataRequest(request, vrn.vrn, emptyUserAnswersWithVatInfo, intermediaryNumber, None)
 
-  private val intermediaryNumber: String = request.intermediaryNumber
+  private val requestIntermediaryNumber: String = request.intermediaryNumber
 
-  private val aMatch: Match = arbitraryMatch.arbitrary.sample.value.copy(intermediary = Some(intermediaryNumber))
+  private val aMatch: Match = arbitraryMatch.arbitrary.sample.value.copy(intermediary = Some(requestIntermediaryNumber))
 
   private val index: Index = Index(0)
 
@@ -77,21 +97,48 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
   private val allPreviousRegistrations: List[PreviousRegistrationDetailsWithOptionalVatNumber] = List(previousRegistration1, previousRegistration2)
 
   override def beforeEach(): Unit = {
-    Mockito.reset(mockCoreRegistrationValidationService)
+    Mockito.reset(
+      mockCoreRegistrationValidationService,
+      mockSessionRepository
+    )
   }
 
   "CoreSavedAnswersRevalidationService" - {
 
     ".checkAndValidateSavedUserAnswers" - {
 
-      "must return None if there are no active matches, quarantines or expired VRNs" in {
+      "must return None if there are no active matches" in {
+
+        val activeVrn: Vrn = arbitraryVrn.arbitrary.sample.value
+        val updatedUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo
+          .set(ClientVatNumberPage, activeVrn.vrn).success.value
+
+        val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
+
+        implicit val dataRequest: DataRequest[AnyContent] =
+          DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
+
+        when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
         result `mustBe` None
+        verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(activeVrn))(any(), any())
+      }
+
+      "must throw an Illegal State Exception if none of the validation fields are set in the user answers" in {
+
+        val errorMessage: String = "There was an error when validating user answers.Could not find a UK VRN, a UTR, a Nino or a UK Tax Reference in the user answers."
+
+        val service: CoreSavedAnswersRevalidationService =
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
+
+        intercept[IllegalStateException] {
+          service.checkAndValidateSavedUserAnswers(waypoints)
+        }.getMessage `mustBe` errorMessage
       }
 
       "when checking ClientVatNumberPage" - {
@@ -108,17 +155,17 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             .copy(vatInfo = Some(vatCustomerInfoWithDeregistration))
             .set(ClientVatNumberPage, activeVrn.vrn).success.value
 
-          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           implicit val dataRequest: DataRequest[AnyContent] =
-            DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+            DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
-          result `mustBe` Some(routes.ExpiredVrnDateController.onPageLoad(waypoints).url)
+          result `mustBe` Some(Redirect(routes.ExpiredVrnDateController.onPageLoad(waypoints).url))
           verifyNoInteractions(mockCoreRegistrationValidationService)
         }
 
@@ -128,10 +175,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val updatedUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo
             .set(ClientVatNumberPage, activeVrn.vrn).success.value
 
-          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           implicit val dataRequest: DataRequest[AnyContent] =
-            DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+            DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           val activeMatch: Match = aMatch.copy(
             traderId = TraderId(traderId = s"IM${activeVrn.vrn}"),
@@ -139,15 +186,25 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             exclusionEffectiveDate = None
           )
 
+          when(mockSessionRepository.set(any())) thenReturn true.toFuture
           when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn Some(activeMatch).toFuture
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
-          result `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+          val activeTrader = ActiveTraderResult(
+            isReversal = activeMatch.exclusionStatusCode.contains(-1),
+            exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+          )
+
+          val expectedUserAnswers: UserAnswers = request.userAnswers
+            .set(ActiveTraderResultQuery, activeTrader).success.value
+
+          result `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
           verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(activeVrn))(any(), eqTo(dataRequest))
+          verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
         }
 
         "must revalidate UK VRN if one exists and no active match is found" in {
@@ -156,15 +213,15 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val updatedUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo
             .set(ClientVatNumberPage, nonActiveVrn.vrn).success.value
 
-          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           implicit val dataRequest: DataRequest[AnyContent] =
-            DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+            DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
@@ -181,10 +238,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val updatedUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo
             .set(ClientUtrNumberPage, activeUtr).success.value
 
-          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           implicit val dataRequest: DataRequest[AnyContent] =
-            DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+            DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           val activeMatch: Match = aMatch.copy(
             traderId = TraderId(traderId = s"IM$activeUtr"),
@@ -192,15 +249,25 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             exclusionEffectiveDate = None
           )
 
+          when(mockSessionRepository.set(any())) thenReturn true.toFuture
           when(mockCoreRegistrationValidationService.searchTraderId(any())(any(), any())) thenReturn Some(activeMatch).toFuture
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
-          result `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+          val activeTrader = ActiveTraderResult(
+            isReversal = activeMatch.exclusionStatusCode.contains(-1),
+            exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+          )
+
+          val expectedUserAnswers: UserAnswers = request.userAnswers
+            .set(ActiveTraderResultQuery, activeTrader).success.value
+
+          result `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
           verify(mockCoreRegistrationValidationService, times(1)).searchTraderId(eqTo(activeUtr))(any(), eqTo(dataRequest))
+          verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
         }
 
         "must revalidate Client UTR if one exists and no active match is found" in {
@@ -209,15 +276,15 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val updatedUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo
             .set(ClientUtrNumberPage, nonActiveUtr).success.value
 
-          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           implicit val dataRequest: DataRequest[AnyContent] =
-            DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+            DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           when(mockCoreRegistrationValidationService.searchTraderId(any())(any(), any())) thenReturn None.toFuture
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
@@ -234,10 +301,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val updatedUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo
             .set(ClientsNinoNumberPage, activeNino).success.value
 
-          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           implicit val dataRequest: DataRequest[AnyContent] =
-            DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+            DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           val activeMatch: Match = aMatch.copy(
             traderId = TraderId(traderId = s"IM$activeNino"),
@@ -245,15 +312,25 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             exclusionEffectiveDate = None
           )
 
+          when(mockSessionRepository.set(any())) thenReturn true.toFuture
           when(mockCoreRegistrationValidationService.searchTraderId(any())(any(), any())) thenReturn Some(activeMatch).toFuture
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
-          result `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+          val activeTrader = ActiveTraderResult(
+            isReversal = activeMatch.exclusionStatusCode.contains(-1),
+            exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+          )
+
+          val expectedUserAnswers: UserAnswers = request.userAnswers
+            .set(ActiveTraderResultQuery, activeTrader).success.value
+
+          result `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
           verify(mockCoreRegistrationValidationService, times(1)).searchTraderId(eqTo(activeNino))(any(), eqTo(dataRequest))
+          verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
         }
 
         "must revalidate Client NINO if one exists and no active match is found" in {
@@ -262,15 +339,15 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val updatedUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo
             .set(ClientsNinoNumberPage, nonActiveNino).success.value
 
-          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           implicit val dataRequest: DataRequest[AnyContent] =
-            DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+            DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           when(mockCoreRegistrationValidationService.searchTraderId(any())(any(), any())) thenReturn None.toFuture
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
@@ -289,10 +366,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             .set(ClientTaxReferencePage, activeClientTaxReference).success.value
             .set(ClientCountryBasedPage, country).success.value
 
-          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           implicit val dataRequest: DataRequest[AnyContent] =
-            DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+            DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           val activeMatch: Match = aMatch.copy(
             traderId = TraderId(traderId = s"IM$activeClientTaxReference"),
@@ -301,15 +378,25 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             exclusionEffectiveDate = None
           )
 
+          when(mockSessionRepository.set(any())) thenReturn true.toFuture
           when(mockCoreRegistrationValidationService.searchForeignTaxReference(any(), any())(any(), any())) thenReturn Some(activeMatch).toFuture
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
-          result `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+          val activeTrader = ActiveTraderResult(
+            isReversal = activeMatch.exclusionStatusCode.contains(-1),
+            exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+          )
+
+          val expectedUserAnswers: UserAnswers = request.userAnswers
+            .set(ActiveTraderResultQuery, activeTrader).success.value
+
+          result `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
           verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(activeClientTaxReference), eqTo(activeMatch.memberState))(any(), eqTo(dataRequest))
+          verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
         }
 
         "must revalidate Client Tax Reference if one exists and no active match is found" in {
@@ -320,15 +407,15 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             .set(ClientTaxReferencePage, nonActiveClientTaxReference).success.value
             .set(ClientCountryBasedPage, country).success.value
 
-          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           implicit val dataRequest: DataRequest[AnyContent] =
-            DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+            DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           when(mockCoreRegistrationValidationService.searchForeignTaxReference(any(), any())(any(), any())) thenReturn None.toFuture
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
@@ -345,13 +432,13 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val updatedUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo
             .set(ClientTaxReferencePage, nonActiveClientTaxReference).success.value
 
-          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+          val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           implicit val dataRequest: DataRequest[AnyContent] =
-            DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+            DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           intercept[IllegalStateException] {
             service.checkAndValidateSavedUserAnswers(waypoints)
@@ -367,6 +454,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
           "and then return None when no active matches are found" in {
 
+            val ukVrn: Vrn = arbitraryVrn.arbitrary.sample.value
             val euVrn: String = arbitraryEuVatNumber.sample.value
             val country1: Country = Country.euCountries.find(_.code == euVrn.substring(0, 2)).head
 
@@ -377,6 +465,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               arbitraryTradingNameAndBusinessAddress.arbitrary.sample.value
 
             val updatedUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo
+              .set(ClientVatNumberPage, ukVrn.vrn).success.value
               .set(HasFixedEstablishmentPage, true).success.value
               .set(EuCountryPage(index), country1).success.value
               .set(TradingNameAndBusinessAddressPage(index), tradingNameAndBusinessAddress).success.value
@@ -389,20 +478,22 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               .set(EuTaxReferencePage(index + 1), euTaxReference).success.value
               .set(AddEuDetailsPage(), false).success.value
 
-            val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+            val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
             implicit val dataRequest: DataRequest[AnyContent] =
-              DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+              DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
+            when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
             when(mockCoreRegistrationValidationService.searchEuVrn(any(), any())(any(), any())) thenReturn None.toFuture
             when(mockCoreRegistrationValidationService.searchEuTaxId(any(), any())(any(), any())) thenReturn None.toFuture
 
             val service: CoreSavedAnswersRevalidationService =
-              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
             val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
             result `mustBe` None
+            verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(ukVrn))(any(), any())
             verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVrn), eqTo(country1.code))(any(), any())
             verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(country2.code))(any(), any())
             verifyNoMoreInteractions(mockCoreRegistrationValidationService)
@@ -410,6 +501,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
           "and then return the corresponding URL when an active match is found" in {
 
+            val ukVrn: Vrn = arbitraryVrn.arbitrary.sample.value
             val euVrn: String = arbitraryEuVatNumber.sample.value
             val country1: Country = Country.euCountries.find(_.code == euVrn.substring(0, 2)).head
 
@@ -420,6 +512,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               arbitraryTradingNameAndBusinessAddress.arbitrary.sample.value
 
             val updatedUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo
+              .set(ClientVatNumberPage, ukVrn.vrn).success.value
               .set(HasFixedEstablishmentPage, true).success.value
               .set(EuCountryPage(index), country1).success.value
               .set(TradingNameAndBusinessAddressPage(index), tradingNameAndBusinessAddress).success.value
@@ -432,10 +525,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               .set(EuTaxReferencePage(index + 1), euTaxReference).success.value
               .set(AddEuDetailsPage(), false).success.value
 
-            val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+            val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
             implicit val dataRequest: DataRequest[AnyContent] =
-              DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+              DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
             val activeMatch: Match = aMatch.copy(
               traderId = TraderId(traderId = s"IM$euTaxReference"),
@@ -444,18 +537,30 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               exclusionEffectiveDate = None
             )
 
+            when(mockSessionRepository.set(any())) thenReturn true.toFuture
+            when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
             when(mockCoreRegistrationValidationService.searchEuVrn(any(), any())(any(), any())) thenReturn None.toFuture
             when(mockCoreRegistrationValidationService.searchEuTaxId(any(), any())(any(), any())) thenReturn Some(activeMatch).toFuture
 
             val service: CoreSavedAnswersRevalidationService =
-              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
             val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
-            result `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+            val activeTrader = ActiveTraderResult(
+              isReversal = activeMatch.exclusionStatusCode.contains(-1),
+              exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+            )
+
+            val expectedUserAnswers: UserAnswers = updatedUserAnswers
+              .set(ActiveTraderResultQuery, activeTrader).success.value
+
+            result `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+            verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(ukVrn))(any(), any())
             verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVrn), eqTo(country1.code))(any(), any())
             verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(country2.code))(any(), any())
             verifyNoMoreInteractions(mockCoreRegistrationValidationService)
+            verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
           }
         }
       }
@@ -486,7 +591,13 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           previousSchemeNumber = allPreviousRegistrations.tail.head.previousSchemesDetails.value.tail.tail.head.previousSchemeNumbers.value.previousSchemeNumber.value
         )
 
+        val clientTaxRefence: String = arbitraryTaxRefTraderID.arbitrary.sample.value.taxReferenceNumber
+        val clientCountry: Country = arbitraryCountry.arbitrary.sample.value
+
         val updatedUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo
+          .set(ClientTaxReferencePage, clientTaxRefence).success.value
+          .set(ClientCountryBasedPage, clientCountry).success.value
+
           .set(PreviouslyRegisteredPage, true).success.value
           .set(PreviousEuCountryPage(index), allPreviousRegistrations.head.previousEuCountry).success.value
           .set(PreviousSchemePage(index, index), allPreviousRegistrations.head.previousSchemesDetails.value.head.previousScheme.value).success.value
@@ -522,30 +633,32 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
           "and then return None when no active matches are found" in {
 
-            val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+            val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
             implicit val dataRequest: DataRequest[AnyContent] =
-              DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+              DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
+            when(mockCoreRegistrationValidationService.searchForeignTaxReference(any(), any())(any(), any())) thenReturn None.toFuture
             when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
 
             val service: CoreSavedAnswersRevalidationService =
-              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
             val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
             result `mustBe` None
+            verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(clientTaxRefence), eqTo(clientCountry.code))(any(), any())
             verify(mockCoreRegistrationValidationService, times(6)).searchScheme(any(), any(), any(), any())(any(), any())
           }
 
           "when it is an OSS scheme" - {
 
-            "and then None when an active match is found" in {
+            "must return None when an active match is found" in {
 
-              val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+              val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
               implicit val dataRequest: DataRequest[AnyContent] =
-                DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+                DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
               val activeMatch: Match = aMatch.copy(
                 traderId = TraderId(traderId = country2PreviousSchemeNumber2.previousSchemeNumber),
@@ -554,6 +667,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
                 exclusionEffectiveDate = None
               )
 
+              when(mockCoreRegistrationValidationService.searchForeignTaxReference(any(), any())(any(), any())) thenReturn None.toFuture
               when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
               when(mockCoreRegistrationValidationService.searchScheme(
                 eqTo(country2PreviousSchemeNumber2.previousSchemeNumber),
@@ -563,20 +677,21 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               )(any(), any())) thenReturn Some(activeMatch).toFuture
 
               val service: CoreSavedAnswersRevalidationService =
-                new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+                new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
               val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
               result `mustBe` None
+              verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(clientTaxRefence), eqTo(clientCountry.code))(any(), any())
               verify(mockCoreRegistrationValidationService, times(6)).searchScheme(any(), any(), any(), any())(any(), any())
             }
 
-            "and then return the corresponding URL when a quarantined match is found" in {
+            "must return the corresponding URL when a quarantined match is found" in {
 
-              val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+              val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
               implicit val dataRequest: DataRequest[AnyContent] = {
-                DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+                DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
               }
 
               val quarantinedMatch: Match = aMatch.copy(
@@ -586,6 +701,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
                 exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
               )
 
+              when(mockCoreRegistrationValidationService.searchForeignTaxReference(any(), any())(any(), any())) thenReturn None.toFuture
               when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
               when(mockCoreRegistrationValidationService.searchScheme(
                 eqTo(country1PreviousSchemeNumber2.previousSchemeNumber),
@@ -595,14 +711,15 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               )(any(), any())) thenReturn Some(quarantinedMatch).toFuture
 
               val service: CoreSavedAnswersRevalidationService =
-                new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+                new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
               val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
-              result `mustBe` Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+              result `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
                 countryCode = quarantinedMatch.memberState,
                 exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
-              ).url)
+              ).url))
+              verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(clientTaxRefence), eqTo(clientCountry.code))(any(), any())
               verify(mockCoreRegistrationValidationService, times(2)).searchScheme(any(), any(), any(), any())(any(), any())
             }
           }
@@ -611,10 +728,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
             "and then return the corresponding URL when an active match is found" in {
 
-              val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+              val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
               implicit val dataRequest: DataRequest[AnyContent] =
-                DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+                DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
               val activeMatch: Match = aMatch.copy(
                 traderId = TraderId(traderId = s"IM${country2PreviousSchemeNumber1.previousSchemeNumber}"),
@@ -623,29 +740,41 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
                 exclusionEffectiveDate = None
               )
 
+              when(mockSessionRepository.set(any())) thenReturn true.toFuture
+              when(mockCoreRegistrationValidationService.searchForeignTaxReference(any(), any())(any(), any())) thenReturn None.toFuture
               when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
               when(mockCoreRegistrationValidationService.searchScheme(
                 eqTo(country2PreviousSchemeNumber1.previousSchemeNumber),
                 eqTo(allPreviousRegistrations.tail.head.previousSchemesDetails.value.head.previousScheme.value),
-                eqTo(Some(intermediaryNumber)),
+                eqTo(Some(requestIntermediaryNumber)),
                 eqTo(allPreviousRegistrations.tail.head.previousEuCountry.code)
               )(any(), any())) thenReturn Some(activeMatch).toFuture
 
               val service: CoreSavedAnswersRevalidationService =
-                new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+                new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
               val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
-              result `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+              val activeTrader = ActiveTraderResult(
+                isReversal = activeMatch.exclusionStatusCode.contains(-1),
+                exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+              )
+
+              val expectedUserAnswers: UserAnswers = request.userAnswers
+                .set(ActiveTraderResultQuery, activeTrader).success.value
+
+              result `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+              verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(clientTaxRefence), eqTo(clientCountry.code))(any(), any())
               verify(mockCoreRegistrationValidationService, times(4)).searchScheme(any(), any(), any(), any())(any(), any())
+              verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
             }
 
             "and then return the corresponding URL when a quarantined match is found" in {
 
-              val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+              val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
               implicit val dataRequest: DataRequest[AnyContent] =
-                DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+                DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
               val quarantinedMatch: Match = aMatch.copy(
                 traderId = TraderId(traderId = s"IM${country1PreviousSchemeNumber1.previousSchemeNumber}"),
@@ -654,22 +783,24 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
                 exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
               )
 
+              when(mockCoreRegistrationValidationService.searchForeignTaxReference(any(), any())(any(), any())) thenReturn None.toFuture
               when(mockCoreRegistrationValidationService.searchScheme(
                 eqTo(country1PreviousSchemeNumber1.previousSchemeNumber),
                 eqTo(allPreviousRegistrations.head.previousSchemesDetails.value.head.previousScheme.value),
-                eqTo(Some(intermediaryNumber)),
+                eqTo(Some(requestIntermediaryNumber)),
                 eqTo(allPreviousRegistrations.head.previousEuCountry.code)
               )(any(), any())) thenReturn Some(quarantinedMatch).toFuture
 
               val service: CoreSavedAnswersRevalidationService =
-                new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+                new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
               val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
 
-              result `mustBe` Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+              result `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
                 countryCode = quarantinedMatch.memberState,
                 exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
-              ).url)
+              ).url))
+              verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(clientTaxRefence), eqTo(clientCountry.code))(any(), any())
               verify(mockCoreRegistrationValidationService, times(1)).searchScheme(any(), any(), any(), any())(any(), any())
             }
           }
@@ -684,7 +815,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateUKVrn"))
 
@@ -703,19 +834,19 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val updatedUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo.copy(vatInfo = Some(vatCustomerInfoWithDeregistration))
 
-        val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+        val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
         implicit val dataRequest: DataRequest[AnyContent] =
-          DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+          DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateUKVrn"))
 
         val result = service invokePrivate privateMethodCall(waypoints, vrn, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(routes.ExpiredVrnDateController.onPageLoad().url)
+        result.futureValue `mustBe` Some(Redirect(routes.ExpiredVrnDateController.onPageLoad().url))
         verifyNoInteractions(mockCoreRegistrationValidationService)
       }
 
@@ -728,15 +859,15 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val updatedUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo.copy(vatInfo = Some(vatCustomerInfoWithDeregistration))
 
-        val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+        val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
         implicit val dataRequest: DataRequest[AnyContent] =
-          DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+          DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
         when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateUKVrn"))
 
@@ -746,7 +877,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(vrn))(any(), any())
       }
 
-      "must return the corresponding URL when an  active match is found" in {
+      "must return the corresponding URL when an active match is found" in {
 
         val activeVrn: Vrn = arbitraryVrn.arbitrary.sample.value
         val activeMatch: Match = aMatch.copy(
@@ -755,17 +886,27 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           exclusionEffectiveDate = None
         )
 
+        when(mockSessionRepository.set(any())) thenReturn true.toFuture
         when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn Some(activeMatch).toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateUKVrn"))
 
         val result = service invokePrivate privateMethodCall(waypoints, activeVrn, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+        val activeTrader = ActiveTraderResult(
+          isReversal = activeMatch.exclusionStatusCode.contains(-1),
+          exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+        )
+
+        val expectedUserAnswers: UserAnswers = request.userAnswers
+          .set(ActiveTraderResultQuery, activeTrader).success.value
+
+        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
         verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(activeVrn))(any(), any())
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
       }
     }
 
@@ -778,7 +919,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         when(mockCoreRegistrationValidationService.searchTraderId(any())(any(), any())) thenReturn None.toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateTraderId"))
 
@@ -791,6 +932,38 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
       "must return the corresponding URL when an active match is found" in {
 
         val ukReferenceNumber: String = arbitraryTraderId.arbitrary.sample.value.traderId
+        val activeMatch: Match = aMatch.copy(
+          traderId = TraderId(traderId = s"IM$ukReferenceNumber"),
+          exclusionStatusCode = None,
+          exclusionEffectiveDate = None
+        )
+
+        when(mockSessionRepository.set(any())) thenReturn true.toFuture
+        when(mockCoreRegistrationValidationService.searchTraderId(any())(any(), any())) thenReturn Some(activeMatch).toFuture
+
+        val service: CoreSavedAnswersRevalidationService =
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
+
+        val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateTraderId"))
+
+        val result = service invokePrivate privateMethodCall(ukReferenceNumber, hc, dataRequest)
+
+        val activeTrader = ActiveTraderResult(
+          isReversal = activeMatch.exclusionStatusCode.contains(-1),
+          exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+        )
+
+        val expectedUserAnswers: UserAnswers = request.userAnswers
+          .set(ActiveTraderResultQuery, activeTrader).success.value
+
+        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        verify(mockCoreRegistrationValidationService, times(1)).searchTraderId(eqTo(ukReferenceNumber))(any(), any())
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
+      }
+
+      "must return the corresponding URL when a quarantined match is found" in {
+
+        val ukReferenceNumber: String = arbitraryTraderId.arbitrary.sample.value.traderId
         val quarantinedMatch: Match = aMatch.copy(
           traderId = TraderId(traderId = s"IM$ukReferenceNumber"),
           exclusionStatusCode = Some(ExclusionReason.FailsToComply.numberValue),
@@ -800,16 +973,16 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         when(mockCoreRegistrationValidationService.searchTraderId(any())(any(), any())) thenReturn Some(quarantinedMatch).toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateTraderId"))
 
         val result = service invokePrivate privateMethodCall(ukReferenceNumber, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
           countryCode = quarantinedMatch.memberState,
           exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
-        ).url)
+        ).url))
         verify(mockCoreRegistrationValidationService, times(1)).searchTraderId(eqTo(ukReferenceNumber))(any(), any())
       }
     }
@@ -824,7 +997,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         when(mockCoreRegistrationValidationService.searchForeignTaxReference(any(), any())(any(), any())) thenReturn None.toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateForeignTaxReference"))
 
@@ -845,16 +1018,54 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           exclusionEffectiveDate = None
         )
 
+        when(mockSessionRepository.set(any())) thenReturn true.toFuture
         when(mockCoreRegistrationValidationService.searchForeignTaxReference(any(), any())(any(), any())) thenReturn Some(activeMatch).toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateForeignTaxReference"))
 
         val result = service invokePrivate privateMethodCall(foreignTaxReference, countryCode, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+        val activeTrader = ActiveTraderResult(
+          isReversal = activeMatch.exclusionStatusCode.contains(-1),
+          exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+        )
+
+        val expectedUserAnswers: UserAnswers = request.userAnswers
+          .set(ActiveTraderResultQuery, activeTrader).success.value
+
+        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(foreignTaxReference), eqTo(countryCode))(any(), any())
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
+      }
+
+      "must return the corresponding URL when a quarantined match is found" in {
+
+        val foreignTaxReference: String = arbitrary[String].sample.value
+        val countryCode: String = arbitraryCountry.arbitrary.sample.value.code
+
+        val quarantinedMatch: Match = aMatch.copy(
+          traderId = TraderId(traderId = s"IM$foreignTaxReference"),
+          memberState = countryCode,
+          exclusionStatusCode = Some(ExclusionReason.FailsToComply.numberValue),
+          exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
+        )
+
+        when(mockCoreRegistrationValidationService.searchForeignTaxReference(any(), any())(any(), any())) thenReturn Some(quarantinedMatch).toFuture
+
+        val service: CoreSavedAnswersRevalidationService =
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
+
+        val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateForeignTaxReference"))
+
+        val result = service invokePrivate privateMethodCall(foreignTaxReference, countryCode, hc, dataRequest)
+
+        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+          countryCode = quarantinedMatch.memberState,
+          exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+        ).url))
         verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(foreignTaxReference), eqTo(countryCode))(any(), any())
       }
     }
@@ -869,7 +1080,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         when(mockCoreRegistrationValidationService.searchEuTaxId(any(), any())(any(), any())) thenReturn None.toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateEuTaxId"))
 
@@ -884,6 +1095,41 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         val euTaxReference: String = arbitraryEuTaxReference.sample.value
         val countryCode: String = arbitraryCountry.arbitrary.sample.value.code
 
+        val activeMatch: Match = aMatch.copy(
+          traderId = TraderId(traderId = s"IM$euTaxReference"),
+          memberState = countryCode,
+          exclusionStatusCode = None,
+          exclusionEffectiveDate = None
+        )
+
+        when(mockSessionRepository.set(any())) thenReturn true.toFuture
+        when(mockCoreRegistrationValidationService.searchEuTaxId(any(), any())(any(), any())) thenReturn Some(activeMatch).toFuture
+
+        val service: CoreSavedAnswersRevalidationService =
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
+
+        val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateEuTaxId"))
+
+        val result = service invokePrivate privateMethodCall(euTaxReference, countryCode, hc, dataRequest)
+
+        val activeTrader = ActiveTraderResult(
+          isReversal = activeMatch.exclusionStatusCode.contains(-1),
+          exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+        )
+
+        val expectedUserAnswers: UserAnswers = request.userAnswers
+          .set(ActiveTraderResultQuery, activeTrader).success.value
+
+        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(countryCode))(any(), any())
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
+      }
+
+      "must return the corresponding URL when a quarantined match is found" in {
+
+        val euTaxReference: String = arbitraryEuTaxReference.sample.value
+        val countryCode: String = arbitraryCountry.arbitrary.sample.value.code
+
         val quarantinedMatch: Match = aMatch.copy(
           traderId = TraderId(traderId = s"IM$euTaxReference"),
           memberState = countryCode,
@@ -894,16 +1140,16 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         when(mockCoreRegistrationValidationService.searchEuTaxId(any(), any())(any(), any())) thenReturn Some(quarantinedMatch).toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateEuTaxId"))
 
         val result = service invokePrivate privateMethodCall(euTaxReference, countryCode, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
           countryCode = quarantinedMatch.memberState,
           exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
-        ).url)
+        ).url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(countryCode))(any(), any())
       }
     }
@@ -918,7 +1164,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         when(mockCoreRegistrationValidationService.searchEuVrn(any(), any())(any(), any())) thenReturn None.toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateEuVrn"))
 
@@ -940,16 +1186,54 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           exclusionEffectiveDate = None
         )
 
+        when(mockSessionRepository.set(any())) thenReturn true.toFuture
         when(mockCoreRegistrationValidationService.searchEuVrn(any(), any())(any(), any())) thenReturn Some(activeMatch).toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateEuVrn"))
 
         val result = service invokePrivate privateMethodCall(euVrn, countryCode, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+        val activeTrader = ActiveTraderResult(
+          isReversal = activeMatch.exclusionStatusCode.contains(-1),
+          exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+        )
+
+        val expectedUserAnswers: UserAnswers = request.userAnswers
+          .set(ActiveTraderResultQuery, activeTrader).success.value
+
+        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVrn), eqTo(countryCode))(any(), any())
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
+      }
+
+      "must return the corresponding URL when a quarantined match is found" in {
+
+        val euVrn: String = arbitraryEuVatNumber.sample.value
+        val countryCode: String = euVrn.substring(0, 2)
+
+        val quarantinedMatch: Match = aMatch.copy(
+          traderId = TraderId(traderId = s"IM$euVrn"),
+          memberState = countryCode,
+          exclusionStatusCode = Some(ExclusionReason.FailsToComply.numberValue),
+          exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
+        )
+
+        when(mockCoreRegistrationValidationService.searchEuVrn(any(), any())(any(), any())) thenReturn Some(quarantinedMatch).toFuture
+
+        val service: CoreSavedAnswersRevalidationService =
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
+
+        val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateEuVrn"))
+
+        val result = service invokePrivate privateMethodCall(euVrn, countryCode, hc, dataRequest)
+
+        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+          countryCode = quarantinedMatch.memberState,
+          exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+        ).url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVrn), eqTo(countryCode))(any(), any())
       }
     }
@@ -980,16 +1264,16 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           .set(EuTaxReferencePage(index + 1), euTaxReference).success.value
           .set(AddEuDetailsPage(), false).success.value
 
-        val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+        val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
         implicit val dataRequest: DataRequest[AnyContent] =
-          DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+          DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
         when(mockCoreRegistrationValidationService.searchEuVrn(any(), any())(any(), any())) thenReturn None.toFuture
         when(mockCoreRegistrationValidationService.searchEuTaxId(any(), any())(any(), any())) thenReturn None.toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val list: List[EuDetails] = request.userAnswers.get(AllEuDetailsQuery).getOrElse(List.empty)
 
@@ -1026,10 +1310,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           .set(EuTaxReferencePage(index + 1), euTaxReference).success.value
           .set(AddEuDetailsPage(), false).success.value
 
-        val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+        val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
         implicit val dataRequest: DataRequest[AnyContent] =
-          DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+          DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
         val activeMatch: Match = aMatch.copy(
           traderId = TraderId(traderId = s"IM$euTaxReference"),
@@ -1038,11 +1322,12 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           exclusionEffectiveDate = None
         )
 
+        when(mockSessionRepository.set(any())) thenReturn true.toFuture
         when(mockCoreRegistrationValidationService.searchEuVrn(any(), any())(any(), any())) thenReturn None.toFuture
         when(mockCoreRegistrationValidationService.searchEuTaxId(any(), any())(any(), any())) thenReturn Some(activeMatch).toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val list: List[EuDetails] = request.userAnswers.get(AllEuDetailsQuery).getOrElse(List.empty)
 
@@ -1050,9 +1335,18 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val result = service invokePrivate privateMethodCall(list, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+        val activeTrader = ActiveTraderResult(
+          isReversal = activeMatch.exclusionStatusCode.contains(-1),
+          exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+        )
+
+        val expectedUserAnswers: UserAnswers = updatedUserAnswers
+          .set(ActiveTraderResultQuery, activeTrader).success.value
+
+        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVrn), eqTo(country1.code))(any(), eqTo(dataRequest))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(country2.code))(any(), eqTo(dataRequest))
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
       }
 
       "must return the corresponding URL when the first country with a quarantined match is found in the user answers" in {
@@ -1079,10 +1373,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           .set(EuTaxReferencePage(index + 1), euTaxReference).success.value
           .set(AddEuDetailsPage(), false).success.value
 
-        val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+        val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
         implicit val dataRequest: DataRequest[AnyContent] =
-          DataRequest(request, vrn.vrn, updatedUserAnswers, intermediaryNumber, None)
+          DataRequest(request, vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
         val quarantinedMatch: Match = aMatch.copy(
           traderId = TraderId(traderId = s"IM$euVrn"),
@@ -1095,7 +1389,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         when(mockCoreRegistrationValidationService.searchEuTaxId(any(), any())(any(), any())) thenReturn None.toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val list: List[EuDetails] = request.userAnswers.get(AllEuDetailsQuery).getOrElse(List.empty)
 
@@ -1103,10 +1397,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val result = service invokePrivate privateMethodCall(list, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
           countryCode = quarantinedMatch.memberState,
           exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
-        ).url)
+        ).url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVrn), eqTo(country1.code))(any(), eqTo(dataRequest))
         verifyNoMoreInteractions(mockCoreRegistrationValidationService)
       }
@@ -1127,7 +1421,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         when(mockCoreRegistrationValidationService.searchEuVrn(any(), any())(any(), any())) thenReturn None.toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateEuDetails"))
 
@@ -1155,21 +1449,107 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           exclusionEffectiveDate = None
         )
 
+        when(mockSessionRepository.set(any())) thenReturn true.toFuture
         when(mockCoreRegistrationValidationService.searchEuVrn(any(), any())(any(), any())) thenReturn Some(activeMatch).toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateEuDetails"))
 
         val result = service invokePrivate privateMethodCall(euDetails, Some(euVatNumber), hc, dataRequest)
 
-        result.futureValue `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+        val activeTrader = ActiveTraderResult(
+          isReversal = activeMatch.exclusionStatusCode.contains(-1),
+          exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+        )
+
+        val expectedUserAnswers: UserAnswers = request.userAnswers
+          .set(ActiveTraderResultQuery, activeTrader).success.value
+
+        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVatNumber), eqTo(euCountry.code))(any(), any())
+        verifyNoMoreInteractions(mockCoreRegistrationValidationService)
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
+      }
+
+      "must return the corresponding URL when a quarantined match is found for an EU VAT number" in {
+
+        val euVatNumber: String = arbitraryEuVatNumber.sample.value
+        val euCountry: Country = Country.euCountries.find(_.code == euVatNumber.substring(0, 2)).head
+
+        val euDetails: EuDetails = arbitraryEuDetails.arbitrary.sample.value.copy(
+          euVatNumber = Some(euVatNumber),
+          euCountry = euCountry
+        )
+
+        val quarantinedMatch: Match = aMatch.copy(
+          traderId = TraderId(traderId = s"IM$euVatNumber"),
+          memberState = euCountry.code,
+          exclusionStatusCode = Some(ExclusionReason.FailsToComply.numberValue),
+          exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
+        )
+
+        when(mockCoreRegistrationValidationService.searchEuVrn(any(), any())(any(), any())) thenReturn Some(quarantinedMatch).toFuture
+
+        val service: CoreSavedAnswersRevalidationService =
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
+
+        val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateEuDetails"))
+
+        val result = service invokePrivate privateMethodCall(euDetails, Some(euVatNumber), hc, dataRequest)
+
+        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+          countryCode = quarantinedMatch.memberState,
+          exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+        ).url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVatNumber), eqTo(euCountry.code))(any(), any())
         verifyNoMoreInteractions(mockCoreRegistrationValidationService)
       }
 
       "must return the corresponding URL when an active match is found for an EU Tax Reference number" in {
+
+        val euTaxReference: String = arbitraryEuTaxReference.sample.value
+        val euCountry: Country = arbitraryCountry.arbitrary.sample.value
+
+        val euDetails: EuDetails = arbitraryEuDetails.arbitrary.sample.value.copy(
+          euVatNumber = None,
+          euTaxReference = Some(euTaxReference),
+          euCountry = euCountry
+        )
+
+        val activeMatch: Match = aMatch.copy(
+          traderId = TraderId(traderId = s"IM$euTaxReference"),
+          memberState = euCountry.code,
+          exclusionStatusCode = None,
+          exclusionEffectiveDate = None
+        )
+
+        when(mockSessionRepository.set(any())) thenReturn true.toFuture
+        when(mockCoreRegistrationValidationService.searchEuTaxId(any(), any())(any(), any())) thenReturn Some(activeMatch).toFuture
+
+        val service: CoreSavedAnswersRevalidationService =
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
+
+        val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateEuDetails"))
+
+        val result = service invokePrivate privateMethodCall(euDetails, None, hc, dataRequest)
+
+        val activeTrader = ActiveTraderResult(
+          isReversal = activeMatch.exclusionStatusCode.contains(-1),
+          exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+        )
+
+        val expectedUserAnswers: UserAnswers = request.userAnswers
+          .set(ActiveTraderResultQuery, activeTrader).success.value
+
+        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(euCountry.code))(any(), any())
+        verifyNoMoreInteractions(mockCoreRegistrationValidationService)
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
+      }
+
+      "must return the corresponding URL when a quarantined match is found for an EU Tax Reference number" in {
 
         val euTaxReference: String = arbitraryEuTaxReference.sample.value
         val euCountry: Country = arbitraryCountry.arbitrary.sample.value
@@ -1190,16 +1570,16 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         when(mockCoreRegistrationValidationService.searchEuTaxId(any(), any())(any(), any())) thenReturn Some(quarantinedMatch).toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateEuDetails"))
 
         val result = service invokePrivate privateMethodCall(euDetails, None, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
           countryCode = quarantinedMatch.memberState,
           exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
-        ).url)
+        ).url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(euCountry.code))(any(), any())
         verifyNoMoreInteractions(mockCoreRegistrationValidationService)
       }
@@ -1214,7 +1594,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         val errorMessage: String = s"$euDetails has neither a euVatNumber or euTaxReference."
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateEuDetails"))
 
@@ -1235,11 +1615,11 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("checkAllPreviousRegistrations"))
 
-          val result = service invokePrivate privateMethodCall(allPreviousRegistrations, Some(intermediaryNumber), hc, dataRequest)
+          val result = service invokePrivate privateMethodCall(allPreviousRegistrations, Some(requestIntermediaryNumber), hc, dataRequest)
 
           result.futureValue `mustBe` None
           verify(mockCoreRegistrationValidationService, times(6)).searchScheme(any(), any(), any(), any())(any(), any())
@@ -1255,17 +1635,17 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("checkAllPreviousRegistrations"))
 
-          val result = service invokePrivate privateMethodCall(updatedAllPreviousRegistrations, Some(intermediaryNumber), hc, dataRequest)
+          val result = service invokePrivate privateMethodCall(updatedAllPreviousRegistrations, Some(requestIntermediaryNumber), hc, dataRequest)
 
           result.futureValue `mustBe` None
           verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
             eqTo(updatedAllPreviousRegistrations.tail.head.previousSchemesDetails.value.head.previousSchemeNumbers.value.previousSchemeNumber.value),
             eqTo(updatedAllPreviousRegistrations.tail.head.previousSchemesDetails.value.head.previousScheme.value),
-            eqTo(Some(intermediaryNumber)),
+            eqTo(Some(requestIntermediaryNumber)),
             eqTo(updatedAllPreviousRegistrations.tail.head.previousEuCountry.code)
           )(any(), any())
         }
@@ -1292,7 +1672,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               (any(), any())) thenReturn Some(activeMatch).toFuture
 
             val service: CoreSavedAnswersRevalidationService =
-              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
             val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("checkAllPreviousRegistrations"))
 
@@ -1322,16 +1702,16 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               (any(), any())) thenReturn Some(quarantinedMatch).toFuture
 
             val service: CoreSavedAnswersRevalidationService =
-              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
             val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("checkAllPreviousRegistrations"))
 
             val result = service invokePrivate privateMethodCall(allPreviousRegistrations, None, hc, dataRequest)
 
-            result.futureValue `mustBe` Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+            result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
               countryCode = quarantinedMatch.memberState,
               exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
-            ).url)
+            ).url))
             verify(mockCoreRegistrationValidationService, times(6)).searchScheme(any(), any(), any(), any())(any(), any())
           }
         }
@@ -1349,22 +1729,32 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               exclusionEffectiveDate = None
             )
 
+            when(mockSessionRepository.set(any())) thenReturn true.toFuture
             when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeMatch).toFuture
 
             val service: CoreSavedAnswersRevalidationService =
-              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
             val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("checkAllPreviousRegistrations"))
 
-            val result = service invokePrivate privateMethodCall(allPreviousRegistrations, Some(intermediaryNumber), hc, dataRequest)
+            val result = service invokePrivate privateMethodCall(allPreviousRegistrations, Some(requestIntermediaryNumber), hc, dataRequest)
 
-            result.futureValue `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+            val activeTrader = ActiveTraderResult(
+              isReversal = activeMatch.exclusionStatusCode.contains(-1),
+              exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+            )
+
+            val expectedUserAnswers: UserAnswers = request.userAnswers
+              .set(ActiveTraderResultQuery, activeTrader).success.value
+
+            result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
             verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
               eqTo(previousSchemeNumber),
               eqTo(allPreviousRegistrations.head.previousSchemesDetails.value.head.previousScheme.value),
-              eqTo(Some(intermediaryNumber)),
+              eqTo(Some(requestIntermediaryNumber)),
               eqTo(allPreviousRegistrations.head.previousEuCountry.code)
             )(any(), any())
+            verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
           }
 
           "and return the corresponding URL when a quarantined match is found" in {
@@ -1382,21 +1772,21 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             when(mockCoreRegistrationValidationService.searchScheme(
               eqTo(previousSchemeNumber),
               eqTo(allPreviousRegistrations.tail.head.previousSchemesDetails.value.head.previousScheme.value),
-              eqTo(Some(intermediaryNumber)),
+              eqTo(Some(requestIntermediaryNumber)),
               eqTo(allPreviousRegistrations.tail.head.previousEuCountry.code)
             )(any(), any())) thenReturn Some(quarantinedMatch).toFuture
 
             val service: CoreSavedAnswersRevalidationService =
-              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+              new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
             val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("checkAllPreviousRegistrations"))
 
-            val result = service invokePrivate privateMethodCall(Seq(previousRegistration1, previousRegistration2), Some(intermediaryNumber), hc, dataRequest)
+            val result = service invokePrivate privateMethodCall(Seq(previousRegistration1, previousRegistration2), Some(requestIntermediaryNumber), hc, dataRequest)
 
-            result.futureValue `mustBe` Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+            result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
               countryCode = quarantinedMatch.memberState,
               exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
-            ).url)
+            ).url))
             verify(mockCoreRegistrationValidationService, times(4)).searchScheme(any(), any(), any(), any())(any(), any())
           }
         }
@@ -1414,7 +1804,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidatePreviousSchemeDetails"))
 
@@ -1439,7 +1829,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn None.toFuture
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidatePreviousSchemeDetails"))
 
@@ -1470,7 +1860,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeMatch).toFuture
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidatePreviousSchemeDetails"))
 
@@ -1505,16 +1895,16 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           )(any(), any())) thenReturn Some(quarantinedMatch).toFuture
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidatePreviousSchemeDetails"))
 
           val result = service invokePrivate privateMethodCall(countryCode, allPreviousSchemeDetails, None, hc, dataRequest)
 
-          result.futureValue `mustBe` Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+          result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
             countryCode = quarantinedMatch.memberState,
             exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
-          ).url)
+          ).url))
           verify(mockCoreRegistrationValidationService, times(2)).searchScheme(any(), any(), any(), eqTo(countryCode))(any(), any())
         }
       }
@@ -1532,22 +1922,32 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             exclusionEffectiveDate = None
           )
 
+          when(mockSessionRepository.set(any())) thenReturn true.toFuture
           when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(activeMatch).toFuture
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidatePreviousSchemeDetails"))
 
-          val result = service invokePrivate privateMethodCall(countryCode, allPreviousSchemeDetails, Some(intermediaryNumber), hc, dataRequest)
+          val result = service invokePrivate privateMethodCall(countryCode, allPreviousSchemeDetails, Some(requestIntermediaryNumber), hc, dataRequest)
 
-          result.futureValue `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+          val activeTrader = ActiveTraderResult(
+            isReversal = activeMatch.exclusionStatusCode.contains(-1),
+            exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+          )
+
+          val expectedUserAnswers: UserAnswers = request.userAnswers
+            .set(ActiveTraderResultQuery, activeTrader).success.value
+
+          result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
           verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
             eqTo(previousSchemeNumber),
             eqTo(allPreviousSchemeDetails.head.previousScheme.value),
-            eqTo(Some(intermediaryNumber)),
+            eqTo(Some(requestIntermediaryNumber)),
             eqTo(countryCode)
           )(any(), any())
+          verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
         }
 
         "must return the corresponding URL when a quarantined match is found" in {
@@ -1564,20 +1964,20 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           when(mockCoreRegistrationValidationService.searchScheme(any(), any(), any(), any())(any(), any())) thenReturn Some(quarantinedMatch).toFuture
 
           val service: CoreSavedAnswersRevalidationService =
-            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+            new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidatePreviousSchemeDetails"))
 
-          val result = service invokePrivate privateMethodCall(countryCode, allPreviousSchemeDetails, Some(intermediaryNumber), hc, dataRequest)
+          val result = service invokePrivate privateMethodCall(countryCode, allPreviousSchemeDetails, Some(requestIntermediaryNumber), hc, dataRequest)
 
-          result.futureValue `mustBe` Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+          result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
             countryCode = quarantinedMatch.memberState,
             exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
-          ).url)
+          ).url))
           verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
             eqTo(previousSchemeNumber),
             eqTo(allPreviousSchemeDetails.head.previousScheme.value),
-            eqTo(Some(intermediaryNumber)),
+            eqTo(Some(requestIntermediaryNumber)),
             eqTo(countryCode)
           )(any(), any())
         }
@@ -1589,11 +1989,11 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
       "must return None when no active match is found" in {
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("activeMatchRedirectUrl"))
 
-        val result = service invokePrivate privateMethodCall(None)
+        val result = service invokePrivate privateMethodCall(None, dataRequest)
 
         result.futureValue `mustBe` None
       }
@@ -1607,36 +2007,47 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           exclusionEffectiveDate = None
         )
 
+        when(mockSessionRepository.set(any())) thenReturn true.toFuture
+
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("activeMatchRedirectUrl"))
 
-        val result = service invokePrivate privateMethodCall(Some(activeMatch))
+        val result = service invokePrivate privateMethodCall(Some(activeMatch), dataRequest)
 
-        result.futureValue `mustBe` Some(routes.ClientAlreadyRegisteredController.onPageLoad().url)
+        val activeTrader = ActiveTraderResult(
+          isReversal = activeMatch.exclusionStatusCode.contains(-1),
+          exclusionEffectiveDate = activeMatch.exclusionEffectiveDate
+        )
+
+        val expectedUserAnswers: UserAnswers = request.userAnswers
+          .set(ActiveTraderResultQuery, activeTrader).success.value
+
+        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
       }
 
-      "must return the URL for Other Country Excluded And Quarantined page when an active match exists and the trader is quarantined" in {
+      "must return the URL for Other Country Excluded And Quarantined page when a quarantined match exists" in {
 
-        val activeVrn: Vrn = arbitraryVrn.arbitrary.sample.value
+        val quarantinedVrn: Vrn = arbitraryVrn.arbitrary.sample.value
         val quarantinedMatch: Match = aMatch.copy(
-          traderId = TraderId(traderId = s"IM${activeVrn.vrn}"),
+          traderId = TraderId(traderId = s"IM${quarantinedVrn.vrn}"),
           exclusionStatusCode = Some(ExclusionReason.FailsToComply.numberValue),
           exclusionEffectiveDate = Some(LocalDate.now(stubClockAtArbitraryDate).minusYears(2).plusDays(1).toString)
         )
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("activeMatchRedirectUrl"))
 
-        val result = service invokePrivate privateMethodCall(Some(quarantinedMatch))
+        val result = service invokePrivate privateMethodCall(Some(quarantinedMatch), dataRequest)
 
-        result.futureValue `mustBe` Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
           countryCode = quarantinedMatch.memberState,
           exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
-        ).url)
+        ).url))
       }
     }
 
@@ -1645,7 +2056,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
       "must return false if there is no Vat Customer Info present" in {
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Boolean](Symbol("checkVrnExpired"))
 
@@ -1657,7 +2068,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
       "must return false if deregistration date is absent" in {
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Boolean](Symbol("checkVrnExpired"))
 
@@ -1674,7 +2085,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         )
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Boolean](Symbol("checkVrnExpired"))
 
@@ -1691,7 +2102,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         )
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Boolean](Symbol("checkVrnExpired"))
 
@@ -1708,7 +2119,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         )
 
         val service: CoreSavedAnswersRevalidationService =
-          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, stubClockAtArbitraryDate)
+          new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Boolean](Symbol("checkVrnExpired"))
 

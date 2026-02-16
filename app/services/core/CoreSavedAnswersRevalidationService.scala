@@ -1,19 +1,40 @@
+/*
+ * Copyright 2026 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package services.core
 
-import controllers.routes
+import controllers.{SetActiveTraderResult, routes}
 import jakarta.inject.Inject
 import logging.Logging
 import models.Country
 import models.core.Match
-import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
+import models.domain.VatCustomerInfo
 import models.previousRegistrations.*
 import models.requests.DataRequest
 import models.vatEuDetails.EuDetails
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.{ClientCountryBasedPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, Waypoints}
+import play.api.libs.json.OFormat.oFormatFromReadsAndOWrites
+import play.api.libs.json.Reads
+import play.api.mvc.Result
+import play.api.mvc.Results.Redirect
 import queries.euDetails.AllEuDetailsQuery
-import queries.previousRegistrations.{AllPreviousRegistrationsQuery, AllPreviousRegistrationsWithOptionalVatNumberQuery}
+import queries.previousRegistrations.AllPreviousRegistrationsWithOptionalVatNumberQuery
+import repositories.SessionRepository
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.FutureSyntax.FutureOps
@@ -23,10 +44,25 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class CoreSavedAnswersRevalidationService @Inject()(
                                                      coreRegistrationValidationService: CoreRegistrationValidationService,
+                                                     sessionRepository: SessionRepository,
                                                      clock: Clock
-                                                   )(implicit ec: ExecutionContext) extends Logging {
+                                                   )(implicit ec: ExecutionContext) extends SetActiveTraderResult with Logging {
 
-  def checkAndValidateSavedUserAnswers(waypoints: Waypoints)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
+  def checkAndValidateSavedUserAnswers(waypoints: Waypoints)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
+    checkClientDetails(waypoints).flatMap {
+      case None =>
+        checkEuDetails().flatMap {
+          case None =>
+            checkPreviousRegistrations()
+
+          case redirectUrl => redirectUrl.toFuture
+        }
+
+      case redirectUrl => redirectUrl.toFuture
+    }
+  }
+
+  private def checkClientDetails(waypoints: Waypoints)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
     request.userAnswers.get(ClientVatNumberPage) match {
       case Some(value) =>
         revalidateUKVrn(waypoints, Vrn(value))
@@ -54,31 +90,43 @@ class CoreSavedAnswersRevalidationService @Inject()(
                     revalidateForeignTaxReference(value, country.code)
 
                   case _ =>
-                    request.userAnswers.get(HasFixedEstablishmentPage) match {
-                      case Some(true) =>
-                        val euDetails: List[EuDetails] = request.userAnswers.get(AllEuDetailsQuery).getOrElse(List.empty)
-                        checkAllEuDetails(euDetails)
-
-                      case _ =>
-                        request.userAnswers.get(PreviouslyRegisteredPage) match {
-                          case Some(true) =>
-                            // TODO -> NEED TO USE EITHER RAWQUERY OR OPTION
-                            val previousRegistrations: List[PreviousRegistrationDetailsWithOptionalVatNumber] = request.userAnswers.get(AllPreviousRegistrationsWithOptionalVatNumberQuery).getOrElse(List.empty)
-                            checkAllPreviousRegistrations(previousRegistrations, Some(request.intermediaryNumber))
-
-                          case _ =>
-                            None.toFuture
-                        }
-                    }
+                    val message: String = "There was an error when validating user answers." +
+                      "Could not find a UK VRN, a UTR, a Nino or a UK Tax Reference in the user answers."
+                    logger.error(message)
+                    val exception: IllegalStateException = new IllegalStateException(message)
+                    throw exception
                 }
             }
         }
     }
   }
 
-  private def revalidateUKVrn(waypoints: Waypoints, ukVrn: Vrn)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
+  private def checkEuDetails()(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
+    request.userAnswers.get(HasFixedEstablishmentPage) match {
+      case Some(true) =>
+        val euDetails: List[EuDetails] = request.userAnswers.get(AllEuDetailsQuery).getOrElse(List.empty)
+        checkAllEuDetails(euDetails)
+
+      case _ =>
+        None.toFuture
+    }
+  }
+
+  private def checkPreviousRegistrations()(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
+    request.userAnswers.get(PreviouslyRegisteredPage) match {
+      case Some(true) =>
+        val previousRegistrations =
+          request.userAnswers.get(AllPreviousRegistrationsWithOptionalVatNumberQuery).getOrElse(List.empty)
+        checkAllPreviousRegistrations(previousRegistrations, Some(request.intermediaryNumber))
+
+      case _ =>
+        None.toFuture
+    }
+  }
+
+  private def revalidateUKVrn(waypoints: Waypoints, ukVrn: Vrn)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
     if (checkVrnExpired(request.userAnswers.vatInfo)) {
-      Some(routes.ExpiredVrnDateController.onPageLoad(waypoints).url).toFuture
+      Some(Redirect(routes.ExpiredVrnDateController.onPageLoad(waypoints).url)).toFuture
     } else {
       coreRegistrationValidationService.searchUkVrn(ukVrn).flatMap { maybeActiveMatch =>
         activeMatchRedirectUrl(maybeActiveMatch)
@@ -86,7 +134,7 @@ class CoreSavedAnswersRevalidationService @Inject()(
     }
   }
 
-  private def revalidateTraderId(ukReferenceNumber: String)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
+  private def revalidateTraderId(ukReferenceNumber: String)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
     coreRegistrationValidationService.searchTraderId(ukReferenceNumber).flatMap { maybeActiveMatch =>
       activeMatchRedirectUrl(maybeActiveMatch)
     }
@@ -95,13 +143,13 @@ class CoreSavedAnswersRevalidationService @Inject()(
   private def revalidateForeignTaxReference(
                                              foreignReferenceNumber: String,
                                              countryCode: String
-                                           )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
+                                           )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
     coreRegistrationValidationService.searchForeignTaxReference(foreignReferenceNumber, countryCode).flatMap { maybeActiveMatch =>
       activeMatchRedirectUrl(maybeActiveMatch)
     }
   }
 
-  private def checkAllEuDetails(allEuDetails: List[EuDetails])(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
+  private def checkAllEuDetails(allEuDetails: List[EuDetails])(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
     allEuDetails match {
       case ::(currentEuDetails, remaining) =>
         revalidateEuDetails(currentEuDetails, currentEuDetails.euVatNumber).flatMap {
@@ -116,7 +164,7 @@ class CoreSavedAnswersRevalidationService @Inject()(
   private def revalidateEuDetails(
                                    euDetails: EuDetails,
                                    euVatNumber: Option[String]
-                                 )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
+                                 )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
     euVatNumber match {
       case Some(euVrn) =>
         revalidateEuVrn(euVrn, euDetails.euCountry.code)
@@ -137,7 +185,7 @@ class CoreSavedAnswersRevalidationService @Inject()(
   private def checkAllPreviousRegistrations(
                                              allPreviousRegistrations: List[PreviousRegistrationDetailsWithOptionalVatNumber],
                                              intermediaryNumber: Option[String]
-                                           )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
+                                           )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
     allPreviousRegistrations match {
       case ::(PreviousRegistrationDetailsWithOptionalVatNumber(
         country,
@@ -166,7 +214,7 @@ class CoreSavedAnswersRevalidationService @Inject()(
                                                countryCode: String,
                                                allPreviousSchemeDetails: List[SchemeDetailsWithOptionalVatNumber],
                                                intermediaryNumber: Option[String]
-                                             )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
+                                             )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
     allPreviousSchemeDetails match {
       case ::(SchemeDetailsWithOptionalVatNumber(Some(previousScheme), _, Some(SchemeNumbersWithOptionalVatNumber(Some(previousSchemeNumber)))), remaining) =>
         coreRegistrationValidationService.searchScheme(
@@ -194,7 +242,7 @@ class CoreSavedAnswersRevalidationService @Inject()(
   private def revalidateEuTaxId(
                                  euTaxReference: String,
                                  countryCode: String
-                               )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
+                               )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
     coreRegistrationValidationService.searchEuTaxId(euTaxReference, countryCode).flatMap { maybeActiveMatch =>
       activeMatchRedirectUrl(maybeActiveMatch)
     }
@@ -203,19 +251,25 @@ class CoreSavedAnswersRevalidationService @Inject()(
   private def revalidateEuVrn(
                                euVrn: String,
                                countryCode: String
-                             )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[String]] = {
+                             )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
     coreRegistrationValidationService.searchEuVrn(euVrn, countryCode).flatMap { maybeActiveMatch =>
       activeMatchRedirectUrl(maybeActiveMatch)
     }
   }
 
-  private def activeMatchRedirectUrl(maybeMatch: Option[Match]): Future[Option[String]] = {
+  private def activeMatchRedirectUrl(maybeMatch: Option[Match])(implicit request: DataRequest[_]): Future[Option[Result]] = {
     maybeMatch match {
       case Some(activeMatch) if activeMatch.isActiveTrader(clock) =>
-        Some(routes.ClientAlreadyRegisteredController.onPageLoad().url).toFuture
+        setActiveTraderResultAndRedirect(
+          activeMatch = activeMatch,
+          sessionRepository = sessionRepository,
+          redirect = controllers.routes.ClientAlreadyRegisteredController.onPageLoad()
+        ).flatMap { result =>
+          Some(result).toFuture
+        }
 
       case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
-        Some(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(activeMatch.memberState, activeMatch.getEffectiveDate).url).toFuture
+        Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(activeMatch.memberState, activeMatch.getEffectiveDate).url)).toFuture
 
       case _ => None.toFuture
     }
@@ -225,6 +279,7 @@ class CoreSavedAnswersRevalidationService @Inject()(
     vatCustomerInfo match {
       case Some(vatInfo) =>
         vatInfo.deregistrationDecisionDate.exists(!_.isAfter(LocalDate.now(clock)))
+
       case _ => false
     }
   }

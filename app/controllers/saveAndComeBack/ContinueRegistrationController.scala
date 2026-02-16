@@ -101,18 +101,15 @@ class ContinueRegistrationController @Inject()(
         value1 =>
           (value1, request.userAnswers.get(SavedProgressPage)) match {
             case (ContinueRegistration.Continue, Some(url)) =>
-              // TODO -> Call new service method checkAndValidateSavedUserAnswers
-              // TODO -> TEST
               coreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(waypoints).flatMap {
-                case Some(redirectUrl) =>
-                  deleteAndRedirect(taxReferenceInformation, redirectUrl)
+                case Some(redirectResult) =>
+                  deleteAndRedirect(taxReferenceInformation, redirectResult)
 
                 case None =>
                   Redirect(Call(GET, url)).toFuture
               }
 
-            case (ContinueRegistration.Delete, _)
-            =>
+            case (ContinueRegistration.Delete, _) =>
               for {
                 _ <- cc.sessionRepository.clear(request.userId)
                 _ <- saveAndComeBackService.deleteSavedUserAnswers(taxReferenceInformation.journeyId)
@@ -128,12 +125,11 @@ class ContinueRegistrationController @Inject()(
 
   private def deleteAndRedirect(
                                  taxReferenceInformation: TaxReferenceInformation,
-                                 redirectUrl: String
+                                 redirectUrl: Result
                                )(implicit ec: ExecutionContext, request: DataRequest[_]): Future[Result] = {
     for {
-      _ <- cc.sessionRepository.clear(request.userId)
       _ <- saveAndComeBackService.deleteSavedUserAnswers(taxReferenceInformation.journeyId)
-    } yield Redirect(redirectUrl)
+    } yield redirectUrl
   }
 }
 
