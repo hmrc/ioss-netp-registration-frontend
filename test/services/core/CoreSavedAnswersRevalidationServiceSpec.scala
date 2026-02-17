@@ -1584,24 +1584,21 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         verifyNoMoreInteractions(mockCoreRegistrationValidationService)
       }
 
-      "must throw an IllegalStateException when Eu Details exist with neither a Eu Vat Number or EU Tax Reference present" in {
+      "must return None when Eu Details exist with neither a Eu Vat Number or EU Tax Reference present" in {
 
         val euDetails: EuDetails = arbitraryEuDetails.arbitrary.sample.value.copy(
           euVatNumber = None,
           euTaxReference = None
         )
 
-        val errorMessage: String = s"$euDetails has neither a euVatNumber or euTaxReference."
-
         val service: CoreSavedAnswersRevalidationService =
           new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateEuDetails"))
 
-        intercept[IllegalStateException] {
-          service invokePrivate privateMethodCall(euDetails, None, hc, dataRequest)
-        }.getMessage `mustBe` errorMessage
+        val result = service invokePrivate privateMethodCall(euDetails, None, hc, dataRequest)
 
+        result.futureValue `mustBe` None
         verifyNoInteractions(mockCoreRegistrationValidationService)
       }
     }

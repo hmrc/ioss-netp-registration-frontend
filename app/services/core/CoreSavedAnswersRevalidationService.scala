@@ -174,10 +174,7 @@ class CoreSavedAnswersRevalidationService @Inject()(
           revalidateEuTaxId(euTaxReference, euDetails.euCountry.code)
 
         case _ =>
-          val errorMessage: String = s"$euDetails has neither a euVatNumber or euTaxReference."
-          logger.error(errorMessage)
-          val exception = IllegalStateException(errorMessage)
-          throw exception
+          None.toFuture
       }
     }
   }
