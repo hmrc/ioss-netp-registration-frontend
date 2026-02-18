@@ -16,24 +16,29 @@
 
 package controllers.saveAndComeBack
 
+import config.FrontendAppConfig
+import controllers.SetActiveTraderResult
 import controllers.actions.*
 import forms.saveAndComeBack.ContinueRegistrationFormProvider
 import logging.Logging
+import models.domain.VatCustomerInfo
+import models.requests.DataRequest
 import models.saveAndComeBack.{ContinueRegistration, TaxReferenceInformation}
 import pages.{ClientVatNumberPage, SavedProgressPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.Format.GenericFormat
-import play.api.mvc.{Action, AnyContent, Call, MessagesControllerComponents}
+import play.api.libs.json.Reads
+import play.api.mvc.*
 import services.SaveAndComeBackService
+import services.core.CoreSavedAnswersRevalidationService
 import uk.gov.hmrc.http.HttpVerbs.GET
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.saveAndComeBack.ContinueRegistrationView
-import config.FrontendAppConfig
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class ContinueRegistrationController @Inject()(
                                                 override val messagesApi: MessagesApi,
@@ -41,8 +46,9 @@ class ContinueRegistrationController @Inject()(
                                                 formProvider: ContinueRegistrationFormProvider,
                                                 view: ContinueRegistrationView,
                                                 frontendAppConfig: FrontendAppConfig,
-                                                saveAndComeBackService: SaveAndComeBackService
-                                              )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
+                                                saveAndComeBackService: SaveAndComeBackService,
+                                                coreSavedAnswersRevalidationService: CoreSavedAnswersRevalidationService
+                                              )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with SetActiveTraderResult {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -52,7 +58,7 @@ class ContinueRegistrationController @Inject()(
     implicit request =>
 
       request.userAnswers.get(ClientVatNumberPage) match {
-        case None => {
+        case None =>
           val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(request.userAnswers)
 
           request.userAnswers.get(SavedProgressPage).map { _ =>
@@ -62,35 +68,32 @@ class ContinueRegistrationController @Inject()(
             logger.error(exception.getMessage, exception)
             throw exception
           }
-        }
 
         case Some(clientVatNumber) =>
 
           saveAndComeBackService.getVatTaxInfo(clientVatNumber, waypoints).map { vatCustomerInfo =>
-              val updatedAnswers = request.userAnswers.copy(vatInfo = Some(vatCustomerInfo))
-              cc.sessionRepository.set(updatedAnswers)
+            val updatedAnswers = request.userAnswers.copy(vatInfo = Some(vatCustomerInfo))
+            cc.sessionRepository.set(updatedAnswers)
 
-              val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(updatedAnswers)
+            val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(updatedAnswers)
 
-              request.userAnswers.get(SavedProgressPage).map { _ =>
-                Ok(view(taxReferenceInformation, form, waypoints))
-              }.getOrElse {
-                val exception = new IllegalStateException("Must have a saved page url to return to the saved journey")
-                logger.error(exception.getMessage, exception)
-                throw exception
-              }
+            request.userAnswers.get(SavedProgressPage).map { _ =>
+              Ok(view(taxReferenceInformation, form, waypoints))
+            }.getOrElse {
+              val exception = new IllegalStateException("Must have a saved page url to return to the saved journey")
+              logger.error(exception.getMessage, exception)
+              throw exception
+            }
           }
       }
-
   }
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
       val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(request.userAnswers)
-
       val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
-      
+
       form.bindFromRequest().fold(
         formWithErrors =>
           BadRequest(view(taxReferenceInformation, formWithErrors, waypoints)).toFuture,
@@ -98,7 +101,13 @@ class ContinueRegistrationController @Inject()(
         value1 =>
           (value1, request.userAnswers.get(SavedProgressPage)) match {
             case (ContinueRegistration.Continue, Some(url)) =>
-              Redirect(Call(GET, url)).toFuture
+              coreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(waypoints).flatMap {
+                case Some(redirectResult) =>
+                  deleteAndRedirect(taxReferenceInformation, redirectResult)
+
+                case None =>
+                  Redirect(Call(GET, url)).toFuture
+              }
 
             case (ContinueRegistration.Delete, _) =>
               for {
@@ -112,6 +121,16 @@ class ContinueRegistrationController @Inject()(
               throw exception
           }
       )
+  }
 
+  private def deleteAndRedirect(
+                                 taxReferenceInformation: TaxReferenceInformation,
+                                 redirectUrl: Result
+                               )(implicit ec: ExecutionContext, request: DataRequest[_]): Future[Result] = {
+    for {
+      _ <- saveAndComeBackService.deleteSavedUserAnswers(taxReferenceInformation.journeyId)
+    } yield redirectUrl
   }
 }
+
+

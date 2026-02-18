@@ -16,23 +16,30 @@
 
 package controllers
 
-import controllers.actions._
-import javax.inject.Inject
-import play.api.i18n.{I18nSupport, MessagesApi}
+import controllers.actions.*
 import pages.Waypoints
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.ExpiredVrnDateView
 
-class ExpiredVrnDateController @Inject()(
-                                       override val messagesApi: MessagesApi,
-                                       cc: AuthenticatedControllerComponents,
-                                       val controllerComponents: MessagesControllerComponents,
-                                       view: ExpiredVrnDateView
-                                     ) extends FrontendBaseController with I18nSupport {
+import javax.inject.Inject
+import scala.concurrent.ExecutionContext
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (cc.actionBuilder andThen cc.identify) {
+class ExpiredVrnDateController @Inject()(
+                                          override val messagesApi: MessagesApi,
+                                          cc: AuthenticatedControllerComponents,
+                                          val controllerComponents: MessagesControllerComponents,
+                                          view: ExpiredVrnDateView
+                                        )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = (cc.actionBuilder andThen cc.identify).async {
     implicit request =>
-      Ok(view())
+
+      for {
+        _ <- cc.sessionRepository.clear(request.userId)
+      } yield {
+        Ok(view())
+      }
   }
 }

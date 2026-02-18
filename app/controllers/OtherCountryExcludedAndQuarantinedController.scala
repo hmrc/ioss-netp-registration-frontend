@@ -19,27 +19,32 @@ package controllers
 import controllers.actions.*
 import formats.Format.dateFormatter
 import models.Country
-
-import javax.inject.Inject
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.OtherCountryExcludedAndQuarantinedView
 
 import java.time.LocalDate
+import javax.inject.Inject
+import scala.concurrent.ExecutionContext
 
 class OtherCountryExcludedAndQuarantinedController @Inject()(
-                                       override val messagesApi: MessagesApi,
-                                       cc: AuthenticatedControllerComponents,
-                                       view: OtherCountryExcludedAndQuarantinedView
-                                     ) extends FrontendBaseController with I18nSupport {
+                                                              override val messagesApi: MessagesApi,
+                                                              cc: AuthenticatedControllerComponents,
+                                                              view: OtherCountryExcludedAndQuarantinedView
+                                                            )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
   protected val controllerComponents: MessagesControllerComponents = cc
-  
-  def onPageLoad(countryCode: String, exclusionDate: String): Action[AnyContent] = (cc.actionBuilder andThen cc.identify) {
+
+  def onPageLoad(countryCode: String, exclusionDate: String): Action[AnyContent] = (cc.actionBuilder andThen cc.identify).async {
     implicit request =>
-      
+
       val exclusionDateFormatted: String = LocalDate.parse(exclusionDate).plusYears(2).format(dateFormatter)
-      Ok(view(Country.getCountryNameWithNi(countryCode), exclusionDateFormatted))
+      
+      for {
+        _ <- cc.sessionRepository.clear(request.userId)
+      } yield {
+        Ok(view(Country.getCountryNameWithNi(countryCode), exclusionDateFormatted))
+      }
   }
 }

@@ -62,7 +62,7 @@ case class Match(
     
     traderId.isAnIOSSNetp &&
       (exclusionStatusCode.isEmpty || exclusionStatusCode.contains(-1) ||
-      today.isBefore(LocalDate.parse(getEffectiveDate)))
+        today.isBefore(LocalDate.parse(getEffectiveDate)))
   }
 
   def isQuarantinedTrader(clock: Clock): Boolean = {
@@ -83,16 +83,18 @@ case class Match(
 }
 
 object Match {
-  
+
   val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy MM dd")
   val ossDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-  
+
   implicit val format: OFormat[Match] = Json.format[Match]
 }
 
 case class TraderId(traderId: String) {
   private val traderIdScheme = TraderIdScheme(this)
+
   def isAnIOSSNetp: Boolean = traderIdScheme == TraderIdScheme.ImportOneStopShopNetp
+
   def isAnOSSTrader: Boolean = traderIdScheme == TraderIdScheme.OneStopShop
 }
 
@@ -113,7 +115,9 @@ sealed trait TraderIdScheme
 
 object TraderIdScheme {
   case object OneStopShop extends TraderIdScheme
+
   case object ImportOneStopShopNetp extends TraderIdScheme
+
   case object ImportOneStopShopIntermediary extends TraderIdScheme
 
   def apply(traderId: TraderId): TraderIdScheme = {

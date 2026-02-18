@@ -18,24 +18,39 @@ package controllers
 
 import base.SpecBase
 import formats.Format.dateFormatter
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito
+import org.mockito.Mockito.{times, verify, when}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers.*
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import repositories.SessionRepository
+import utils.FutureSyntax.FutureOps
 import views.html.OtherCountryExcludedAndQuarantinedView
 
 import java.time.LocalDate
 
-class OtherCountryExcludedAndQuarantinedControllerSpec extends SpecBase {
+class OtherCountryExcludedAndQuarantinedControllerSpec extends SpecBase with MockitoSugar {
 
   "OtherCountryExcludedAndQuarantined Controller" - {
 
-    "must return OK and the correct view for a GET" in {
+    "must delete the answers and return OK and the correct view for a GET" in {
 
       val countryCode: String = "NL"
       val countryName: String = "Netherlands"
-      val effectiveDecisionDate = "2022-10-10"
-      val formattedEffectiveDecisionDate = LocalDate.parse(effectiveDecisionDate).plusYears(2).format(dateFormatter)
-      
-      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
+      val effectiveDecisionDate: String = "2022-10-10"
+      val formattedEffectiveDecisionDate: String = LocalDate.parse(effectiveDecisionDate).plusYears(2).format(dateFormatter)
+
+      val mockSessionRepository: SessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.clear(any())) thenReturn true.toFuture
+
+      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers))
+        .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
+        .build()
 
       running(application) {
         val request = FakeRequest(GET, routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(countryCode, effectiveDecisionDate).url)
@@ -46,6 +61,7 @@ class OtherCountryExcludedAndQuarantinedControllerSpec extends SpecBase {
 
         status(result) `mustBe` OK
         contentAsString(result) mustBe view(countryName, formattedEffectiveDecisionDate)(request, messages(application)).toString
+        verify(mockSessionRepository, times(1)).clear(eqTo(userAnswersId))
       }
     }
   }

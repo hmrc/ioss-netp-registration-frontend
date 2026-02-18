@@ -31,17 +31,18 @@ import views.html.ClientAlreadyRegisteredView
 
 import java.time.LocalDate
 import javax.inject.Inject
+import scala.concurrent.ExecutionContext
 
 class ClientAlreadyRegisteredController @Inject()(
                                                    override val messagesApi: MessagesApi,
                                                    cc: AuthenticatedControllerComponents,
                                                    frontendAppConfig: FrontendAppConfig,
                                                    view: ClientAlreadyRegisteredView
-                                                 ) extends FrontendBaseController with I18nSupport with Logging {
+                                                 )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(): Action[AnyContent] = cc.identifyAndGetData() {
+  def onPageLoad(): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request: DataRequest[_] =>
 
       val activeTrader: ActiveTraderResult = request.userAnswers.get(ActiveTraderResultQuery) match {
@@ -58,7 +59,12 @@ class ClientAlreadyRegisteredController @Inject()(
       getOrganisationName(request.userAnswers) match {
         case maybeClientCompanyName =>
           val companyName: String = maybeClientCompanyName.getOrElse(Messages("clientAlreadyRegistered.yourClient"))
-          Ok(view(companyName, formattedExclusionEffectiveDate, frontendAppConfig.intermediaryYourAccountUrl, activeTrader.isReversal))
+
+          for {
+            _ <- cc.sessionRepository.clear(request.userId)
+          } yield {
+            Ok(view(companyName, formattedExclusionEffectiveDate, frontendAppConfig.intermediaryYourAccountUrl, activeTrader.isReversal))
+          }
       }
   }
 
