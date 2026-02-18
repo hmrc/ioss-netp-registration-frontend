@@ -131,7 +131,7 @@ class SecureMessagesController @Inject()(
       rows,
       head = Some(Seq(
         HeadCell(
-          content = Text("")
+          content = HtmlContent(messages("secureMessages.table.headContent.column0"))
         ),
         HeadCell(
           content = Text(messages("secureMessages.table.headContent.column1"))
