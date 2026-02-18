@@ -149,8 +149,13 @@ class AmendCompleteControllerSpec extends SpecBase with MockitoSugar {
 
       "must show row for when previous registration added" in {
 
+        val existingCountries = registrationWrapper.etmpDisplayRegistration.schemeDetails.previousEURegistrationDetails.map(_.issuedBy)
+
+        val availableCountries = Country.euCountries.filterNot(c => existingCountries.contains(c.code))
+        val newCountry = availableCountries.head
+
         val previousRegistration: PreviousRegistration = PreviousRegistration(
-          previousEuCountry = arbitraryCountry.arbitrary.sample.value,
+          previousEuCountry = newCountry,
           previousSchemesDetails = Gen.listOfN(maxSchemes, PreviousSchemeDetails(
             previousScheme = arbitraryPreviousScheme.arbitrary.sample.value,
             previousSchemeNumbers = arbitraryPreviousIossSchemeDetails.arbitrary.sample.value,

@@ -196,7 +196,7 @@ trait EtmpModelGenerators {
     Arbitrary {
       for {
         issuedBy <- arbitraryCountry.arbitrary.map(_.code)
-        registrationNumber <- arbitrary[String]
+        registrationNumber <- Gen.alphaNumStr.suchThat(_.nonEmpty)
         schemeType <- Gen.oneOf(SchemeType.values)
         intermediaryNumber <- genIntermediaryNumber
       } yield {
