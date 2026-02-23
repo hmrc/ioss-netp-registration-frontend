@@ -24,9 +24,8 @@
 
 @layout(pageTitle = titleNoForm(messages("secureMessages.title")), showBackLink = false) {
 
-    <h1 class="govuk-heading-l govuk-!-margin-top-3">@messages("secureMessages.heading")
-        <p class="govuk-caption-m govuk-!-margin-bottom-3">@Html(messages("secureMessages.clientName", clientName, iossNumber))</p>
-    </h1>
+    <h1 class="govuk-heading-l govuk-!-margin-bottom-3">@messages("secureMessages.heading")</h1>
+    <p class="govuk-caption-m govuk-!-margin-bottom-3">@Html(messages("secureMessages.clientName", clientName, iossNumber))</p>
 
     @govukTable(messagesTable)
 }
