@@ -112,15 +112,16 @@ class SecureMessagesController @Inject()(
       sortedList.map { case (sub, dateStr, unreadMessage, messageId) =>
         val formattedDate = LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE).format(dateFormatter)
 
-        val displayRedDot = if (unreadMessage) HtmlContent(messages("redDot")) else HtmlContent(messages(""))
-
         val messageLink = routes.IndividualSecureMessageController.onPageLoad(messageId).url
 
         val displayCorrectMessage =
-          if (unreadMessage) HtmlContent(messages("secureMessages.subject.unread", sub, messageLink)) else HtmlContent(messages("secureMessages.subject.read", sub, messageLink))
+          if (unreadMessage) {
+            HtmlContent(messages("redDot") ++ messages("secureMessages.subject.unread", sub, messageLink))
+          } else  {
+            HtmlContent(messages("secureMessages.subject.read", sub, messageLink))
+          }
 
         Seq(
-          TableRow(content = displayRedDot),
           TableRow(content = displayCorrectMessage),
           TableRow(content = Text(formattedDate))
         )
@@ -131,9 +132,6 @@ class SecureMessagesController @Inject()(
       rows,
       head = Some(Seq(
         HeadCell(
-          content = Text("")
-        ),
-        HeadCell(
           content = Text(messages("secureMessages.table.headContent.column1"))
         ),
         HeadCell(
@@ -142,6 +140,5 @@ class SecureMessagesController @Inject()(
         )
       ))
     )
-
   }
 }
