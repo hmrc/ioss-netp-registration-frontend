@@ -16,6 +16,7 @@
 
 package controllers
 
+import config.FrontendAppConfig
 import controllers.actions.*
 import formats.Format.dateFormatter
 import models.Country
@@ -31,6 +32,7 @@ import scala.concurrent.ExecutionContext
 class OtherCountryExcludedAndQuarantinedController @Inject()(
                                                               override val messagesApi: MessagesApi,
                                                               cc: AuthenticatedControllerComponents,
+                                                              frontendAppConfig: FrontendAppConfig,
                                                               view: OtherCountryExcludedAndQuarantinedView
                                                             )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
@@ -44,7 +46,7 @@ class OtherCountryExcludedAndQuarantinedController @Inject()(
       for {
         _ <- cc.sessionRepository.clear(request.userId)
       } yield {
-        Ok(view(Country.getCountryNameWithNi(countryCode), exclusionDateFormatted))
+        Ok(view(Country.getCountryNameWithNi(countryCode), exclusionDateFormatted, frontendAppConfig.intermediaryYourAccountUrl))
       }
   }
 }

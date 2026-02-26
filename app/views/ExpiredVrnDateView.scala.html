@@ -19,9 +19,11 @@
         govukButton: GovukButton
 )
 
-@()(implicit request: Request[_], messages: Messages)
+@(yourAccountUrl: String)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("expiredVrnDate.title"))) {
 
     <h1 class="govuk-heading-l">@messages("expiredVrnDate.heading")</h1>
+
+    <p class="govuk-body govuk-!-margin-top-8">@Html(messages("expiredVrnDate.returnToYourAccount", yourAccountUrl))</p>
 }

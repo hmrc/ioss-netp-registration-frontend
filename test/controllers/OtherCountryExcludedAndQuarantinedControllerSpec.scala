@@ -17,6 +17,7 @@
 package controllers
 
 import base.SpecBase
+import config.FrontendAppConfig
 import formats.Format.dateFormatter
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
@@ -57,10 +58,12 @@ class OtherCountryExcludedAndQuarantinedControllerSpec extends SpecBase with Moc
 
         val result = route(application, request).value
 
+        val config = application.injector.instanceOf[FrontendAppConfig]
+
         val view = application.injector.instanceOf[OtherCountryExcludedAndQuarantinedView]
 
         status(result) `mustBe` OK
-        contentAsString(result) mustBe view(countryName, formattedEffectiveDecisionDate)(request, messages(application)).toString
+        contentAsString(result) mustBe view(countryName, formattedEffectiveDecisionDate, config.intermediaryYourAccountUrl)(request, messages(application)).toString
         verify(mockSessionRepository, times(1)).clear(eqTo(userAnswersId))
       }
     }
