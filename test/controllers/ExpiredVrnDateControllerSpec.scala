@@ -17,6 +17,7 @@
 package controllers
 
 import base.SpecBase
+import config.FrontendAppConfig
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
@@ -46,10 +47,12 @@ class ExpiredVrnDateControllerSpec extends SpecBase with MockitoSugar {
 
         val result = route(application, request).value
 
+        val config = application.injector.instanceOf[FrontendAppConfig]
+
         val view = application.injector.instanceOf[ExpiredVrnDateView]
 
         status(result) `mustBe` OK
-        contentAsString(result) `mustBe` view()(request, messages(application)).toString
+        contentAsString(result) `mustBe` view(config.intermediaryYourAccountUrl)(request, messages(application)).toString
         verify(mockSessionRepository, times(1)).clear(eqTo(userAnswersId))
       }
     }

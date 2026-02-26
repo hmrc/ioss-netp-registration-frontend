@@ -16,6 +16,7 @@
 
 package controllers
 
+import config.FrontendAppConfig
 import controllers.actions.*
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -30,6 +31,7 @@ class ExpiredVrnDateController @Inject()(
                                           override val messagesApi: MessagesApi,
                                           cc: AuthenticatedControllerComponents,
                                           val controllerComponents: MessagesControllerComponents,
+                                          frontendAppConfig: FrontendAppConfig,
                                           view: ExpiredVrnDateView
                                         )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
@@ -39,7 +41,7 @@ class ExpiredVrnDateController @Inject()(
       for {
         _ <- cc.sessionRepository.clear(request.userId)
       } yield {
-        Ok(view())
+        Ok(view(frontendAppConfig.intermediaryYourAccountUrl))
       }
   }
 }

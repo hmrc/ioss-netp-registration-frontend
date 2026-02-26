@@ -304,6 +304,7 @@ errorSubmittingPendingRegistration.contactUs = If the problem continues, you can
 
 expiredVrnDate.title = The VAT number for this trader has expired
 expiredVrnDate.heading = The VAT number for this trader has expired
+expiredVrnDate.returnToYourAccount = <a class="govuk-link" href={0}>Return to your account</a>
 
 previouslyRegistered.title = Has your client''s business ever registered for an IOSS scheme?
 previouslyRegistered.heading = Has your client''s business ever registered for an IOSS scheme?
@@ -498,6 +499,7 @@ otherCountryExcludedAndQuarantined.title = You cannot register this trader
 otherCountryExcludedAndQuarantined.heading = You cannot register this trader
 otherCountryExcludedAndQuarantined.paragraph = {0} has blocked their account from One Stop Shop services until {1}.
 otherCountryExcludedAndQuarantined.contact = If you believe this is an error, contact <a class="govuk-link" href="mailto:vatoss.contact@hmrc.gov.uk">vatoss.contact@hmrc.gov.uk</a>
+otherCountryExcludedAndQuarantined.returnToYourAccount = <a class="govuk-link" href={0}>Return to your account</a>
 
 clientAlreadyRegistered.title = You cannot add {0} to your account.
 clientAlreadyRegistered.heading = You cannot add {0} to your account.
