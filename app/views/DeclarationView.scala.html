@@ -16,13 +16,15 @@
 
 @import views.html.components.ButtonGroup
 @import pages.DeclarationPage
+@import config.FrontendAppConfig
 
 @this(
     layout: templates.Layout,
     formHelper: FormWithCSRF,
     govukErrorSummary: GovukErrorSummary,
     govukCheckboxes : GovukCheckboxes,
-    button: ButtonGroup
+    button: ButtonGroup,
+    appConfig: FrontendAppConfig
 )
 
 @(form: Form[_], waypoints : Waypoints, intermediaryName: String, companyName: String)(implicit request: Request[_], messages: Messages)
@@ -50,7 +52,7 @@
         <ul class="govuk-list govuk-list--bullet">
             <li class="govuk-body govuk-!-margin-bottom-4">@messages("declaration.li1", intermediaryName, companyName)</li>
 
-            <li class="govuk-body govuk-!-margin-bottom-4">@messages("declaration.li2")</li>
+            <li class="govuk-body govuk-!-margin-bottom-4">@Html(messages("declaration.li2", appConfig.iossJSLGuidancePageUrl))</li>
 
             <li class="govuk-body govuk-!-margin-bottom-4">@messages("declaration.li3")</li>
         </ul>
