@@ -235,3 +235,6 @@ GET         /individual-secure-message/:id                                  cont
 GET         /no-registration-found                                          controllers.NoRegistrationFoundController.onPageLoad()
 
 GET         /access-denied                                                  controllers.AccessDeniedController.onPageLoad()
+
+GET        /client-registration-already-pending                             controllers.ClientRegistrationAlreadyPendingController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST       /client-registration-already-pending                             controllers.ClientRegistrationAlreadyPendingController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
