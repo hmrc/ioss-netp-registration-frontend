@@ -102,18 +102,18 @@ class ClientTaxReferenceController @Inject()(
 
               case _ =>
                 saveAndComeBackService.getSavedContinueRegistrationJourneys(request.userAnswers, request.intermediaryNumber).flatMap {
-                  
+
                   case SingleRegistration(singleJourneyId) =>
                     continueJourney(Some(singleJourneyId), taxRefNum = value, request, waypoints)
-                    
+
                   case MultipleRegistrations(multipleRegistrations) =>
-                    
+
                     val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(request.userAnswers)
-                    
+
                     val maybeJourneyId: Option[String] = findMatchingJourneyId(taxReferenceInformation, multipleRegistrations)
-                    
+
                     continueJourney(maybeJourneyId, taxRefNum = value, request, waypoints)
-                    
+
                   case _ =>
                     continueJourney(maybeJourneyId = None, taxRefNum = value, request, waypoints)
                 }
@@ -132,25 +132,25 @@ class ClientTaxReferenceController @Inject()(
       _ <- cc.sessionRepository.set(updatedAnswers)
     } yield Redirect(ClientTaxReferencePage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
   }
-  
-  private def handleExistingJourney(
-                                   journeyId: String,
-                                   taxRefNum: String,
-                                   waypoints: Waypoints,
-                                   updatedAnswers: UserAnswers
-                                   )(implicit request: DataRequest[_]): Future[Result] =
+
+  private def handleRedirect(
+                             journeyId: String,
+                             taxRefNum: String,
+                             waypoints: Waypoints,
+                             updatedAnswers: UserAnswers
+                             )(implicit request: DataRequest[_]): Future[Result] =
 
     saveAndComeBackService.retrieveSingleSavedUserAnswer(journeyId, waypoints).flatMap { savedUserAnswers =>
-      
+
       val taxRefNumFromDatabase: Option[String] = (savedUserAnswers.data \ "clientTaxRefrence").asOpt[String]
-      
+
       if (taxRefNumFromDatabase.contains(taxRefNum)) {
         Redirect(controllers.routes.ClientRegistrationAlreadyPendingController.onPageLoad(waypoints).url).toFuture
       } else {
         Redirect(ClientTaxReferencePage.navigate(waypoints, updatedAnswers, updatedAnswers).route).toFuture
       }
     }
-    
+
   private def continueJourney(
                              maybeJourneyId: Option[String],
                              taxRefNum: String,
@@ -159,19 +159,19 @@ class ClientTaxReferenceController @Inject()(
                              ): Future[Result] =
 
     val answersWithJourneyId = maybeJourneyId.fold(request.userAnswers)(id => request.userAnswers.copy(journeyId = id))
-    
+
     for {
       updatedAnswers <- Future.fromTry(answersWithJourneyId.set(ClientTaxReferencePage, taxRefNum))
       _              <- cc.sessionRepository.set(updatedAnswers)
       result         <- maybeJourneyId match {
         case Some(journeyId) =>
-          handleExistingJourney(journeyId, taxRefNum, waypoints, updatedAnswers)(request)
-          
+          handleRedirect(journeyId, taxRefNum, waypoints, updatedAnswers)(request)
+
         case None =>
           Redirect(ClientTaxReferencePage.navigate(waypoints, request.userAnswers, updatedAnswers).route).toFuture
       }
     } yield result
-  
+
   private def findMatchingJourneyId(
                                    taxReferenceInformation: TaxReferenceInformation,
                                    multipleRegistrations: Seq[SavedUserAnswers]

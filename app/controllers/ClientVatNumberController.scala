@@ -144,12 +144,12 @@ class ClientVatNumberController @Inject()(
       None
     }
 
-  private def handleNextJourney(
-                                   journeyId: String,
-                                   ukVatNumber: String,
-                                   waypoints: Waypoints,
-                                   updatedUserAnswers: UserAnswers
-                                   )(implicit request: DataRequest[_]): Future[Result] =
+  private def handleRedirect(
+                             journeyId: String,
+                             ukVatNumber: String,
+                             waypoints: Waypoints,
+                             updatedUserAnswers: UserAnswers
+                            )(implicit request: DataRequest[_]): Future[Result] =
     
     saveAndComeBackService.retrieveSingleSavedUserAnswer(journeyId, waypoints)
       .map { savedUserAnswers =>
@@ -179,7 +179,7 @@ class ClientVatNumberController @Inject()(
       updatedAnswers <- Future.fromTry(answersWithJourney.set(ClientVatNumberPage, ukVatNumber))
       _ <- cc.sessionRepository.set(updatedAnswers)
       result <- maybeJourneyId match {
-        case Some(journeyId) => handleNextJourney(journeyId, ukVatNumber, waypoints, updatedAnswers)(request)
+        case Some(journeyId) => handleRedirect(journeyId, ukVatNumber, waypoints, updatedAnswers)(request)
         case None =>
           Redirect(ClientVatNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route).toFuture
       }

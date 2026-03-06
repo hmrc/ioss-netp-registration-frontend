@@ -109,12 +109,12 @@ class ClientUtrNumberController @Inject()(
       )
   }
 
-  private def handleExistingJourney(
-                                     journeyId: String,
-                                     utrValue: String,
-                                     waypoints: Waypoints,
-                                     updatedAnswers: UserAnswers
-                                   )(implicit request: DataRequest[_]): Future[Result] =
+  private def handleRedirect(
+                             journeyId: String,
+                             utrValue: String,
+                             waypoints: Waypoints,
+                             updatedAnswers: UserAnswers
+                             )(implicit request: DataRequest[_]): Future[Result] =
 
     saveAndComeBackService.retrieveSingleSavedUserAnswer(journeyId, waypoints).map { savedUserAnswers =>
 
@@ -133,7 +133,7 @@ class ClientUtrNumberController @Inject()(
                             request: DataRequest[_],
                             waypoints: Waypoints
                           ): Future[Result] =
-    
+
     val answersWithJourney = maybeJourneyId.fold(request.userAnswers)(id => request.userAnswers.copy(journeyId = id))
 
     for {
@@ -142,7 +142,7 @@ class ClientUtrNumberController @Inject()(
       result         <- maybeJourneyId match {
 
         case Some(journeyId) =>
-          handleExistingJourney(journeyId, utrNumber, waypoints, updatedAnswers)(request)
+          handleRedirect(journeyId, utrNumber, waypoints, updatedAnswers)(request)
 
         case None =>
           Redirect(ClientUtrNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route).toFuture

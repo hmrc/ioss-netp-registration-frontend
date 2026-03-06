@@ -91,7 +91,7 @@ class ClientsNinoNumberController @Inject()(
               saveAndComeBackService.getSavedContinueRegistrationJourneys(request.userAnswers, request.intermediaryNumber).flatMap {
 
                 case SingleRegistration(singleJourneyId) =>
-                  continueFlow(Some(singleJourneyId), ninoNumber = value, request, waypoints)
+                  continueJourney(Some(singleJourneyId), ninoNumber = value, request, waypoints)
 
                 case MultipleRegistrations(multipleRegistrations) =>
 
@@ -99,16 +99,16 @@ class ClientsNinoNumberController @Inject()(
 
                   val maybeJourneyId = findMatchingJourneyId(taxReferenceInformation, multipleRegistrations)
 
-                  continueFlow(maybeJourneyId, ninoNumber = value, request, waypoints)
+                  continueJourney(maybeJourneyId, ninoNumber = value, request, waypoints)
 
                 case _ =>
-                  continueFlow(maybeJourneyId = None, ninoNumber = value, request, waypoints)
+                  continueJourney(maybeJourneyId = None, ninoNumber = value, request, waypoints)
               }
           }
       )
   }
 
-  private def handleExistingJourney(
+  private def handleRedirect(
                                    journeyId: String,
                                    ninoNumber: String,
                                    waypoints: Waypoints,
@@ -126,7 +126,7 @@ class ClientsNinoNumberController @Inject()(
       }
     }
 
-  private def continueFlow(
+  private def continueJourney(
                             maybeJourneyId: Option[String],
                             ninoNumber: String,
                             request: DataRequest[_],
@@ -141,7 +141,7 @@ class ClientsNinoNumberController @Inject()(
       result         <- maybeJourneyId match {
 
         case Some(journeyId) =>
-          handleExistingJourney(journeyId, ninoNumber, waypoints, updatedAnswers)(request)
+          handleRedirect(journeyId, ninoNumber, waypoints, updatedAnswers)(request)
 
         case None =>
           Redirect(ClientsNinoNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route).toFuture
