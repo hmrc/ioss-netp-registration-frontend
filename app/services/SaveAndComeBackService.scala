@@ -193,7 +193,7 @@ class SaveAndComeBackService @Inject()(
                                                  taxReference: (String, String),
                                                  userAnswers: UserAnswers,
                                                  intermediaryNum: String
-                                               ) = {
+                                               )(implicit hc: HeaderCarrier) = {
 
     val listOfPages: List[QuestionPage[String]] = List(ClientTaxReferencePage, ClientUtrNumberPage, ClientsNinoNumberPage, ClientVatNumberPage)
 
