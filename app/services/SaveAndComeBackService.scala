@@ -187,4 +187,44 @@ class SaveAndComeBackService @Inject()(
       )
     }
   }
+
+
+  def checkForPreviousUnfinishedSavedRegJourney(
+                                                 taxReference: (String, String),
+                                                 userAnswers: UserAnswers,
+                                                 intermediaryNum: String
+                                               ) = {
+
+    val listOfPages: List[QuestionPage[String]] = List(ClientTaxReferencePage, ClientUtrNumberPage, ClientsNinoNumberPage, ClientVatNumberPage)
+
+
+    val taxType = taxReference._1
+    val taxNum = taxReference._2
+
+    saveForLaterConnector.getAllByIntermediary(intermediaryNum).map {
+
+      case Left(error) =>
+        val message: String = s"Received an unexpected error when trying to retrieve uncompleted " +
+          s"registrations for the intermediary ID: $intermediaryNum. \nWith Errors: $error"
+        val exception: Exception = new Exception(message)
+        logger.error(exception.getMessage, exception)
+        throw exception
+
+
+      case Right(seqSavedUserAnswers) => seqSavedUserAnswers.map { individualUserAnswers =>
+        for {
+          customPage <- listOfPages.view
+          taxNumber <- individualUserAnswers.get(customPage)
+        } yield {
+          customPage match {
+            case ClientTaxReferencePage if taxType == "FTR" && taxNum.contains(taxNumber) => individualUserAnswers 
+            case ClientUtrNumberPage if taxType == "UTR" && taxNum.contains(taxNumber)=> individualUserAnswers
+            case ClientsNinoNumberPage if taxType == "NINO" && taxNum.contains(taxNumber) => individualUserAnswers
+            case ClientVatNumberPage if taxType == "VAT" && taxNum.contains(taxNumber) => individualUserAnswers
+            case _ => false
+          }
+        }
+      }
+    }
+  }
 }
