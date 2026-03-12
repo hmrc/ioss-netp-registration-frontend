@@ -187,8 +187,7 @@ class SaveAndComeBackService @Inject()(
       )
     }
   }
-
-
+  
   def checkForPreviousUnfinishedSavedRegJourney(
                                                  taxReference: (String, String),
                                                  userAnswers: UserAnswers,
@@ -212,9 +211,11 @@ class SaveAndComeBackService @Inject()(
 
 
       case Right(seqSavedUserAnswers) => seqSavedUserAnswers.map { individualUserAnswers =>
+        
+        val tempUserAnswers = UserAnswers(id = "TempID", data = individualUserAnswers.data)
         for {
           customPage <- listOfPages.view
-          taxNumber <- individualUserAnswers.get(customPage)
+          taxNumber <- tempUserAnswers.get(customPage)
         } yield {
           customPage match {
             case ClientTaxReferencePage if taxType == "FTR" && taxNum.contains(taxNumber) => individualUserAnswers 

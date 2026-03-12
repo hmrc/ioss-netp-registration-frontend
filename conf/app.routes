@@ -226,6 +226,9 @@ POST        /clients-continue-registration                                  cont
 GET         /clients-continue-registration-selection                        controllers.saveAndComeBack.ContinueRegistrationSelectionController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST        /clients-continue-registration-selection                        controllers.saveAndComeBack.ContinueRegistrationSelectionController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
+GET        /client-registration-already-pending                             controllers.saveAndComeBack.RegistrationAlreadySavedController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST       /client-registration-already-pending                             controllers.saveAndComeBack.RegistrationAlreadySavedController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+
 # GET       /no-registration-in-progress                                    controllers.NoRegistrationInProgressController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 
 GET         /secure-messages                                                controllers.secureMessages.SecureMessagesController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)

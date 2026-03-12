@@ -33,13 +33,22 @@ object ContinueRegistration extends Enumerable.Implicits {
     Continue, Delete
   )
 
-  def options(implicit messages: Messages): Seq[RadioItem] = values.zipWithIndex.map {
-    case (value, index) =>
-      RadioItem(
-        content = Text(messages(s"continueRegistration.${value.toString}")),
-        value = Some(value.toString),
-        id = Some(s"${value}Progress")
-      )
+  def options(alreadySavedRegistrationJourney: Boolean = false)(implicit messages: Messages): Seq[RadioItem] = {
+
+    val theString = if (alreadySavedRegistrationJourney) {
+      "clientRegistrationAlreadyPending"
+    } else {
+      "continueRegistration"
+    }
+    
+    values.zipWithIndex.map {
+      case (value, index) =>
+        RadioItem(
+          content = Text(messages(s"${theString}.${value.toString}")),
+          value = Some(value.toString),
+          id = Some(s"${value}Progress")
+        )
+    }
   }
 
   implicit val enumerable: Enumerable[ContinueRegistration] =
