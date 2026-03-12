@@ -87,6 +87,7 @@ class ClientVatNumberController @Inject()(
               ).toFuture
 
             case _ =>
+              // TODO SCG --> Implement the check method here to redirect to kickout page
               registrationConnector.getVatCustomerInfo(ukVatNumber).flatMap {
                 case Right(value) =>
                   val today = LocalDate.now(clock)

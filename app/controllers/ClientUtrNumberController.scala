@@ -83,6 +83,7 @@ class ClientUtrNumberController @Inject()(
               ).toFuture
 
             case _ =>
+              // TODO SCG --> Implement the check method here to redirect to kickout page
               for {
                 updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientUtrNumberPage, value))
                 _ <- cc.sessionRepository.set(updatedAnswers)
