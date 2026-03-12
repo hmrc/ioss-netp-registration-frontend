@@ -19,11 +19,14 @@ package controllers
 import controllers.actions.*
 import forms.ClientTaxReferenceFormProvider
 import logging.Logging
+import models.{SavedUserAnswers, UserAnswers}
 import models.core.Match
 import models.requests.DataRequest
+import models.saveAndComeBack.{MultipleRegistrations, SingleRegistration, TaxReferenceInformation}
 import pages.{ClientTaxReferencePage, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
+import services.SaveAndComeBackService
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.AmendWaypoints.AmendWaypointsOps
@@ -40,7 +43,8 @@ class ClientTaxReferenceController @Inject()(
                                               formProvider: ClientTaxReferenceFormProvider,
                                               view: ClientTaxReferenceView,
                                               coreRegistrationValidationService: CoreRegistrationValidationService,
-                                              clock: Clock
+                                              clock: Clock,
+                                              saveAndComeBackService: SaveAndComeBackService
                                     )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with GetCountry with SetActiveTraderResult with Logging {
 
@@ -97,6 +101,22 @@ class ClientTaxReferenceController @Inject()(
                 ).toFuture
 
               case _ =>
+                saveAndComeBackService.getSavedContinueRegistrationJourneys(request.userAnswers, request.intermediaryNumber).flatMap {
+
+                  case SingleRegistration(singleJourneyId) =>
+                    continueJourney(Some(singleJourneyId), taxRefNum = value, request, waypoints)
+
+                  case MultipleRegistrations(multipleRegistrations) =>
+
+                    val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(request.userAnswers)
+
+                    val maybeJourneyId: Option[String] = findMatchingJourneyId(taxReferenceInformation, multipleRegistrations)
+
+                    continueJourney(maybeJourneyId, taxRefNum = value, request, waypoints)
+
+                  case _ =>
+                    continueJourney(maybeJourneyId = None, taxRefNum = value, request, waypoints)
+                }
                 for {
                   updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientTaxReferencePage, value))
                   _ <- cc.sessionRepository.set(updatedAnswers)
@@ -112,4 +132,52 @@ class ClientTaxReferenceController @Inject()(
       _ <- cc.sessionRepository.set(updatedAnswers)
     } yield Redirect(ClientTaxReferencePage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
   }
+
+  private def handleRedirect(
+                             journeyId: String,
+                             taxRefNum: String,
+                             waypoints: Waypoints,
+                             updatedAnswers: UserAnswers
+                             )(implicit request: DataRequest[_]): Future[Result] =
+
+    saveAndComeBackService.retrieveSingleSavedUserAnswer(journeyId, waypoints).flatMap { savedUserAnswers =>
+
+      val taxRefNumFromDatabase: Option[String] = (savedUserAnswers.data \ "clientTaxRefrence").asOpt[String]
+
+      if (taxRefNumFromDatabase.contains(taxRefNum)) {
+        Redirect(controllers.routes.ClientRegistrationAlreadyPendingController.onPageLoad(waypoints).url).toFuture
+      } else {
+        Redirect(ClientTaxReferencePage.navigate(waypoints, updatedAnswers, updatedAnswers).route).toFuture
+      }
+    }
+
+  private def continueJourney(
+                             maybeJourneyId: Option[String],
+                             taxRefNum: String,
+                             request: DataRequest[_],
+                             waypoints: Waypoints
+                             ): Future[Result] =
+
+    val answersWithJourneyId = maybeJourneyId.fold(request.userAnswers)(id => request.userAnswers.copy(journeyId = id))
+
+    for {
+      updatedAnswers <- Future.fromTry(answersWithJourneyId.set(ClientTaxReferencePage, taxRefNum))
+      _              <- cc.sessionRepository.set(updatedAnswers)
+      result         <- maybeJourneyId match {
+        case Some(journeyId) =>
+          handleRedirect(journeyId, taxRefNum, waypoints, updatedAnswers)(request)
+
+        case None =>
+          Redirect(ClientTaxReferencePage.navigate(waypoints, request.userAnswers, updatedAnswers).route).toFuture
+      }
+    } yield result
+
+  private def findMatchingJourneyId(
+                                   taxReferenceInformation: TaxReferenceInformation,
+                                   multipleRegistrations: Seq[SavedUserAnswers]
+                                   ): Option[String] =
+
+    multipleRegistrations
+      .find(_.journeyId == taxReferenceInformation.journeyId)
+      .map(_.journeyId)
 }

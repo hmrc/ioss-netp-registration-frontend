@@ -20,13 +20,18 @@ import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.ClientVatNumberFormProvider
 import logging.Logging
+import models.{SavedUserAnswers, UserAnswers}
 import models.core.Match
+import models.domain.VatCustomerInfo
+import models.requests.DataRequest
 import models.responses.VatCustomerNotFound
+import models.saveAndComeBack.{MultipleRegistrations, SingleRegistration, TaxReferenceInformation}
 import pages.{ClientVatNumberPage, UkVatNumberNotFoundPage, VatApiDownPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.I18nSupport
 import play.api.mvc.Results.Redirect
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
+import services.SaveAndComeBackService
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
@@ -44,7 +49,8 @@ class ClientVatNumberController @Inject()(
                                            registrationConnector: RegistrationConnector,
                                            view: ClientVatNumberView,
                                            clock: Clock,
-                                           coreRegistrationValidationService: CoreRegistrationValidationService
+                                           coreRegistrationValidationService: CoreRegistrationValidationService,
+                                           saveAndComeBackService: SaveAndComeBackService
                                          )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with SetActiveTraderResult {
 
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -91,19 +97,31 @@ class ClientVatNumberController @Inject()(
                 case Right(value) =>
                   val today = LocalDate.now(clock)
                   val isExpired = value.deregistrationDecisionDate.exists(!_.isAfter(today))
-
-                  if (isExpired) {
-                    logger.info(s"VAT number $ukVatNumber is expired (deregistration date: ${value.deregistrationDecisionDate})")
-                    Redirect(controllers.routes.ExpiredVrnDateController.onPageLoad(waypoints).url).toFuture
-                  } else {
-                    for {
-                      updatedAnswers <- Future.fromTry(request
-                        .userAnswers
-                        .copy(vatInfo = Some(value))
-                        .set(ClientVatNumberPage, ukVatNumber))
-                      _ <- cc.sessionRepository.set(updatedAnswers)
-                    } yield Redirect(ClientVatNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+                  
+                  def handleSelection(maybeJourneyId: Option[String]): Future[Result] = {
+                    
+                    handleExpiry(isExpired, ukVatNumber, value.deregistrationDecisionDate, waypoints)
+                      .getOrElse( {
+                        continueJourney(maybeJourneyId, request, value, ukVatNumber, waypoints)
+                      })
                   }
+                  
+                  saveAndComeBackService.getSavedContinueRegistrationJourneys(request.userAnswers, request.intermediaryNumber).flatMap {
+
+                    case SingleRegistration(singleJourneyId) =>
+                      handleSelection(Some(singleJourneyId))
+                      
+                    case MultipleRegistrations(multipleRegistrations) =>
+                      val taxReferenceInformation = saveAndComeBackService.determineTaxReference(request.userAnswers)
+                      
+                      val matchingJourneyId = findMatchingJourneyId(taxReferenceInformation, multipleRegistrations)
+                      
+                      handleSelection(matchingJourneyId)
+                      
+                    case _ =>
+                      handleSelection(None)
+                  }
+
                 case Left(VatCustomerNotFound) =>
                   Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
                 case Left(_) =>
@@ -111,5 +129,68 @@ class ClientVatNumberController @Inject()(
               }
           }
       )
+  }
+
+  private def handleExpiry(
+                          isExpired: Boolean,
+                          ukVatNumber: String,
+                          deregistrationDecisionDate: Option[LocalDate],
+                          waypoints: Waypoints
+                          ): Option[Future[Result]] =
+    if (isExpired) {
+      logger.info(s"VAT number $ukVatNumber is expired (deregistration date: $deregistrationDecisionDate)")
+      Some(Redirect(controllers.routes.ExpiredVrnDateController.onPageLoad(waypoints).url).toFuture)
+    } else {
+      None
+    }
+
+  private def handleRedirect(
+                             journeyId: String,
+                             ukVatNumber: String,
+                             waypoints: Waypoints,
+                             updatedUserAnswers: UserAnswers
+                            )(implicit request: DataRequest[_]): Future[Result] =
+    
+    saveAndComeBackService.retrieveSingleSavedUserAnswer(journeyId, waypoints)
+      .map { savedUserAnswers =>
+        
+        val vatNumberFromDatabase = (savedUserAnswers.data \ "clientVatNumber").asOpt[String]
+        
+        if (vatNumberFromDatabase.contains(ukVatNumber)) {
+          Redirect(controllers.routes.ClientRegistrationAlreadyPendingController.onPageLoad(waypoints).url)
+        } else {
+          Redirect(ClientVatNumberPage.navigate(waypoints, updatedUserAnswers, updatedUserAnswers).route)
+        }
+      }
+
+  private def continueJourney(
+                          maybeJourneyId: Option[String],
+                          request: DataRequest[_],
+                          vatInfo: VatCustomerInfo,
+                          ukVatNumber: String,
+                          waypoints: Waypoints
+                          ): Future[Result] =
+
+    val baseAnswers = request.userAnswers.copy(vatInfo = Some(vatInfo))
+    
+    val answersWithJourney = maybeJourneyId.fold(baseAnswers)(id => baseAnswers.copy(journeyId = id))
+    
+    for {
+      updatedAnswers <- Future.fromTry(answersWithJourney.set(ClientVatNumberPage, ukVatNumber))
+      _ <- cc.sessionRepository.set(updatedAnswers)
+      result <- maybeJourneyId match {
+        case Some(journeyId) => handleRedirect(journeyId, ukVatNumber, waypoints, updatedAnswers)(request)
+        case None =>
+          Redirect(ClientVatNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route).toFuture
+      }
+    } yield result
+    
+  private def findMatchingJourneyId(
+                                    taxReferenceInformation: TaxReferenceInformation,
+                                    multipleRegistrations: Seq[SavedUserAnswers]
+                                   ): Option[String] = {
+    multipleRegistrations
+      .find(_.journeyId == taxReferenceInformation.journeyId)
+      .map(_.journeyId)
   }
 }

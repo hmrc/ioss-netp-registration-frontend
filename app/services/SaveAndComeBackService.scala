@@ -71,7 +71,6 @@ class SaveAndComeBackService @Inject()(
             case ClientsNinoNumberPage => TaxReferenceInformation(companyName, "National Insurance Number", taxNumber, userAnswers.journeyId)
           }
         }
-
         resultTuple.head
     }
   }
@@ -155,6 +154,28 @@ class SaveAndComeBackService @Inject()(
                                       journeyId: String,
                                       waypoints: Waypoints)
                                     (implicit request: OptionalDataRequest[_], hc: HeaderCarrier): Future[UserAnswers] = {
+    saveForLaterConnector.getClientRegistration(journeyId).flatMap {
+      case Right(savedUserAnswers) =>
+        UserAnswers(
+          request.userId,
+          savedUserAnswers.journeyId,
+          data = savedUserAnswers.data,
+          vatInfo = None,
+          lastUpdated = savedUserAnswers.lastUpdated).toFuture
+
+      case Left(error) =>
+        val message: String = s"Received an unexpected error when trying to retrieve Saved User Answers " +
+          s"for the journey ID: $journeyId,\nWith Errors: $error"
+        val exception: Exception = new Exception(message)
+        logger.error(exception.getMessage, exception)
+        throw exception
+    }
+  }
+
+  def retrieveSingleSavedUserAnswer(
+                                      journeyId: String,
+                                      waypoints: Waypoints)
+                                    (implicit request: DataRequest[_], hc: HeaderCarrier): Future[UserAnswers] = {
     saveForLaterConnector.getClientRegistration(journeyId).flatMap {
       case Right(savedUserAnswers) =>
         UserAnswers(

@@ -19,11 +19,15 @@ package controllers
 import controllers.actions.*
 import forms.ClientUtrNumberFormProvider
 import logging.Logging
+import models.{SavedUserAnswers, UserAnswers}
 import models.core.Match
+import models.requests.DataRequest
+import models.saveAndComeBack.{MultipleRegistrations, SingleRegistration, TaxReferenceInformation}
 import pages.{ClientUtrNumberPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
+import services.SaveAndComeBackService
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.AmendWaypoints.AmendWaypointsOps
@@ -40,7 +44,8 @@ class ClientUtrNumberController @Inject()(
                                            formProvider: ClientUtrNumberFormProvider,
                                            view: ClientUtrNumberView,
                                            coreRegistrationValidationService: CoreRegistrationValidationService,
-                                           clock: Clock
+                                           clock: Clock,
+                                           saveAndComeBackService: SaveAndComeBackService
                                          )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with SetActiveTraderResult with Logging {
 
@@ -83,11 +88,74 @@ class ClientUtrNumberController @Inject()(
               ).toFuture
 
             case _ =>
-              for {
-                updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientUtrNumberPage, value))
-                _ <- cc.sessionRepository.set(updatedAnswers)
-              } yield Redirect(ClientUtrNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+              saveAndComeBackService.getSavedContinueRegistrationJourneys(request.userAnswers, request.intermediaryNumber).flatMap {
+
+                case SingleRegistration(singleJourneyId) =>
+                  continueFlow(Some(singleJourneyId), utrNumber = value, request, waypoints)
+
+                case MultipleRegistrations(multipleRegistrations) =>
+
+                  val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(request.userAnswers)
+
+                  val maybeJourneyId = findMatchingJourneyId(taxReferenceInformation, multipleRegistrations)
+
+                  continueFlow(maybeJourneyId, utrNumber = value, request, waypoints)
+
+                case _ =>
+                  continueFlow(maybeJourneyId = None, utrNumber = value, request, waypoints)
+              }
+
           }
       )
   }
+
+  private def handleRedirect(
+                             journeyId: String,
+                             utrValue: String,
+                             waypoints: Waypoints,
+                             updatedAnswers: UserAnswers
+                             )(implicit request: DataRequest[_]): Future[Result] =
+
+    saveAndComeBackService.retrieveSingleSavedUserAnswer(journeyId, waypoints).map { savedUserAnswers =>
+
+      val utrFromDatabase: Option[String] = (savedUserAnswers.data \ "clientUtrNumber").asOpt[String]
+
+      if (utrFromDatabase.contains(utrValue)) {
+        Redirect(controllers.routes.ClientRegistrationAlreadyPendingController.onPageLoad(waypoints))
+      } else {
+        Redirect(ClientUtrNumberPage.navigate(waypoints, updatedAnswers, updatedAnswers).route)
+      }
+    }
+
+  private def continueFlow(
+                            maybeJourneyId: Option[String],
+                            utrNumber: String,
+                            request: DataRequest[_],
+                            waypoints: Waypoints
+                          ): Future[Result] =
+
+    val answersWithJourney = maybeJourneyId.fold(request.userAnswers)(id => request.userAnswers.copy(journeyId = id))
+
+    for {
+      updatedAnswers <- Future.fromTry(answersWithJourney.set(ClientUtrNumberPage, utrNumber))
+      _              <- cc.sessionRepository.set(updatedAnswers)
+      result         <- maybeJourneyId match {
+
+        case Some(journeyId) =>
+          handleRedirect(journeyId, utrNumber, waypoints, updatedAnswers)(request)
+
+        case None =>
+          Redirect(ClientUtrNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route).toFuture
+      }
+    } yield result
+
+
+  private def findMatchingJourneyId(
+                                     taxReferenceInformation: TaxReferenceInformation,
+                                     multipleRegistrations: Seq[SavedUserAnswers]
+                                   ): Option[String] =
+    multipleRegistrations
+      .find(_.journeyId == taxReferenceInformation.journeyId)
+      .map(_.journeyId)
+
 }
