@@ -30,25 +30,26 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.Format.GenericFormat
 import play.api.libs.json.Reads
 import play.api.mvc.*
+import queries.PreviousUnfinishedRegistration
 import services.SaveAndComeBackService
 import services.core.CoreSavedAnswersRevalidationService
 import uk.gov.hmrc.http.HttpVerbs.GET
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
-import views.html.saveAndComeBack.ContinueRegistrationView
+import views.html.saveAndComeBack.{ContinueRegistrationView, RegistrationAlreadySavedView}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class RegistrationAlreadySavedController @Inject()(
-                                                override val messagesApi: MessagesApi,
-                                                cc: AuthenticatedControllerComponents,
-                                                formProvider: ContinueRegistrationFormProvider,
-                                                view: ContinueRegistrationView,
-                                                frontendAppConfig: FrontendAppConfig,
-                                                saveAndComeBackService: SaveAndComeBackService,
-                                                coreSavedAnswersRevalidationService: CoreSavedAnswersRevalidationService
-                                              )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with SetActiveTraderResult {
+                                                    override val messagesApi: MessagesApi,
+                                                    cc: AuthenticatedControllerComponents,
+                                                    formProvider: ContinueRegistrationFormProvider,
+                                                    view: RegistrationAlreadySavedView,
+                                                    frontendAppConfig: FrontendAppConfig,
+                                                    saveAndComeBackService: SaveAndComeBackService,
+                                                    coreSavedAnswersRevalidationService: CoreSavedAnswersRevalidationService
+                                                  )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with SetActiveTraderResult {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
@@ -56,71 +57,71 @@ class RegistrationAlreadySavedController @Inject()(
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
-
-      request.userAnswers.get(ClientVatNumberPage) match {
+      println("\n\n RegistrationAlreadySavedController --> OnPageLoad")
+      request.userAnswers.get(PreviousUnfinishedRegistration) match
         case None =>
-          val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(request.userAnswers)
-
-          request.userAnswers.get(SavedProgressPage).map { _ =>
-            Ok(view(taxReferenceInformation, form, waypoints)).toFuture
+          val exception = new IllegalStateException("Must have previous unfinished registration journey")
+          logger.error(exception.getMessage, exception)
+          throw exception
+        case Some(previousUserAnswers) =>
+          val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(previousUserAnswers)
+          println(s"\n\n RegistrationAlreadySavedController --> taxReferenceInformation $taxReferenceInformation")
+          previousUserAnswers.get(SavedProgressPage).map { _ =>
+            println(s"\n\n RegistrationAlreadySavedController the view")
+            Ok(view(form, waypoints, taxReferenceInformation.organisationName)).toFuture
           }.getOrElse {
             val exception = new IllegalStateException("Must have a saved page url to return to the saved journey")
             logger.error(exception.getMessage, exception)
             throw exception
           }
-
-        case Some(clientVatNumber) =>
-
-          saveAndComeBackService.getVatTaxInfo(clientVatNumber, waypoints).map { vatCustomerInfo =>
-            val updatedAnswers = request.userAnswers.copy(vatInfo = Some(vatCustomerInfo))
-            cc.sessionRepository.set(updatedAnswers)
-
-            val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(updatedAnswers)
-
-            request.userAnswers.get(SavedProgressPage).map { _ =>
-              Ok(view(taxReferenceInformation, form, waypoints))
-            }.getOrElse {
-              val exception = new IllegalStateException("Must have a saved page url to return to the saved journey")
-              logger.error(exception.getMessage, exception)
-              throw exception
-            }
-          }
-      }
   }
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
+      println("\n\n RegistrationAlreadySavedController --> OnSubmit")
+      request.userAnswers.get(PreviousUnfinishedRegistration) match {
+        case Some(previousUserAnswers) =>
+          println(s"\n\n RegistrationAlreadySavedController Before the error?")
+          val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(previousUserAnswers)
+          println(s"\n\n RegistrationAlreadySavedController --> taxReferenceInformation2 $taxReferenceInformation")
+          val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
 
-      val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(request.userAnswers)
-      val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
 
-      form.bindFromRequest().fold(
-        formWithErrors =>
-          BadRequest(view(taxReferenceInformation, formWithErrors, waypoints)).toFuture,
+          form.bindFromRequest().fold(
+            formWithErrors =>
+              BadRequest(view(form, waypoints, taxReferenceInformation.organisationName)).toFuture,
 
-        value1 =>
-          (value1, request.userAnswers.get(SavedProgressPage)) match {
-            case (ContinueRegistration.Continue, Some(url)) => //TODO SCG ---> This is where the client Reg journey recovers: Yes/ No Delete this Reg page. ( we could feed straight in at this poin)
-              coreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(waypoints).flatMap {
-                case Some(redirectResult) =>
-                  deleteAndRedirect(taxReferenceInformation, redirectResult)
+            value1 =>
+              (value1, previousUserAnswers.get(SavedProgressPage)) match {
+                case (ContinueRegistration.Continue, Some(url)) =>
+                  coreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(waypoints).flatMap {
+                    case Some(redirectResult) =>
+                      deleteAndRedirect(taxReferenceInformation, redirectResult)
 
-                case None =>
-                  Redirect(Call(GET, url)).toFuture
+                    case None =>
+                      Redirect(Call(GET, url)).toFuture
+                  }
+
+                case (ContinueRegistration.Delete, _) =>
+                  for {
+                    _ <- Future.fromTry(request.userAnswers.remove(PreviousUnfinishedRegistration))
+                    _ <- saveAndComeBackService.deleteSavedUserAnswers(taxReferenceInformation.journeyId)
+                  } yield {
+                    //TODO SCG ---> How do i get it back on track??
+                    Redirect(dashboardUrl)
+                  }
+
+                case _ =>
+                  val exception = new IllegalStateException("Illegal value submitted and/or must have a saved page url to return to the saved journey")
+                  logger.error(exception.getMessage, exception)
+                  throw exception
               }
-
-            case (ContinueRegistration.Delete, _) =>
-              for {
-                _ <- cc.sessionRepository.clear(request.userId)
-                _ <- saveAndComeBackService.deleteSavedUserAnswers(taxReferenceInformation.journeyId)
-              } yield Redirect(dashboardUrl)
-
-            case _ =>
-              val exception = new IllegalStateException("Illegal value submitted and/or must have a saved page url to return to the saved journey")
-              logger.error(exception.getMessage, exception)
-              throw exception
-          }
-      )
+          )
+        case None =>
+          val exception = new IllegalStateException("Must have previous unfinished registration journey")
+          logger.error(exception.getMessage, exception)
+          throw exception
+      }
   }
 
   private def deleteAndRedirect(

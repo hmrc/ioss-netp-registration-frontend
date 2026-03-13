@@ -23,6 +23,7 @@ import models.requests.{DataRequest, OptionalDataRequest}
 import models.saveAndComeBack.*
 import models.{SavedUserAnswers, UserAnswers}
 import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, ContinueRegistrationSelectionPage, QuestionPage, Waypoints}
+import play.api.libs.json.JsObject
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.FutureSyntax.FutureOps
 
@@ -187,45 +188,37 @@ class SaveAndComeBackService @Inject()(
       )
     }
   }
-  
+
   def checkForPreviousUnfinishedSavedRegJourney(
-                                                 taxReference: (String, String),
-                                                 userAnswers: UserAnswers,
+                                                 taxType: String,
+                                                 taxNum: String,
                                                  intermediaryNum: String
-                                               )(implicit hc: HeaderCarrier) = {
+                                               )(implicit request: DataRequest[_], hc: HeaderCarrier): Future[Option[UserAnswers]] = {
 
-    val listOfPages: List[QuestionPage[String]] = List(ClientTaxReferencePage, ClientUtrNumberPage, ClientsNinoNumberPage, ClientVatNumberPage)
-
-
-    val taxType = taxReference._1
-    val taxNum = taxReference._2
+    val pageAndTaxType = Map("FTR" -> ClientTaxReferencePage, "UTR" -> ClientUtrNumberPage, "NINO" -> ClientsNinoNumberPage, "VAT" -> ClientVatNumberPage)
 
     saveForLaterConnector.getAllByIntermediary(intermediaryNum).map {
-
       case Left(error) =>
         val message: String = s"Received an unexpected error when trying to retrieve uncompleted " +
           s"registrations for the intermediary ID: $intermediaryNum. \nWith Errors: $error"
         val exception: Exception = new Exception(message)
         logger.error(exception.getMessage, exception)
         throw exception
-
-
-      case Right(seqSavedUserAnswers) => seqSavedUserAnswers.map { individualUserAnswers =>
         
-        val tempUserAnswers = UserAnswers(id = "TempID", data = individualUserAnswers.data)
-        for {
-          customPage <- listOfPages.view
-          taxNumber <- tempUserAnswers.get(customPage)
-        } yield {
-          customPage match {
-            case ClientTaxReferencePage if taxType == "FTR" && taxNum.contains(taxNumber) => individualUserAnswers 
-            case ClientUtrNumberPage if taxType == "UTR" && taxNum.contains(taxNumber)=> individualUserAnswers
-            case ClientsNinoNumberPage if taxType == "NINO" && taxNum.contains(taxNumber) => individualUserAnswers
-            case ClientVatNumberPage if taxType == "VAT" && taxNum.contains(taxNumber) => individualUserAnswers
-            case _ => false
+      case Right(seqSavedUserAnswers) => {
+        seqSavedUserAnswers.find { eachIndividualSUA =>
+          val temporaryUserAnswers = UserAnswers(request.userId, eachIndividualSUA.journeyId, data = eachIndividualSUA.data, vatInfo = None, lastUpdated = eachIndividualSUA.lastUpdated)
+
+          pageAndTaxType.get(taxType).exists { pageType =>
+            temporaryUserAnswers.get(pageType).exists(taxNum.contains)
           }
+        }.map { savedUserAnswer =>
+          UserAnswers(request.userId, savedUserAnswer.journeyId, data = savedUserAnswer.data, vatInfo = None, lastUpdated = savedUserAnswer.lastUpdated)
         }
       }
     }
+
   }
 }
+
+    
