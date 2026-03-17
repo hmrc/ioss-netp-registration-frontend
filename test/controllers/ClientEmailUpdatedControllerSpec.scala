@@ -19,9 +19,10 @@ package controllers
 import base.SpecBase
 import connectors.RegistrationConnector
 import models.responses.InternalServerError
-import models.{BusinessContactDetails, SavedPendingRegistration}
+import models.{BusinessContactDetails, IntermediaryDetails, SavedPendingRegistration}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito.{reset, times, verify, when}
+import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import pages.BusinessContactDetailsPage
 import play.api.inject.bind
@@ -29,14 +30,20 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import utils.FutureSyntax.FutureOps
 
-class ClientEmailUpdatedControllerSpec extends SpecBase with MockitoSugar {
+class ClientEmailUpdatedControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
   private val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
+    .copy(intermediaryDetails = IntermediaryDetails(intermediaryNumber, intermediaryName))
+
   override val journeyId: String = savedPendingRegistration.journeyId
 
   val newEmailAddress: String = "new@email.com"
 
   val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
+
+  override def beforeEach(): Unit = {
+    reset(mockRegistrationConnector)
+  }
 
   "ClientEmailUpdated Controller" - {
 
@@ -84,6 +91,30 @@ class ClientEmailUpdatedControllerSpec extends SpecBase with MockitoSugar {
         intercept[Exception] {
           status(result)
         }
+      }
+    }
+
+    "must redirect to AccessDenied when intermediary number doesn't match" in {
+
+      val wrongRegistration = savedPendingRegistration
+        .copy(intermediaryDetails = IntermediaryDetails("wrong-intermediary", intermediaryName))
+
+      when(mockRegistrationConnector.getPendingRegistration(eqTo(journeyId))(any()))
+        .thenReturn(Right(wrongRegistration).toFuture)
+
+      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers))
+        .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+        .build()
+
+      running(application) {
+        val request = FakeRequest(GET, routes.ClientEmailUpdatedController.onPageLoad(waypoints, journeyId).url)
+
+        val result = route(application, request).value
+
+        status(result) `mustEqual` SEE_OTHER
+        redirectLocation(result).value mustEqual controllers.routes.AccessDeniedController.onPageLoad().url
+
+        verify(mockRegistrationConnector, times(1)).getPendingRegistration(any())(any())
       }
     }
   }
