@@ -25,7 +25,7 @@
         govukButton: GovukButton
 )
 
-@(form: Form[_], waypoints: Waypoints, clientCompanyName: String)(implicit request: Request[_], messages: Messages)
+@(form: Form[_], waypoints: Waypoints, clientCompanyName: String, taxReference: String)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = title(form, messages("clientRegistrationAlreadyPending.title", clientCompanyName))) {
 
@@ -38,8 +38,8 @@
         @govukRadios(
             RadiosViewModel(
                 field  = form("value"),
-                legend = LegendViewModel(messages("clientRegistrationAlreadyPending.heading", clientCompanyName)).asPageHeading(),
-                items  = ContinueRegistration.options(true)
+                legend = LegendViewModel(messages("clientRegistrationAlreadyPending.heading", clientCompanyName, taxReference)).asPageHeading(),
+                items  = ContinueRegistration.options(alreadySavedRegistrationJourney = true)
             )
         )
 

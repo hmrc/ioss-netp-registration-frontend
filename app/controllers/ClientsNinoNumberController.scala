@@ -20,6 +20,7 @@ import controllers.actions.*
 import forms.ClientsNinoNumberFormProvider
 import logging.Logging
 import models.core.Match
+import models.etmp.EtmpIdType.NINO
 import pages.{ClientsNinoNumberPage, Waypoints}
 import play.api.data.Form
 import queries.PreviousUnfinishedRegistration
@@ -86,7 +87,7 @@ class ClientsNinoNumberController @Inject()(
               ).toFuture
 
             case _ =>
-              saveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(taxType = "UTR", taxNum = value, intermediaryNum = request.intermediaryNumber)(request, hc).map {
+              saveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney( NINO, value, request.intermediaryNumber)(request, hc).map {
                 case Some(previousUserAnswers) => {
                   for {
                     updatedAnswers <- Future.fromTry(request

@@ -19,6 +19,8 @@ package services
 import connectors.{RegistrationConnector, SaveForLaterConnector}
 import logging.Logging
 import models.domain.VatCustomerInfo
+import models.etmp.EtmpIdType.{FTR, UTR, NINO, VRN}
+import models.etmp.EtmpIdType
 import models.requests.{DataRequest, OptionalDataRequest}
 import models.saveAndComeBack.*
 import models.{SavedUserAnswers, UserAnswers}
@@ -190,12 +192,16 @@ class SaveAndComeBackService @Inject()(
   }
 
   def checkForPreviousUnfinishedSavedRegJourney(
-                                                 taxType: String,
-                                                 taxNum: String,
+                                                 idType: EtmpIdType,
+                                                 idNumber: String,
                                                  intermediaryNum: String
                                                )(implicit request: DataRequest[_], hc: HeaderCarrier): Future[Option[UserAnswers]] = {
 
-    val pageAndTaxType = Map("FTR" -> ClientTaxReferencePage, "UTR" -> ClientUtrNumberPage, "NINO" -> ClientsNinoNumberPage, "VAT" -> ClientVatNumberPage)
+    val pageAndTaxType = Map(
+      FTR.toString -> ClientTaxReferencePage,
+      UTR.toString -> ClientUtrNumberPage,
+      NINO.toString -> ClientsNinoNumberPage,
+      VRN.toString -> ClientVatNumberPage)
 
     saveForLaterConnector.getAllByIntermediary(intermediaryNum).map {
       case Left(error) =>
@@ -204,13 +210,13 @@ class SaveAndComeBackService @Inject()(
         val exception: Exception = new Exception(message)
         logger.error(exception.getMessage, exception)
         throw exception
-        
+
       case Right(seqSavedUserAnswers) => {
         seqSavedUserAnswers.find { eachIndividualSUA =>
           val temporaryUserAnswers = UserAnswers(request.userId, eachIndividualSUA.journeyId, data = eachIndividualSUA.data, vatInfo = None, lastUpdated = eachIndividualSUA.lastUpdated)
 
-          pageAndTaxType.get(taxType).exists { pageType =>
-            temporaryUserAnswers.get(pageType).exists(taxNum.contains)
+          pageAndTaxType.get(idType.toString).exists { pageType =>
+            temporaryUserAnswers.get(pageType).exists(idNumber.contains)
           }
         }.map { savedUserAnswer =>
           UserAnswers(request.userId, savedUserAnswer.journeyId, data = savedUserAnswer.data, vatInfo = None, lastUpdated = savedUserAnswer.lastUpdated)
@@ -219,6 +225,37 @@ class SaveAndComeBackService @Inject()(
     }
 
   }
+
+  def retrieveTaxRef(userAnswers: UserAnswers): Tuple3[String, String, EtmpIdType] = {
+    userAnswers.vatInfo match {
+      case Some(vatCustomerInfo) =>
+        if (vatCustomerInfo.organisationName.isDefined) {
+          (vatCustomerInfo.organisationName.get, "UK VAT number", VRN)
+        }
+        else {
+          (vatCustomerInfo.individualName.get, "UK VAT number", VRN)
+        }
+      case _ =>
+        val listOfPages: Seq[QuestionPage[String]] = Seq(ClientTaxReferencePage, ClientUtrNumberPage, ClientsNinoNumberPage)
+
+        val companyName: String = userAnswers.get(ClientBusinessNamePage).map(_.name).getOrElse {
+          val exception = new IllegalStateException("User answers must include company name if Vat Customer Info was not provided")
+          logger.error(exception.getMessage, exception)
+          throw exception
+        }
+
+        val resultTuple = for {
+          customPage <- listOfPages.view
+        } yield {
+          customPage match {
+            case ClientTaxReferencePage => (companyName, "tax reference", FTR)
+            case ClientUtrNumberPage => (companyName, "tax reference", UTR)
+            case ClientsNinoNumberPage => (companyName, "National Insurance Number", NINO)
+          }
+        }
+        resultTuple.head
+    }
+  }
+
 }
 
-    

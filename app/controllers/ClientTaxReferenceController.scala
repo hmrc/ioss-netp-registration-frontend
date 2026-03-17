@@ -20,6 +20,7 @@ import controllers.actions.*
 import forms.ClientTaxReferenceFormProvider
 import logging.Logging
 import models.core.Match
+import models.etmp.EtmpIdType.FTR
 import models.requests.DataRequest
 import pages.{ClientTaxReferencePage, Waypoints}
 import queries.PreviousUnfinishedRegistration
@@ -100,7 +101,7 @@ class ClientTaxReferenceController @Inject()(
                 ).toFuture
 
               case _ =>
-                saveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(taxType = "UTR", taxNum = value, intermediaryNum = request.intermediaryNumber)(request, hc).map {
+                saveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(FTR, value, request.intermediaryNumber)(request, hc).map {
                   case Some(previousUserAnswers) => {
                     for {
                       updatedAnswers <- Future.fromTry(request
