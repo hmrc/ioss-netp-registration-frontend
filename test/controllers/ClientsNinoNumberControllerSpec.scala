@@ -31,14 +31,16 @@ import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import queries.ActiveTraderResultQuery
+import queries.{ActiveTraderResultQuery, PreviousUnfinishedRegistration}
 import repositories.SessionRepository
+import services.SaveAndComeBackService
 import services.core.CoreRegistrationValidationService
 import testutils.CreateMatchResponse.createMatchResponse
 import utils.FutureSyntax.FutureOps
 import views.html.ClientsNinoNumberView
 
 import java.time.{Clock, Instant, LocalDate, ZoneId}
+import scala.concurrent.Future
 
 class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
@@ -49,11 +51,13 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar with Be
   private val form: Form[String] = formProvider()
 
   private val mockCoreRegistrationValidationService = mock[CoreRegistrationValidationService]
+  private val mockSaveAndComeBackService = mock[SaveAndComeBackService]
 
   private lazy val clientsNinoNumberRoute: String = routes.ClientsNinoNumberController.onPageLoad(waypoints).url
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockCoreRegistrationValidationService)
+    Mockito.reset(mockSaveAndComeBackService)
   }
  
   "ClientsNinoNumber Controller" - {
@@ -97,12 +101,14 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar with Be
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(), any(), any())(any(), any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService)
           )
           .build()
 
@@ -121,6 +127,43 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar with Be
 
         status(result) `mustBe` SEE_OTHER
         redirectLocation(result).value `mustBe` ClientsNinoNumberPage.navigate(waypoints, emptyUserAnswers, expectedAnswers).url
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
+      }
+    }
+
+    "must save the answers and redirect to the RegistrationAlreadySavedPage when valid data is submitted and a saved journey is found" in {
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(), any(), any())(any(), any())) thenReturn Future.successful(Some(emptyUserAnswers))
+
+      val application =
+        applicationBuilder(userAnswers = Some(emptyUserAnswers))
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService)
+          )
+          .build()
+
+      running(application) {
+
+        when(mockCoreRegistrationValidationService.searchTraderId(any[String])(any(), any())) thenReturn
+          None.toFuture
+
+        val request =
+          FakeRequest(POST, clientsNinoNumberRoute)
+            .withFormUrlEncodedBody(("value", nino))
+
+        val result = route(application, request).value
+
+        val expectedAnswers = emptyUserAnswers
+          .set(ClientsNinoNumberPage, nino).success.value
+          .set(PreviousUnfinishedRegistration, emptyUserAnswers).success.value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` saveAndComeBack.routes.RegistrationAlreadySavedController.onPageLoad(waypoints).url
         verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }
