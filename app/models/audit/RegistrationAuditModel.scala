@@ -29,7 +29,7 @@ case class RegistrationAuditModel(
                                    submissionResult: SubmissionResult
                                  ) extends JsonAuditModel {
 
-  override val auditType: String = "NETPRegistrationSubmitted"
+  override val auditType: String = "NetpRegistrationSubmitted"
   override val transactionName: String = "netp-registration-submitted"
   
   override val detail: JsValue = Json.obj(
