@@ -21,12 +21,11 @@ import controllers.SetActiveTraderResult
 import controllers.actions.*
 import forms.saveAndComeBack.ContinueRegistrationFormProvider
 import logging.Logging
-import models.domain.VatCustomerInfo
 import models.etmp.EtmpIdType
-import models.etmp.EtmpIdType.{VRN, UTR, FTR, NINO}
+import models.etmp.EtmpIdType.{FTR, NINO, UTR, VRN}
 import models.requests.DataRequest
-import models.saveAndComeBack.{ContinueRegistration, TaxReferenceInformation}
-import pages.{ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, SavedProgressPage, Waypoints}
+import models.saveAndComeBack.ContinueRegistration
+import pages.{SavedProgressPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.Format.GenericFormat
@@ -38,7 +37,7 @@ import services.core.CoreSavedAnswersRevalidationService
 import uk.gov.hmrc.http.HttpVerbs.GET
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
-import views.html.saveAndComeBack.{ContinueRegistrationView, RegistrationAlreadySavedView}
+import views.html.saveAndComeBack.RegistrationAlreadySavedView
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -48,7 +47,6 @@ class RegistrationAlreadySavedController @Inject()(
                                                     cc: AuthenticatedControllerComponents,
                                                     formProvider: ContinueRegistrationFormProvider,
                                                     view: RegistrationAlreadySavedView,
-                                                    frontendAppConfig: FrontendAppConfig,
                                                     saveAndComeBackService: SaveAndComeBackService,
                                                     coreSavedAnswersRevalidationService: CoreSavedAnswersRevalidationService
                                                   )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with SetActiveTraderResult {
@@ -79,8 +77,7 @@ class RegistrationAlreadySavedController @Inject()(
     implicit request =>
       request.userAnswers.get(PreviousUnfinishedRegistration) match {
         case Some(previousUserAnswers) =>
-          val (companyName:String, taxReference:String, etmpIdType:EtmpIdType) = saveAndComeBackService.retrieveTaxRef(previousUserAnswers)
-          val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
+          val (companyName: String, taxReference: String, etmpIdType: EtmpIdType) = saveAndComeBackService.retrieveTaxRef(previousUserAnswers)
 
           form.bindFromRequest().fold(
             formWithErrors =>
