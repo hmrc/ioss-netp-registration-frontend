@@ -20,6 +20,7 @@ import controllers.actions.*
 import forms.ClientUtrNumberFormProvider
 import logging.Logging
 import models.core.Match
+import models.etmp.EtmpIdType.UTR
 import pages.{ClientUtrNumberPage, Waypoints}
 import queries.PreviousUnfinishedRegistration
 import play.api.data.Form
@@ -31,7 +32,6 @@ import utils.AmendWaypoints.AmendWaypointsOps
 import utils.FutureSyntax.FutureOps
 import views.html.ClientUtrNumberView
 import services.SaveAndComeBackService
-
 
 import java.time.Clock
 import javax.inject.Inject
@@ -87,7 +87,7 @@ class ClientUtrNumberController @Inject()(
               ).toFuture
 
             case _ =>
-              saveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(taxType = "UTR", taxNum = value, intermediaryNum = request.intermediaryNumber)(request, hc).map {
+              saveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(UTR, value, request.intermediaryNumber)(request, hc).map {
                 case Some(previousUserAnswers) => {
                   for {
                     updatedAnswers <- Future.fromTry(request

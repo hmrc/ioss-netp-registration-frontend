@@ -22,9 +22,11 @@ import controllers.actions.*
 import forms.saveAndComeBack.ContinueRegistrationFormProvider
 import logging.Logging
 import models.domain.VatCustomerInfo
+import models.etmp.EtmpIdType
+import models.etmp.EtmpIdType.{VRN, UTR, FTR, NINO}
 import models.requests.DataRequest
 import models.saveAndComeBack.{ContinueRegistration, TaxReferenceInformation}
-import pages.{ClientVatNumberPage, SavedProgressPage, Waypoints}
+import pages.{ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, SavedProgressPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.Format.GenericFormat
@@ -57,18 +59,15 @@ class RegistrationAlreadySavedController @Inject()(
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
-      println("\n\n RegistrationAlreadySavedController --> OnPageLoad")
       request.userAnswers.get(PreviousUnfinishedRegistration) match
         case None =>
           val exception = new IllegalStateException("Must have previous unfinished registration journey")
           logger.error(exception.getMessage, exception)
           throw exception
         case Some(previousUserAnswers) =>
-          val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(previousUserAnswers)
-          println(s"\n\n RegistrationAlreadySavedController --> taxReferenceInformation $taxReferenceInformation")
+          val (companyName: String, taxReference: String, _) = saveAndComeBackService.retrieveTaxRef(previousUserAnswers)
           previousUserAnswers.get(SavedProgressPage).map { _ =>
-            println(s"\n\n RegistrationAlreadySavedController the view")
-            Ok(view(form, waypoints, taxReferenceInformation.organisationName)).toFuture
+            Ok(view(form, waypoints, companyName, taxReference)).toFuture
           }.getOrElse {
             val exception = new IllegalStateException("Must have a saved page url to return to the saved journey")
             logger.error(exception.getMessage, exception)
@@ -78,25 +77,21 @@ class RegistrationAlreadySavedController @Inject()(
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
-      println("\n\n RegistrationAlreadySavedController --> OnSubmit")
       request.userAnswers.get(PreviousUnfinishedRegistration) match {
         case Some(previousUserAnswers) =>
-          println(s"\n\n RegistrationAlreadySavedController Before the error?")
-          val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(previousUserAnswers)
-          println(s"\n\n RegistrationAlreadySavedController --> taxReferenceInformation2 $taxReferenceInformation")
+          val (companyName:String, taxReference:String, etmpIdType:EtmpIdType) = saveAndComeBackService.retrieveTaxRef(previousUserAnswers)
           val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
-
 
           form.bindFromRequest().fold(
             formWithErrors =>
-              BadRequest(view(form, waypoints, taxReferenceInformation.organisationName)).toFuture,
+              BadRequest(view(form, waypoints, companyName, taxReference)).toFuture,
 
             value1 =>
               (value1, previousUserAnswers.get(SavedProgressPage)) match {
                 case (ContinueRegistration.Continue, Some(url)) =>
                   coreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(waypoints).flatMap {
                     case Some(redirectResult) =>
-                      deleteAndRedirect(taxReferenceInformation, redirectResult)
+                      deleteAndRedirect(previousUserAnswers.journeyId, redirectResult)
 
                     case None =>
                       Redirect(Call(GET, url)).toFuture
@@ -105,10 +100,13 @@ class RegistrationAlreadySavedController @Inject()(
                 case (ContinueRegistration.Delete, _) =>
                   for {
                     _ <- Future.fromTry(request.userAnswers.remove(PreviousUnfinishedRegistration))
-                    _ <- saveAndComeBackService.deleteSavedUserAnswers(taxReferenceInformation.journeyId)
+                    _ <- saveAndComeBackService.deleteSavedUserAnswers(previousUserAnswers.journeyId)
                   } yield {
-                    //TODO SCG ---> How do i get it back on track??
-                    Redirect(dashboardUrl)
+                    etmpIdType match
+                      case VRN => Redirect(controllers.routes.CheckVatDetailsController.onPageLoad().url)
+                      case FTR => Redirect(controllers.routes.ClientBusinessNameController.onPageLoad().url)
+                      case UTR => Redirect(controllers.routes.ClientBusinessAddressController.onPageLoad().url)
+                      case NINO => Redirect(controllers.routes.ClientBusinessAddressController.onPageLoad().url)
                   }
 
                 case _ =>
@@ -125,11 +123,11 @@ class RegistrationAlreadySavedController @Inject()(
   }
 
   private def deleteAndRedirect(
-                                 taxReferenceInformation: TaxReferenceInformation,
+                                 journeyId: String,
                                  redirectUrl: Result
                                )(implicit ec: ExecutionContext, request: DataRequest[_]): Future[Result] = {
     for {
-      _ <- saveAndComeBackService.deleteSavedUserAnswers(taxReferenceInformation.journeyId)
+      _ <- saveAndComeBackService.deleteSavedUserAnswers(journeyId)
     } yield redirectUrl
   }
 }

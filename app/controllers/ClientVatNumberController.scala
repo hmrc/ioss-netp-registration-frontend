@@ -22,6 +22,7 @@ import controllers.saveAndComeBack.RegistrationAlreadySavedController
 import forms.ClientVatNumberFormProvider
 import logging.Logging
 import models.core.Match
+import models.etmp.EtmpIdType.VRN
 import models.responses.VatCustomerNotFound
 import pages.{ClientVatNumberPage, UkVatNumberNotFoundPage, VatApiDownPage, Waypoints}
 import play.api.data.Form
@@ -101,10 +102,9 @@ class ClientVatNumberController @Inject()(
                     logger.info(s"VAT number $ukVatNumber is expired (deregistration date: ${value.deregistrationDecisionDate})")
                     Redirect(controllers.routes.ExpiredVrnDateController.onPageLoad(waypoints).url).toFuture
                   } else {
-                    saveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(taxType = "VAT", taxNum = ukVatNumber, intermediaryNum = request.intermediaryNumber)(request, hc).map {
+                    saveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(VRN, ukVatNumber, request.intermediaryNumber)(request, hc).map {
                       case Some(previousUserAnswers) => {
                         val updateWithCurrentVatInfo = previousUserAnswers.copy(vatInfo = Some(value))
-                        println(s"\n\n the userAnswers?? => $updateWithCurrentVatInfo")
                         for {
                           updatedAnswers <- Future.fromTry(request
                             .userAnswers

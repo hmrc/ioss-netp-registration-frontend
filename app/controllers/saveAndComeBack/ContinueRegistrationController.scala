@@ -57,7 +57,6 @@ class ContinueRegistrationController @Inject()(
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
 
-      println(s"\n\n ContinueRegistrationController ---> On page load")
       request.userAnswers.get(ClientVatNumberPage) match {
         case None =>
           val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(request.userAnswers)
@@ -91,7 +90,6 @@ class ContinueRegistrationController @Inject()(
 
   def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData().async {
     implicit request =>
-      println(s"\n\n ContinueRegistrationController ---> On Submit")
 
       val taxReferenceInformation: TaxReferenceInformation = saveAndComeBackService.determineTaxReference(request.userAnswers)
       val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
