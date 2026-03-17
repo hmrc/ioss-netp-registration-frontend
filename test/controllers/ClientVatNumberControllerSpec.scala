@@ -33,8 +33,9 @@ import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import queries.ActiveTraderResultQuery
+import queries.{ActiveTraderResultQuery, PreviousUnfinishedRegistration}
 import repositories.SessionRepository
+import services.SaveAndComeBackService
 import services.core.CoreRegistrationValidationService
 import testutils.CreateMatchResponse.createMatchResponse
 import uk.gov.hmrc.domain.Vrn
@@ -51,6 +52,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
   private val mockCoreRegistrationValidationService = mock[CoreRegistrationValidationService]
+  private val mockSaveAndComeBackService = mock[SaveAndComeBackService]
 
   private val formProvider: ClientVatNumberFormProvider = new ClientVatNumberFormProvider()
   private val form: Form[String] = formProvider()
@@ -61,7 +63,8 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
   override def beforeEach(): Unit = {
     Mockito.reset(
       mockRegistrationConnector,
-      mockCoreRegistrationValidationService
+      mockCoreRegistrationValidationService,
+      mockSaveAndComeBackService
     )
   }
 
@@ -109,13 +112,15 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
 
       when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
       when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Future.successful(Right(vatCustomerInfo))
-
+      when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(),any(),any())(any(),any())) thenReturn Future.successful(None)
+        
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[RegistrationConnector].toInstance(mockRegistrationConnector),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService)
           )
           .build()
 
@@ -135,6 +140,49 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
 
         status(result) `mustBe` SEE_OTHER
         redirectLocation(result).value `mustBe` ClientVatNumberPage.navigate(waypoints, emptyUserAnswers, expectedAnswers).url
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
+        verify(mockRegistrationConnector, times(1)).getVatCustomerInfo(eqTo(ukVatNumber))(any())
+      }
+    }
+
+    "must save the answers and redirect to the RegistrationAlreadySavedPage when valid data is submitted and a saved journey is found" in {
+
+      val vatCustomerInfo = arbitraryVatCustomerInfo.arbitrary.sample.value
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
+      when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Future.successful(Right(vatCustomerInfo))
+      when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(),any(),any())(any(),any())) thenReturn Future.successful(Some(emptyUserAnswers))
+
+      val application =
+        applicationBuilder(userAnswers = Some(emptyUserAnswers))
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService)
+          )
+          .build()
+
+      running(application) {
+
+        when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
+
+        val request =
+          FakeRequest(POST, clientVatNumberRoute)
+            .withFormUrlEncodedBody(("value", ukVatNumber))
+
+        val result = route(application, request).value
+        val expectedAnswers = emptyUserAnswers
+          .copy(vatInfo = Some(vatCustomerInfo))
+          .set(ClientVatNumberPage, ukVatNumber)
+          .success.value
+          .set(PreviousUnfinishedRegistration, emptyUserAnswers.copy(vatInfo = Some(vatCustomerInfo)))
+          .success.value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` saveAndComeBack.routes.RegistrationAlreadySavedController.onPageLoad(waypoints).url
         verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
         verify(mockRegistrationConnector, times(1)).getVatCustomerInfo(eqTo(ukVatNumber))(any())
       }

@@ -32,14 +32,16 @@ import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import queries.ActiveTraderResultQuery
+import queries.{ActiveTraderResultQuery, PreviousUnfinishedRegistration}
 import repositories.SessionRepository
+import services.SaveAndComeBackService
 import services.core.CoreRegistrationValidationService
 import testutils.CreateMatchResponse.createMatchResponse
 import utils.FutureSyntax.FutureOps
 import views.html.ClientTaxReferenceView
 
 import java.time.{Clock, Instant, LocalDate, ZoneId}
+import scala.concurrent.Future
 
 class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
@@ -59,11 +61,13 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
   private lazy val clientTaxReferenceRoute: String = routes.ClientTaxReferenceController.onPageLoad(waypoints).url
 
   private val mockCoreRegistrationValidationService: CoreRegistrationValidationService = mock[CoreRegistrationValidationService]
+  private val mockSaveAndComeBackService = mock[SaveAndComeBackService]
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockCoreRegistrationValidationService)
+    Mockito.reset(mockSaveAndComeBackService)
   }
-  
+
   "ClientTaxReference Controller" - {
 
     "must return OK and the correct view for a GET" in {
@@ -105,12 +109,14 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(), any(), any())(any(), any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(updatedAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService)
           )
           .build()
 
@@ -118,7 +124,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
 
         when(mockCoreRegistrationValidationService.searchForeignTaxReference(any(), any())(any(), any())) thenReturn
           None.toFuture
-        
+
         val request =
           FakeRequest(POST, clientTaxReferenceRoute)
             .withFormUrlEncodedBody(("value", taxReference))
@@ -129,6 +135,45 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
 
         status(result) `mustBe` SEE_OTHER
         redirectLocation(result).value `mustBe` ClientTaxReferencePage.navigate(waypoints, emptyUserAnswers, expectedAnswers).url
+        verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
+      }
+    }
+
+    "must save the answers and redirect to the RegistrationAlreadySavedPage when valid data is submitted and a saved journey is found" in {
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(), any(), any())(any(), any())) thenReturn Future.successful(Some(updatedAnswers))
+
+      val application =
+        applicationBuilder(userAnswers = Some(updatedAnswers))
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService)
+          )
+          .build()
+
+      running(application) {
+
+        when(mockCoreRegistrationValidationService.searchForeignTaxReference(any(), any())(any(), any())) thenReturn
+          None.toFuture
+
+        val request =
+          FakeRequest(POST, clientTaxReferenceRoute)
+            .withFormUrlEncodedBody(("value", taxReference))
+
+        val result = route(application, request).value
+
+        val expectedAnswers = updatedAnswers
+          .set(ClientTaxReferencePage, taxReference)
+          .success.value
+          .set(PreviousUnfinishedRegistration, updatedAnswers)
+          .success.value
+
+        status(result) `mustBe` SEE_OTHER
+        redirectLocation(result).value `mustBe` saveAndComeBack.routes.RegistrationAlreadySavedController.onPageLoad(waypoints).url
         verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }
