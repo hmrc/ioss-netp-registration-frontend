@@ -16,7 +16,6 @@
 
 package controllers.saveAndComeBack
 
-import config.FrontendAppConfig
 import controllers.SetActiveTraderResult
 import controllers.actions.*
 import forms.saveAndComeBack.ContinueRegistrationFormProvider
