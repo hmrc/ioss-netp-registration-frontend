@@ -17,6 +17,7 @@
 @import config.FrontendAppConfig
 @import uk.gov.hmrc.hmrcfrontend.views.config.StandardBetaBanner
 @import views.html.helper.CSPNonce
+@import views.html.templates.FullWidthLayout
 
 @this(
     appConfig: FrontendAppConfig,
@@ -33,10 +34,18 @@
     betaBanner: StandardBetaBanner,
     autocompleteCss: HmrcAccessibleAutocompleteCss,
     autocompleteJavascript: HmrcAccessibleAutocompleteJavascript,
-    hmrcStandardPage: HmrcStandardPage
+    hmrcStandardPage: HmrcStandardPage,
+    defaultMainContentLayout: TwoThirdsMainContent,
+    fullWidthLayout: FullWidthLayout
 )
 
-@(pageTitle: String, showBackLink: Boolean = true, timeout: Boolean = true, showSignOut: Boolean = true)(contentBlock: Html)(implicit rh: RequestHeader, messages: Messages)
+@(
+        pageTitle: String,
+        showBackLink: Boolean = true,
+        timeout: Boolean = true,
+        showSignOut: Boolean = true,
+        fullWidth: Boolean = false
+)(contentBlock: Html)(implicit rh: RequestHeader, messages: Messages)
 
 @head = {
     @hmrcHead(
@@ -103,5 +112,12 @@
     footerBlock        = Some(hmrcStandardFooter()),
     scriptsBlock       = Some(hmrcScripts(
         scriptsBlock = Some(additionalScripts)
-    ))
+    )),
+    mainContentLayout = Some(
+      if(fullWidth) {
+        fullWidthLayout(_)
+      } else {
+        defaultMainContentLayout(_)
+      }
+    )
 )(content)
