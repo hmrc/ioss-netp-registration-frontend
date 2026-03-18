@@ -251,7 +251,7 @@ class SaveAndComeBackService @Inject()(
           case Some(ClientTaxReferencePage) => (companyName, "tax reference", FTR)
           case Some(ClientUtrNumberPage) => (companyName, "tax reference", UTR)
           case Some(ClientsNinoNumberPage) => (companyName, "National Insurance number", NINO)
-          case None =>           
+          case _ =>
             val exception = new IllegalStateException("User answers must include the Answers for one of four id types. VAT/UTR/FTR/NINO")
             logger.error(exception.getMessage, exception)
             throw exception

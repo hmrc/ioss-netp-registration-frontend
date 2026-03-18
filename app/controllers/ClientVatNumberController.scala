@@ -18,7 +18,6 @@ package controllers
 
 import connectors.RegistrationConnector
 import controllers.actions.*
-import controllers.saveAndComeBack.RegistrationAlreadySavedController
 import forms.ClientVatNumberFormProvider
 import logging.Logging
 import models.core.Match
