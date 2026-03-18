@@ -81,7 +81,7 @@ class RegistrationAlreadySavedController @Inject()(
 
           form.bindFromRequest().fold(
             formWithErrors =>
-              BadRequest(view(form, waypoints, companyName, taxReference)).toFuture,
+              BadRequest(view(formWithErrors, waypoints, companyName, taxReference)).toFuture,
 
             value1 =>
               (value1, previousUserAnswers.get(SavedProgressPage)) match {
@@ -96,7 +96,8 @@ class RegistrationAlreadySavedController @Inject()(
 
                 case (ContinueRegistration.Delete, _) =>
                   for {
-                    _ <- Future.fromTry(request.userAnswers.remove(PreviousUnfinishedRegistration))
+                    removeUnfinishedRegistrationUA <- Future.fromTry(request.userAnswers.remove(PreviousUnfinishedRegistration))
+                    _ <- cc.sessionRepository.set(removeUnfinishedRegistrationUA)
                     _ <- saveAndComeBackService.deleteSavedUserAnswers(previousUserAnswers.journeyId)
                   } yield {
                     etmpIdType match
