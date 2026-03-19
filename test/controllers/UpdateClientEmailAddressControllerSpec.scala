@@ -21,7 +21,7 @@ import connectors.RegistrationConnector
 import forms.UpdateClientEmailAddressFormProvider
 import models.emails.EmailSendingResult
 import models.responses.InternalServerError
-import models.{BusinessContactDetails, SavedPendingRegistration, UserAnswers}
+import models.{BusinessContactDetails, IntermediaryDetails, SavedPendingRegistration, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -39,7 +39,8 @@ class UpdateClientEmailAddressControllerSpec extends SpecBase with MockitoSugar 
   val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
   val mockEmailService: EmailService = mock[EmailService]
 
-  val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
+  private val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
+    .copy(intermediaryDetails = IntermediaryDetails(intermediaryNumber, intermediaryName))
   override val journeyId: String = savedPendingRegistration.journeyId
 
   val formProvider = new UpdateClientEmailAddressFormProvider()
@@ -104,6 +105,30 @@ class UpdateClientEmailAddressControllerSpec extends SpecBase with MockitoSugar 
           intercept[Exception] {
             status(result)
           }
+        }
+      }
+
+      "must redirect to AccessDenied when intermediary number doesn't match" in {
+
+        val wrongRegistration = savedPendingRegistration
+          .copy(intermediaryDetails = IntermediaryDetails("wrong-intermediary", intermediaryName))
+
+        when(mockRegistrationConnector.getPendingRegistration(eqTo(journeyId))(any()))
+          .thenReturn(Right(wrongRegistration).toFuture)
+
+        val application = applicationBuilder(userAnswers = Some(emptyUserAnswers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+        running(application) {
+          val request = FakeRequest(GET, updateClientEmailAddressOnPageLoadRoute)
+
+          val result = route(application, request).value
+
+          status(result) `mustEqual` SEE_OTHER
+          redirectLocation(result).value mustEqual controllers.routes.AccessDeniedController.onPageLoad().url
+
+          verify(mockRegistrationConnector, times(1)).getPendingRegistration(any())(any())
         }
       }
     }
@@ -176,6 +201,31 @@ class UpdateClientEmailAddressControllerSpec extends SpecBase with MockitoSugar 
           val result = route(application, request).value
 
           status(result) mustEqual BAD_REQUEST
+        }
+      }
+
+      "must redirect to AccessDenied when intermediary number doesn't match" in {
+
+        val wrongRegistration = savedPendingRegistration
+          .copy(intermediaryDetails = IntermediaryDetails("wrong-intermediary", intermediaryName))
+
+        when(mockRegistrationConnector.getPendingRegistration(eqTo(journeyId))(any()))
+          .thenReturn(Right(wrongRegistration).toFuture)
+
+        val application = applicationBuilder(userAnswers = Some(emptyUserAnswers))
+          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .build()
+
+        running(application) {
+          val request = FakeRequest(POST, updateClientEmailAddressOnSubmitRoute)
+            .withFormUrlEncodedBody(("value", "test@email.com"))
+
+          val result = route(application, request).value
+
+          status(result) `mustEqual` SEE_OTHER
+          redirectLocation(result).value mustEqual controllers.routes.AccessDeniedController.onPageLoad().url
+
+          verify(mockRegistrationConnector, times(1)).getPendingRegistration(any())(any())
         }
       }
     }

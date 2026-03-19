@@ -31,34 +31,40 @@ import views.html.ClientEmailUpdatedView
 import scala.concurrent.ExecutionContext
 
 class ClientEmailUpdatedController @Inject()(
-                                       override val messagesApi: MessagesApi,
-                                       cc: AuthenticatedControllerComponents,
-                                       val controllerComponents: MessagesControllerComponents,
-                                       frontendAppConfig: FrontendAppConfig,
-                                       registrationConnector: RegistrationConnector,
-                                       view: ClientEmailUpdatedView
-                                     )(implicit ec: ExecutionContext)
+                                              override val messagesApi: MessagesApi,
+                                              cc: AuthenticatedControllerComponents,
+                                              val controllerComponents: MessagesControllerComponents,
+                                              frontendAppConfig: FrontendAppConfig,
+                                              registrationConnector: RegistrationConnector,
+                                              view: ClientEmailUpdatedView
+                                            )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with Logging with GetOrganisationOrBusinessName {
 
   def onPageLoad(waypoints: Waypoints, journeyId: String): Action[AnyContent] = cc.identify.async {
     implicit request =>
 
-        registrationConnector.getPendingRegistration(journeyId).map {
-          case Right(pendingRegistration) =>
+      registrationConnector.getPendingRegistration(journeyId).map {
+        case Right(pendingRegistration) =>
 
-              val clientCompanyName = getClientCompanyName(pendingRegistration)
+          if (pendingRegistration.intermediaryDetails.intermediaryNumber == request.intermediaryNumber) {
 
-              val emailAddress = pendingRegistration.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
+            val clientCompanyName = getClientCompanyName(pendingRegistration)
 
-              val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
+            val emailAddress = pendingRegistration.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
 
-              Ok(view(clientCompanyName, emailAddress, dashboardUrl))
+            val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
 
-          case Left(errors) =>
-            val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given journey ID: $errors."
-            val exception: Exception = new Exception(message)
-            logger.error(exception.getMessage, exception)
-            throw exception
+            Ok(view(clientCompanyName, emailAddress, dashboardUrl))
+            
+          } else {
+            Redirect(controllers.routes.AccessDeniedController.onPageLoad().url)
+          }
+
+        case Left(errors) =>
+          val message: String = s"Received an unexpected error when trying to retrieve a pending registration for the given journey ID: $errors."
+          val exception: Exception = new Exception(message)
+          logger.error(exception.getMessage, exception)
+          throw exception
       }
   }
 }

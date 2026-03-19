@@ -33,14 +33,14 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class UpdateClientEmailAddressController @Inject()(
-                                        override val messagesApi: MessagesApi,
-                                        cc: AuthenticatedControllerComponents,
-                                        formProvider: UpdateClientEmailAddressFormProvider,
-                                        val controllerComponents: MessagesControllerComponents,
-                                        registrationConnector: RegistrationConnector,
-                                        emailService: EmailService,
-                                        view: UpdateClientEmailAddressView
-                                    )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetOrganisationOrBusinessName with Logging {
+                                                    override val messagesApi: MessagesApi,
+                                                    cc: AuthenticatedControllerComponents,
+                                                    formProvider: UpdateClientEmailAddressFormProvider,
+                                                    val controllerComponents: MessagesControllerComponents,
+                                                    registrationConnector: RegistrationConnector,
+                                                    emailService: EmailService,
+                                                    view: UpdateClientEmailAddressView
+                                                  )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetOrganisationOrBusinessName with Logging {
 
   private val form = formProvider()
 
@@ -49,7 +49,9 @@ class UpdateClientEmailAddressController @Inject()(
 
       registrationConnector.getPendingRegistration(journeyId).map {
         case Right(savedPendingRegistrations) =>
-          
+
+          if (savedPendingRegistrations.intermediaryDetails.intermediaryNumber == request.intermediaryNumber) {
+
             val clientCompanyName = getClientCompanyName(savedPendingRegistrations)
             val emailAddress = savedPendingRegistrations.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
 
@@ -57,13 +59,17 @@ class UpdateClientEmailAddressController @Inject()(
               case None => form
               case Some(value) => form.fill(value)
             }
-  
+
             Ok(view(preparedForm, waypoints, journeyId, clientCompanyName, emailAddress))
-            
+
+          } else {
+            Redirect(controllers.routes.AccessDeniedController.onPageLoad().url)
+          }
+
         case Left(errors) =>
           val message: String =
             s"Received an unexpected error when trying to retrieve a pending registration for the given journeyId: [$journeyId] with error: $errors."
-            
+
           val exception: Exception = new Exception(message)
           logger.error(exception.getMessage, exception)
           throw exception
@@ -76,37 +82,43 @@ class UpdateClientEmailAddressController @Inject()(
       registrationConnector.getPendingRegistration(journeyId).flatMap {
         case Right(savedPendingRegistration) =>
 
-          val clientCompanyName = getClientCompanyName(savedPendingRegistration)
-          val emailAddress = savedPendingRegistration.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
+          if (savedPendingRegistration.intermediaryDetails.intermediaryNumber == request.intermediaryNumber) {
 
-          form.bindFromRequest().fold(
-            formWithErrors =>
-              BadRequest(view(formWithErrors, waypoints, journeyId, clientCompanyName, emailAddress)).toFuture,
+            val clientCompanyName = getClientCompanyName(savedPendingRegistration)
+            val emailAddress = savedPendingRegistration.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
 
-            value =>
-              registrationConnector.updateClientEmailAddress(journeyId, value).map {
-                case Right(updatedClient) =>
+            form.bindFromRequest().fold(
+              formWithErrors =>
+                BadRequest(view(formWithErrors, waypoints, journeyId, clientCompanyName, emailAddress)).toFuture,
 
-                  val intermediaryName = updatedClient.intermediaryDetails.intermediaryName
-                  val recipientName = getClientCompanyName(updatedClient)
-                  val uniqueActivationCode = updatedClient.uniqueActivationCode
-                  val activationExpiryDate = updatedClient.activationExpiryDate
-                  val emailAddress = updatedClient.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
+              value =>
+                registrationConnector.updateClientEmailAddress(journeyId, value).map {
+                  case Right(updatedClient) =>
 
-                  emailService.sendClientActivationEmail(intermediaryName, recipientName, uniqueActivationCode, activationExpiryDate,
-                    emailAddress, alertQueue = Some(emailAlertQueuePriority))
-                  
-                  Redirect(controllers.routes.ClientEmailUpdatedController.onPageLoad(waypoints, journeyId))
+                    val intermediaryName = updatedClient.intermediaryDetails.intermediaryName
+                    val recipientName = getClientCompanyName(updatedClient)
+                    val uniqueActivationCode = updatedClient.uniqueActivationCode
+                    val activationExpiryDate = updatedClient.activationExpiryDate
+                    val emailAddress = updatedClient.userAnswers.get(BusinessContactDetailsPage).get.emailAddress
 
-                case Left(errors) =>
-                  val message: String =
-                    s"Received an unexpected error when trying to update the email address for the given journeyId: [$journeyId] with error: $errors."
+                    emailService.sendClientActivationEmail(intermediaryName, recipientName, uniqueActivationCode, activationExpiryDate,
+                      emailAddress, alertQueue = Some(emailAlertQueuePriority))
 
-                  val exception: Exception = new Exception(message)
-                  logger.error(exception.getMessage, exception)
-                  throw exception
-              }
-          )
+                    Redirect(controllers.routes.ClientEmailUpdatedController.onPageLoad(waypoints, journeyId))
+
+                  case Left(errors) =>
+                    val message: String =
+                      s"Received an unexpected error when trying to update the email address for the given journeyId: [$journeyId] with error: $errors."
+
+                    val exception: Exception = new Exception(message)
+                    logger.error(exception.getMessage, exception)
+                    throw exception
+                }
+            )
+
+          } else {
+            Redirect(controllers.routes.AccessDeniedController.onPageLoad().url).toFuture
+          }
 
         case Left(errors) =>
           val message: String =
