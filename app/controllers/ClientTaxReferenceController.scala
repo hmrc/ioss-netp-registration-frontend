@@ -20,8 +20,10 @@ import controllers.actions.*
 import forms.ClientTaxReferenceFormProvider
 import logging.Logging
 import models.core.Match
+import models.etmp.EtmpIdType.FTR
 import models.requests.DataRequest
 import pages.{ClientTaxReferencePage, Waypoints}
+import queries.PreviousUnfinishedRegistration
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.core.CoreRegistrationValidationService
@@ -29,6 +31,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.AmendWaypoints.AmendWaypointsOps
 import utils.FutureSyntax.FutureOps
 import views.html.ClientTaxReferenceView
+import services.SaveAndComeBackService
 
 import java.time.Clock
 import javax.inject.Inject
@@ -40,7 +43,8 @@ class ClientTaxReferenceController @Inject()(
                                               formProvider: ClientTaxReferenceFormProvider,
                                               view: ClientTaxReferenceView,
                                               coreRegistrationValidationService: CoreRegistrationValidationService,
-                                              clock: Clock
+                                              clock: Clock,
+                                              saveAndComeBackService: SaveAndComeBackService
                                     )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with GetCountry with SetActiveTraderResult with Logging {
 
@@ -97,10 +101,23 @@ class ClientTaxReferenceController @Inject()(
                 ).toFuture
 
               case _ =>
-                for {
-                  updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientTaxReferencePage, value))
-                  _ <- cc.sessionRepository.set(updatedAnswers)
-                } yield Redirect(ClientTaxReferencePage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+                saveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(FTR, value, request.intermediaryNumber)(request, hc).map {
+                  case Some(previousUserAnswers) => {
+                    for {
+                      updatedAnswers <- Future.fromTry(request
+                        .userAnswers
+                        .set(ClientTaxReferencePage, value))
+                      addPrevious <- Future.fromTry(updatedAnswers.set(PreviousUnfinishedRegistration, previousUserAnswers))
+                      _ <- cc.sessionRepository.set(addPrevious)
+                    } yield Redirect(saveAndComeBack.routes.RegistrationAlreadySavedController.onPageLoad(waypoints))
+                  }
+                  case None => {
+                    for {
+                      updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientTaxReferencePage, value))
+                      _ <- cc.sessionRepository.set(updatedAnswers)
+                    } yield Redirect(ClientTaxReferencePage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+                  }
+                }.flatten
             }
         )
       }

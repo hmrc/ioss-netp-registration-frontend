@@ -20,7 +20,9 @@ import controllers.actions.*
 import forms.ClientUtrNumberFormProvider
 import logging.Logging
 import models.core.Match
+import models.etmp.EtmpIdType.UTR
 import pages.{ClientUtrNumberPage, Waypoints}
+import queries.PreviousUnfinishedRegistration
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -29,6 +31,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.AmendWaypoints.AmendWaypointsOps
 import utils.FutureSyntax.FutureOps
 import views.html.ClientUtrNumberView
+import services.SaveAndComeBackService
 
 import java.time.Clock
 import javax.inject.Inject
@@ -40,7 +43,8 @@ class ClientUtrNumberController @Inject()(
                                            formProvider: ClientUtrNumberFormProvider,
                                            view: ClientUtrNumberView,
                                            coreRegistrationValidationService: CoreRegistrationValidationService,
-                                           clock: Clock
+                                           clock: Clock,
+                                           saveAndComeBackService: SaveAndComeBackService
                                          )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with SetActiveTraderResult with Logging {
 
@@ -83,10 +87,23 @@ class ClientUtrNumberController @Inject()(
               ).toFuture
 
             case _ =>
-              for {
-                updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientUtrNumberPage, value))
-                _ <- cc.sessionRepository.set(updatedAnswers)
-              } yield Redirect(ClientUtrNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+              saveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(UTR, value, request.intermediaryNumber)(request, hc).map {
+                case Some(previousUserAnswers) => {
+                  for {
+                    updatedAnswers <- Future.fromTry(request
+                      .userAnswers
+                      .set(ClientUtrNumberPage, value))
+                    addPrevious <- Future.fromTry(updatedAnswers.set(PreviousUnfinishedRegistration, previousUserAnswers))
+                    _ <- cc.sessionRepository.set(addPrevious)
+                  } yield Redirect(saveAndComeBack.routes.RegistrationAlreadySavedController.onPageLoad(waypoints))
+                }
+                case None => {
+                  for {
+                    updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientUtrNumberPage, value))
+                    _ <- cc.sessionRepository.set(updatedAnswers)
+                  } yield Redirect(ClientUtrNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+                }
+              }.flatten
           }
       )
   }

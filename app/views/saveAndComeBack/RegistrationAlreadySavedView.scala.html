@@ -14,23 +14,22 @@
  * limitations under the License.
  *@
 
-@import models.saveAndComeBack.TaxReferenceInformation
+@import pages.Waypoints
 @import models.saveAndComeBack.ContinueRegistration
 
-
 @this(
-    layout: templates.Layout,
-    formHelper: FormWithCSRF,
-    govukErrorSummary: GovukErrorSummary,
-    govukRadios: GovukRadios,
-    govukButton: GovukButton
+        layout: templates.Layout,
+        formHelper: FormWithCSRF,
+        govukErrorSummary: GovukErrorSummary,
+        govukRadios: GovukRadios,
+        govukButton: GovukButton
 )
 
-@(taxReferenceInfo: TaxReferenceInformation, form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
+@(form: Form[_], waypoints: Waypoints, clientCompanyName: String, taxReference: String)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = title(form, messages("continueRegistration.title"))) {
+@layout(pageTitle = title(form, messages("clientRegistrationAlreadyPending.title", clientCompanyName))) {
 
-    @formHelper(action = controllers.saveAndComeBack.routes.ContinueRegistrationController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
+    @formHelper(action = controllers.saveAndComeBack.routes.RegistrationAlreadySavedController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
 
         @if(form.errors.nonEmpty) {
             @govukErrorSummary(ErrorSummaryViewModel(form))
@@ -39,13 +38,13 @@
         @govukRadios(
             RadiosViewModel(
                 field  = form("value"),
-                legend = LegendViewModel(messages("continueRegistration.heading", taxReferenceInfo.organisationName, taxReferenceInfo.taxReference, taxReferenceInfo.referenceNumber)).asPageHeading(),
-                items  = ContinueRegistration.options()
+                legend = LegendViewModel(messages("clientRegistrationAlreadyPending.heading", clientCompanyName, taxReference)).asPageHeading(),
+                items  = ContinueRegistration.options(alreadySavedRegistrationJourney = true)
             )
         )
 
         @govukButton(
-            ButtonViewModel(messages("site.continue")).withAttribute(("id", "continue"))
+            ButtonViewModel(messages("site.continue")).withAttribute("id", "continue")
         )
     }
 }

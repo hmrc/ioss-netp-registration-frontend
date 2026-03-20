@@ -19,22 +19,26 @@ package services
 import base.SpecBase
 import connectors.{RegistrationConnector, SaveForLaterConnector}
 import models.domain.VatCustomerInfo
+import models.etmp.EtmpIdType
+import models.etmp.EtmpIdType.{FTR, NINO, UTR, VRN}
 import models.requests.{DataRequest, OptionalDataRequest}
-import models.responses.{NotFound, VatCustomerNotFound}
+import models.responses.{InternalServerError, NotFound, UnexpectedResponseStatus, VatCustomerNotFound}
 import models.saveAndComeBack.{MultipleRegistrations, NoRegistrations, SingleRegistration, TaxReferenceInformation}
-import models.{ClientBusinessName, SavedUserAnswers}
+import models.{ClientBusinessName, SavedUserAnswers, UserAnswers}
 import org.mockito.Mockito.when
 import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, ContinueRegistrationSelectionPage, EmptyWaypoints}
 import play.api.libs.json.JsObject
+import play.api.test.Helpers.status
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.FutureSyntax.FutureOps
 
 import java.time.Instant
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
-class SaveAndComeBackServiceSpec extends AnyFreeSpec with MockitoSugar with SpecBase {
+class SaveAndComeBackServiceSpec extends AnyFreeSpec with MockitoSugar with SpecBase with TableDrivenPropertyChecks {
 
   private implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
   private implicit val dataRequest: DataRequest[_] = mock[DataRequest[_]]
@@ -402,6 +406,197 @@ class SaveAndComeBackServiceSpec extends AnyFreeSpec with MockitoSugar with Spec
 
         ex.getMessage mustEqual expectedMessage
 
+      }
+    }
+
+    ".checkForPreviousUnfinishedSavedRegJourney should" - {
+      val VRNUserAnswers: UserAnswers = emptyUserAnswersWithVatInfo
+        .set(ClientVatNumberPage, "VatNumber").success.value
+
+      val FTRUserAnswers: UserAnswers = emptyUserAnswers
+        .set(ClientTaxReferencePage, "FtrNumber").success.value
+
+      val UTRUserAnswers: UserAnswers = emptyUserAnswers
+        .set(ClientUtrNumberPage, "UtrNumber").success.value
+
+      val NINOUserAnswers: UserAnswers = emptyUserAnswers
+        .set(ClientsNinoNumberPage, "NinoNumber").success.value
+
+      def createSavedUserAnswers(userAnswersData: JsObject): SavedUserAnswers = {
+        SavedUserAnswers(
+          journeyId = "SomeJourneyID",
+          data = userAnswersData,
+          intermediaryNumber = "SomeIntermediaryNumber",
+          lastUpdated = Instant.now())
+      }
+
+      val seqWithAllIdTypes: Seq[SavedUserAnswers] = Seq(
+        createSavedUserAnswers(VRNUserAnswers.data),
+        createSavedUserAnswers(FTRUserAnswers.data),
+        createSavedUserAnswers(UTRUserAnswers.data),
+        createSavedUserAnswers(NINOUserAnswers.data),
+      )
+
+      "Return UserAnswers when a saved journey with a matching VRN is found" in {
+        when(mockSaveForLaterConnector.getAllByIntermediary("SomeIntermediaryNumber")).thenReturn(Right(seqWithAllIdTypes).toFuture)
+
+        val result: Future[Option[UserAnswers]] = testSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(
+          idType = VRN,
+          idNumber = "VatNumber",
+          intermediaryNum = "SomeIntermediaryNumber")
+
+        whenReady(result) { exp =>
+          exp.get `mustBe` a[UserAnswers]
+          exp.get.data `mustBe` VRNUserAnswers.data
+        }
+      }
+
+      "Return UserAnswers when a saved journey with a matching FTR is found" in {
+        when(mockSaveForLaterConnector.getAllByIntermediary("SomeIntermediaryNumber")).thenReturn(Right(seqWithAllIdTypes).toFuture)
+
+        val result: Future[Option[UserAnswers]] = testSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(
+          idType = FTR,
+          idNumber = "FtrNumber",
+          intermediaryNum = "SomeIntermediaryNumber")
+
+        whenReady(result) { exp =>
+          exp.get `mustBe` a[UserAnswers]
+          exp.get.data `mustBe` FTRUserAnswers.data
+        }
+      }
+
+      "Return UserAnswers when a saved journey with a matching UTR is found" in {
+        when(mockSaveForLaterConnector.getAllByIntermediary("SomeIntermediaryNumber")).thenReturn(Right(seqWithAllIdTypes).toFuture)
+
+        val result: Future[Option[UserAnswers]] = testSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(
+          idType = UTR,
+          idNumber = "UtrNumber",
+          intermediaryNum = "SomeIntermediaryNumber")
+
+        whenReady(result) { exp =>
+          exp.get `mustBe` a[UserAnswers]
+          exp.get.data `mustBe` UTRUserAnswers.data
+        }
+      }
+
+      "Return UserAnswers when a saved journey with a matching NINO is found" in {
+        when(mockSaveForLaterConnector.getAllByIntermediary("SomeIntermediaryNumber")).thenReturn(Right(seqWithAllIdTypes).toFuture)
+
+        val result: Future[Option[UserAnswers]] = testSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(
+          idType = NINO,
+          idNumber = "NinoNumber",
+          intermediaryNum = "SomeIntermediaryNumber")
+
+        whenReady(result) { exp =>
+          exp.get `mustBe` a[UserAnswers]
+          exp.get.data `mustBe` NINOUserAnswers.data
+        }
+      }
+
+      "Return None when no saved journey matches both the correct idType and value entered" in {
+        when(mockSaveForLaterConnector.getAllByIntermediary("SomeIntermediaryNumber")).thenReturn(Right(seqWithAllIdTypes).toFuture)
+
+        val testCases = Table(
+          ("idType", "idNumber"),
+          (VRN, "UtrNumber"),
+          (VRN, "FtrNumber"),
+          (VRN, "NinoNumber"),
+          (UTR, "VatNumber"),
+          (UTR, "FtrNumber"),
+          (UTR, "NinoNumber"),
+          (FTR, "VatNumber"),
+          (FTR, "UtrNumber"),
+          (FTR, "NinoNumber"),
+          (NINO, "VatNumber"),
+          (NINO, "UtrNumber"),
+          (NINO, "FtrNumber")
+        )
+
+        forAll(testCases) { (idType, idNumber) =>
+          val result: Future[Option[UserAnswers]] = testSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(
+            idType = idType,
+            idNumber = idNumber,
+            intermediaryNum = "SomeIntermediaryNumber")
+
+          whenReady(result) { exp =>
+            exp `mustBe` None
+          }
+        }
+      }
+
+      "Return an error when getAllByIntermediary returns an unexpected error" in {
+        when(mockSaveForLaterConnector.getAllByIntermediary("SomeIntermediaryNumber")).thenReturn(Left(InternalServerError).toFuture)
+
+        val result = testSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(
+            idType = VRN,
+            idNumber = "VatNumber",
+            intermediaryNum = "SomeIntermediaryNumber")
+
+        whenReady(result.failed) { exp =>
+          exp `mustBe` a[Exception]
+          exp.getMessage `mustBe` "Received an unexpected error " +
+            "when trying to retrieve uncompleted registrations for the intermediary ID: SomeIntermediaryNumber. " +
+            "\nWith Errors: InternalServerError"
+        }
+      }
+    }
+
+
+    ".retrieveTaxRef should" - {
+      "Return client name, Uk vat text and VRN for a VAT client" in {
+        val vatUserAnswers = emptyUserAnswersWithVatInfo
+
+        val result: (String, String, EtmpIdType) = testSaveAndComeBackService.retrieveTaxRef(vatUserAnswers)
+
+        val expectedResult: (String, String, EtmpIdType) = ("Company name", "UK VAT number", VRN)
+
+        result mustBe expectedResult
+      }
+      
+      "Return client name, UTR text and UTR for a UTR client" in {
+        val utrUserAnswers: UserAnswers = emptyUserAnswers
+          .set(ClientUtrNumberPage, "UTR123456").success.value
+          .set(ClientBusinessNamePage, ClientBusinessName("UTR Company Name")).success.value
+
+        val result: (String, String, EtmpIdType) = testSaveAndComeBackService.retrieveTaxRef(utrUserAnswers)
+
+        val expectedResult: (String, String, EtmpIdType) = ("UTR Company Name", "tax reference", UTR)
+
+        result mustBe expectedResult
+      }
+      
+      "Return client name, FTR text and FTR for a FTR client" in {
+        val ftrUserAnswers: UserAnswers = emptyUserAnswers
+          .set(ClientTaxReferencePage, "FTR123456").success.value
+          .set(ClientBusinessNamePage, ClientBusinessName("FTR Company Name")).success.value
+
+        val result: (String, String, EtmpIdType) = testSaveAndComeBackService.retrieveTaxRef(ftrUserAnswers)
+
+        val expectedResult: (String, String, EtmpIdType) = ("FTR Company Name", "tax reference", FTR)
+
+        result mustBe expectedResult
+      }
+      
+      "Return client name, NINO text and NINO for a NINO client" in {
+        val ninoUserAnswers: UserAnswers = emptyUserAnswers
+          .set(ClientsNinoNumberPage, "NINO123456").success.value
+          .set(ClientBusinessNamePage, ClientBusinessName("NINO Company Name")).success.value
+
+        val result: (String, String, EtmpIdType) = testSaveAndComeBackService.retrieveTaxRef(ninoUserAnswers)
+
+        val expectedResult: (String, String, EtmpIdType) = ("NINO Company Name", "National Insurance number", NINO)
+
+        result mustBe expectedResult
+      }
+      
+      "Return an exception if no business name is stored in the userAnswers for a Non VAT client" in {
+        val missingBusinessName: UserAnswers = emptyUserAnswers
+          .set(ClientsNinoNumberPage, "NINO123456").success.value
+
+        val result: IllegalStateException = intercept[IllegalStateException] {
+          testSaveAndComeBackService.retrieveTaxRef(missingBusinessName)
+        }
+        result.getMessage mustEqual "User answers must include company name if Vat Customer Info was not provided"
       }
     }
   }
