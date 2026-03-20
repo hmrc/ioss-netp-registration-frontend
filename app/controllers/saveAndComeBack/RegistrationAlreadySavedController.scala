@@ -24,7 +24,7 @@ import models.etmp.EtmpIdType
 import models.etmp.EtmpIdType.{FTR, NINO, UTR, VRN}
 import models.requests.DataRequest
 import models.saveAndComeBack.ContinueRegistration
-import pages.{SavedProgressPage, Waypoints}
+import pages.{ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, SavedProgressPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.Format.GenericFormat
@@ -100,10 +100,10 @@ class RegistrationAlreadySavedController @Inject()(
                     _ <- saveAndComeBackService.deleteSavedUserAnswers(previousUserAnswers.journeyId)
                   } yield {
                     etmpIdType match
-                      case VRN => Redirect(controllers.routes.CheckVatDetailsController.onPageLoad().url)
-                      case FTR => Redirect(controllers.routes.ClientBusinessNameController.onPageLoad().url)
-                      case UTR => Redirect(controllers.routes.ClientBusinessAddressController.onPageLoad().url)
-                      case NINO => Redirect(controllers.routes.ClientBusinessAddressController.onPageLoad().url)
+                      case VRN => Redirect(ClientVatNumberPage.navigate(waypoints, removeUnfinishedRegistrationUA, removeUnfinishedRegistrationUA).route)
+                      case FTR => Redirect(ClientTaxReferencePage.navigate(waypoints, removeUnfinishedRegistrationUA, removeUnfinishedRegistrationUA).route)
+                      case UTR => Redirect(ClientUtrNumberPage.navigate(waypoints, removeUnfinishedRegistrationUA, removeUnfinishedRegistrationUA).route)
+                      case NINO => Redirect(ClientsNinoNumberPage.navigate(waypoints, removeUnfinishedRegistrationUA, removeUnfinishedRegistrationUA).route)
                   }
 
                 case _ =>

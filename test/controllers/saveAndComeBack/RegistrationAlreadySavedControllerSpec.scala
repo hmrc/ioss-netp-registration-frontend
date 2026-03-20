@@ -30,7 +30,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.mockito.MockitoSugar
-import pages.SavedProgressPage
+import pages.{BusinessBasedInUKPage, SavedProgressPage}
 import play.api.inject.bind
 import play.api.mvc.Result
 import play.api.mvc.Results.Redirect
@@ -70,6 +70,7 @@ class RegistrationAlreadySavedControllerSpec extends AnyFreeSpec with MockitoSug
 
   val userAnswersWithAllRequiredFields: UserAnswers = emptyUserAnswers
     .set(PreviousUnfinishedRegistration, previousUserAnswersWithAllRequiredFields).success.value
+    .set(BusinessBasedInUKPage, true).success.value
 
   private val form = formProvider()
 
