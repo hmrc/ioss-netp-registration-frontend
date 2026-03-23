@@ -20,6 +20,7 @@ import controllers.SetActiveTraderResult
 import controllers.actions.*
 import forms.saveAndComeBack.ContinueRegistrationFormProvider
 import logging.Logging
+import models.UserAnswers
 import models.etmp.EtmpIdType
 import models.etmp.EtmpIdType.{FTR, NINO, UTR, VRN}
 import models.requests.DataRequest
@@ -85,13 +86,16 @@ class RegistrationAlreadySavedController @Inject()(
             value1 =>
               (value1, previousUserAnswers.get(SavedProgressPage)) match {
                 case (ContinueRegistration.Continue, Some(url)) =>
-                  coreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(waypoints).flatMap {
-                    case Some(redirectResult) =>
-                      deleteAndRedirect(previousUserAnswers.journeyId, redirectResult)
+                  cc.sessionRepository.set(previousUserAnswers)
+                    coreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(waypoints).flatMap {
+                      case Some(redirectResult) =>
+                        deleteAndRedirect(previousUserAnswers.journeyId, redirectResult)
 
-                    case None =>
-                      Redirect(Call(GET, url)).toFuture
+                      case None =>
+                        Redirect(Call(GET, url)).toFuture
                   }
+
+
 
                 case (ContinueRegistration.Delete, _) =>
                   for {
