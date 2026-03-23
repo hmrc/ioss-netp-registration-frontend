@@ -49,7 +49,7 @@ class RegistrationAuditModelSpec extends SpecBase {
       )
 
       val expectedJson = Json.obj(
-        "credId" -> testUserId,
+        "etmpEnrolmentResponseId" -> testUserId,
         "browserUserAgent" -> "test-browser/1.0",
         "userAnswersDetails" -> Json.toJson(emptyUserAnswers),
         "etmpEnrolmentResponse" -> Json.toJson(etmpEnrolmentResponse),
@@ -77,7 +77,7 @@ class RegistrationAuditModelSpec extends SpecBase {
       )
 
       val expectedJson = Json.obj(
-        "credId" -> testUserId,
+        "etmpEnrolmentResponseId" -> testUserId,
         "browserUserAgent" -> "",
         "userAnswersDetails" -> Json.toJson(emptyUserAnswers),
         "etmpEnrolmentResponse" -> Json.toJson(None: Option[EtmpEnrolmentResponse]),

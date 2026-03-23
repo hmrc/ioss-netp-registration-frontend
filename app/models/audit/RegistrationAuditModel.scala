@@ -33,7 +33,7 @@ case class RegistrationAuditModel(
   override val transactionName: String = "netp-registration-submitted"
   
   override val detail: JsValue = Json.obj(
-    "credId" -> credId,
+    "etmpEnrolmentResponseId" -> credId,
     "browserUserAgent" -> userAgent,
     "userAnswersDetails" -> Json.toJson(userAnswers),
     "etmpEnrolmentResponse" -> Json.toJson(etmpEnrolmentResponse),
