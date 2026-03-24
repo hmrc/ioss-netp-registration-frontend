@@ -18,7 +18,7 @@ package models.audit
 
 import models.core.{CoreRegistrationRequest, CoreRegistrationValidationResult}
 import models.requests.DataRequest
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsObject, JsValue, Json}
 
 case class CoreRegistrationAuditModel(
                                        credId: String,
@@ -31,13 +31,36 @@ case class CoreRegistrationAuditModel(
   override val auditType: String = "CoreRegistrationValidation"
 
   override val transactionName: String = "core-registration-validation"
-  
+
+  val coreRegistrationRequestDetail: JsValue = Json.obj(
+    "pointOfSubmission" -> coreRegistrationRequest.source,
+    "scheme" -> coreRegistrationRequest.scheme,
+    "validationSearchId" -> coreRegistrationRequest.searchId,
+    "searchIntermediary" -> coreRegistrationRequest.searchIntermediary,
+    "countryCodeSearchIdIssuedBy" -> coreRegistrationRequest.searchIdIssuedBy
+  )
+
+  val coreRegistrationValidationResultDetail: JsValue = {
+    val base: JsObject = Json.obj(
+      "validationSearchId" -> coreRegistrationValidationResult.searchId,
+      "searchIdIntermediary" -> coreRegistrationValidationResult.searchIdIntermediary,
+      "countryCodeSearchIdIssuedBy" -> coreRegistrationValidationResult.searchIdIssuedBy,
+      "traderFound" -> coreRegistrationValidationResult.traderFound
+    )
+
+    if (coreRegistrationValidationResult.traderFound) {
+      base + ("matches" -> Json.toJson(coreRegistrationValidationResult.matches))
+    } else {
+      base
+    }
+  }
+
   override val detail: JsValue = Json.obj(
     "credId" -> credId,
     "browserUserAgent" -> userAgent,
     "requestersIntermediaryNumber" -> intermediaryNumber,
-    "coreRegistrationRequest" -> Json.toJson(coreRegistrationRequest),
-    "coreRegistrationValidationResponse" -> Json.toJson(coreRegistrationValidationResult)
+    "coreRegistrationRequest" -> coreRegistrationRequestDetail,
+    "coreRegistrationValidationResponse" -> coreRegistrationValidationResultDetail
   )
 }
 

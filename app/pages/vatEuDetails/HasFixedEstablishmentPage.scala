@@ -28,7 +28,7 @@ case object HasFixedEstablishmentPage extends QuestionPage[Boolean] {
 
   override def path: JsPath = JsPath \ toString
 
-  override def toString: String = "hasFixedEstablishment"
+  override def toString: String = "hasFixedEstablishmentInTheEu"
 
   override def route(waypoints: Waypoints): Call = {
     routes.HasFixedEstablishmentController.onPageLoad(waypoints)

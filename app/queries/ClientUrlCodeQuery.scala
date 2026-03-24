@@ -20,5 +20,5 @@ import play.api.libs.json.JsPath
 
 case object ClientUrlCodeQuery extends Gettable[String] with Settable[String] {
 
-  override def path: JsPath = JsPath \ "clientUrlCode"
+  override def path: JsPath = JsPath \ "urlCodeForClient"
 }
