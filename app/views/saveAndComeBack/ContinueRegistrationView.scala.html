@@ -28,7 +28,7 @@
 
 @(taxReferenceInfo: TaxReferenceInformation, form: Form[_], waypoints: Waypoints)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = title(form, messages("continueRegistration.title"))) {
+@layout(pageTitle = title(form, messages("continueRegistration.title", taxReferenceInfo.organisationName, taxReferenceInfo.taxReference, taxReferenceInfo.referenceNumber))) {
 
     @formHelper(action = controllers.saveAndComeBack.routes.ContinueRegistrationController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
 
