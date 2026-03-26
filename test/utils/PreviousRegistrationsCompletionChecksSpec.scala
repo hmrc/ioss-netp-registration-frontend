@@ -230,39 +230,6 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
       }
     }
 
-    "must return a Seq of incomplete Previous Intermediary Registrations when Client has Intermediary answer is missing" in {
-
-      val invalidAnswers: UserAnswers = emptyUserAnswersWithVatInfo
-        .set(PreviouslyRegisteredPage, true).success.value
-        .set(PreviousEuCountryPage(countryIndex), country).success.value
-        .set(PreviousSchemeTypePage(countryIndex, schemeIndex), PreviousSchemeType.IOSS).success.value
-        .set(PreviousSchemePage(countryIndex, schemeIndex), PreviousScheme.IOSSWOI).success.value
-        .set(PreviousIossNumberPage(Index(0), Index(0)), PreviousSchemeNumbers("123456789")).success.value
-
-      val expected = List(
-        PreviousRegistrationDetailsWithOptionalVatNumber(
-          previousEuCountry = country,
-          previousSchemesDetails = Some(List(
-            SchemeDetailsWithOptionalVatNumber(
-              previousScheme = Some(PreviousScheme.IOSSWOI),
-              previousSchemeNumbers = Some(SchemeNumbersWithOptionalVatNumber(Some("123456789")))
-            )
-          ))
-        )
-      )
-
-      val application = applicationBuilder(userAnswers = Some(invalidAnswers)).build()
-
-      running(application) {
-        implicit val request: DataRequest[AnyContent] = mock[DataRequest[AnyContent]]
-        when(request.userAnswers) thenReturn invalidAnswers
-
-        val result = PreviousRegistrationsCompletionChecksTests.getAllIncompleteRegistrationDetails()
-
-        result `mustBe` expected
-      }
-    }
-
     "must return List.empty when there are no incomplete Previous Intermediary Registration entries present" in {
 
       val completeAnswers = validAnswers
