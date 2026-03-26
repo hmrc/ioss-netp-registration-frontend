@@ -44,7 +44,6 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
 
   private val schemeDetails = SchemeDetailsWithOptionalVatNumber(
     previousScheme = Some(PreviousScheme.IOSSWOI),
-    clientHasIntermediary = Some(false),
     previousSchemeNumbers = Some(
       SchemeNumbersWithOptionalVatNumber(Some("IM0401234567")))
   )
@@ -212,7 +211,6 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
           previousSchemesDetails = Some(List(
             SchemeDetailsWithOptionalVatNumber(
               previousScheme = Some(PreviousScheme.IOSSWOI),
-              clientHasIntermediary = Some(false),
               previousSchemeNumbers = None
             )
           ))
@@ -247,7 +245,6 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
           previousSchemesDetails = Some(List(
             SchemeDetailsWithOptionalVatNumber(
               previousScheme = Some(PreviousScheme.IOSSWOI),
-              clientHasIntermediary = None,
               previousSchemeNumbers = Some(SchemeNumbersWithOptionalVatNumber(Some("123456789")))
             )
           ))

@@ -213,7 +213,7 @@ class CoreSavedAnswersRevalidationService @Inject()(
                                                intermediaryNumber: Option[String]
                                              )(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
     allPreviousSchemeDetails match {
-      case ::(SchemeDetailsWithOptionalVatNumber(Some(previousScheme), _, Some(SchemeNumbersWithOptionalVatNumber(Some(previousSchemeNumber)))), remaining) =>
+      case ::(SchemeDetailsWithOptionalVatNumber(Some(previousScheme), Some(SchemeNumbersWithOptionalVatNumber(Some(previousSchemeNumber)))), remaining) =>
         coreRegistrationValidationService.searchScheme(
           searchNumber = previousSchemeNumber,
           previousScheme = previousScheme,

@@ -62,12 +62,7 @@ object PreviousRegistrationsCompletionChecks extends CompletionChecks {
 
   private def checkIncompleteForPreviousSchemeType(schemeDetails: Option[List[SchemeDetailsWithOptionalVatNumber]]) = {
     schemeDetails.getOrElse(List.empty).exists { schemeDetailsWithOptionalVatNumber =>
-      schemeDetailsWithOptionalVatNumber.previousScheme match {
-        case Some(PreviousScheme.IOSSWI | PreviousScheme.IOSSWOI) =>
-          schemeDetailsWithOptionalVatNumber.clientHasIntermediary.isEmpty || schemeDetailsWithOptionalVatNumber.previousSchemeNumbers.isEmpty
-        case _ =>
-          schemeDetailsWithOptionalVatNumber.previousSchemeNumbers.isEmpty
-      }
+      schemeDetailsWithOptionalVatNumber.previousSchemeNumbers.isEmpty
     }
   }
 
@@ -100,7 +95,7 @@ object PreviousRegistrationsCompletionChecks extends CompletionChecks {
               PreviousSchemeTypePage(Index(countryIndex), Index(schemeIndex))
             )
 
-            schemeDetails.previousSchemeNumbers.isEmpty || (schemeType.contains(PreviousSchemeType.IOSS) && schemeDetails.clientHasIntermediary.isEmpty)
+            schemeDetails.previousSchemeNumbers.isEmpty
         } match {
             case Some(schemeDetails) => incompleteSchemeDetailsRedirect(incompleteCountry, schemeDetails)
             case None => None
