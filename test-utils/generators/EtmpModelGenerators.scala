@@ -241,12 +241,10 @@ trait EtmpModelGenerators {
     Arbitrary {
       for {
         previousScheme <- Gen.oneOf(PreviousScheme.values)
-        clientHasIntermediary <- arbitrary[Boolean]
         previousSchemeNumbers <- arbitrarySchemeNumbersWithOptionalVatNumber.arbitrary
       } yield {
         SchemeDetailsWithOptionalVatNumber(
           previousScheme = Some(previousScheme),
-          clientHasIntermediary = Some(clientHasIntermediary),
           previousSchemeNumbers = Some(previousSchemeNumbers)
         )
       }

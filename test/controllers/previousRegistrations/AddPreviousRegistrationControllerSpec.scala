@@ -113,7 +113,7 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
             Seq(
               PreviousRegistrationDetailsWithOptionalVatNumber(
                 Country.euCountries.head,
-                Some(List(SchemeDetailsWithOptionalVatNumber(Some(PreviousScheme.OSSU), clientHasIntermediary = Some(false), None)))
+                Some(List(SchemeDetailsWithOptionalVatNumber(Some(PreviousScheme.OSSU), None)))
               )
             )
           )(request, implicitly).toString
@@ -308,25 +308,5 @@ class AddPreviousRegistrationControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
-    "must redirect to the ClientHasIntermediary page for a POST if the answer is incomplete and prompt has been shown" in {
-
-      val incompleteAnswersWithPreviousSchemeType = basicUserAnswersWithVatInfo
-        .set(PreviousEuCountryPage(Index(0)), Country.euCountries.head).success.value
-        .set(PreviousSchemeTypePage(Index(0), Index(0)), PreviousSchemeType.IOSS).success.value
-        .set(PreviousIossNumberPage(Index(0), Index(0)), PreviousSchemeNumbers("123456789")).success.value
-        .set(PreviousSchemePage(Index(0), Index(0)), PreviousScheme.IOSSWI).success.value
-      val application = applicationBuilder(userAnswers = Some(incompleteAnswersWithPreviousSchemeType)).build()
-
-      running(application) {
-        val request =
-          FakeRequest(POST, addPreviousRegistrationRoutePost(true))
-            .withFormUrlEncodedBody(("value", "true"))
-
-        val result = route(application, request).value
-
-        status(result) `mustBe` SEE_OTHER
-        redirectLocation(result).value `mustBe` ClientHasIntermediaryPage(Index(0), Index(0)).route(waypoints).url
-      }
-    }
   }
 }

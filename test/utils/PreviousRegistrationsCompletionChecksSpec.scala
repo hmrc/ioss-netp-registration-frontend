@@ -44,7 +44,6 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
 
   private val schemeDetails = SchemeDetailsWithOptionalVatNumber(
     previousScheme = Some(PreviousScheme.IOSSWOI),
-    clientHasIntermediary = Some(false),
     previousSchemeNumbers = Some(
       SchemeNumbersWithOptionalVatNumber(Some("IM0401234567")))
   )
@@ -212,7 +211,6 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
           previousSchemesDetails = Some(List(
             SchemeDetailsWithOptionalVatNumber(
               previousScheme = Some(PreviousScheme.IOSSWOI),
-              clientHasIntermediary = Some(false),
               previousSchemeNumbers = None
             )
           ))
@@ -229,40 +227,6 @@ class PreviousRegistrationsCompletionChecksSpec extends SpecBase with MockitoSug
 
         result `mustBe` expected
 
-      }
-    }
-
-    "must return a Seq of incomplete Previous Intermediary Registrations when Client has Intermediary answer is missing" in {
-
-      val invalidAnswers: UserAnswers = emptyUserAnswersWithVatInfo
-        .set(PreviouslyRegisteredPage, true).success.value
-        .set(PreviousEuCountryPage(countryIndex), country).success.value
-        .set(PreviousSchemeTypePage(countryIndex, schemeIndex), PreviousSchemeType.IOSS).success.value
-        .set(PreviousSchemePage(countryIndex, schemeIndex), PreviousScheme.IOSSWOI).success.value
-        .set(PreviousIossNumberPage(Index(0), Index(0)), PreviousSchemeNumbers("123456789")).success.value
-
-      val expected = List(
-        PreviousRegistrationDetailsWithOptionalVatNumber(
-          previousEuCountry = country,
-          previousSchemesDetails = Some(List(
-            SchemeDetailsWithOptionalVatNumber(
-              previousScheme = Some(PreviousScheme.IOSSWOI),
-              clientHasIntermediary = None,
-              previousSchemeNumbers = Some(SchemeNumbersWithOptionalVatNumber(Some("123456789")))
-            )
-          ))
-        )
-      )
-
-      val application = applicationBuilder(userAnswers = Some(invalidAnswers)).build()
-
-      running(application) {
-        implicit val request: DataRequest[AnyContent] = mock[DataRequest[AnyContent]]
-        when(request.userAnswers) thenReturn invalidAnswers
-
-        val result = PreviousRegistrationsCompletionChecksTests.getAllIncompleteRegistrationDetails()
-
-        result `mustBe` expected
       }
     }
 
