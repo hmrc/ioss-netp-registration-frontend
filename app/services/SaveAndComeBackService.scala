@@ -19,10 +19,13 @@ package services
 import connectors.{RegistrationConnector, SaveForLaterConnector}
 import logging.Logging
 import models.domain.VatCustomerInfo
+import models.etmp.EtmpIdType.{FTR, UTR, NINO, VRN}
+import models.etmp.EtmpIdType
 import models.requests.{DataRequest, OptionalDataRequest}
 import models.saveAndComeBack.*
 import models.{SavedUserAnswers, UserAnswers}
 import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, ContinueRegistrationSelectionPage, QuestionPage, Waypoints}
+import play.api.libs.json.JsObject
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.FutureSyntax.FutureOps
 
@@ -187,4 +190,73 @@ class SaveAndComeBackService @Inject()(
       )
     }
   }
+
+  def checkForPreviousUnfinishedSavedRegJourney(
+                                                 idType: EtmpIdType,
+                                                 idNumber: String,
+                                                 intermediaryNum: String
+                                               )(implicit request: DataRequest[_], hc: HeaderCarrier): Future[Option[UserAnswers]] = {
+
+    val pageAndTaxType = Map(
+      FTR.toString -> ClientTaxReferencePage,
+      UTR.toString -> ClientUtrNumberPage,
+      NINO.toString -> ClientsNinoNumberPage,
+      VRN.toString -> ClientVatNumberPage)
+
+    saveForLaterConnector.getAllByIntermediary(intermediaryNum).map {
+      case Left(error) =>
+        val message: String = s"Received an unexpected error when trying to retrieve uncompleted " +
+          s"registrations for the intermediary ID: $intermediaryNum. \nWith Errors: $error"
+        val exception: Exception = new Exception(message)
+        logger.error(exception.getMessage, exception)
+        throw exception
+
+      case Right(seqSavedUserAnswers) => {
+        seqSavedUserAnswers.find { eachIndividualSUA =>
+          val temporaryUserAnswers = UserAnswers(request.userId, eachIndividualSUA.journeyId, data = eachIndividualSUA.data, vatInfo = None, lastUpdated = eachIndividualSUA.lastUpdated)
+
+          pageAndTaxType.get(idType.toString).exists { pageType =>
+            temporaryUserAnswers.get(pageType).exists(idNumber.contains)
+          }
+        }.map { savedUserAnswer =>
+          UserAnswers(request.userId, savedUserAnswer.journeyId, data = savedUserAnswer.data, vatInfo = None, lastUpdated = savedUserAnswer.lastUpdated)
+        }
+      }
+    }
+
+  }
+
+  def retrieveTaxRef(userAnswers: UserAnswers): Tuple3[String, String, EtmpIdType] = {
+    userAnswers.vatInfo match {
+      case Some(vatCustomerInfo) =>
+        if (vatCustomerInfo.organisationName.isDefined) {
+          (vatCustomerInfo.organisationName.get, "UK VAT number", VRN)
+        }
+        else {
+          (vatCustomerInfo.individualName.get, "UK VAT number", VRN)
+        }
+      case _ =>
+        val listOfPages: Seq[QuestionPage[String]] = Seq(ClientTaxReferencePage, ClientUtrNumberPage, ClientsNinoNumberPage)
+
+        val companyName: String = userAnswers.get(ClientBusinessNamePage).map(_.name).getOrElse {
+          val exception = new IllegalStateException("User answers must include company name if Vat Customer Info was not provided")
+          logger.error(exception.getMessage, exception)
+          throw exception
+        }
+
+        val pageType: Option[QuestionPage[String]] = listOfPages.find(page =>
+        userAnswers.get(page).isDefined)
+        
+        pageType match
+          case Some(ClientTaxReferencePage) => (companyName, "tax reference", FTR)
+          case Some(ClientUtrNumberPage) => (companyName, "tax reference", UTR)
+          case Some(ClientsNinoNumberPage) => (companyName, "National Insurance number", NINO)
+          case _ =>
+            val exception = new IllegalStateException("User answers must include the Answers for one of four id types. VAT/UTR/FTR/NINO")
+            logger.error(exception.getMessage, exception)
+            throw exception
+    }
+  }
+
 }
+

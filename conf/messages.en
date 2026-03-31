@@ -636,3 +636,9 @@ individualSecureMessage.title = Message Details
 
 accessDenied.title = You cannot access this page
 accessDenied.heading = You cannot access this page
+
+clientRegistrationAlreadyPending.title = You already have a registration in progress for {0} using this {1}, do you want to continue that registration?
+clientRegistrationAlreadyPending.heading = You already have a registration in progress for {0} using this {1}, do you want to continue that registration?
+clientRegistrationAlreadyPending.continue = Yes
+clientRegistrationAlreadyPending.delete = No, delete the saved registration
+clientRegistrationAlreadyPending.error.required = Select yes if you want to continue with that registration

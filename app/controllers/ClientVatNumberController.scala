@@ -21,12 +21,15 @@ import controllers.actions.*
 import forms.ClientVatNumberFormProvider
 import logging.Logging
 import models.core.Match
+import models.etmp.EtmpIdType.VRN
 import models.responses.VatCustomerNotFound
 import pages.{ClientVatNumberPage, UkVatNumberNotFoundPage, VatApiDownPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.I18nSupport
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.PreviousUnfinishedRegistration
+import services.SaveAndComeBackService
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
@@ -44,7 +47,8 @@ class ClientVatNumberController @Inject()(
                                            registrationConnector: RegistrationConnector,
                                            view: ClientVatNumberView,
                                            clock: Clock,
-                                           coreRegistrationValidationService: CoreRegistrationValidationService
+                                           coreRegistrationValidationService: CoreRegistrationValidationService,
+                                           saveAndComeBackService: SaveAndComeBackService
                                          )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with SetActiveTraderResult {
 
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -88,7 +92,7 @@ class ClientVatNumberController @Inject()(
 
             case _ =>
               registrationConnector.getVatCustomerInfo(ukVatNumber).flatMap {
-                case Right(value) =>
+                case Right(value) => {
                   val today = LocalDate.now(clock)
                   val isExpired = value.deregistrationDecisionDate.exists(!_.isAfter(today))
 
@@ -96,18 +100,32 @@ class ClientVatNumberController @Inject()(
                     logger.info(s"VAT number $ukVatNumber is expired (deregistration date: ${value.deregistrationDecisionDate})")
                     Redirect(controllers.routes.ExpiredVrnDateController.onPageLoad(waypoints).url).toFuture
                   } else {
-                    for {
-                      updatedAnswers <- Future.fromTry(request
-                        .userAnswers
-                        .copy(vatInfo = Some(value))
-                        .set(ClientVatNumberPage, ukVatNumber))
-                      _ <- cc.sessionRepository.set(updatedAnswers)
-                    } yield Redirect(ClientVatNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+                    saveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(VRN, ukVatNumber, request.intermediaryNumber)(request, hc).map {
+                      case Some(previousUserAnswers) => {
+                        val updateWithCurrentVatInfo = previousUserAnswers.copy(vatInfo = Some(value))
+                        for {
+                          updatedAnswers <- Future.fromTry(request
+                            .userAnswers
+                            .copy(vatInfo = Some(value))
+                            .set(ClientVatNumberPage, ukVatNumber))
+                          addPrevious <- Future.fromTry(updatedAnswers.set(PreviousUnfinishedRegistration, updateWithCurrentVatInfo))
+                          _ <- cc.sessionRepository.set(addPrevious)
+                        } yield Redirect(saveAndComeBack.routes.RegistrationAlreadySavedController.onPageLoad(waypoints))
+                      }
+                      case None => {
+                        for {
+                          updatedAnswers <- Future.fromTry(request
+                            .userAnswers
+                            .copy(vatInfo = Some(value))
+                            .set(ClientVatNumberPage, ukVatNumber))
+                          _ <- cc.sessionRepository.set(updatedAnswers)
+                        } yield Redirect(ClientVatNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+                      }
+                    }.flatten
                   }
-                case Left(VatCustomerNotFound) =>
-                  Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
-                case Left(_) =>
-                  Redirect(VatApiDownPage.route(waypoints).url).toFuture
+                }
+                case Left(VatCustomerNotFound) => Redirect(UkVatNumberNotFoundPage.route(waypoints).url).toFuture
+                case Left(_) => Redirect(VatApiDownPage.route(waypoints).url).toFuture
               }
           }
       )

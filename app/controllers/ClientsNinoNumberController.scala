@@ -20,8 +20,10 @@ import controllers.actions.*
 import forms.ClientsNinoNumberFormProvider
 import logging.Logging
 import models.core.Match
+import models.etmp.EtmpIdType.NINO
 import pages.{ClientsNinoNumberPage, Waypoints}
 import play.api.data.Form
+import queries.PreviousUnfinishedRegistration
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.core.CoreRegistrationValidationService
@@ -29,6 +31,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.AmendWaypoints.AmendWaypointsOps
 import utils.FutureSyntax.FutureOps
 import views.html.ClientsNinoNumberView
+import services.SaveAndComeBackService
 
 import java.time.Clock
 import javax.inject.Inject
@@ -40,7 +43,8 @@ class ClientsNinoNumberController @Inject()(
                                              formProvider: ClientsNinoNumberFormProvider,
                                              view: ClientsNinoNumberView,
                                              coreRegistrationValidationService: CoreRegistrationValidationService,
-                                             clock: Clock
+                                             clock: Clock,
+                                             saveAndComeBackService: SaveAndComeBackService
                                            )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with Logging with GetCountry with SetActiveTraderResult {
 
@@ -83,10 +87,23 @@ class ClientsNinoNumberController @Inject()(
               ).toFuture
 
             case _ =>
-              for {
-                updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientsNinoNumberPage, value))
-                _ <- cc.sessionRepository.set(updatedAnswers)
-              } yield Redirect(ClientsNinoNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+              saveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney( NINO, value, request.intermediaryNumber)(request, hc).map {
+                case Some(previousUserAnswers) => {
+                  for {
+                    updatedAnswers <- Future.fromTry(request
+                      .userAnswers
+                      .set(ClientsNinoNumberPage, value))
+                    addPrevious <- Future.fromTry(updatedAnswers.set(PreviousUnfinishedRegistration, previousUserAnswers))
+                    _ <- cc.sessionRepository.set(addPrevious)
+                  } yield Redirect(saveAndComeBack.routes.RegistrationAlreadySavedController.onPageLoad(waypoints))
+                }
+                case None => {
+                  for {
+                    updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientsNinoNumberPage, value))
+                    _ <- cc.sessionRepository.set(updatedAnswers)
+                  } yield Redirect(ClientsNinoNumberPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+                }
+              }.flatten
           }
       )
   }
