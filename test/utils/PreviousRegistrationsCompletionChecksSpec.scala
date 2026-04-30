@@ -17,7 +17,6 @@
 package utils
 
 import base.SpecBase
-import models.domain.PreviousSchemeNumbers
 import models.previousRegistrations.{PreviousRegistrationDetailsWithOptionalVatNumber, SchemeDetailsWithOptionalVatNumber, SchemeNumbersWithOptionalVatNumber}
 import models.requests.DataRequest
 import models.{Country, Index, PreviousScheme, PreviousSchemeType, UserAnswers}

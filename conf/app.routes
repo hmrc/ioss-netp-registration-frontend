@@ -238,3 +238,8 @@ GET         /individual-secure-message/:id                                  cont
 GET         /no-registration-found                                          controllers.NoRegistrationFoundController.onPageLoad()
 
 GET         /access-denied                                                  controllers.AccessDeniedController.onPageLoad()
+
+# Pending Registration Kick-out pages
+GET         /client-registration-pending-with-another-intermediary          controllers.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad()
+
+GET         /client-registration-pending-with-our-service/:journeyId        controllers.ClientRegistrationPendingWithOurServiceController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)

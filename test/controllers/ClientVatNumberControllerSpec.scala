@@ -21,6 +21,7 @@ import connectors.RegistrationConnector
 import controllers.routes as normalRoutes
 import forms.ClientVatNumberFormProvider
 import models.core.TraderId
+import models.etmp.EtmpIdType.VRN
 import models.responses.{InternalServerError, VatCustomerNotFound}
 import models.{ActiveTraderResult, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
@@ -31,11 +32,12 @@ import org.scalatestplus.mockito.MockitoSugar
 import pages.{ClientVatNumberPage, EmptyWaypoints, UkVatNumberNotFoundPage, VatApiDownPage, Waypoints}
 import play.api.data.Form
 import play.api.inject.bind
+import play.api.mvc.Results.Redirect
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import queries.{ActiveTraderResultQuery, PreviousUnfinishedRegistration}
 import repositories.SessionRepository
-import services.SaveAndComeBackService
+import services.{SaveAndComeBackService, PendingRegistrationDuplicateCheckService}
 import services.core.CoreRegistrationValidationService
 import testutils.CreateMatchResponse.createMatchResponse
 import uk.gov.hmrc.domain.Vrn
@@ -53,6 +55,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
   private val mockCoreRegistrationValidationService = mock[CoreRegistrationValidationService]
   private val mockSaveAndComeBackService = mock[SaveAndComeBackService]
+  private val mockPendingRegistrationDuplicateCheckService = mock[PendingRegistrationDuplicateCheckService]
 
   private val formProvider: ClientVatNumberFormProvider = new ClientVatNumberFormProvider()
   private val form: Form[String] = formProvider()
@@ -64,7 +67,8 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
     Mockito.reset(
       mockRegistrationConnector,
       mockCoreRegistrationValidationService,
-      mockSaveAndComeBackService
+      mockSaveAndComeBackService,
+      mockPendingRegistrationDuplicateCheckService
     )
   }
 
@@ -113,6 +117,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
       when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Future.successful(Right(vatCustomerInfo))
       when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(),any(),any())(any(),any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
         
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
@@ -120,7 +125,8 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[RegistrationConnector].toInstance(mockRegistrationConnector),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService)
+            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -154,6 +160,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
       when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Future.successful(Right(vatCustomerInfo))
       when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(),any(),any())(any(),any())) thenReturn Future.successful(Some(emptyUserAnswers))
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
@@ -161,7 +168,8 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[RegistrationConnector].toInstance(mockRegistrationConnector),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService)
+            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -388,13 +396,15 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
       when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Future.successful(Right(expiredVrnVatInfo))
       when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[RegistrationConnector].toInstance(mockRegistrationConnector),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -419,11 +429,13 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
         .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
         .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
         .overrides(bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService))
+        .overrides(bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService))
         .build()
 
       when(mockSessionRepository.set(any())) thenReturn false.toFuture
       when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Left(VatCustomerNotFound).toFuture
       when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       running(application) {
         val request =
@@ -446,11 +458,13 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
         .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
         .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
         .overrides(bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService))
+        .overrides(bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService))
         .build()
 
       when(mockSessionRepository.set(any())) thenReturn false.toFuture
       when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Left(InternalServerError).toFuture
       when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       running(application) {
         val request =
@@ -512,6 +526,45 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
 
         status(result) `mustBe` SEE_OTHER
         redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
+      }
+    }
+
+    "must redirect when a pending registration duplicate is found" in {
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      val pendingRedirect = Redirect(controllers.routes.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad())
+
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(eqTo(VRN), eqTo(ukVatNumber), any(), eqTo(waypoints))(any())) thenReturn
+        Future.successful(Some(pendingRedirect))
+
+      val application =
+        applicationBuilder(userAnswers = Some(emptyUserAnswers))
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+          )
+          .build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, clientVatNumberSubmitRoute)
+            .withFormUrlEncodedBody(("value", ukVatNumber))
+
+        val result = route(application, request).value
+
+        status(result) mustBe SEE_OTHER
+        redirectLocation(result).value mustBe
+          controllers.routes.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad().url
+
+        verify(mockPendingRegistrationDuplicateCheckService, times(1))
+          .checkPendingRegistration(eqTo(VRN), eqTo(ukVatNumber), any(), eqTo(waypoints))(any())
+
+        verifyNoInteractions(mockCoreRegistrationValidationService)
+        verifyNoInteractions(mockRegistrationConnector)
+        verifyNoInteractions(mockSessionRepository)
       }
     }
   }

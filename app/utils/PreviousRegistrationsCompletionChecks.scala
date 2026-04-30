@@ -19,7 +19,7 @@ package utils
 import controllers.previousRegistrations.routes
 import models.previousRegistrations.{PreviousRegistrationDetailsWithOptionalVatNumber, SchemeDetailsWithOptionalVatNumber}
 import models.requests.DataRequest
-import models.{Country, Index, PreviousScheme, PreviousSchemeType}
+import models.{Country, Index, PreviousSchemeType}
 import pages.*
 import pages.previousRegistrations.{ClientHasIntermediaryPage, PreviousSchemeTypePage, PreviouslyRegisteredPage}
 import play.api.mvc.Results.Redirect
@@ -90,10 +90,6 @@ object PreviousRegistrationsCompletionChecks extends CompletionChecks {
       case Some(incompleteCountry) if incompleteCountry._1.previousSchemesDetails.isDefined =>
         incompleteCountry._1.previousSchemesDetails.getOrElse(List.empty).zipWithIndex.find {
           case (schemeDetails, schemeIndex) =>
-            val countryIndex = incompleteCountry._2
-            val schemeType = request.userAnswers.get(
-              PreviousSchemeTypePage(Index(countryIndex), Index(schemeIndex))
-            )
 
             schemeDetails.previousSchemeNumbers.isEmpty
         } match {
