@@ -110,13 +110,15 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
       when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(), any(), any())(any(), any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService)
+            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -145,13 +147,15 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
       when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(), any(), any())(any(), any())) thenReturn Future.successful(Some(emptyUserAnswers))
-
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService)
+            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -185,6 +189,7 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = false,
@@ -201,7 +206,8 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
         )
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -232,6 +238,7 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = false,
@@ -245,7 +252,8 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
         applicationBuilder(userAnswers = Some(answersWithActiveTraderResult))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -279,6 +287,7 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = true,
@@ -295,7 +304,8 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
         )
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -327,12 +337,14 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
