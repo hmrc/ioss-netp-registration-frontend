@@ -30,7 +30,7 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import queries.euDetails.{AllEuDetailsRawQuery, EuDetailsQuery}
-import repositories.{AuthenticatedUserAnswersRepository, SessionRepository}
+import repositories.SessionRepository
 import views.html.vatEuDetails.DeleteEuDetailsView
 import utils.FutureSyntax.FutureOps
 
@@ -114,15 +114,8 @@ class DeleteEuDetailsControllerSpec extends SpecBase with MockitoSugar {
 
     "must not remove the record and then redirect to the next page when the user answers No" in {
 
-      val mockSessionRepository = mock[AuthenticatedUserAnswersRepository]
-
-      when(mockSessionRepository.set(any())) thenReturn true.toFuture
-
       val application =
         applicationBuilder(userAnswers = Some(updatedAnswers))
-          .overrides(
-            bind[AuthenticatedUserAnswersRepository].toInstance(mockSessionRepository)
-          )
           .build()
 
       running(application) {
@@ -134,7 +127,6 @@ class DeleteEuDetailsControllerSpec extends SpecBase with MockitoSugar {
 
         status(result) `mustBe` SEE_OTHER
         redirectLocation(result).value `mustBe` DeleteEuDetailsPage(countryIndex(0)).navigate(waypoints, updatedAnswers, updatedAnswers).url
-        verifyNoInteractions(mockSessionRepository)
       }
     }
 

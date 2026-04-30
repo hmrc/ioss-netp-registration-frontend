@@ -28,7 +28,6 @@ import play.api.data.Form
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import repositories.AuthenticatedUserAnswersRepository
 import views.html.previousRegistrations.ClientHasIntermediaryView
 
 import scala.concurrent.Future
@@ -80,15 +79,8 @@ class ClientHasIntermediaryControllerSpec extends SpecBase with MockitoSugar {
 
     "must save the answer and redirect to the next page when valid data is submitted" in {
 
-      val mockSessionRepository = mock[AuthenticatedUserAnswersRepository]
-
-      when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
-
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
-          .overrides(
-            bind[AuthenticatedUserAnswersRepository].toInstance(mockSessionRepository)
-          )
           .build()
 
       running(application) {
