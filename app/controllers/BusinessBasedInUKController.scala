@@ -63,8 +63,16 @@ class BusinessBasedInUKController @Inject()(
           val originalAnswers: UserAnswers = request.userAnswers.getOrElse(UserAnswers(request.userId))
 
           val existingAnswers: Option[Boolean] = originalAnswers.get(BusinessBasedInUKPage)
-          
-          if (existingAnswers.contains(value)) {
+
+          println(s"")
+          println(s"")
+          println(s"")
+          println(s"in check ${waypoints.inCheck}")
+          println(s"")
+          println(s"")
+          println(s"")
+
+          if (existingAnswers.contains(value) && waypoints.inCheck) {
             Future.successful(Redirect(CheckVatDetailsPage().route(waypoints)))
           } else {
             for {
@@ -74,8 +82,4 @@ class BusinessBasedInUKController @Inject()(
           }
       )
   }
-}
-
-private def createJourneyId: String = {
-  UUID.randomUUID().toString
 }
