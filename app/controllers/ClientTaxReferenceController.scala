@@ -31,7 +31,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.AmendWaypoints.AmendWaypointsOps
 import utils.FutureSyntax.FutureOps
 import views.html.ClientTaxReferenceView
-import services.SaveAndComeBackService
+import services.{PendingRegistrationDuplicateCheckService, SaveAndComeBackService}
 
 import java.time.Clock
 import javax.inject.Inject
@@ -44,7 +44,8 @@ class ClientTaxReferenceController @Inject()(
                                               view: ClientTaxReferenceView,
                                               coreRegistrationValidationService: CoreRegistrationValidationService,
                                               clock: Clock,
-                                              saveAndComeBackService: SaveAndComeBackService
+                                              saveAndComeBackService: SaveAndComeBackService,
+                                              pendingRegistrationDuplicateCheckService: PendingRegistrationDuplicateCheckService,
                                     )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with GetCountry with SetActiveTraderResult with Logging {
 
@@ -81,43 +82,48 @@ class ClientTaxReferenceController @Inject()(
             BadRequest(view(formWithErrors, waypoints, country)).toFuture,
 
           value =>
-            coreRegistrationValidationService.searchForeignTaxReference(value, country.code).flatMap {
+            pendingRegistrationDuplicateCheckService.checkPendingRegistration(FTR, value, request.intermediaryNumber, waypoints).flatMap {
+              case Some(pendingRegistration) =>
+                pendingRegistration.toFuture
+              case None =>
+                coreRegistrationValidationService.searchForeignTaxReference(value, country.code).flatMap {
 
-              case _ if waypoints.inAmend =>
-                updateAnswersAndRedirect(waypoints, request, value)
+                  case _ if waypoints.inAmend =>
+                    updateAnswersAndRedirect(waypoints, request, value)
 
-              case Some(activeMatch) if activeMatch.isActiveTrader(clock) =>
-                setActiveTraderResultAndRedirect(
-                  activeMatch = activeMatch,
-                  sessionRepository = cc.sessionRepository,
-                  redirect = controllers.routes.ClientAlreadyRegisteredController.onPageLoad()
-                )
+                  case Some(activeMatch) if activeMatch.isActiveTrader(clock) =>
+                    setActiveTraderResultAndRedirect(
+                      activeMatch = activeMatch,
+                      sessionRepository = cc.sessionRepository,
+                      redirect = controllers.routes.ClientAlreadyRegisteredController.onPageLoad()
+                    )
 
-              case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
-                Redirect(
-                  controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-                    activeMatch.memberState,
-                    activeMatch.getEffectiveDate)
-                ).toFuture
+                  case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
+                    Redirect(
+                      controllers.routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
+                        activeMatch.memberState,
+                        activeMatch.getEffectiveDate)
+                    ).toFuture
 
-              case _ =>
-                saveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(FTR, value, request.intermediaryNumber)(request, hc).map {
-                  case Some(previousUserAnswers) => {
-                    for {
-                      updatedAnswers <- Future.fromTry(request
-                        .userAnswers
-                        .set(ClientTaxReferencePage, value))
-                      addPrevious <- Future.fromTry(updatedAnswers.set(PreviousUnfinishedRegistration, previousUserAnswers))
-                      _ <- cc.sessionRepository.set(addPrevious)
-                    } yield Redirect(saveAndComeBack.routes.RegistrationAlreadySavedController.onPageLoad(waypoints))
-                  }
-                  case None => {
-                    for {
-                      updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientTaxReferencePage, value))
-                      _ <- cc.sessionRepository.set(updatedAnswers)
-                    } yield Redirect(ClientTaxReferencePage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
-                  }
-                }.flatten
+                  case _ =>
+                    saveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(FTR, value, request.intermediaryNumber)(request, hc).map {
+                      case Some(previousUserAnswers) =>
+                        for {
+                          updatedAnswers <- Future.fromTry(request
+                            .userAnswers
+                            .set(ClientTaxReferencePage, value))
+                          addPrevious <- Future.fromTry(updatedAnswers.set(PreviousUnfinishedRegistration, previousUserAnswers))
+                          _ <- cc.sessionRepository.set(addPrevious)
+                        } yield Redirect(saveAndComeBack.routes.RegistrationAlreadySavedController.onPageLoad(waypoints))
+
+                      case None =>
+                        for {
+                          updatedAnswers <- Future.fromTry(request.userAnswers.set(ClientTaxReferencePage, value))
+                          _ <- cc.sessionRepository.set(updatedAnswers)
+                        } yield Redirect(ClientTaxReferencePage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+
+                    }.flatten
+                }
             }
         )
       }

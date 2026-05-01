@@ -24,7 +24,7 @@ import connectors.ValidateClientCodeHttpParser.{ValidateClientCodeReads, validat
 import connectors.VatCustomerInfoHttpParser.{VatCustomerInfoResponse, VatCustomerInfoResponseReads}
 import logging.Logging
 import models.PendingRegistrationRequest
-import models.etmp.EtmpRegistrationRequest
+import models.etmp.{EtmpIdType, EtmpRegistrationRequest}
 import models.etmp.amend.EtmpAmendRegistrationRequest
 import play.api.Configuration
 import play.api.libs.json.Json
@@ -73,7 +73,13 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
     httpClientV2.get(url"$baseUrl/pending-registrations/$intermediaryNumber")
       .execute[SavedPendingRegistrationsResponse]
   }
-  
+
+  def getPendingRegistrationsByCustomerIdentification(idType: EtmpIdType, idValue: String)
+                                                     (implicit hc: HeaderCarrier): Future[SavedPendingRegistrationsResponse] = {
+    httpClientV2.get(url"$baseUrl/pending-registration/$idType/$idValue")
+      .execute[SavedPendingRegistrationsResponse]
+  }
+
   def deletePendingRegistration(journeyId: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
     httpClientV2.delete(url"$baseUrl/pending-registrations/$journeyId").execute[Boolean]
   }

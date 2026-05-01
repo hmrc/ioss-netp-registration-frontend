@@ -20,6 +20,7 @@ import base.SpecBase
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import models.{PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
 import models.domain.VatCustomerInfo
+import models.etmp.EtmpIdType.*
 import models.etmp.amend.{AmendRegistrationResponse, EtmpAmendRegistrationRequest}
 import models.etmp.display.RegistrationWrapper
 import models.etmp.intermediary.IntermediaryRegistrationWrapper
@@ -55,6 +56,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
   private val otherErrorStatuses: Seq[Int] = Seq(BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE, UNPROCESSABLE_ENTITY)
   private val vatNumber = "123456789"
+  private val nino = "QQ123456C"
 
   private def application: Application = applicationBuilder()
     .configure(
@@ -414,6 +416,97 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
             val result = connector.getPendingRegistrationsByIntermediaryNumber(intermediaryNumber).futureValue
 
             result `mustBe` Left(response)
+          }
+        }
+      }
+    }
+
+    ".getPendingRegistrationsByIntermediaryNumber" - {
+
+      val vatNumberUrl: String = s"/ioss-netp-registration/pending-registration/VRN/$vrn"
+      val utrNumberUrl: String = s"/ioss-netp-registration/pending-registration/UTR/$utr"
+      val ninoNumberUrl: String = s"/ioss-netp-registration/pending-registration/NINO/$nino"
+      val taxReferenceUrl: String = s"/ioss-netp-registration/pending-registration/FTR/$taxReference"
+
+      "must return a Right(Seq(SavedPendingRegistration)) for a given EtmpType when pending registrations exist in the database" - {
+
+        "UK Vat number" in {
+
+          val responseBody = Json.toJson(Seq(savedPendingRegistration)).toString
+
+          running(application) {
+
+            val connector = application.injector.instanceOf[RegistrationConnector]
+
+            server.stubFor(
+              get(urlEqualTo(vatNumberUrl))
+                .willReturn(ok()
+                  .withBody(responseBody))
+            )
+
+            val result = connector.getPendingRegistrationsByCustomerIdentification(VRN, "123456789").futureValue
+
+            result `mustBe` Right(Seq(savedPendingRegistration))
+          }
+        }
+
+        "UTR number" in {
+
+          val responseBody = Json.toJson(Seq(savedPendingRegistration)).toString
+
+          running(application) {
+
+            val connector = application.injector.instanceOf[RegistrationConnector]
+
+            server.stubFor(
+              get(urlEqualTo(utrNumberUrl))
+                .willReturn(ok()
+                  .withBody(responseBody))
+            )
+
+            val result = connector.getPendingRegistrationsByCustomerIdentification(UTR, utr).futureValue
+
+            result `mustBe` Right(Seq(savedPendingRegistration))
+          }
+        }
+
+        "NINO number" in {
+
+          val responseBody = Json.toJson(Seq(savedPendingRegistration)).toString
+
+          running(application) {
+
+            val connector = application.injector.instanceOf[RegistrationConnector]
+
+            server.stubFor(
+              get(urlEqualTo(ninoNumberUrl))
+                .willReturn(ok()
+                  .withBody(responseBody))
+            )
+
+            val result = connector.getPendingRegistrationsByCustomerIdentification(NINO, nino).futureValue
+
+            result `mustBe` Right(Seq(savedPendingRegistration))
+          }
+        }
+
+        "client tax reference" in {
+
+          val responseBody = Json.toJson(Seq(savedPendingRegistration)).toString
+
+          running(application) {
+
+            val connector = application.injector.instanceOf[RegistrationConnector]
+
+            server.stubFor(
+              get(urlEqualTo(taxReferenceUrl))
+                .willReturn(ok()
+                  .withBody(responseBody))
+            )
+
+            val result = connector.getPendingRegistrationsByCustomerIdentification(FTR, taxReference).futureValue
+
+            result `mustBe` Right(Seq(savedPendingRegistration))
           }
         }
       }

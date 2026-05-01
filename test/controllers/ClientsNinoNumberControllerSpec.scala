@@ -17,10 +17,12 @@
 package controllers
 
 import base.SpecBase
+import connectors.RegistrationConnector
 import controllers.routes as normalRoutes
 import forms.ClientsNinoNumberFormProvider
 import models.core.TraderId
 import models.{ActiveTraderResult, UserAnswers}
+import models.etmp.EtmpIdType.NINO
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{times, verify, verifyNoInteractions, when}
@@ -29,11 +31,12 @@ import org.scalatestplus.mockito.MockitoSugar
 import pages.{ClientsNinoNumberPage, EmptyWaypoints, Waypoints}
 import play.api.data.Form
 import play.api.inject.bind
+import play.api.mvc.Results.Redirect
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import queries.{ActiveTraderResultQuery, PreviousUnfinishedRegistration}
 import repositories.SessionRepository
-import services.SaveAndComeBackService
+import services.{SaveAndComeBackService, PendingRegistrationDuplicateCheckService}
 import services.core.CoreRegistrationValidationService
 import testutils.CreateMatchResponse.createMatchResponse
 import utils.FutureSyntax.FutureOps
@@ -52,12 +55,16 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar with Be
 
   private val mockCoreRegistrationValidationService = mock[CoreRegistrationValidationService]
   private val mockSaveAndComeBackService = mock[SaveAndComeBackService]
+  private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
+  private val mockPendingRegistrationDuplicateCheckService = mock[PendingRegistrationDuplicateCheckService]
 
   private lazy val clientsNinoNumberRoute: String = routes.ClientsNinoNumberController.onPageLoad(waypoints).url
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockCoreRegistrationValidationService)
     Mockito.reset(mockSaveAndComeBackService)
+    Mockito.reset(mockRegistrationConnector)
+    Mockito.reset(mockPendingRegistrationDuplicateCheckService)
   }
  
   "ClientsNinoNumber Controller" - {
@@ -102,13 +109,15 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar with Be
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
       when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(), any(), any())(any(), any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService)
+            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -137,13 +146,15 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar with Be
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
       when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(), any(), any())(any(), any())) thenReturn Future.successful(Some(emptyUserAnswers))
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService)
+            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -177,6 +188,7 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar with Be
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = false,
@@ -193,7 +205,8 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar with Be
         )
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -224,6 +237,7 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar with Be
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = false,
@@ -237,7 +251,8 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar with Be
         applicationBuilder(userAnswers = Some(answersWithActiveTraderResult))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -271,6 +286,7 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar with Be
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = true,
@@ -287,7 +303,8 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar with Be
         )
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -320,12 +337,14 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar with Be
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -403,6 +422,45 @@ class ClientsNinoNumberControllerSpec extends SpecBase with MockitoSugar with Be
 
         status(result) `mustBe` SEE_OTHER
         redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
+      }
+    }
+
+    "must redirect when a pending registration duplicate is found" in {
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      val pendingRedirect = Redirect(controllers.routes.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad())
+
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(eqTo(NINO), eqTo(nino), any(), eqTo(waypoints))(any())) thenReturn
+        Future.successful(Some(pendingRedirect))
+
+      val application =
+        applicationBuilder(userAnswers = Some(emptyUserAnswers))
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+          )
+          .build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, clientsNinoNumberRoute)
+            .withFormUrlEncodedBody(("value", nino))
+
+        val result = route(application, request).value
+
+        status(result) mustBe SEE_OTHER
+        redirectLocation(result).value mustBe
+          controllers.routes.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad().url
+
+        verify(mockPendingRegistrationDuplicateCheckService, times(1))
+          .checkPendingRegistration(eqTo(NINO), eqTo(nino), any(), eqTo(waypoints))(any())
+
+        verifyNoInteractions(mockCoreRegistrationValidationService)
+        verifyNoInteractions(mockRegistrationConnector)
+        verifyNoInteractions(mockSessionRepository)
       }
     }
   }

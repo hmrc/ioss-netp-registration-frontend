@@ -17,9 +17,11 @@
 package controllers
 
 import base.SpecBase
+import connectors.RegistrationConnector
 import controllers.routes as normalRoutes
 import forms.ClientUtrNumberFormProvider
 import models.{ActiveTraderResult, UserAnswers}
+import models.etmp.EtmpIdType.UTR
 import models.core.TraderId
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
@@ -29,11 +31,12 @@ import org.scalatestplus.mockito.MockitoSugar
 import pages.{ClientUtrNumberPage, EmptyWaypoints, Waypoints}
 import play.api.data.Form
 import play.api.inject.bind
+import play.api.mvc.Results.Redirect
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import queries.{ActiveTraderResultQuery, PreviousUnfinishedRegistration}
 import repositories.SessionRepository
-import services.SaveAndComeBackService
+import services.{SaveAndComeBackService, PendingRegistrationDuplicateCheckService}
 import services.core.CoreRegistrationValidationService
 import testutils.CreateMatchResponse.createMatchResponse
 import utils.FutureSyntax.FutureOps
@@ -54,10 +57,15 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
 
   private lazy val clientUtrNumberRoute: String = routes.ClientUtrNumberController.onPageLoad(waypoints).url
   private val mockSaveAndComeBackService = mock[SaveAndComeBackService]
+  private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
+  private val mockPendingRegistrationDuplicateCheckService = mock[PendingRegistrationDuplicateCheckService]
+
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockCoreRegistrationValidationService)
     Mockito.reset(mockSaveAndComeBackService)
+    Mockito.reset(mockRegistrationConnector)
+    Mockito.reset(mockPendingRegistrationDuplicateCheckService)
   }
 
   "ClientUtrNumber Controller" - {
@@ -102,13 +110,15 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
       when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(), any(), any())(any(), any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService)
+            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -137,13 +147,15 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
       when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(), any(), any())(any(), any())) thenReturn Future.successful(Some(emptyUserAnswers))
-
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService)
+            bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -177,6 +189,7 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = false,
@@ -193,7 +206,8 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
         )
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -224,6 +238,7 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = false,
@@ -237,7 +252,8 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
         applicationBuilder(userAnswers = Some(answersWithActiveTraderResult))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -271,6 +287,7 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = true,
@@ -287,7 +304,8 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
         )
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -319,12 +337,14 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService)
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -402,6 +422,45 @@ class ClientUtrNumberControllerSpec extends SpecBase with MockitoSugar with Befo
 
         status(result) `mustBe` SEE_OTHER
         redirectLocation(result).value `mustBe` routes.JourneyRecoveryController.onPageLoad().url
+      }
+    }
+    
+    "must redirect when a pending registration duplicate is found" in {
+
+      val mockSessionRepository = mock[SessionRepository]
+
+      val pendingRedirect = Redirect(controllers.routes.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad())
+
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(eqTo(UTR), eqTo(utr), any(), eqTo(waypoints))(any())) thenReturn
+        Future.successful(Some(pendingRedirect))
+
+      val application =
+        applicationBuilder(userAnswers = Some(emptyUserAnswers))
+          .overrides(
+            bind[SessionRepository].toInstance(mockSessionRepository),
+            bind[RegistrationConnector].toInstance(mockRegistrationConnector),
+            bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
+            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+          )
+          .build()
+
+      running(application) {
+        val request =
+          FakeRequest(POST, clientUtrNumberRoute)
+            .withFormUrlEncodedBody(("value", utr))
+
+        val result = route(application, request).value
+
+        status(result) mustBe SEE_OTHER
+        redirectLocation(result).value mustBe
+          controllers.routes.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad().url
+
+        verify(mockPendingRegistrationDuplicateCheckService, times(1))
+          .checkPendingRegistration(eqTo(UTR), eqTo(utr), any(), eqTo(waypoints))(any())
+
+        verifyNoInteractions(mockCoreRegistrationValidationService)
+        verifyNoInteractions(mockRegistrationConnector)
+        verifyNoInteractions(mockSessionRepository)
       }
     }
   }
