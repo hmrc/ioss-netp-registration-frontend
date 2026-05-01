@@ -1,7 +1,9 @@
 (function () {
+
+  const copyButton = document.querySelector('#copy-to-clip-button');
+
   function copy() {
     const code = document.getElementById("copy-to-clip").dataset.code;
-
 
     // Create text area
     var textArea = document.createElement("textarea");
@@ -23,5 +25,8 @@
     document.execCommand("copy");
     document.body.removeChild(textArea);
   }
-  document.querySelector("#copy-to-clip-button").addEventListener("click", copy);
+
+  if(copyButton) {
+    copyButton.addEventListener("click", copy);
+  }
 })();
