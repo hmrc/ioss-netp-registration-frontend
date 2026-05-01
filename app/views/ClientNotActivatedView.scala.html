@@ -33,7 +33,8 @@
     emailAddress: String,
     clientCodeEntryUrl: String,
     activationExpiryDate: String,
-    redirectToUpdateClientEmailAddressPage: String
+    redirectToUpdateClientEmailAddressPage: String,
+    dashboardUrl: String
 )(implicit request: Request[_], messages: Messages)
 
     @layout(pageTitle = titleNoForm(messages("clientNotActivated.title", companyName))) {
@@ -67,4 +68,6 @@
         <h2 class="govuk-heading-m">@messages("checkYourAnswers.details.heading")</h2>
         
         @govukSummaryList(clientDetailsSummaryList)
+
+        <p class="govuk-body">@Html(messages("clientNotActivated.returnToYourAccount.link", dashboardUrl))</p>
     }

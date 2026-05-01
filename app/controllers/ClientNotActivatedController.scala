@@ -69,6 +69,7 @@ class ClientNotActivatedController @Inject()(
             val activationExpiryDate = pendingRegistration.activationExpiryDate
             val clientCompanyName = getClientCompanyName(pendingRegistration)
             val redirectToUpdateClientEmailAddressPage = s"${frontendAppConfig.redirectToUpdateClientEmailAddressPage}/${pendingRegistration.journeyId}"
+            val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
 
             if (isBasedInUk && hasVatNumber) {
               pendingRegistration.userAnswers.vatInfo match {
@@ -76,13 +77,13 @@ class ClientNotActivatedController @Inject()(
                 case Some(vatCustomerInfo) =>
                   val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatCustomerInfo)
 
-                  Ok(view(waypoints, Some(viewModel), registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage))
+                  Ok(view(waypoints, Some(viewModel), registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage, dashboardUrl))
 
                 case None =>
                   Redirect(JourneyRecoveryPage.route(waypoints).url)
               }
             } else {
-              Ok(view(waypoints, None, registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage))
+              Ok(view(waypoints, None, registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage, dashboardUrl))
             }
           } else {
             Redirect(controllers.routes.AccessDeniedController.onPageLoad().url)
