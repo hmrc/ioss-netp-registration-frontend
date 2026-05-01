@@ -64,14 +64,6 @@ class BusinessBasedInUKController @Inject()(
 
           val existingAnswers: Option[Boolean] = originalAnswers.get(BusinessBasedInUKPage)
 
-          println(s"")
-          println(s"")
-          println(s"")
-          println(s"in check ${waypoints.inCheck}")
-          println(s"")
-          println(s"")
-          println(s"")
-
           if (existingAnswers.contains(value) && waypoints.inCheck) {
             Future.successful(Redirect(CheckVatDetailsPage().route(waypoints)))
           } else {
