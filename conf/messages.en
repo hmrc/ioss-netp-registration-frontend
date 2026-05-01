@@ -647,7 +647,7 @@ clientRegistrationAlreadyPending.error.required = Select yes if you want to cont
 clientRegistrationPendingWithAnotherIntermediary.title = This client has a registration in progress with another intermediary
 clientRegistrationPendingWithAnotherIntermediary.heading = This client has a registration in progress with another intermediary
 clientRegistrationPendingWithAnotherIntermediary.p1 = You cannot add them to your account while that registration is in progress.
-clientRegistrationPendingWithAnotherIntermediary.returnToYourAccount.link = <a class="govuk-link" href="{0}">Return to your account</a>
+clientRegistrationPendingWithAnotherIntermediary.returnToYourAccount.link = <a class="govuk-link" href="{0}" id="return-to-your-account">Return to your account</a>
 
 clientRegistrationPendingWithOurService.title = This client already has a pending registration
 clientRegistrationPendingWithOurService.heading = This client already has a pending registration
