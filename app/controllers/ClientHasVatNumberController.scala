@@ -61,7 +61,7 @@ class ClientHasVatNumberController @Inject()(
           val originalAnswers = request.userAnswers
           val existingAnswers = originalAnswers.get(ClientHasVatNumberPage)
 
-          if (existingAnswers.contains(value)) {
+          if (existingAnswers.contains(value) && waypoints.inCheck) {
             Future.successful(Redirect(CheckVatDetailsPage().route(waypoints)))
           } else {
             for {
