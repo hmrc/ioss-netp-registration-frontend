@@ -15,6 +15,7 @@
  *@
 
 @import viewmodels.CheckVatDetailsViewModel
+@import views.html.helper.CSPNonce
 
 @this(
     layout: templates.Layout,
@@ -42,6 +43,14 @@
         <h1 class="govuk-heading-l">@messages("clientNotActivated.heading", companyName)</h1>
         
         <p class="govuk-body">@Html(messages("clientNotActivated.p1.link", clientCodeEntryUrl))</p>
+
+        <span id="copy-to-clip" data-code="@clientCodeEntryUrl">
+            <button id="copy-to-clip-button" class="govuk-button govuk-button--secondary" data-module="govuk-button">
+                @messages("site.copyLinkBtn")
+            </button>
+            <script @CSPNonce.attr src='@routes.Assets.versioned("javascripts/copy-button.js")'></script>
+        </span>
+
         <p class="govuk-body">@messages("clientNotActivated.p2")</p>
         
         <p class="govuk-body">@Html(messages("clientNotActivated.info", emailAddress, redirectToUpdateClientEmailAddressPage))</p>

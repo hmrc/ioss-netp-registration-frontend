@@ -19,18 +19,13 @@ package controllers.previousRegistrations
 import base.SpecBase
 import forms.previousRegistrations.ClientHasIntermediaryFormProvider
 import models.{Index, UserAnswers}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
 import org.scalatestplus.mockito.MockitoSugar
 import pages.JourneyRecoveryPage
 import pages.previousRegistrations.ClientHasIntermediaryPage
 import play.api.data.Form
-import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import views.html.previousRegistrations.ClientHasIntermediaryView
-
-import scala.concurrent.Future
 
 class ClientHasIntermediaryControllerSpec extends SpecBase with MockitoSugar {
 

@@ -22,7 +22,7 @@ import models.domain.VatCustomerInfo
 import models.etmp.EtmpIdType
 import models.etmp.EtmpIdType.{FTR, NINO, UTR, VRN}
 import models.requests.{DataRequest, OptionalDataRequest}
-import models.responses.{InternalServerError, NotFound, UnexpectedResponseStatus, VatCustomerNotFound}
+import models.responses.{InternalServerError, NotFound, VatCustomerNotFound}
 import models.saveAndComeBack.{MultipleRegistrations, NoRegistrations, SingleRegistration, TaxReferenceInformation}
 import models.{ClientBusinessName, SavedUserAnswers, UserAnswers}
 import org.mockito.Mockito.when
@@ -31,7 +31,6 @@ import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.mockito.MockitoSugar
 import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, ContinueRegistrationSelectionPage, EmptyWaypoints}
 import play.api.libs.json.JsObject
-import play.api.test.Helpers.status
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.FutureSyntax.FutureOps
 

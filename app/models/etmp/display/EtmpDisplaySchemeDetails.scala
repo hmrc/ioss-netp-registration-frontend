@@ -18,7 +18,6 @@ package models.etmp.display
 
 import models.etmp.{EtmpPreviousEuRegistrationDetails, EtmpWebsite}
 import play.api.libs.json.*
-import play.api.libs.json.{Json, OFormat}
 
 case class EtmpDisplaySchemeDetails(
                                      commencementDate: String,
