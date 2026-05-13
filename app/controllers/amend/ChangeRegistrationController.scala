@@ -420,18 +420,6 @@ class ChangeRegistrationController @Inject()(
           contactDetails.emailAddress != originalAnswers.schemeDetails.businessEmailId
       }
 
-    logger.info(s"countryBasedInChanged: $countryBasedInChanged")
-    logger.info(s"taxReferenceChanged: $taxReferenceChanged")
-    logger.info(s"clientBusinessNameChanged: $clientBusinessNameChanged")
-    logger.info(s"clientBusinessAddressChanged: $clientBusinessAddressChanged")
-    logger.info(s"tradingNamesChanged: $tradingNamesChanged")
-    logger.info(s"previousRegistrationsChanged: $previousRegistrationsChanged")
-    logger.info(s"fixedEstablishmentsChanged: $fixedEstablishmentsChanged")
-    logger.info(s"amendedFixedEstablishmentsChanged: $amendedFixedEstablishmentsChanged")
-    logger.info(s"previousRegistrationSchemesChanged: $previousRegistrationSchemesChanged")
-    logger.info(s"websitesChanged: $websitesChanged")
-    logger.info(s"contactDetailsChanged: $contactDetailsChanged")
-
     countryBasedInChanged ||
       taxReferenceChanged ||
       clientBusinessNameChanged ||
