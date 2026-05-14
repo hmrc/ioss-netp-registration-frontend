@@ -21,7 +21,7 @@ import forms.vatEuDetails.DeleteEuDetailsFormProvider
 import models.vatEuDetails.{RegistrationType, TradingNameAndBusinessAddress}
 import models.{Country, InternationalAddress, TradingName, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.{times, verify, verifyNoInteractions, when}
+import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
 import pages.JourneyRecoveryPage
 import pages.vatEuDetails.*
@@ -31,8 +31,8 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import queries.euDetails.{AllEuDetailsRawQuery, EuDetailsQuery}
 import repositories.SessionRepository
-import views.html.vatEuDetails.DeleteEuDetailsView
 import utils.FutureSyntax.FutureOps
+import views.html.vatEuDetails.DeleteEuDetailsView
 
 
 class DeleteEuDetailsControllerSpec extends SpecBase with MockitoSugar {
