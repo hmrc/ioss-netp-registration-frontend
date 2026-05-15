@@ -39,7 +39,7 @@ import queries.{AllWebsites, OriginalRegistrationQuery}
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
-import services.{AuditService, RegistrationService}
+import services.{AmendAnswersComparisonService, AuditService, RegistrationService}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
@@ -63,7 +63,8 @@ class ChangeRegistrationController @Inject()(
                                               view: ChangeRegistrationView,
                                               registrationService: RegistrationService,
                                               auditService: AuditService,
-                                              frontendAppConfig: FrontendAppConfig
+                                              frontendAppConfig: FrontendAppConfig,
+                                              amendAnswersComparisonService: AmendAnswersComparisonService
                                             )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientCompanyName with CompletionChecks {
 
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -179,7 +180,7 @@ class ChangeRegistrationController @Inject()(
         val hasChanges: Boolean =
           request.userAnswers.get(OriginalRegistrationQuery(request.iossNumber)) match {
             case Some(originalRegistrationAnswers) =>
-              !answersHaveChanged(originalRegistrationAnswers)
+              !amendAnswersComparisonService.answersHaveChanged(originalRegistrationAnswers, request.userAnswers)
 
             case None =>
               true
@@ -335,124 +336,5 @@ class ChangeRegistrationController @Inject()(
     val formattedEmailAddress = BusinessContactDetailsSummary.rowEmailAddress(waypoints, answers, page)
 
     (formattedContactName, formattedTelephoneNumber, formattedEmailAddress)
-  }
-
-  private def answersHaveChanged(originalAnswers: EtmpDisplayRegistration)
-                                (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Boolean = {
-
-    val countryBasedInChanged =
-      request.userAnswers.get(ClientCountryBasedPage).exists { country =>
-        originalAnswers.otherAddress.exists(_.issuedBy != country.code)
-      }
-
-    val taxReferenceChanged =
-      request.userAnswers.get(ClientTaxReferencePage).exists { taxReference =>
-        taxReference != originalAnswers.customerIdentification.idValue
-      }
-
-    val clientBusinessNameChanged =
-      request.userAnswers.get(ClientBusinessNamePage).map(_.name) !=
-        originalAnswers.otherAddress.flatMap(_.tradingName)
-
-    val clientBusinessAddressChanged =
-      request.userAnswers.get(ClientBusinessAddressPage) match {
-        case Some(address) =>
-          originalAnswers.otherAddress match {
-            case Some(originalAddress) =>
-              address.line1 != originalAddress.addressLine1 ||
-                address.line2 != originalAddress.addressLine2 ||
-                address.townOrCity != originalAddress.townOrCity ||
-                address.stateOrRegion != originalAddress.regionOrState ||
-                address.postCode != originalAddress.postcode
-
-            case None =>
-              true
-          }
-
-        case None =>
-          originalAnswers.otherAddress.isDefined
-      }
-
-    val tradingNamesChanged =
-      request.userAnswers.get(AllTradingNamesQuery).map(_.map(_.name)).getOrElse(Seq.empty) !=
-        originalAnswers.tradingNames.map(_.tradingName)
-
-    val previousRegistrationsChanged =
-      request.userAnswers.get(AllPreviousRegistrationsQuery).map(_.map(_.previousEuCountry.code)).getOrElse(Seq.empty) !=
-        originalAnswers.schemeDetails.previousEURegistrationDetails.map(_.issuedBy).distinct
-
-    val fixedEstablishmentsChanged =
-      request.userAnswers.get(AllEuDetailsQuery).map(_.map(_.euCountry.code)).getOrElse(Seq.empty) !=
-        originalAnswers.schemeDetails.euRegistrationDetails.map(_.issuedBy)
-
-    val amendedFixedEstablishmentsChanged =
-      request.userAnswers.get(AllEuDetailsQuery).getOrElse(Seq.empty).exists { amendedDetails =>
-        originalAnswers.schemeDetails.euRegistrationDetails
-          .find(_.issuedBy == amendedDetails.euCountry.code)
-          .exists(originalDetails => hasFixedEstablishmentDetailsChanged(amendedDetails, originalDetails))
-      }
-
-    val previousRegistrationSchemesChanged =
-      request.userAnswers.get(AllPreviousRegistrationsQuery).getOrElse(Seq.empty).exists { amendedCountry =>
-        val matchingOriginalRegistrations =
-          originalAnswers.schemeDetails.previousEURegistrationDetails
-            .filter(_.issuedBy == amendedCountry.previousEuCountry.code)
-
-        val originalSchemeNumbers =
-          matchingOriginalRegistrations.map { registration =>
-            PreviousSchemeDetails.fromEtmpPreviousEuRegistrationDetails(registration).previousSchemeNumbers
-          }
-
-        val amendedSchemeNumbers =
-          amendedCountry.previousSchemesDetails.map(_.previousSchemeNumbers)
-
-        originalSchemeNumbers.nonEmpty && amendedSchemeNumbers != originalSchemeNumbers
-      }
-
-    val websitesChanged =
-      request.userAnswers.get(AllWebsites).map(_.map(_.site)).getOrElse(Seq.empty) !=
-        originalAnswers.schemeDetails.websites.map(_.websiteAddress)
-
-    val contactDetailsChanged =
-      request.userAnswers.get(BusinessContactDetailsPage).exists { contactDetails =>
-        contactDetails.fullName != originalAnswers.schemeDetails.contactName ||
-          contactDetails.telephoneNumber != originalAnswers.schemeDetails.businessTelephoneNumber ||
-          contactDetails.emailAddress != originalAnswers.schemeDetails.businessEmailId
-      }
-
-    countryBasedInChanged ||
-      taxReferenceChanged ||
-      clientBusinessNameChanged ||
-      clientBusinessAddressChanged ||
-      tradingNamesChanged ||
-      previousRegistrationsChanged ||
-      fixedEstablishmentsChanged ||
-      amendedFixedEstablishmentsChanged ||
-      previousRegistrationSchemesChanged ||
-      websitesChanged ||
-      contactDetailsChanged
-  }
-
-  private def hasFixedEstablishmentDetailsChanged(
-                                                   amendedDetails: EuDetails,
-                                                   originalDetails: EtmpDisplayEuRegistrationDetails
-                                                 ): Boolean = {
-
-    val vatNumberWithoutCountryCode: Option[String] =
-      amendedDetails.euVatNumber.map(_.stripPrefix(amendedDetails.euCountry.code))
-
-    val originalRegistrationVatNumber: Option[String] =
-      originalDetails.vatNumber
-
-    amendedDetails.tradingNameAndBusinessAddress.map(_.tradingName.name).exists(_ != originalDetails.fixedEstablishmentTradingName) ||
-      amendedDetails.tradingNameAndBusinessAddress.map(_.address).exists { address =>
-        originalDetails.fixedEstablishmentAddressLine1 != address.line1 ||
-          originalDetails.fixedEstablishmentAddressLine2 != address.line2 ||
-          originalDetails.townOrCity != address.townOrCity ||
-          originalDetails.regionOrState != address.stateOrRegion ||
-          originalDetails.postcode != address.postCode
-      } ||
-      vatNumberWithoutCountryCode != originalRegistrationVatNumber ||
-      amendedDetails.euTaxReference != originalDetails.taxIdentificationNumber
   }
 }

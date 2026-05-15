@@ -48,7 +48,7 @@ import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
 import queries.{IossNumberQuery, OriginalRegistrationQuery}
-import services.{AuditService, RegistrationService}
+import services.{AmendAnswersComparisonService, AuditService, RegistrationService}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
@@ -191,6 +191,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
   private val mockRegistrationService: RegistrationService = mock[RegistrationService]
   private val mockAuditService: AuditService = mock[AuditService]
+  private val mockAmendAnswersComparisonService: AmendAnswersComparisonService = mock[AmendAnswersComparisonService]
 
   "ChangeRegistration Controller" - {
 
@@ -588,6 +589,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
         "A NETP has made changes" in {
 
+          when(mockAmendAnswersComparisonService.answersHaveChanged(any[EtmpDisplayRegistration], any[UserAnswers])).thenReturn(true)
+
           val originalRegistration =
             registrationWrapperWithoutExclusions.etmpDisplayRegistration
 
@@ -599,7 +602,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
           val application = applicationBuilder(
             userAnswers = Some(userAnswers),
             registrationWrapper = Some(registrationWrapperWithoutExclusions)
-          ).build()
+          )
+            .overrides(bind[AmendAnswersComparisonService].toInstance(mockAmendAnswersComparisonService))
+            .build()
 
           running(application) {
 
