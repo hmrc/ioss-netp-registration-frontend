@@ -27,6 +27,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status.SEE_OTHER
 import play.api.inject.bind
+import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET, defaultAwaitTimeout, route, running, status, writeableOf_AnyContentAsEmpty}
 import services.RegistrationService
@@ -87,6 +88,8 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
       when(mockRegistrationConnector.displayIntermediaryRegistration(any())(any())) thenReturn
         Right(intermediaryRegistrationWithClients(Seq(iossNumber))).toFuture
       when(mockRegistrationConnector.displayRegistrationNetp(any())(any())) thenReturn Left(NotFound).toFuture
+      
+      println(Json.toJson(basicUserAnswersWithVatInfo))
 
       val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
         .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
