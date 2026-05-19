@@ -18,12 +18,13 @@ package controllers.amend
 
 import base.SpecBase
 import config.Constants.maxSchemes
+import config.FrontendAppConfig
 import models.audit.{NetpAmendRegistrationAuditModel, RegistrationAuditType, SubmissionResult}
 import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
 import models.etmp.amend.AmendRegistrationResponse
 import models.vatEuDetails.EuDetails
 import models.etmp.display.{EtmpDisplayRegistration, RegistrationWrapper}
-import models.previousRegistrations._
+import models.previousRegistrations.*
 import models.requests.{AuthenticatedMandatoryRegistrationRequest, DataRequest}
 import models.responses.InternalServerError
 import models.{CheckMode, ClientBusinessName, DesAddress, TradingName, UserAnswers, Website}
@@ -47,7 +48,7 @@ import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
 import queries.{IossNumberQuery, OriginalRegistrationQuery}
-import services.{AuditService, RegistrationService}
+import services.{AmendAnswersComparisonService, AuditService, RegistrationService}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
@@ -190,6 +191,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
   private val mockRegistrationService: RegistrationService = mock[RegistrationService]
   private val mockAuditService: AuditService = mock[AuditService]
+  private val mockAmendAnswersComparisonService: AmendAnswersComparisonService = mock[AmendAnswersComparisonService]
 
   "ChangeRegistration Controller" - {
 
@@ -207,6 +209,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
           running(application) {
 
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+
+            val config = application.injector.instanceOf[FrontendAppConfig]
 
             implicit val msgs: Messages = messages(application)
 
@@ -231,7 +235,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 isValid = false,
                 isExcluded = false,
                 maybeExclusion= None,
-                exclusionDeadline = None
+                exclusionDeadline = None,
+                noChangesMade = true,
+                config.clientListUrl
               )(request, messages(application)).toString
           }
         }
@@ -246,6 +252,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
           running(application) {
 
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+
+            val config = application.injector.instanceOf[FrontendAppConfig]
 
             implicit val msgs: Messages = messages(application)
 
@@ -270,7 +278,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 isValid = false,
                 isExcluded = false,
                 maybeExclusion= None,
-                exclusionDeadline = None
+                exclusionDeadline = None,
+                noChangesMade = true,
+                config.clientListUrl
               )(request, messages(application)).toString
           }
         }
@@ -284,6 +294,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
           running(application) {
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+
+            val config = application.injector.instanceOf[FrontendAppConfig]
 
             implicit val msgs: Messages = messages(application)
 
@@ -308,7 +320,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               isValid = false,
               isExcluded = false,
               maybeExclusion= None,
-              exclusionDeadline = None
+              exclusionDeadline = None,
+              noChangesMade = true,
+              config.clientListUrl
             )(request, messages(application)).toString
           }
         }
@@ -323,6 +337,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
           running(application) {
 
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+
+            val config = application.injector.instanceOf[FrontendAppConfig]
 
             implicit val msgs: Messages = messages(application)
 
@@ -347,7 +363,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 isValid = false,
                 isExcluded = false,
                 maybeExclusion= None,
-                exclusionDeadline = None
+                exclusionDeadline = None,
+                noChangesMade = true,
+                config.clientListUrl
               )(request, messages(application)).toString
           }
         }
@@ -374,6 +392,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
           running(application) {
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+
+            val config = application.injector.instanceOf[FrontendAppConfig]
             implicit val msgs: Messages = messages(application)
 
             val result = route(application, request).value
@@ -399,7 +419,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               isValid = false,
               isExcluded = true,
               maybeExclusion = Some(exclusionWithinDeadline),
-              exclusionDeadline = expectedDeadline
+              exclusionDeadline = expectedDeadline,
+              noChangesMade = true,
+              config.clientListUrl
             )(request, messages(application)).toString
           }
         }
@@ -426,6 +448,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
           running(application) {
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+
+            val config = application.injector.instanceOf[FrontendAppConfig]
             implicit val msgs: Messages = messages(application)
 
             val result = route(application, request).value
@@ -449,7 +473,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               isValid = false,
               isExcluded = true,
               maybeExclusion = Some(expiredExclusion),
-              exclusionDeadline = None
+              exclusionDeadline = None,
+              noChangesMade = true,
+              config.clientListUrl
             )(request, messages(application)).toString
           }
         }
@@ -476,6 +502,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
           running(application) {
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+
+            val config = application.injector.instanceOf[FrontendAppConfig]
             implicit val msgs: Messages = messages(application)
 
             val result = route(application, request).value
@@ -499,7 +527,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               isValid = false,
               isExcluded = true,
               maybeExclusion = Some(hmrcExclusion),
-              exclusionDeadline = None
+              exclusionDeadline = None,
+              noChangesMade = true,
+              config.clientListUrl
             )(request, messages(application)).toString
           }
         }
@@ -525,6 +555,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
           running(application) {
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+
+            val config = application.injector.instanceOf[FrontendAppConfig]
             implicit val msgs: Messages = messages(application)
 
             val result = route(application, request).value
@@ -548,7 +580,63 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               isValid = false,
               isExcluded = false,
               maybeExclusion = None,
-              exclusionDeadline = None
+              exclusionDeadline = None,
+              noChangesMade = true,
+              config.clientListUrl
+            )(request, messages(application)).toString
+          }
+        }
+
+        "A NETP has made changes" in {
+
+          when(mockAmendAnswersComparisonService.answersHaveChanged(any[EtmpDisplayRegistration], any[UserAnswers])).thenReturn(true)
+
+          val originalRegistration =
+            registrationWrapperWithoutExclusions.etmpDisplayRegistration
+
+          val userAnswers =
+            ukBasedCompleteUserAnswersWithVatInfo
+              .set(OriginalRegistrationQuery(iossNumber), originalRegistration).success.value
+              .set(AllWebsites, List(Website("www.changed-example.com"))).success.value
+
+          val application = applicationBuilder(
+            userAnswers = Some(userAnswers),
+            registrationWrapper = Some(registrationWrapperWithoutExclusions)
+          )
+            .overrides(bind[AmendAnswersComparisonService].toInstance(mockAmendAnswersComparisonService))
+            .build()
+
+          running(application) {
+
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+
+            val config = application.injector.instanceOf[FrontendAppConfig]
+            implicit val msgs: Messages = messages(application)
+
+            val result = route(application, request).value
+            val view = application.injector.instanceOf[ChangeRegistrationView]
+
+            val registrationList =
+              SummaryListViewModel(rows = getUkBasedWithVatNumRegistrationDetailsList(userAnswers))
+
+            val importOneStopShopDetailsList =
+              SummaryListViewModel(
+                rows = getImportOneStopShopDetailsSummaryList(userAnswers, existingPreviousRegistrations)
+              )
+
+            status(result) mustBe OK
+            contentAsString(result) mustBe view(
+              waypoints,
+              vatCustomerInfo.organisationName.get,
+              iossNumber,
+              registrationList,
+              importOneStopShopDetailsList,
+              isValid = false,
+              isExcluded = false,
+              maybeExclusion = None,
+              exclusionDeadline = None,
+              noChangesMade = false,
+              config.clientListUrl
             )(request, messages(application)).toString
           }
         }

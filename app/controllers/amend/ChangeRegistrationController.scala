@@ -17,6 +17,7 @@
 package controllers.amend
 
 import config.Constants.ukCountryCodeAreaPrefix
+import config.FrontendAppConfig
 import controllers.GetClientCompanyName
 import controllers.actions.AuthenticatedControllerComponents
 import formats.Format.dateFormatter
@@ -24,15 +25,21 @@ import logging.Logging
 import models.audit.NetpAmendRegistrationAuditModel
 import models.audit.RegistrationAuditType.AmendRegistration
 import models.audit.SubmissionResult.{Failure, Success}
-import models.domain.PreviousRegistration
-import models.etmp.{EtmpPreviousEuRegistrationDetails, EtmpExclusion}
+import models.domain.{PreviousRegistration, PreviousSchemeDetails}
+import models.etmp.display.{EtmpDisplayEuRegistrationDetails, EtmpDisplayRegistration}
+import models.etmp.{EtmpExclusion, EtmpPreviousEuRegistrationDetails}
 import models.requests.AuthenticatedMandatoryRegistrationRequest
+import models.vatEuDetails.EuDetails
 import models.{CheckMode, Country, InternationalAddress, UserAnswers}
 import pages.*
 import pages.amend.ChangeRegistrationPage
 import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
-import services.{AuditService, RegistrationService}
+import queries.{AllWebsites, OriginalRegistrationQuery}
+import queries.euDetails.AllEuDetailsQuery
+import queries.previousRegistrations.AllPreviousRegistrationsQuery
+import queries.tradingNames.AllTradingNamesQuery
+import services.{AmendAnswersComparisonService, AuditService, RegistrationService}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
@@ -55,7 +62,9 @@ class ChangeRegistrationController @Inject()(
                                               cc: AuthenticatedControllerComponents,
                                               view: ChangeRegistrationView,
                                               registrationService: RegistrationService,
-                                              auditService: AuditService
+                                              auditService: AuditService,
+                                              frontendAppConfig: FrontendAppConfig,
+                                              amendAnswersComparisonService: AmendAnswersComparisonService
                                             )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientCompanyName with CompletionChecks {
 
   protected val controllerComponents: MessagesControllerComponents = cc
@@ -168,8 +177,16 @@ class ChangeRegistrationController @Inject()(
         )
 
         val isValid: Boolean = validate()(request.request)
+        val hasChanges: Boolean =
+          request.userAnswers.get(OriginalRegistrationQuery(request.iossNumber)) match {
+            case Some(originalRegistrationAnswers) =>
+              !amendAnswersComparisonService.answersHaveChanged(originalRegistrationAnswers, request.userAnswers)
 
-        Ok(view(waypoints, companyName, request.iossNumber, registrationDetailsList, importOneStopShopDetailsList, isValid, isExcluded, maybeExclusion, exclusionDeadline)).toFuture
+            case None =>
+              true
+          }
+
+        Ok(view(waypoints, companyName, request.iossNumber, registrationDetailsList, importOneStopShopDetailsList, isValid, isExcluded, maybeExclusion, exclusionDeadline, hasChanges, frontendAppConfig.clientListUrl)).toFuture
       }(request.request)
   }
 
