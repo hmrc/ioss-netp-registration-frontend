@@ -10,6 +10,9 @@
 # Failing to follow this rule may result in test routes deployed in production.
 
 # Add all the application routes to the prod.routes file
-->         /                          prod.Routes
+->            /                                                                                                                               prod.Routes
 
-GET     /pay-clients-vat-on-eu-sales/register-new-ioss-client/test-only/get-client-code/:urlCode   @controllers.test.TestOnlyClientDeclarationCodeController.testOnlyGetClientDeclarationCode(urlCode: String)
+GET           /pay-clients-vat-on-eu-sales/register-new-ioss-client/test-only/get-client-code/:urlCode                                        @controllers.test.TestOnlyClientDeclarationCodeController.testOnlyGetClientDeclarationCode(urlCode: String)
+
+DELETE        /pay-clients-vat-on-eu-sales/register-new-ioss-client/test-only/delete-pending-registrations                                    @controllers.test.TestOnlyPendingClientsController.testOnlyDeletePendingRegistrations()
+PUT           /pay-clients-vat-on-eu-sales/register-new-ioss-client/test-only/create-pending-registrations/:intermediaryNumber/:amount        @controllers.test.TestOnlyPendingClientsController.testOnlyCreatePendingRegistration(intermediaryNumber: String, amount: Int)
