@@ -25,20 +25,16 @@ import logging.Logging
 import models.audit.NetpAmendRegistrationAuditModel
 import models.audit.RegistrationAuditType.AmendRegistration
 import models.audit.SubmissionResult.{Failure, Success}
-import models.domain.{PreviousRegistration, PreviousSchemeDetails}
-import models.etmp.display.{EtmpDisplayEuRegistrationDetails, EtmpDisplayRegistration}
+import models.domain.PreviousRegistration
+import models.etmp.display.EtmpDisplayRegistration
 import models.etmp.{EtmpExclusion, EtmpPreviousEuRegistrationDetails}
 import models.requests.AuthenticatedMandatoryRegistrationRequest
-import models.vatEuDetails.EuDetails
 import models.{CheckMode, Country, InternationalAddress, UserAnswers}
 import pages.*
 import pages.amend.ChangeRegistrationPage
 import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
-import queries.{AllWebsites, OriginalRegistrationQuery}
-import queries.euDetails.AllEuDetailsQuery
-import queries.previousRegistrations.AllPreviousRegistrationsQuery
-import queries.tradingNames.AllTradingNamesQuery
+import queries.OriginalRegistrationQuery
 import services.{AmendAnswersComparisonService, AuditService, RegistrationService}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import uk.gov.hmrc.http.HeaderCarrier
