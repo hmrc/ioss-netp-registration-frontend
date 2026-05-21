@@ -17,36 +17,19 @@
 package services
 
 import base.SpecBase
-import connectors.RegistrationConnector
-import models.domain.{PreviousRegistration, PreviousSchemeDetails, PreviousSchemeNumbers, VatCustomerInfo}
+import models.domain.PreviousSchemeNumbers
 import models.etmp.*
-import models.etmp.EtmpIdType.{FTR, NINO, UTR, VRN}
-import models.etmp.display.*
-import models.responses.UnexpectedResponseStatus
-import models.responses.etmp.EtmpEnrolmentResponse
-import models.vatEuDetails.{EuDetails, RegistrationType, TradingNameAndBusinessAddress}
+import models.etmp.display.{EtmpDisplayEuRegistrationDetails, EtmpDisplayRegistration}
+import models.vatEuDetails.{RegistrationType, TradingNameAndBusinessAddress}
 import models.{BusinessContactDetails, ClientBusinessName, Country, Index, InternationalAddress, PreviousScheme, TradingName, UserAnswers, Website}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{reset, times, verify, when}
-import org.scalacheck.Arbitrary.arbitrary
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.prop.TableDrivenPropertyChecks
-import org.scalatest.prop.TableDrivenPropertyChecks.forAll
-import org.scalatestplus.mockito.MockitoSugar.mock
 import pages.previousRegistrations.{PreviousEuCountryPage, PreviousOssNumberPage, PreviousSchemePage, PreviouslyRegisteredPage}
-import pages.tradingNames.{HasTradingNamePage, TradingNamePage}
+import pages.tradingNames.TradingNamePage
 import pages.vatEuDetails.{EuCountryPage, EuTaxReferencePage, HasFixedEstablishmentPage, RegistrationTypePage, TradingNameAndBusinessAddressPage}
 import pages.website.WebsitePage
-import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage, ClientBusinessNamePage, ClientCountryBasedPage, ClientHasUtrNumberPage, ClientHasVatNumberPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage}
-import play.api.test.Helpers.running
-import queries.AllWebsites
-import queries.euDetails.AllEuDetailsQuery
-import queries.previousRegistrations.AllPreviousRegistrationsQuery
-import queries.tradingNames.AllTradingNamesQuery
-import testutils.{RegistrationData, WireMockHelper}
-import uk.gov.hmrc.http.HeaderCarrier
-import utils.CheckUkBased.isUkBasedNetp
-import utils.FutureSyntax.FutureOps
+import pages.{BusinessContactDetailsPage, ClientBusinessAddressPage, ClientBusinessNamePage, ClientCountryBasedPage, ClientTaxReferencePage}
+
+import testutils.WireMockHelper
+
 
 
 class AmendAnswersComparisonServiceSpec extends SpecBase with WireMockHelper {
