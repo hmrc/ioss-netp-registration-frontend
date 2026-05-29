@@ -575,8 +575,8 @@ changeRegistration.info.p1 = Confirm these changes to save them to your client''
 changeRegistration.removedClient.intermediary = You removed {0} from your account on {1}.
 changeRegistration.removedClient.intermediary.undo = If you wish to undo this removal, you must contact <a href="mailto:vatoss.contact@hmrc.gov.uk" class="govuk-link">vatoss.contact@hmrc.gov.uk</a> by {0}.
 changeRegistration.removedClient.hmrc = We removed {0} from your account on {1}.
-changeRegistration.noChangesMade = You have not made any changes.
-changeRegistration.returnToListOfClients = Return to your list of clients
+changeRegistration.noAmendments = You have not made any changes.
+changeRegistration.returnToListOfClients = <a class="govuk-link" id="return-to-client-list" href="{0}">Return to your list of clients</a>
 
 savedProgress.title = We have saved your progress
 savedProgress.subtitle =We will keep the registration details until {0}

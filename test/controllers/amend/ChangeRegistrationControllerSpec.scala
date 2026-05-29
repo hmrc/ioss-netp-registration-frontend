@@ -48,7 +48,7 @@ import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
 import queries.{IossNumberQuery, OriginalRegistrationQuery}
-import services.{AmendAnswersComparisonService, AuditService, RegistrationService}
+import services.{AuditService, RegistrationService}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
@@ -191,7 +191,6 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
   private val mockRegistrationService: RegistrationService = mock[RegistrationService]
   private val mockAuditService: AuditService = mock[AuditService]
-  private val mockAmendAnswersComparisonService: AmendAnswersComparisonService = mock[AmendAnswersComparisonService]
 
   "ChangeRegistration Controller" - {
 
@@ -201,10 +200,14 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
         "A NETP Has a Uk based address and has Vat Info" in {
 
+          when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn ukBasedCompleteUserAnswersWithVatInfo.toFuture
+
           val application = applicationBuilder(
             userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo),
             registrationWrapper = Some(registrationWrapperWithoutExclusions)
-          ).build()
+          )
+            .overrides(bind[RegistrationService].toInstance(mockRegistrationService))
+            .build()
 
           running(application) {
 
@@ -236,7 +239,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 isExcluded = false,
                 maybeExclusion= None,
                 exclusionDeadline = None,
-                noChangesMade = true,
+                noAmendments = true,
                 config.clientListUrl
               )(request, messages(application)).toString
           }
@@ -244,10 +247,14 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
         "A NETP Has a Uk based address and does NOT have Vat Info" in {
 
+          when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn ukBasedCompleteUserAnswersWithoutVatInfo.toFuture
+
           val application = applicationBuilder(
             userAnswers = Some(ukBasedCompleteUserAnswersWithoutVatInfo),
             registrationWrapper = Some(registrationWrapperWithoutExclusions)
-          ).build()
+          )
+            .overrides(bind[RegistrationService].toInstance(mockRegistrationService))
+            .build()
 
           running(application) {
 
@@ -279,7 +286,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 isExcluded = false,
                 maybeExclusion= None,
                 exclusionDeadline = None,
-                noChangesMade = true,
+                noAmendments = true,
                 config.clientListUrl
               )(request, messages(application)).toString
           }
@@ -287,10 +294,14 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
         "A NETP Has a Non Uk based address and Vat Info" in {
 
+          when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn ukBasedCompleteUserAnswersWithoutVatInfo.toFuture
+
           val application = applicationBuilder(
             userAnswers = Some(nonUkBasedCompleteUserAnswersWithVatInfo),
             registrationWrapper = Some(registrationWrapperWithoutExclusions)
-          ).build()
+          )
+            .overrides(bind[RegistrationService].toInstance(mockRegistrationService))
+            .build()
 
           running(application) {
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
@@ -321,7 +332,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               isExcluded = false,
               maybeExclusion= None,
               exclusionDeadline = None,
-              noChangesMade = true,
+              noAmendments = true,
               config.clientListUrl
             )(request, messages(application)).toString
           }
@@ -329,10 +340,14 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
         "A NETP Has a Non Uk based address does NOT have Vat Info" in {
 
+          when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn ukBasedCompleteUserAnswersWithoutVatInfo.toFuture
+
           val application = applicationBuilder(
             userAnswers = Some(nonUkBasedCompleteUserAnswersWithoutVatInfo),
             registrationWrapper = Some(registrationWrapperWithoutExclusions)
-          ).build()
+          )
+            .overrides(bind[RegistrationService].toInstance(mockRegistrationService))
+            .build()
 
           running(application) {
 
@@ -364,13 +379,16 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 isExcluded = false,
                 maybeExclusion= None,
                 exclusionDeadline = None,
-                noChangesMade = true,
+                noAmendments = true,
                 config.clientListUrl
               )(request, messages(application)).toString
           }
         }
 
         "A NETP has an active TRADER exclusion within deadline" in {
+
+          when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn ukBasedCompleteUserAnswersWithVatInfo.toFuture
+
           val effectiveDate = LocalDate.now().plusMonths(1)
           val exclusionWithinDeadline = models.etmp.EtmpExclusion(
             exclusionReason = models.etmp.EtmpExclusionReason.VoluntarilyLeaves,
@@ -388,7 +406,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
           val application = applicationBuilder(
             userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo),
             registrationWrapper = Some(registrationWrapperWithExclusion)
-          ).build()
+          )
+            .overrides(bind[RegistrationService].toInstance(mockRegistrationService))
+            .build()
 
           running(application) {
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
@@ -420,13 +440,16 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               isExcluded = true,
               maybeExclusion = Some(exclusionWithinDeadline),
               exclusionDeadline = expectedDeadline,
-              noChangesMade = true,
+              noAmendments = true,
               config.clientListUrl
             )(request, messages(application)).toString
           }
         }
 
         "A NETP has an expired TRADER exclusion past the reversal deadline" in {
+
+          when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn ukBasedCompleteUserAnswersWithVatInfo.toFuture
+
           val effectiveDate = LocalDate.now().minusDays(5)
           val expiredExclusion = models.etmp.EtmpExclusion(
             exclusionReason = models.etmp.EtmpExclusionReason.VoluntarilyLeaves,
@@ -444,7 +467,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
           val application = applicationBuilder(
             userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo),
             registrationWrapper = Some(registrationWrapperWithExclusion)
-          ).build()
+          )
+            .overrides(bind[RegistrationService].toInstance(mockRegistrationService))
+            .build()
 
           running(application) {
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
@@ -474,13 +499,16 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               isExcluded = true,
               maybeExclusion = Some(expiredExclusion),
               exclusionDeadline = None,
-              noChangesMade = true,
+              noAmendments = true,
               config.clientListUrl
             )(request, messages(application)).toString
           }
         }
 
         "A NETP has an HMRC exclusion" in {
+
+          when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn ukBasedCompleteUserAnswersWithVatInfo.toFuture
+
           val effectiveDate = LocalDate.now().plusMonths(1)
           val hmrcExclusion = models.etmp.EtmpExclusion(
             exclusionReason = models.etmp.EtmpExclusionReason.NoLongerMeetsConditions,
@@ -498,7 +526,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
           val application = applicationBuilder(
             userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo),
             registrationWrapper = Some(registrationWrapperWithExclusion)
-          ).build()
+          )
+            .overrides(bind[RegistrationService].toInstance(mockRegistrationService))
+            .build()
 
           running(application) {
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
@@ -528,13 +558,16 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               isExcluded = true,
               maybeExclusion = Some(hmrcExclusion),
               exclusionDeadline = None,
-              noChangesMade = true,
+              noAmendments = true,
               config.clientListUrl
             )(request, messages(application)).toString
           }
         }
 
         "A NETP has a Reversal exclusion and no warning is shown" in {
+
+          when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn ukBasedCompleteUserAnswersWithVatInfo.toFuture
+
           val reversalExclusion = models.etmp.EtmpExclusion(
             exclusionReason = models.etmp.EtmpExclusionReason.Reversal,
             effectiveDate = LocalDate.now().plusMonths(1),
@@ -551,7 +584,9 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
           val application = applicationBuilder(
             userAnswers = Some(ukBasedCompleteUserAnswersWithVatInfo),
             registrationWrapper = Some(registrationWrapperWithExclusion)
-          ).build()
+          )
+            .overrides(bind[RegistrationService].toInstance(mockRegistrationService))
+            .build()
 
           running(application) {
             val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
@@ -581,7 +616,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               isExcluded = false,
               maybeExclusion = None,
               exclusionDeadline = None,
-              noChangesMade = true,
+              noAmendments = true,
               config.clientListUrl
             )(request, messages(application)).toString
           }
@@ -589,7 +624,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
         "A NETP has made changes" in {
 
-          when(mockAmendAnswersComparisonService.answersHaveChanged(any[EtmpDisplayRegistration], any[UserAnswers])).thenReturn(true)
+          when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn ukBasedCompleteUserAnswersWithVatInfo.toFuture
 
           val originalRegistration =
             registrationWrapperWithoutExclusions.etmpDisplayRegistration
@@ -603,7 +638,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
             userAnswers = Some(userAnswers),
             registrationWrapper = Some(registrationWrapperWithoutExclusions)
           )
-            .overrides(bind[AmendAnswersComparisonService].toInstance(mockAmendAnswersComparisonService))
+            .overrides(bind[RegistrationService].toInstance(mockRegistrationService))
             .build()
 
           running(application) {
@@ -635,7 +670,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               isExcluded = false,
               maybeExclusion = None,
               exclusionDeadline = None,
-              noChangesMade = false,
+              noAmendments = false,
               config.clientListUrl
             )(request, messages(application)).toString
           }
