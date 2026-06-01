@@ -32,7 +32,7 @@
         govukWarningText: GovukWarningText
 )
 
-@(waypoints: Waypoints, companyName: String, iossNum: String, list: SummaryList, ilist: SummaryList, isValid: Boolean, isExcluded: Boolean, maybeExclusion: Option[EtmpExclusion], exclusionDeadline: Option[String], noChangesMade: Boolean, clientListUrl: String)(implicit request: Request[_], messages: Messages)
+@(waypoints: Waypoints, companyName: String, iossNum: String, list: SummaryList, ilist: SummaryList, isValid: Boolean, isExcluded: Boolean, maybeExclusion: Option[EtmpExclusion], exclusionDeadline: Option[String], noAmendments: Boolean, clientListUrl: String)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("changeRegistration.title",companyName )), showBackLink = false) {
 
@@ -67,27 +67,25 @@
 
     @govukSummaryList(ilist)
 
-    @if(noChangesMade && isValid) {
-        <p class="govuk-body">@messages("changeRegistration.noChangesMade")</p>
+    
 
-        <p class="govuk-body">
-            <a href="@clientListUrl" class="govuk-link" id="return-to-client-list">@messages("changeRegistration.returnToListOfClients")</a>
-        </p>
-    } else {
-
-        <p class="govuk-body">@messages("changeRegistration.info.p1")</p>
-
-        @if(isValid) {
+    @if(isValid) {
+        @if(noAmendments) {
+            <p class="govuk-body">@messages("changeRegistration.noAmendments")</p>
+            <p class="govuk-body">@Html(messages("changeRegistration.returnToListOfClients", clientListUrl))</p>
+        
+        } else {
+            <p class="govuk-body">@messages("changeRegistration.info.p1")</p>
             @formHelper(action = controllers.amend.routes.ChangeRegistrationController.onSubmit(waypoints, incompletePrompt = false)) {
                 @button("site.confirm", CancelAmendRegistrationPage.route(waypoints).url, waypoints)
             }
-        } else {
-            <h2 class="govuk-heading-m push--top">@messages("error.missing_answers_header")</h2>
-            <p class="govuk-body">@messages("error.missing_answers_prompt.general")</p>
+        }
+    } else {
+        <h2 class="govuk-heading-m push--top">@messages("error.missing_answers_header")</h2>
+        <p class="govuk-body">@messages("error.missing_answers_prompt.general")</p>
 
-            @formHelper(action = controllers.amend.routes.ChangeRegistrationController.onSubmit(waypoints, incompletePrompt = true)) {
-                @button("error.resolve_missing_answers", CancelAmendRegistrationPage.route(waypoints).url, waypoints)
-            }
+        @formHelper(action = controllers.amend.routes.ChangeRegistrationController.onSubmit(waypoints, incompletePrompt = true)) {
+            @button("error.resolve_missing_answers", CancelAmendRegistrationPage.route(waypoints).url, waypoints)
         }
     }
 
