@@ -33,7 +33,7 @@ import pages.*
 import pages.amend.ChangeRegistrationPage
 import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
-import queries.{IossNumberQuery, OriginalRegistrationQuery}
+import queries.{AllOriginalRegistrationsRawQuery, IossNumberQuery}
 import services.{AuditService, RegistrationService}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import uk.gov.hmrc.http.HeaderCarrier
@@ -173,7 +173,7 @@ class ChangeRegistrationController @Inject()(
           originalUserAnswers <- registrationService.toUserAnswers(request.userId, request.registrationWrapper)
           userAnswersWithoutOriginalRegistration <- Future.fromTry {
             request.userAnswers
-              .remove(OriginalRegistrationQuery)
+              .remove(AllOriginalRegistrationsRawQuery)
               .flatMap(_.remove(IossNumberQuery))
           }
         } yield {
