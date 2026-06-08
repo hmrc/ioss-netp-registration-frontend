@@ -31,7 +31,7 @@ case class WebsitePage(index: Index) extends QuestionPage[Website] with AddToLis
 
   override def path: JsPath = JsPath \ toString \ index.position
 
-  override def toString: String = "websites"
+  override def toString: String = "tradingWebsites"
 
   override val addItemWaypoint: Waypoint = AddWebsitePage().waypoint(NormalMode)
 

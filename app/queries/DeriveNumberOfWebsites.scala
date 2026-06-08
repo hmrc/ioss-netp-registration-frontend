@@ -21,5 +21,5 @@ import play.api.libs.json.{JsObject, JsPath}
 case object DeriveNumberOfWebsites extends Derivable[Seq[JsObject], Int] {
   override val derive: Seq[JsObject] => Int = _.size
 
-  override def path: JsPath = JsPath \ "websites"
+  override def path: JsPath = JsPath \ "tradingWebsites"
 }

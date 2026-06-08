@@ -21,5 +21,5 @@ import play.api.libs.json.JsPath
 
 case object AllWebsites extends Gettable[List[Website]] with Settable[List[Website]] {
 
-  override def path: JsPath = JsPath \ "websites"
+  override def path: JsPath = JsPath \ "tradingWebsites"
 }

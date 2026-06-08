@@ -88,8 +88,6 @@ class StartAmendJourneyControllerSpec extends SpecBase with MockitoSugar with Be
       when(mockRegistrationConnector.displayIntermediaryRegistration(any())(any())) thenReturn
         Right(intermediaryRegistrationWithClients(Seq(iossNumber))).toFuture
       when(mockRegistrationConnector.displayRegistrationNetp(any())(any())) thenReturn Left(NotFound).toFuture
-      
-      println(Json.toJson(basicUserAnswersWithVatInfo))
 
       val application = applicationBuilder(userAnswers = Some(basicUserAnswersWithVatInfo))
         .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))

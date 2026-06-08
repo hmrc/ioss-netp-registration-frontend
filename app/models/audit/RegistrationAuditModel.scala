@@ -23,7 +23,6 @@ import play.api.libs.json.{JsValue, Json}
 
 case class RegistrationAuditModel(
                                    credId: String,
-                                   userAgent: String,
                                    userAnswers: UserAnswers,
                                    etmpEnrolmentResponse: Option[EtmpEnrolmentResponse],
                                    submissionResult: SubmissionResult
@@ -34,8 +33,7 @@ case class RegistrationAuditModel(
   
   override val detail: JsValue = Json.obj(
     "credId" -> credId,
-    "browserUserAgent" -> userAgent,
-    "userAnswersDetails" -> Json.toJson(userAnswers),
+    "userAnswersDetails" -> Json.toJson(userAnswers.data),
     "etmpEnrolmentResponseId" -> Json.toJson(etmpEnrolmentResponse),
     "submissionResult" -> submissionResult
   )
@@ -50,7 +48,6 @@ object RegistrationAuditModel {
            )(implicit request: ClientOptionalDataRequest[_]): RegistrationAuditModel =
     RegistrationAuditModel(
       credId = request.userId,
-      userAgent = request.headers.get("user-agent").getOrElse(""),
       userAnswers = userAnswers,
       etmpEnrolmentResponse = etmpEnrolmentResponse,
       submissionResult = submissionResult
