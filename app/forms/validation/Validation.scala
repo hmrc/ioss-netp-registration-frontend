@@ -19,7 +19,7 @@ package forms.validation
 object Validation {
 
 
-  val websitePattern = """^(https?://)((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,})(\:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(\#[-a-z\d_]*)?"""
+  val websitePattern = """(?i)^(https?://)((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,})(\:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(\#[-a-z\d_]*)?$"""
   val commonTextPattern = """^(?!^[’'"])(?:[A-Za-z0-9À-ÿ \!\)\(.,_/’'"&-]|[’'"](?=[A-Za-z0-9À-ÿ \!\)\(.,_/’'"&-]))*[A-Za-z0-9À-ÿ \!\)\(.,_/’'"&-](?<![’'"]$)$"""
   val postcodePattern = """^[A-Za-z0-9 ]{0,100}$"""
   val alphaNumericWithSpace = """^[a-zA-Z0-9 ]+$"""
