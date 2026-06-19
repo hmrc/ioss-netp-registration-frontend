@@ -22,7 +22,7 @@ import pages.Waypoints
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import queries.previousRegistrations.{AllPreviousRegistrationsRawQuery, DeriveNumberOfPreviousRegistrations}
+import queries.previousRegistrations.{AllPreviousRegistrationsQuery, AllPreviousRegistrationsRawQuery, DeriveNumberOfPreviousRegistrations}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.AmendWaypoints.AmendWaypointsOps
 import utils.CheckExistingRegistrations
@@ -32,6 +32,7 @@ import utils.CheckExistingRegistrations.cleanup
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Success
 
 class PreviouslyRegisteredController @Inject()(
                                                 override val messagesApi: MessagesApi,
@@ -67,8 +68,16 @@ class PreviouslyRegisteredController @Inject()(
           BadRequest(view(formWithErrors, waypoints)).toFuture,
 
         value =>
+          val cleanedAnswersTry =
+            if (!value && !waypoints.inCheck) {
+              request.userAnswers.remove(AllPreviousRegistrationsQuery)
+            } else {
+              Success(request.userAnswers)
+            }
+
           for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(PreviouslyRegisteredPage, value))
+            cleanedAnswers <- Future.fromTry(cleanedAnswersTry)
+            updatedAnswers <- Future.fromTry(cleanedAnswers.set(PreviouslyRegisteredPage, value))
             finalAnswers <- Future.fromTry(cleanup(updatedAnswers, DeriveNumberOfPreviousRegistrations, AllPreviousRegistrationsRawQuery))
             _ <- cc.sessionRepository.set(finalAnswers)
           } yield Redirect(PreviouslyRegisteredPage.navigate(waypoints, request.userAnswers, finalAnswers).route)

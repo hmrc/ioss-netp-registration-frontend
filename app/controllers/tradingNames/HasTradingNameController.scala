@@ -25,6 +25,7 @@ import play.api.Logging
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.tradingNames.AllTradingNamesQuery
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
@@ -33,6 +34,7 @@ import utils.AmendWaypoints.AmendWaypointsOps
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Success
 
 class HasTradingNameController @Inject()(
                                          override val messagesApi: MessagesApi,
@@ -70,8 +72,15 @@ class HasTradingNameController @Inject()(
               BadRequest(view(formWithErrors, waypoints, companyName)).toFuture,
 
             value =>
+              val cleanedAnswersTry =
+                if (!value && !waypoints.inCheck) {
+                  request.userAnswers.remove(AllTradingNamesQuery)
+                } else {
+                  Success(request.userAnswers)
+                }
               for {
-                updatedAnswers <- Future.fromTry(request.userAnswers.set(HasTradingNamePage, value))
+                cleanedAnswers <- Future.fromTry(cleanedAnswersTry)
+                updatedAnswers <- Future.fromTry(cleanedAnswers.set(HasTradingNamePage, value))
                 _ <- sessionRepository.set(updatedAnswers)
               } yield Redirect(HasTradingNamePage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
           )

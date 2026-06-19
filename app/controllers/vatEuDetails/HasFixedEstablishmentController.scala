@@ -24,6 +24,7 @@ import pages.Waypoints
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.euDetails.AllEuDetailsQuery
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.AmendWaypoints.AmendWaypointsOps
 import views.html.vatEuDetails.HasFixedEstablishmentView
@@ -31,6 +32,7 @@ import utils.FutureSyntax.FutureOps
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Success
 
 class HasFixedEstablishmentController @Inject()(
                                          override val messagesApi: MessagesApi,
@@ -65,8 +67,15 @@ class HasFixedEstablishmentController @Inject()(
           BadRequest(view(formWithErrors, waypoints)).toFuture,
 
         value =>
+          val cleanedAnswersTry =
+            if (!value && !waypoints.inCheck) {
+              request.userAnswers.remove(AllEuDetailsQuery)
+            } else {
+              Success(request.userAnswers)
+            }
           for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(HasFixedEstablishmentPage, value))
+            cleanedAnswers <- Future.fromTry(cleanedAnswersTry)
+            updatedAnswers <- Future.fromTry(cleanedAnswers.set(HasFixedEstablishmentPage, value))
             _ <- cc.sessionRepository.set(updatedAnswers)
           } yield Redirect(HasFixedEstablishmentPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
       )
