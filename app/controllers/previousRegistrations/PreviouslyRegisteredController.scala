@@ -22,7 +22,7 @@ import pages.Waypoints
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import queries.previousRegistrations.{AllPreviousRegistrationsRawQuery, DeriveNumberOfPreviousRegistrations}
+import queries.previousRegistrations.{AllPreviousRegistrationsQuery, AllPreviousRegistrationsRawQuery, DeriveNumberOfPreviousRegistrations}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.AmendWaypoints.AmendWaypointsOps
 import utils.CheckExistingRegistrations
@@ -32,6 +32,7 @@ import utils.CheckExistingRegistrations.cleanup
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Success
 
 class PreviouslyRegisteredController @Inject()(
                                                 override val messagesApi: MessagesApi,
@@ -50,10 +51,18 @@ class PreviouslyRegisteredController @Inject()(
   ) {
     implicit request =>
       val userAnswers = request.userAnswers
+      val hasPreviousRegistrations = request.userAnswers.get(AllPreviousRegistrationsQuery).exists(_.nonEmpty)
 
       val preparedForm = userAnswers.get(PreviouslyRegisteredPage) match {
         case None => form
-        case Some(value) => form.fill(value)
+        case Some(value) =>
+          if (waypoints.inAmend && hasPreviousRegistrations) {
+            throw new InvalidAmendModeOperationException(
+              "Cannot change otherOneStopRegistrations when in amend mode and have existing registrations"
+            )
+          } else {
+            form.fill(value)
+          }
       }
 
       Ok(view(preparedForm, waypoints))
@@ -67,11 +76,27 @@ class PreviouslyRegisteredController @Inject()(
           BadRequest(view(formWithErrors, waypoints)).toFuture,
 
         value =>
-          for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(PreviouslyRegisteredPage, value))
-            finalAnswers <- Future.fromTry(cleanup(updatedAnswers, DeriveNumberOfPreviousRegistrations, AllPreviousRegistrationsRawQuery))
-            _ <- cc.sessionRepository.set(finalAnswers)
-          } yield Redirect(PreviouslyRegisteredPage.navigate(waypoints, request.userAnswers, finalAnswers).route)
+          val hasPreviousRegistrations = request.userAnswers.get(AllPreviousRegistrationsQuery).exists(_.nonEmpty)
+
+          if (waypoints.inAmend && hasPreviousRegistrations) {
+            throw new InvalidAmendModeOperationException(
+              "Cannot change otherOneStopRegistrations when in amend mode and have existing registrations"
+            )
+          } else {
+            val cleanedAnswersTry =
+              if (!value && !waypoints.inCheck) {
+                request.userAnswers.remove(AllPreviousRegistrationsQuery)
+              } else {
+                Success(request.userAnswers)
+              }
+
+            for {
+              cleanedAnswers <- Future.fromTry(cleanedAnswersTry)
+              updatedAnswers <- Future.fromTry(cleanedAnswers.set(PreviouslyRegisteredPage, value))
+              finalAnswers <- Future.fromTry(cleanup(updatedAnswers, DeriveNumberOfPreviousRegistrations, AllPreviousRegistrationsRawQuery))
+              _ <- cc.sessionRepository.set(finalAnswers)
+            } yield Redirect(PreviouslyRegisteredPage.navigate(waypoints, request.userAnswers, finalAnswers).route)
+          }
       )
   }
 }
