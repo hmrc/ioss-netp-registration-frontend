@@ -51,10 +51,18 @@ class PreviouslyRegisteredController @Inject()(
   ) {
     implicit request =>
       val userAnswers = request.userAnswers
+      val hasPreviousRegistrations = request.userAnswers.get(AllPreviousRegistrationsQuery).exists(_.nonEmpty)
 
       val preparedForm = userAnswers.get(PreviouslyRegisteredPage) match {
         case None => form
-        case Some(value) => form.fill(value)
+        case Some(value) =>
+          if (waypoints.inAmend && hasPreviousRegistrations) {
+            throw new InvalidAmendModeOperationException(
+              "Cannot change otherOneStopRegistrations when in amend mode and have existing registrations"
+            )
+          } else {
+            form.fill(value)
+          }
       }
 
       Ok(view(preparedForm, waypoints))
@@ -68,19 +76,27 @@ class PreviouslyRegisteredController @Inject()(
           BadRequest(view(formWithErrors, waypoints)).toFuture,
 
         value =>
-          val cleanedAnswersTry =
-            if (!value && !waypoints.inCheck) {
-              request.userAnswers.remove(AllPreviousRegistrationsQuery)
-            } else {
-              Success(request.userAnswers)
-            }
+          val hasPreviousRegistrations = request.userAnswers.get(AllPreviousRegistrationsQuery).exists(_.nonEmpty)
 
-          for {
-            cleanedAnswers <- Future.fromTry(cleanedAnswersTry)
-            updatedAnswers <- Future.fromTry(cleanedAnswers.set(PreviouslyRegisteredPage, value))
-            finalAnswers <- Future.fromTry(cleanup(updatedAnswers, DeriveNumberOfPreviousRegistrations, AllPreviousRegistrationsRawQuery))
-            _ <- cc.sessionRepository.set(finalAnswers)
-          } yield Redirect(PreviouslyRegisteredPage.navigate(waypoints, request.userAnswers, finalAnswers).route)
+          if (waypoints.inAmend && hasPreviousRegistrations) {
+            throw new InvalidAmendModeOperationException(
+              "Cannot change otherOneStopRegistrations when in amend mode and have existing registrations"
+            )
+          } else {
+            val cleanedAnswersTry =
+              if (!value && !waypoints.inCheck) {
+                request.userAnswers.remove(AllPreviousRegistrationsQuery)
+              } else {
+                Success(request.userAnswers)
+              }
+
+            for {
+              cleanedAnswers <- Future.fromTry(cleanedAnswersTry)
+              updatedAnswers <- Future.fromTry(cleanedAnswers.set(PreviouslyRegisteredPage, value))
+              finalAnswers <- Future.fromTry(cleanup(updatedAnswers, DeriveNumberOfPreviousRegistrations, AllPreviousRegistrationsRawQuery))
+              _ <- cc.sessionRepository.set(finalAnswers)
+            } yield Redirect(PreviouslyRegisteredPage.navigate(waypoints, request.userAnswers, finalAnswers).route)
+          }
       )
   }
 }
