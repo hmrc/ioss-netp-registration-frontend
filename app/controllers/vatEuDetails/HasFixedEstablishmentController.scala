@@ -68,7 +68,7 @@ class HasFixedEstablishmentController @Inject()(
 
         value =>
           val cleanedAnswersTry =
-            if (!value && !waypoints.inCheck) {
+            if (!value && !waypoints.inCheck && !waypoints.inAmend) {
               request.userAnswers.remove(AllEuDetailsQuery)
             } else {
               Success(request.userAnswers)
