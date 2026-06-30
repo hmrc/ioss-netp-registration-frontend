@@ -18,7 +18,6 @@ import play.api.{Application, Configuration}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import services.crypto.EncryptionService
-import testutils.RegistrationData.journeyId
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 import java.time.temporal.ChronoUnit
@@ -67,7 +66,7 @@ class SessionRepositorySpec
 
   when(mockEncryptionService.encryptField(any())) thenReturn encryptedUserAnswersData
   when(mockEncryptionService.decryptField(any())) thenReturn userAnswers.data.toString
-  
+
   ".set" - {
 
     "must set the last updated time on the supplied user answers to `now`, and save them" in {
