@@ -50,8 +50,7 @@ class RegistrationAuditModelSpec extends SpecBase {
 
       val expectedJson = Json.obj(
         "credId" -> testUserId,
-        "browserUserAgent" -> "test-browser/1.0",
-        "userAnswersDetails" -> Json.toJson(emptyUserAnswers),
+        "userAnswersDetails" -> Json.toJson(emptyUserAnswers.data),
         "etmpEnrolmentResponseId" -> Json.toJson(etmpEnrolmentResponse),
         "submissionResult" -> submissionResult.toString
       )
@@ -78,34 +77,13 @@ class RegistrationAuditModelSpec extends SpecBase {
 
       val expectedJson = Json.obj(
         "credId" -> testUserId,
-        "browserUserAgent" -> "",
-        "userAnswersDetails" -> Json.toJson(emptyUserAnswers),
+        "userAnswersDetails" -> Json.toJson(emptyUserAnswers.data),
         "etmpEnrolmentResponseId" -> Json.toJson(None: Option[EtmpEnrolmentResponse]),
         "submissionResult" -> SubmissionResult.Failure.toString
       )
 
       registrationAuditModel.detail mustBe expectedJson
       registrationAuditModel.transactionName mustBe "netp-registration-submitted"
-    }
-
-    "must handle missing user agent" in {
-
-      val fakeRequest = FakeRequest("POST", "/declaration")
-
-      implicit val dataRequest: ClientOptionalDataRequest[AnyContent] = ClientOptionalDataRequest(
-        fakeRequest,
-        testUserId,
-        emptyUserAnswers
-      )
-
-      val registrationAuditModel = RegistrationAuditModel.build(
-        userAnswers = emptyUserAnswers,
-        etmpEnrolmentResponse = Some(etmpEnrolmentResponse),
-        submissionResult = submissionResult
-      )
-
-      val jsonDetail = registrationAuditModel.detail
-      (jsonDetail \ "browserUserAgent").as[String] mustBe ""
     }
   }
 }
