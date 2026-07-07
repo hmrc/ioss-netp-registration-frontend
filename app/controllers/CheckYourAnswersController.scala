@@ -17,6 +17,7 @@
 package controllers
 
 import com.google.inject.Inject
+import config.FrontendAppConfig
 import controllers.actions.*
 import logging.Logging
 import models.CheckMode
@@ -39,7 +40,8 @@ import scala.concurrent.ExecutionContext
 class CheckYourAnswersController @Inject()(
                                             override val messagesApi: MessagesApi,
                                             cc: AuthenticatedControllerComponents,
-                                            view: CheckYourAnswersView
+                                            view: CheckYourAnswersView,
+                                            appConfig: FrontendAppConfig
                                           )(implicit executionContext: ExecutionContext)
   extends FrontendBaseController with I18nSupport with CompletionChecks with Logging {
 
@@ -115,7 +117,7 @@ class CheckYourAnswersController @Inject()(
         ).flatten
       )
 
-      val isValid: Boolean = validate()
+      val isValid: Boolean = validate(appConfig.version7Enabled)
 
       Ok(view(waypoints, vatRegistrationDetailsList, list, isValid))
   }
