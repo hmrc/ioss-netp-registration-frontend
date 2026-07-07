@@ -157,7 +157,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency {
       "must redirect to the correct page when there is incomplete data" in {
 
         val incompleteAnswers: UserAnswers = completeUserAnswers
-          .remove(WebsitePage(Index(0))).success.value
+          .remove(TradingNamePage(Index(0))).success.value
 
         val application = applicationBuilder(userAnswers = Some(incompleteAnswers))
           .build()
@@ -169,7 +169,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency {
           val result = route(application, request).value
 
           status(result) `mustBe` SEE_OTHER
-          redirectLocation(result).value `mustBe` WebsitePage(Index(0)).route(waypoints).url
+          redirectLocation(result).value `mustBe` TradingNamePage(Index(0)).route(waypoints).url
         }
       }
     }

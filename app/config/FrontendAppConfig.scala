@@ -78,4 +78,6 @@ class FrontendAppConfig @Inject()(configuration: Configuration) {
   val netpEnrolment: String = configuration.get[String]("netp-enrolment")
 
   val iossJSLGuidancePageUrl: String = configuration.get[String]("urls.iossJSLGuidancePageUrl")
+
+  val version7Enabled: Boolean = configuration.get[Boolean]("features.version7")
 }

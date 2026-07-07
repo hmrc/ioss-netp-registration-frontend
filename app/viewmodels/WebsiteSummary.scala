@@ -46,28 +46,41 @@ object WebsiteSummary  {
                        waypoints: Waypoints,
                        answers: UserAnswers,
                        sourcePage: CheckAnswersPage
-                     )(implicit messages: Messages): Option[SummaryListRow] =
-    answers.get(AllWebsites).map {
-      websites =>
+                     )(implicit messages: Messages): Option[SummaryListRow] = {
 
-        val value = websites.map {
-          website =>
-            HtmlFormat.escape(website.site)
-        }.mkString("<br/>")
+    val websites = answers.get(AllWebsites).getOrElse(Seq.empty)
+    val hasWebsites = websites.nonEmpty
 
-        val addWebsitePageChangeUrl = AddWebsitePage().changeLink(waypoints, sourcePage).url
-
-        val listRowViewModel = SummaryListRowViewModel(
-          key = "website.checkYourAnswersLabel",
-          value = ValueViewModel(HtmlContent(value)),
-          actions = Seq(
-            ActionItemViewModel("site.change", addWebsitePageChangeUrl)
-              .withVisuallyHiddenText(messages("website.change.hidden"))
-          )
-        )
-
-        listRowViewModel
+    val value = if (hasWebsites) {
+      websites.map {
+        website =>
+          HtmlFormat.escape(website.site)
+      }.mkString("<br/>")
+    } else {
+      messages("website.noneSupplied")
     }
+
+    val actionText = if (hasWebsites) "site.change" else "site.add"
+
+    val actionUrl = if (hasWebsites) {
+      AddWebsitePage().changeLink(waypoints, sourcePage).url
+    } else {
+      WebsitePage(Index(0)).route(waypoints).url
+    }
+
+    val listRowViewModel = SummaryListRowViewModel(
+      key = "website.checkYourAnswersLabel",
+      value = ValueViewModel(HtmlContent(value)),
+      actions = Seq(
+        ActionItemViewModel(actionText, actionUrl)
+          .withVisuallyHiddenText(
+            if (hasWebsites) messages("website.change.hidden") else messages("websites.add.hidden")
+          )
+      )
+    )
+
+    Some(listRowViewModel)
+  }
 
   def checkAnswersRowWithoutAction(
                        waypoints: Waypoints,
