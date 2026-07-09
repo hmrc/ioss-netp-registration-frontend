@@ -16,6 +16,7 @@
 
 package models.etmp
 
+import config.FrontendAppConfig
 import formats.Format.eisDateFormatter
 import models.{BusinessContactDetails, Country, UserAnswers}
 import pages.*
@@ -65,7 +66,7 @@ trait EtmpCommonRegistrationRequest extends EtmpEuRegistrations with EtmpPreviou
     }
   }
 
-  def getSchemeDetails(answers: UserAnswers, commencementDate: LocalDate): EtmpSchemeDetails = {
+  def getSchemeDetails(answers: UserAnswers, commencementDate: LocalDate, frontendAppConfig: FrontendAppConfig): EtmpSchemeDetails = {
 
     val businessContactDetails = getBusinessContactDetails(answers)
 
@@ -75,7 +76,7 @@ trait EtmpCommonRegistrationRequest extends EtmpEuRegistrations with EtmpPreviou
       commencementDate = commencementDate.format(eisDateFormatter),
       euRegistrationDetails = getEuTaxRegistrations(answers),
       previousEURegistrationDetails = getPreviousRegistrationDetails(answers),
-      websites = Some(getWebsites(answers)),
+      websites = Some(getWebsites(answers, frontendAppConfig)),
       contactName = businessContactDetails.fullName,
       businessTelephoneNumber = businessContactDetails.telephoneNumber,
       businessEmailId = businessContactDetails.emailAddress,
@@ -118,12 +119,14 @@ trait EtmpCommonRegistrationRequest extends EtmpEuRegistrations with EtmpPreviou
     }
   }
 
-  private def getWebsites(answers: UserAnswers): List[EtmpWebsite] =
+  private def getWebsites(answers: UserAnswers, frontendAppConfig: FrontendAppConfig): List[EtmpWebsite] =
     answers.get(AllWebsites) match {
       case Some(websites) =>
         for {
           website <- websites
         } yield EtmpWebsite(websiteAddress = website.site)
+      case _ if frontendAppConfig.version7Enabled =>
+        List.empty
       case _ =>
         val exception = new IllegalStateException("User must have at least one website")
         logger.error(exception.getMessage, exception)

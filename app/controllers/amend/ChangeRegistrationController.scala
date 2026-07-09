@@ -178,7 +178,7 @@ class ChangeRegistrationController @Inject()(
           }
         } yield {
 
-          val isValid: Boolean = validate()(request.request)
+          val isValid: Boolean = validate(frontendAppConfig.version7Enabled)(request.request)
           val noAmendments = originalUserAnswers.data == userAnswersWithoutOriginalRegistration.data
 
           Ok(view(waypoints, companyName, request.iossNumber, registrationDetailsList, importOneStopShopDetailsList, isValid, isExcluded, maybeExclusion, exclusionDeadline, noAmendments, frontendAppConfig.clientListUrl))
@@ -192,7 +192,7 @@ class ChangeRegistrationController @Inject()(
     implicit request =>
 
       if (incompletePrompt) {
-        getFirstValidationErrorRedirect(waypoints)(request.request) match {
+        getFirstValidationErrorRedirect(waypoints, frontendAppConfig.version7Enabled)(request.request) match {
           case Some(redirectResult) => Future.successful(redirectResult)
           case None =>
             submitAmendReg()

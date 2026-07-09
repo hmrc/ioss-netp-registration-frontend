@@ -24,6 +24,7 @@ import pages.website.{DeleteWebsitePage, WebsitePage}
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
+import queries.DeriveNumberOfWebsites
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.AmendWaypoints.AmendWaypointsOps
 import views.html.DeleteWebsiteView
@@ -74,7 +75,14 @@ class DeleteWebsiteController @Inject()(
               for {
                 updatedAnswers <- Future.fromTry(request.userAnswers.remove(WebsitePage(index)))
                 _              <- cc.sessionRepository.set(updatedAnswers)
-              } yield Redirect(DeleteWebsitePage(index).navigate(waypoints, updatedAnswers, updatedAnswers).route)
+              } yield {
+                updatedAnswers.get(DeriveNumberOfWebsites) match {
+                  case Some(n) if n > 0 =>
+                    Redirect(DeleteWebsitePage(index).navigate(waypoints, updatedAnswers, updatedAnswers).route)
+                  case _ =>
+                    Redirect(controllers.website.routes.WebsiteController.onPageLoad(waypoints, index))
+                }
+              }
             } else {
               Redirect(DeleteWebsitePage(index).navigate(waypoints, request.userAnswers, request.userAnswers).route).toFuture
             }

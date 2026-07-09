@@ -18,6 +18,7 @@ package models.etmp
 
 import base.SpecBase
 import config.Constants.{maxSchemes, maxTradingNames, maxWebsites}
+import config.FrontendAppConfig
 import formats.Format.eisDateFormatter
 import models.PreviousScheme.toEmtpSchemeType
 import models.domain.{PreviousRegistration, PreviousSchemeDetails}
@@ -26,11 +27,12 @@ import models.vatEuDetails.*
 import models.{BusinessContactDetails, CountryWithValidationDetails, PreviousScheme, TradingName, UserAnswers, Website}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
+import org.scalatestplus.mockito.MockitoSugar.mock
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.tradingNames.HasTradingNamePage
 import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientHasVatNumberPage, ClientVatNumberPage}
-import play.api.libs.json.{JsError, Json, JsSuccess}
+import play.api.libs.json.{JsError, JsSuccess, Json}
 import queries.euDetails.AllEuDetailsQuery
 import queries.previousRegistrations.AllPreviousRegistrationsQuery
 import queries.tradingNames.AllTradingNamesQuery
@@ -42,6 +44,7 @@ import java.time.LocalDate
 class EtmpRegistrationRequestSpec extends SpecBase {
 
   private val numberOfRegistrations: Int = 8
+  private val mockAppConfig: FrontendAppConfig = mock[FrontendAppConfig]
 
   private def convertToTraderId(euDetails: EuDetails): Option[TraderId] = {
     euDetails.registrationType match {
@@ -204,7 +207,8 @@ class EtmpRegistrationRequestSpec extends SpecBase {
 
         EtmpRegistrationRequest.buildEtmpRegistrationRequest(
           userAnswers,
-          LocalDate.now(stubClockAtArbitraryDate)
+          LocalDate.now(stubClockAtArbitraryDate),
+          mockAppConfig
         ) mustBe etmpRegistrationRequest
       }
     }
