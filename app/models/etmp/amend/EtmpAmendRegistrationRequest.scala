@@ -16,6 +16,7 @@
 
 package models.etmp.amend
 
+import config.FrontendAppConfig
 import logging.Logging
 import models.UserAnswers
 import models.etmp.*
@@ -45,10 +46,11 @@ object EtmpAmendRegistrationRequest extends EtmpCommonRegistrationRequest with L
                                          registration: EtmpDisplayRegistration,
                                          commencementDate: LocalDate,
                                          iossNumber: String,
-                                         rejoin: Boolean = false
+                                         rejoin: Boolean = false,
+                                         frontendAppConfig: FrontendAppConfig
                                        ): EtmpAmendRegistrationRequest = {
 
-    val schemeDetails = getSchemeDetails(answers, commencementDate)
+    val schemeDetails = getSchemeDetails(answers, commencementDate, frontendAppConfig)
     val taxIdType: EtmpIdType = determineTaxIdType(answers)
     val maybeFtr: Option[String] = answers.get(ClientTaxReferencePage)
 
@@ -59,7 +61,7 @@ object EtmpAmendRegistrationRequest extends EtmpCommonRegistrationRequest with L
         fixedEstablishments = compareEuRegistrationDetails(
           registration.schemeDetails.euRegistrationDetails, schemeDetails.euRegistrationDetails,
         ),
-        contactDetails = contactDetailsDiff(registration.schemeDetails, getSchemeDetails(answers, commencementDate)),
+        contactDetails = contactDetailsDiff(registration.schemeDetails, getSchemeDetails(answers, commencementDate, frontendAppConfig)),
         bankDetails = false,
         reRegistration = rejoin,
         otherAddress = registration.otherAddress != getOtherAddress(taxIdType, answers)
@@ -68,7 +70,7 @@ object EtmpAmendRegistrationRequest extends EtmpCommonRegistrationRequest with L
       tradingNames = getTradingNames(answers),
       intermediaryDetails = None,
       otherAddress = getOtherAddress(taxIdType, answers),
-      schemeDetails = getSchemeDetails(answers, commencementDate),
+      schemeDetails = getSchemeDetails(answers, commencementDate, frontendAppConfig),
       bankDetails = None
     )
   }

@@ -16,6 +16,7 @@
 
 package models.etmp
 
+import config.FrontendAppConfig
 import logging.Logging
 import models.UserAnswers
 import pages.*
@@ -38,7 +39,7 @@ object EtmpRegistrationRequest extends EtmpCommonRegistrationRequest with Loggin
 
   implicit val format: OFormat[EtmpRegistrationRequest] = Json.format[EtmpRegistrationRequest]
 
-  def buildEtmpRegistrationRequest(answers: UserAnswers, commencementDate: LocalDate): EtmpRegistrationRequest = {
+  def buildEtmpRegistrationRequest(answers: UserAnswers, commencementDate: LocalDate, appConfig: FrontendAppConfig): EtmpRegistrationRequest = {
     val customerIdentification = getCustomerIdentification(answers)
     EtmpRegistrationRequest(
       administration = EtmpAdministration(messageType = EtmpMessageType.IOSSIntAddClient),
@@ -46,7 +47,7 @@ object EtmpRegistrationRequest extends EtmpCommonRegistrationRequest with Loggin
       tradingNames = getTradingNames(answers),
       intermediaryDetails = None,
       otherAddress = getOtherAddress(customerIdentification.idType, answers),
-      schemeDetails = getSchemeDetails(answers, commencementDate),
+      schemeDetails = getSchemeDetails(answers, commencementDate, appConfig),
       bankDetails = None
     )
   }

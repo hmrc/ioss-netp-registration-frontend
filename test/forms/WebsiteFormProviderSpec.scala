@@ -16,8 +16,11 @@
 
 package forms
 
+import config.FrontendAppConfig
 import forms.behaviours.StringFieldBehaviours
 import models.Index
+import org.mockito.Mockito.when
+import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.data.FormError
 
 class WebsiteFormProviderSpec extends StringFieldBehaviours {
@@ -32,30 +35,98 @@ class WebsiteFormProviderSpec extends StringFieldBehaviours {
   val index = Index(0)
   val emptyExistingAnswers = Seq.empty[String]
 
-  val formProvider: WebsiteFormProvider = new WebsiteFormProvider()
-  val form = formProvider(index, emptyExistingAnswers)
+  private val mockAppConfig = mock[FrontendAppConfig]
+
+  val fieldName = "value"
 
   ".value" - {
 
-    val fieldName = "value"
+    "when version 7 enabled" - {
 
-    behave like fieldThatBindsValidData(
-      form,
-      fieldName,
-      validData
-    )
+      when(mockAppConfig.version7Enabled).thenReturn(true)
 
-    behave like fieldWithMaxLength(
-      form,
-      fieldName,
-      maxLength = maxLength,
-      lengthError = FormError(fieldName, lengthKey, Seq(maxLength))
-    )
+      val form = new WebsiteFormProvider(mockAppConfig)(index, emptyExistingAnswers)
+      
+      behave like fieldThatBindsValidData(
+        form,
+        fieldName,
+        validData
+      )
 
-    behave like mandatoryField(
-      form,
-      fieldName,
-      requiredError = FormError(fieldName, requiredKey)
-    )
+      "bind valid website without www prefix" in {
+        val result = form.bind(Map(fieldName -> validData2))
+        result.value.value mustBe Some(validData2)
+        result.errors mustBe empty
+      }
+
+      "bind valid website with http:// prefix" in {
+        val result = form.bind(Map(fieldName -> validData3))
+        result.value.value mustBe Some(validData3)
+        result.errors mustBe empty
+      }
+
+      "must not bind invalid website data" in {
+        val invalidWebsite = "invalid"
+        val result = form.bind(Map(fieldName -> invalidWebsite)).apply(fieldName)
+        result.errors mustBe Seq(FormError(fieldName, invalidKey))
+      }
+
+      "must not bind invalid website data with missing ." in {
+        val invalidWebsite = "https://websitecom"
+        val result = form.bind(Map(fieldName -> invalidWebsite)).apply(fieldName)
+        result.errors mustBe Seq(FormError(fieldName, invalidKey))
+      }
+
+      "must not bind invalid website data with incorrect https://" in {
+        val invalidWebsite = "https:/www.website.com"
+        val result = form.bind(Map(fieldName -> invalidWebsite)).apply(fieldName)
+        result.errors mustBe Seq(FormError(fieldName, invalidKey))
+      }
+
+      "must not bind a website longer than 250 characters" in {
+        val longWebsite = s"https://${"a" * 241}.com"
+
+        val result = form.bind(Map(fieldName -> longWebsite))
+
+        result.errors must contain only FormError(fieldName, lengthKey)
+      }
+
+      "bind blank as None" in {
+        val result = form.bind(Map(fieldName -> ""))
+
+        result.errors mustBe empty
+        result.value mustBe Some(None)
+      }
+
+      "must fail to bind when given a duplicate value" in {
+        val existingAnswers = Seq("https://foo.com", "https://bar.com")
+        val answer = "https://bar.com"
+        val form = new WebsiteFormProvider(mockAppConfig)(index, existingAnswers)
+
+        val result = form.bind(Map(fieldName -> answer)).apply(fieldName)
+        result.errors must contain only FormError(fieldName, "website.error.duplicate")
+      }
+    }
+
+    "when version 7 disabled" - {
+
+      when(mockAppConfig.version7Enabled).thenReturn(false)
+
+      val form = new WebsiteFormProvider(mockAppConfig)(index, emptyExistingAnswers)
+      val fieldName = "value"
+
+      behave like mandatoryField(
+        form,
+        fieldName,
+        requiredError = FormError(fieldName, requiredKey)
+      )
+
+      behave like fieldWithMaxLength(
+        form,
+        fieldName,
+        maxLength = maxLength,
+        lengthError = FormError(fieldName, lengthKey, Seq(maxLength))
+      )
+    }
   }
 }

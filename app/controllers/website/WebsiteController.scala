@@ -50,7 +50,7 @@ class WebsiteController @Inject()(
 
       val preparedForm = userAnswers.get(WebsitePage(index)) match {
         case None => form
-        case Some(value) => form.fill(value.site)
+        case Some(value) => form.fill(Some(value.site))
       }
 
       Ok(view(preparedForm, waypoints, index))
@@ -67,8 +67,13 @@ class WebsiteController @Inject()(
 
         value =>
           for {
-            updatedAnswers <- Future.fromTry(request.userAnswers.set(WebsitePage(index), Website(value)))
-            _              <- cc.sessionRepository.set(updatedAnswers)
+            updatedAnswers <-  value match {
+              case Some(website) =>
+                Future.fromTry(request.userAnswers.set(WebsitePage(index), Website(website)))
+              case None =>
+                Future.fromTry(request.userAnswers.remove(WebsitePage(index)))
+            }
+            _ <- cc.sessionRepository.set (updatedAnswers)
           } yield Redirect(WebsitePage(index).navigate(waypoints, updatedAnswers, updatedAnswers).route)
       )
   }

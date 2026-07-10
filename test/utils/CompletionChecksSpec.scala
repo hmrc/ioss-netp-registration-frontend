@@ -110,7 +110,7 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
       "must validate and return false when invalid data is present" in {
 
         val invalidAnswers: UserAnswers = validAnswers
-          .remove(WebsitePage(Index(0))).success.value
+          .remove(TradingNamePage(Index(0))).success.value
 
         val application = applicationBuilder(userAnswers = Some(invalidAnswers)).build()
 
@@ -150,7 +150,7 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
         "when there is only one validation error present" in {
 
           val invalidAnswers: UserAnswers = validAnswers
-            .remove(WebsitePage(Index(0))).success.value
+            .remove(TradingNamePage(Index(0))).success.value
 
           val application = applicationBuilder(userAnswers = Some(invalidAnswers)).build()
 
@@ -161,7 +161,7 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
 
             val result = CompletionChecksTests.getFirstValidationErrorRedirect(waypoints)
 
-            result `mustBe` Some(Redirect(WebsitePage(Index(0)).route(waypoints).url))
+            result `mustBe` Some(Redirect(TradingNamePage(Index(0)).route(waypoints).url))
           }
         }
 

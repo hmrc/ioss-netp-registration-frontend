@@ -67,6 +67,8 @@ noRegistrationFound.heading = Sorry, there is a problem with the service
 
 website.title = Enter a website your client uses to sell goods
 website.heading = Enter a website your client uses to sell goods
+website.heading.optional = Enter a website you use to sell your goods (optional)
+website.hint.text = Leave blank if you do not have a website.
 website.checkYourAnswersLabel = Trading websites
 websites.checkYourAnswersLabel.added = Trading websites added
 websites.checkYourAnswersLabel.removed = Trading websites removed
@@ -76,6 +78,8 @@ website.error.duplicate = You entered this website address already. Enter a diff
 website.error.invalid = Enter a website address in the correct format, like https://www.gov.uk
 website.change.hidden = Trading websites
 website.change.heading = What is your client''s website address?
+websites.add.hidden = add website address
+website.noneSupplied = None supplied
 
 addWebsite.name.singular = website address
 addWebsite.name.plural = website addresses

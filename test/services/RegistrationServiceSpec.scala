@@ -17,6 +17,7 @@
 package services
 
 import base.SpecBase
+import config.FrontendAppConfig
 import connectors.RegistrationConnector
 import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
 import models.etmp.*
@@ -53,8 +54,8 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
   private implicit val hc: HeaderCarrier = HeaderCarrier()
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
-  private val registrationService = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector)
-
+  private val mockAppConfig: FrontendAppConfig = mock[FrontendAppConfig]
+  private val registrationService = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector, mockAppConfig)
   private val registrationWrapper: RegistrationWrapper = arbitraryRegistrationWrapper.arbitrary.sample.value
   private val etmpOtherAddress: EtmpOtherAddress = arbitraryEtmpOtherAddress.arbitrary.sample.value
 
@@ -100,7 +101,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
           answers = basicUserAnswersWithVatInfo,
           registration = registration,
           iossNumber = intermediaryNumber,
-          rejoin = false
+          rejoin = false,
         ).futureValue mustBe Right(amendResponse)
 
         verify(mockRegistrationConnector, times(1)).amendRegistration(any())(any())
@@ -145,7 +146,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
               )
           )
 
-        val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector)
+        val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector, mockAppConfig)
 
         val result = service.toUserAnswers(userAnswersId, ukRegistrationWrapper).futureValue
 
@@ -165,7 +166,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
               )
           )
 
-        val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector)
+        val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector, mockAppConfig)
 
         val result = service.toUserAnswers(userAnswersId, ukRegistrationWrapper).futureValue
 
@@ -188,7 +189,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
             )
         )
 
-        val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector)
+        val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector, mockAppConfig)
 
         val result = service.toUserAnswers(userAnswersId, nonUkRegistrationWrapper).futureValue
 
@@ -208,7 +209,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
             )
         )
 
-        val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector)
+        val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector, mockAppConfig)
 
         val result = service.toUserAnswers(userAnswersId, nonUkRegistrationWrapper).futureValue
 
@@ -225,7 +226,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
           .copy(otherAddress = None)
       )
 
-      val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector)
+      val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector, mockAppConfig)
 
       val exception = intercept[IllegalStateException] {
         service.toUserAnswers(userAnswersId, nonUkRegistrationWrapper).failed
@@ -247,7 +248,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
           .copy(otherAddress = registrationWrapper.etmpDisplayRegistration.otherAddress.map(_.copy(issuedBy = nonExistentCountryCode)))
       )
 
-      val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector)
+      val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector, mockAppConfig)
 
       val result = service.toUserAnswers(userAnswersId, nonUkRegistrationWrapper).failed
 

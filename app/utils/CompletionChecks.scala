@@ -52,7 +52,7 @@ trait CompletionChecks {
     }
   }
 
-  def validate()(implicit request: DataRequest[AnyContent]): Boolean = {
+  def validate(version7Enabled: Boolean = false)(implicit request: DataRequest[AnyContent]): Boolean = {
     isBasedInUk() &&
       hasUkVatNumber() &&
       ukVatNumberDefined() &&
@@ -68,11 +68,18 @@ trait CompletionChecks {
       isPreviouslyRegisteredDefined() &&
       isEuDetailsDefined() &&
       getAllIncompleteEuDetails().isEmpty &&
-      hasWebsiteValid() &&
+      (if (version7Enabled) true else hasWebsiteValid()) &&
       isContactDetailsPopulated()
   }
 
-  def getFirstValidationErrorRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
+  def getFirstValidationErrorRedirect(waypoints: Waypoints, version7Enabled: Boolean = false)(implicit request: DataRequest[AnyContent]): Option[Result] = {
+
+    val websiteRedirects = if (version7Enabled) {
+      None
+    } else {
+      incompleteWebsiteUrlsRedirect(waypoints)
+    }
+
     Seq(incompleteBusinessBasedInUkRedirect(waypoints),
       incompleteHasVatNumberRedirect(waypoints),
       incompleteClientVatNumberRedirect(waypoints),
@@ -89,7 +96,7 @@ trait CompletionChecks {
       incompletePreviousRegistrationRedirect(waypoints),
       emptyEuDetailsRedirect(waypoints),
       incompleteEuDetailsRedirect(waypoints),
-      incompleteWebsiteUrlsRedirect(waypoints),
+      websiteRedirects,
       emptyContactDetails(waypoints)
       ).flatten.headOption
   }
