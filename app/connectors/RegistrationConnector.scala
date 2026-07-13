@@ -17,6 +17,7 @@
 package connectors
 
 import config.Service
+import connectors.IntermediaryVatCustomerInfoHttpParser.{IntermediaryVatCustomerInfoResponse, IntermediaryVatCustomerInfoResponseReads}
 import connectors.RegistrationHttpParser.*
 import connectors.SavedPendingRegistrationHttpParser.{SavedPendingRegistrationResponse, SavedPendingRegistrationResultResponseReads}
 import connectors.SavedPendingRegistrationsHttpParser.*
@@ -49,8 +50,8 @@ class RegistrationConnector @Inject()(config: Configuration, httpClientV2: HttpC
     httpClientV2.get(url"$baseUrl/vat-information/$ukVatNumber").execute[VatCustomerInfoResponse]
   }
 
-  def getIntermediaryVatCustomerInfo()(implicit hc: HeaderCarrier): Future[VatCustomerInfoResponse] = {
-    httpClientV2.get(url"$intermediaryUrl/vat-information").execute[VatCustomerInfoResponse]
+  def getIntermediaryVatCustomerInfo()(implicit hc: HeaderCarrier): Future[IntermediaryVatCustomerInfoResponse] = {
+    httpClientV2.get(url"$intermediaryUrl/vat-information").execute[IntermediaryVatCustomerInfoResponse]
   }
 
   def amendRegistration(amendRegistrationRequest: EtmpAmendRegistrationRequest)(implicit hc: HeaderCarrier): Future[AmendRegistrationResultResponse] = {

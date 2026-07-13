@@ -60,16 +60,27 @@
             @{
                 val maybeAddressRow = if (isBasedInUk) {
                     viewModel.map { model =>
-                    SummaryListRow(
-                    key = Key(content = Text(messages("checkVatDetails.address"))),
-                    value = Value(content = HtmlContent(model.formattedAddress.body))
-                    )
+                        SummaryListRow(
+                            key = Key(content = Text(messages("checkVatDetails.address"))),
+                            value = Value(content = HtmlContent(model.formattedAddress.body))
+                        )
                     }
                 } else None
 
-                    val rowsWithAddress = summaryList.rows ++ maybeAddressRow.toSeq
+                val maybePartOfVatGroup = if (isBasedInUk) {
+                    viewModel.map { model =>
+                        SummaryListRow(
+                            key = Key(content = Text(messages("checkVatDetails.partOfVatGroup"))),
+                            value = Value(content = HtmlContent(model.partOfVatGroup))
+                        )
+                    }
+                } else {
+                    None
+                }
 
-                    govukSummaryList(summaryList.copy(rows = rowsWithAddress))
+                val rowsWithAddress = summaryList.rows ++ maybeAddressRow.toSeq ++ maybePartOfVatGroup.toSeq
+
+                govukSummaryList(summaryList.copy(rows = rowsWithAddress))
             }
 
             @if(isBasedInUk && hasVatNumber) {

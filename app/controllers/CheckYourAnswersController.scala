@@ -69,7 +69,8 @@ class CheckYourAnswersController @Inject()(
           ClientCountryBasedSummary.row(waypoints, userAnswers, thisPage),
           ClientTaxReferenceSummary.row(waypoints, userAnswers, thisPage),
           ClientBusinessAddressSummary.row(waypoints, userAnswers, thisPage),
-          if (isUKBased && hasUkVatNumber) VatRegistrationDetailsSummary.rowBusinessAddress(waypoints, userAnswers, thisPage) else None
+          if (isUKBased && hasUkVatNumber) VatRegistrationDetailsSummary.rowBusinessAddress(waypoints, userAnswers, thisPage) else None,
+          if (isUKBased && hasUkVatNumber) VatRegistrationDetailsSummary.rowPartOfVatUkGroup(waypoints, userAnswers, thisPage) else None
         ).flatten
       )
 

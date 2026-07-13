@@ -18,6 +18,7 @@ package connectors
 
 import logging.Logging
 import models.domain.VatCustomerInfo
+import models.etmp.intermediary.IntermediaryVatCustomerInfo
 import models.responses.{ErrorResponse, InvalidJson, UnexpectedResponseStatus, VatCustomerNotFound}
 import play.api.http.Status.{NOT_FOUND, OK}
 import play.api.libs.json.{JsError, JsSuccess}
@@ -33,6 +34,34 @@ object VatCustomerInfoHttpParser extends Logging {
       response.status match {
         case OK =>
           response.json.validate[VatCustomerInfo] match {
+            case JsSuccess(value, _) =>
+              Right(value)
+            case JsError(errors) =>
+              logger.error(s"Could not read payload as a VatCustomerInfo model $errors", errors)
+              Left(InvalidJson)
+          }
+
+        case NOT_FOUND =>
+          logger.error(s"not found vat customer info")
+          Left(VatCustomerNotFound)
+
+        case status =>
+          logger.error(s"There was error getting vat info status: $status with body: ${response.body}")
+          Left(UnexpectedResponseStatus(status, s"Received unexpected response code $status"))
+      }
+  }
+}
+
+object IntermediaryVatCustomerInfoHttpParser extends Logging {
+
+  type IntermediaryVatCustomerInfoResponse = Either[ErrorResponse, IntermediaryVatCustomerInfo]
+
+  implicit object IntermediaryVatCustomerInfoResponseReads extends HttpReads[IntermediaryVatCustomerInfoResponse] {
+
+    override def read(method: String, url: String, response: HttpResponse): IntermediaryVatCustomerInfoResponse =
+      response.status match {
+        case OK =>
+          response.json.validate[IntermediaryVatCustomerInfo] match {
             case JsSuccess(value, _) =>
               Right(value)
             case JsError(errors) =>

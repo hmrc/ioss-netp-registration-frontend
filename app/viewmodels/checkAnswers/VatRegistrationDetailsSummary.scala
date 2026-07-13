@@ -52,6 +52,19 @@ object VatRegistrationDetailsSummary {
     }
   }
 
+  def rowPartOfVatUkGroup(waypoints: Waypoints, answers: UserAnswers, sourcePage: CheckAnswersPage)(implicit messages: Messages): Option[SummaryListRow] = {
+    answers.vatInfo.map {
+      answer =>
+
+        val value = if (answer.partOfVatGroup) "site.yes" else "site.no"
+
+        SummaryListRowViewModel(
+          key = "checkYourAnswers.vatRegistrationDetails.partOfVatGroup",
+          value = ValueViewModel(value)
+        )
+    }
+  }
+
   def changeRegBusinessAddressRow(
                                    waypoints: Waypoints,
                                    answers: UserAnswers,
