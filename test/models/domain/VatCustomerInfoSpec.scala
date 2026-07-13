@@ -32,6 +32,7 @@ class VatCustomerInfoSpec extends SpecBase {
         val expectedJson = Json.obj(
           "desAddress" -> vatCustomerInfo.desAddress,
           "registrationDate" -> vatCustomerInfo.registrationDate,
+          "partOfVatGroup" -> vatCustomerInfo.partOfVatGroup,
           "organisationName" -> vatCustomerInfo.organisationName,
           "individualName" -> vatCustomerInfo.individualName,
           "singleMarketIndicator" -> vatCustomerInfo.singleMarketIndicator
@@ -47,12 +48,14 @@ class VatCustomerInfoSpec extends SpecBase {
       val json = Json.obj(
         "desAddress" -> vatCustomerInfo.desAddress,
         "registrationDate" -> vatCustomerInfo.registrationDate,
+        "partOfVatGroup" -> vatCustomerInfo.partOfVatGroup,
         "singleMarketIndicator" -> vatCustomerInfo.singleMarketIndicator
       )
 
       val expectedResult: VatCustomerInfo = VatCustomerInfo(
         desAddress = vatCustomerInfo.desAddress,
         registrationDate = vatCustomerInfo.registrationDate,
+        partOfVatGroup = vatCustomerInfo.partOfVatGroup,
         organisationName = None,
         individualName = None,
         singleMarketIndicator = vatCustomerInfo.singleMarketIndicator,

@@ -20,6 +20,7 @@ import controllers.actions.*
 import generators.Generators
 import models.domain.VatCustomerInfo
 import models.etmp.display.RegistrationWrapper
+import models.etmp.intermediary.IntermediaryVatCustomerInfo
 import models.{BusinessContactDetails, CheckMode, Index, IntermediaryDetails, UserAnswers, Website}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
@@ -104,13 +105,14 @@ trait SpecBase
       organisationName = Some("Company name"),
       individualName = None,
       singleMarketIndicator = true,
-      deregistrationDecisionDate = None
+      deregistrationDecisionDate = None,
+      partOfVatGroup = false,
     )
   }
 
-  val intermediaryVatCustomerInfo: VatCustomerInfo = {
-    VatCustomerInfo(
-      registrationDate = LocalDate.now(stubClockAtArbitraryDate),
+  val intermediaryVatCustomerInfo: IntermediaryVatCustomerInfo = {
+    IntermediaryVatCustomerInfo(
+      registrationDate = Some(LocalDate.now(stubClockAtArbitraryDate)),
       desAddress = arbitraryDesAddress.arbitrary.sample.value,
       organisationName = Some(intermediaryDetails.intermediaryName),
       individualName = None,

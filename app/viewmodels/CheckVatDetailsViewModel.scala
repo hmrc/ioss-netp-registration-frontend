@@ -19,9 +19,10 @@ package viewmodels
 import formats.Format.dateFormatter
 import models.Country
 import models.domain.VatCustomerInfo
+import play.api.i18n.Messages
 import play.twirl.api.{Html, HtmlFormat}
 
-case class CheckVatDetailsViewModel(vrn: String, vatCustomerInfo: VatCustomerInfo) {
+case class CheckVatDetailsViewModel(vrn: String, vatCustomerInfo: VatCustomerInfo)(implicit messages: Messages) {
 
   val organisationName: Option[String] = vatCustomerInfo.organisationName.map(organisationName => HtmlFormat.escape(organisationName).toString)
 
@@ -42,4 +43,12 @@ case class CheckVatDetailsViewModel(vrn: String, vatCustomerInfo: VatCustomerInf
       country.map(_.name)
     ).flatten.mkString("<br/>")
   )
+
+  val partOfVatGroup: String = {
+    if (vatCustomerInfo.partOfVatGroup) {
+      messages("site.yes")
+    } else {
+      messages("site.no")
+    }
+  }
 }

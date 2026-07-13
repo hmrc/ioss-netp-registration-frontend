@@ -133,10 +133,12 @@ trait ModelGenerators extends EitherValues with EtmpModelGenerators {
         organisationName <- Gen.alphaStr
         individualName <- Gen.alphaStr
         singleMarketIndicator <- arbitrary[Boolean]
+        partOfVatGroup <- arbitrary[Boolean]
       } yield {
         VatCustomerInfo(
           desAddress = desAddress,
           registrationDate = registrationDate,
+          partOfVatGroup = partOfVatGroup,
           organisationName = Some(organisationName),
           individualName = Some(individualName),
           singleMarketIndicator = singleMarketIndicator,
