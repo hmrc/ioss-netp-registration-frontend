@@ -23,6 +23,7 @@ import logging.Logging
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import services.{PendingRegistrationService, RegistrationService}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.ApplicationCompleteView
 
@@ -32,7 +33,7 @@ import scala.concurrent.ExecutionContext
 class ApplicationCompleteController @Inject()(
                                                override val messagesApi: MessagesApi,
                                                cc: AuthenticatedControllerComponents,
-                                               registrationConnector: RegistrationConnector,
+                                               pendingRegistrationService: PendingRegistrationService,
                                                frontendAppConfig: FrontendAppConfig,
                                                view: ApplicationCompleteView
                                              )(implicit ec: ExecutionContext)
@@ -44,7 +45,7 @@ class ApplicationCompleteController @Inject()(
     implicit request =>
       getClientCompanyName(waypoints) { clientCompanyName =>
 
-        registrationConnector.getPendingRegistration(request.userAnswers.journeyId).flatMap {
+        pendingRegistrationService.getPendingRegistration(request.userAnswers.journeyId).flatMap {
           case Right(savedPendingRegistration) =>
             val clientCodeEntryUrl =
               s"${frontendAppConfig.clientCodeEntryHost}${frontendAppConfig.clientCodeEntryUrl}/${savedPendingRegistration.uniqueUrlCode}"

@@ -29,7 +29,7 @@ import play.api.i18n.I18nSupport
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.PreviousUnfinishedRegistration
-import services.{SaveAndComeBackService, PendingRegistrationDuplicateCheckService}
+import services.{SaveAndComeBackService, PendingRegistrationService}
 import services.core.CoreRegistrationValidationService
 import uk.gov.hmrc.domain.Vrn
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
@@ -48,7 +48,7 @@ class ClientVatNumberController @Inject()(
                                            view: ClientVatNumberView,
                                            clock: Clock,
                                            coreRegistrationValidationService: CoreRegistrationValidationService,
-                                           pendingRegistrationDuplicateCheckService: PendingRegistrationDuplicateCheckService,
+                                           pendingRegistrationDuplicateCheckService: PendingRegistrationService,
                                            saveAndComeBackService: SaveAndComeBackService
                                          )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with SetActiveTraderResult {
 
@@ -75,7 +75,7 @@ class ClientVatNumberController @Inject()(
           BadRequest(view(formWithErrors, waypoints)).toFuture,
 
         ukVatNumber =>
-          pendingRegistrationDuplicateCheckService.checkPendingRegistration(VRN, ukVatNumber, request.intermediaryNumber, waypoints).flatMap {
+          pendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(VRN, ukVatNumber, request.intermediaryNumber, waypoints).flatMap {
             case Some(pendingRegistration) =>
               pendingRegistration.toFuture
             case None =>

@@ -52,9 +52,9 @@ class PendingRegistrationDuplicateCheckServiceSpec extends SpecBase {
 
         when(mockRegistrationConnector.getPendingRegistrationsByCustomerIdentification(any(), any())(any())) thenReturn Right(Seq(pendingRegistration)).toFuture
 
-        val service = new PendingRegistrationDuplicateCheckService(mockRegistrationConnector)
+        val service = new PendingRegistrationService(mockRegistrationConnector)
 
-        val result = service.checkPendingRegistration(VRN, vrn.vrn, intermediaryNumber, waypoints).futureValue
+        val result = service.checkPendingRegistrationDuplication(VRN, vrn.vrn, intermediaryNumber, waypoints).futureValue
 
         result.value mustBe Redirect(controllers.routes.ClientRegistrationPendingWithOurServiceController.onPageLoad(waypoints, journeyId))
       }
@@ -63,9 +63,9 @@ class PendingRegistrationDuplicateCheckServiceSpec extends SpecBase {
 
         when(mockRegistrationConnector.getPendingRegistrationsByCustomerIdentification(any(), any())(any())) thenReturn Right(Seq(pendingRegistration)).toFuture
 
-        val service = new PendingRegistrationDuplicateCheckService(mockRegistrationConnector)
+        val service = new PendingRegistrationService(mockRegistrationConnector)
 
-        val result = service.checkPendingRegistration(UTR, utr, intermediaryNumber, waypoints).futureValue
+        val result = service.checkPendingRegistrationDuplication(UTR, utr, intermediaryNumber, waypoints).futureValue
 
         result.value mustBe Redirect(controllers.routes.ClientRegistrationPendingWithOurServiceController.onPageLoad(waypoints, journeyId))
       }
@@ -76,9 +76,9 @@ class PendingRegistrationDuplicateCheckServiceSpec extends SpecBase {
 
         when(mockRegistrationConnector.getPendingRegistrationsByCustomerIdentification(any(), any())(any())) thenReturn Right(Seq(pendingRegistration)).toFuture
 
-        val service = new PendingRegistrationDuplicateCheckService(mockRegistrationConnector)
+        val service = new PendingRegistrationService(mockRegistrationConnector)
 
-        val result = service.checkPendingRegistration(NINO, nino, intermediaryNumber, waypoints).futureValue
+        val result = service.checkPendingRegistrationDuplication(NINO, nino, intermediaryNumber, waypoints).futureValue
 
         result.value mustBe Redirect(controllers.routes.ClientRegistrationPendingWithOurServiceController.onPageLoad(waypoints, journeyId))
       }
@@ -87,9 +87,9 @@ class PendingRegistrationDuplicateCheckServiceSpec extends SpecBase {
 
         when(mockRegistrationConnector.getPendingRegistrationsByCustomerIdentification(any(), any())(any())) thenReturn Right(Seq(pendingRegistration)).toFuture
 
-        val service = new PendingRegistrationDuplicateCheckService(mockRegistrationConnector)
+        val service = new PendingRegistrationService(mockRegistrationConnector)
 
-        val result = service.checkPendingRegistration(FTR, taxReference, intermediaryNumber, waypoints).futureValue
+        val result = service.checkPendingRegistrationDuplication(FTR, taxReference, intermediaryNumber, waypoints).futureValue
 
         result.value mustBe Redirect(controllers.routes.ClientRegistrationPendingWithOurServiceController.onPageLoad(waypoints, journeyId))
       }
@@ -102,9 +102,9 @@ class PendingRegistrationDuplicateCheckServiceSpec extends SpecBase {
         when(mockRegistrationConnector.getPendingRegistrationsByCustomerIdentification(any(), any())(any())) thenReturn
           Right(Seq(anotherPendingRegistration)).toFuture
 
-        val service = new PendingRegistrationDuplicateCheckService(mockRegistrationConnector)
+        val service = new PendingRegistrationService(mockRegistrationConnector)
 
-        val result = service.checkPendingRegistration(VRN, vrn.vrn, intermediaryNumber, waypoints).futureValue
+        val result = service.checkPendingRegistrationDuplication(VRN, vrn.vrn, intermediaryNumber, waypoints).futureValue
 
         result.value mustBe Redirect(controllers.routes.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad())
       }
@@ -114,9 +114,9 @@ class PendingRegistrationDuplicateCheckServiceSpec extends SpecBase {
         when(mockRegistrationConnector.getPendingRegistrationsByCustomerIdentification(any(), any())(any())) thenReturn
           Right(Seq(anotherPendingRegistration)).toFuture
 
-        val service = new PendingRegistrationDuplicateCheckService(mockRegistrationConnector)
+        val service = new PendingRegistrationService(mockRegistrationConnector)
 
-        val result = service.checkPendingRegistration(UTR, utr, intermediaryNumber, waypoints).futureValue
+        val result = service.checkPendingRegistrationDuplication(UTR, utr, intermediaryNumber, waypoints).futureValue
 
         result.value mustBe Redirect(controllers.routes.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad())
       }
@@ -128,9 +128,9 @@ class PendingRegistrationDuplicateCheckServiceSpec extends SpecBase {
         when(mockRegistrationConnector.getPendingRegistrationsByCustomerIdentification(any(), any())(any())) thenReturn
           Right(Seq(anotherPendingRegistration)).toFuture
 
-        val service = new PendingRegistrationDuplicateCheckService(mockRegistrationConnector)
+        val service = new PendingRegistrationService(mockRegistrationConnector)
 
-        val result = service.checkPendingRegistration(NINO, nino, intermediaryNumber, waypoints).futureValue
+        val result = service.checkPendingRegistrationDuplication(NINO, nino, intermediaryNumber, waypoints).futureValue
 
         result.value mustBe Redirect(controllers.routes.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad())
       }
@@ -140,9 +140,9 @@ class PendingRegistrationDuplicateCheckServiceSpec extends SpecBase {
         when(mockRegistrationConnector.getPendingRegistrationsByCustomerIdentification(any(), any())(any())) thenReturn
           Right(Seq(anotherPendingRegistration)).toFuture
 
-        val service = new PendingRegistrationDuplicateCheckService(mockRegistrationConnector)
+        val service = new PendingRegistrationService(mockRegistrationConnector)
 
-        val result = service.checkPendingRegistration(FTR, taxReference, intermediaryNumber, waypoints).futureValue
+        val result = service.checkPendingRegistrationDuplication(FTR, taxReference, intermediaryNumber, waypoints).futureValue
 
         result.value mustBe Redirect(controllers.routes.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad())
       }
@@ -154,10 +154,10 @@ class PendingRegistrationDuplicateCheckServiceSpec extends SpecBase {
 
         when(mockRegistrationConnector.getPendingRegistrationsByCustomerIdentification(any(), any())(any())) thenReturn Right(Seq.empty).toFuture
 
-        val service = new PendingRegistrationDuplicateCheckService(mockRegistrationConnector)
+        val service = new PendingRegistrationService(mockRegistrationConnector)
 
         val result = service
-          .checkPendingRegistration(VRN, vrn.vrn, intermediaryNumber, waypoints)
+          .checkPendingRegistrationDuplication(VRN, vrn.vrn, intermediaryNumber, waypoints)
           .futureValue
 
         result mustBe None
@@ -167,10 +167,10 @@ class PendingRegistrationDuplicateCheckServiceSpec extends SpecBase {
 
         when(mockRegistrationConnector.getPendingRegistrationsByCustomerIdentification(any(), any())(any())) thenReturn Right(Seq.empty).toFuture
 
-        val service = new PendingRegistrationDuplicateCheckService(mockRegistrationConnector)
+        val service = new PendingRegistrationService(mockRegistrationConnector)
 
         val result = service
-          .checkPendingRegistration(UTR, utr, intermediaryNumber, waypoints)
+          .checkPendingRegistrationDuplication(UTR, utr, intermediaryNumber, waypoints)
           .futureValue
 
         result mustBe None
@@ -180,10 +180,10 @@ class PendingRegistrationDuplicateCheckServiceSpec extends SpecBase {
 
         when(mockRegistrationConnector.getPendingRegistrationsByCustomerIdentification(any(), any())(any())) thenReturn Right(Seq.empty).toFuture
 
-        val service = new PendingRegistrationDuplicateCheckService(mockRegistrationConnector)
+        val service = new PendingRegistrationService(mockRegistrationConnector)
 
         val result = service
-          .checkPendingRegistration(NINO, nino, intermediaryNumber, waypoints)
+          .checkPendingRegistrationDuplication(NINO, nino, intermediaryNumber, waypoints)
           .futureValue
 
         result mustBe None
@@ -193,10 +193,10 @@ class PendingRegistrationDuplicateCheckServiceSpec extends SpecBase {
 
         when(mockRegistrationConnector.getPendingRegistrationsByCustomerIdentification(any(), any())(any())) thenReturn Right(Seq.empty).toFuture
 
-        val service = new PendingRegistrationDuplicateCheckService(mockRegistrationConnector)
+        val service = new PendingRegistrationService(mockRegistrationConnector)
 
         val result = service
-          .checkPendingRegistration(FTR, taxReference, intermediaryNumber, waypoints)
+          .checkPendingRegistrationDuplication(FTR, taxReference, intermediaryNumber, waypoints)
           .futureValue
 
         result mustBe None

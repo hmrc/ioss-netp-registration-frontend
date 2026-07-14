@@ -31,7 +31,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.AmendWaypoints.AmendWaypointsOps
 import utils.FutureSyntax.FutureOps
 import views.html.ClientTaxReferenceView
-import services.{PendingRegistrationDuplicateCheckService, SaveAndComeBackService}
+import services.{PendingRegistrationService, SaveAndComeBackService}
 
 import java.time.Clock
 import javax.inject.Inject
@@ -45,7 +45,7 @@ class ClientTaxReferenceController @Inject()(
                                               coreRegistrationValidationService: CoreRegistrationValidationService,
                                               clock: Clock,
                                               saveAndComeBackService: SaveAndComeBackService,
-                                              pendingRegistrationDuplicateCheckService: PendingRegistrationDuplicateCheckService,
+                                              pendingRegistrationDuplicateCheckService: PendingRegistrationService,
                                     )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with GetCountry with SetActiveTraderResult with Logging {
 
@@ -82,7 +82,7 @@ class ClientTaxReferenceController @Inject()(
             BadRequest(view(formWithErrors, waypoints, country)).toFuture,
 
           value =>
-            pendingRegistrationDuplicateCheckService.checkPendingRegistration(FTR, value, request.intermediaryNumber, waypoints).flatMap {
+            pendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(FTR, value, request.intermediaryNumber, waypoints).flatMap {
               case Some(pendingRegistration) =>
                 pendingRegistration.toFuture
               case None =>
