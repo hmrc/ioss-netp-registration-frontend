@@ -37,7 +37,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import queries.{ActiveTraderResultQuery, PreviousUnfinishedRegistration}
 import repositories.SessionRepository
-import services.{SaveAndComeBackService, PendingRegistrationDuplicateCheckService}
+import services.{SaveAndComeBackService, PendingRegistrationService}
 import services.core.CoreRegistrationValidationService
 import testutils.CreateMatchResponse.createMatchResponse
 import uk.gov.hmrc.domain.Vrn
@@ -55,7 +55,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
   private val mockCoreRegistrationValidationService = mock[CoreRegistrationValidationService]
   private val mockSaveAndComeBackService = mock[SaveAndComeBackService]
-  private val mockPendingRegistrationDuplicateCheckService = mock[PendingRegistrationDuplicateCheckService]
+  private val mockPendingRegistrationDuplicateCheckService = mock[PendingRegistrationService]
 
   private val formProvider: ClientVatNumberFormProvider = new ClientVatNumberFormProvider()
   private val form: Form[String] = formProvider()
@@ -117,7 +117,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
       when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Future.successful(Right(vatCustomerInfo))
       when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(),any(),any())(any(),any())) thenReturn Future.successful(None)
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
         
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
@@ -126,7 +126,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
             bind[RegistrationConnector].toInstance(mockRegistrationConnector),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
             bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
-            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+            bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -160,7 +160,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
       when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Future.successful(Right(vatCustomerInfo))
       when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(),any(),any())(any(),any())) thenReturn Future.successful(Some(emptyUserAnswers))
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
@@ -169,7 +169,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
             bind[RegistrationConnector].toInstance(mockRegistrationConnector),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
             bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
-            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+            bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -205,7 +205,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = false,
@@ -223,7 +223,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+            bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -255,7 +255,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = false,
@@ -270,7 +270,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+            bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -305,7 +305,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = true,
@@ -323,7 +323,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+            bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -356,14 +356,14 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+            bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -404,7 +404,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
       when(mockSessionRepository.set(any())) thenReturn Future.successful(true)
       when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Future.successful(Right(expiredVrnVatInfo))
       when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(emptyUserAnswers))
@@ -412,7 +412,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[RegistrationConnector].toInstance(mockRegistrationConnector),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+            bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -437,13 +437,13 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
         .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
         .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
         .overrides(bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService))
-        .overrides(bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService))
+        .overrides(bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService))
         .build()
 
       when(mockSessionRepository.set(any())) thenReturn false.toFuture
       when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Left(VatCustomerNotFound).toFuture
       when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       running(application) {
         val request =
@@ -466,13 +466,13 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
         .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
         .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
         .overrides(bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService))
-        .overrides(bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService))
+        .overrides(bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService))
         .build()
 
       when(mockSessionRepository.set(any())) thenReturn false.toFuture
       when(mockRegistrationConnector.getVatCustomerInfo(any())(any())) thenReturn Left(InternalServerError).toFuture
       when(mockCoreRegistrationValidationService.searchUkVrn(any())(any(), any())) thenReturn None.toFuture
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       running(application) {
         val request =
@@ -543,7 +543,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
 
       val pendingRedirect = Redirect(controllers.routes.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad())
 
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(eqTo(VRN), eqTo(ukVatNumber), any(), eqTo(waypoints))(any())) thenReturn
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(eqTo(VRN), eqTo(ukVatNumber), any(), eqTo(waypoints))(any())) thenReturn
         Future.successful(Some(pendingRedirect))
 
       val application =
@@ -552,7 +552,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[RegistrationConnector].toInstance(mockRegistrationConnector),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+            bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -568,7 +568,7 @@ class ClientVatNumberControllerSpec extends SpecBase with MockitoSugar with Befo
           controllers.routes.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad().url
 
         verify(mockPendingRegistrationDuplicateCheckService, times(1))
-          .checkPendingRegistration(eqTo(VRN), eqTo(ukVatNumber), any(), eqTo(waypoints))(any())
+          .checkPendingRegistrationDuplication(eqTo(VRN), eqTo(ukVatNumber), any(), eqTo(waypoints))(any())
 
         verifyNoInteractions(mockCoreRegistrationValidationService)
         verifyNoInteractions(mockRegistrationConnector)
