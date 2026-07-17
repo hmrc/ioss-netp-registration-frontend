@@ -251,6 +251,24 @@ trait ModelGenerators extends EitherValues with EtmpModelGenerators {
         SavedPendingRegistration(
           journeyId = userAnswers.journeyId,
           uniqueUrlCode = uniqueUrlCode,
+          userAnswersData = userAnswers.data,
+          lastUpdated = userAnswers.lastUpdated,
+          uniqueActivationCode = uniqueActivationCode,
+          intermediaryDetails = IntermediaryDetails("IM123456789", "IntermediaryName"))
+      }
+    }
+  }
+
+  implicit lazy val arbitrarySavedPendingRegistrationWithUserAnswers: Arbitrary[SavedPendingRegistrationWithUserAnswers] = {
+    Arbitrary {
+      for {
+        userAnswers <- arbitraryUserAnswers.arbitrary
+        uniqueUrlCode = UUID.randomUUID().toString
+        uniqueActivationCode = UUID.randomUUID().toString
+      } yield {
+        SavedPendingRegistrationWithUserAnswers(
+          journeyId = userAnswers.journeyId,
+          uniqueUrlCode = uniqueUrlCode,
           userAnswers = userAnswers,
           lastUpdated = userAnswers.lastUpdated,
           uniqueActivationCode = uniqueActivationCode,

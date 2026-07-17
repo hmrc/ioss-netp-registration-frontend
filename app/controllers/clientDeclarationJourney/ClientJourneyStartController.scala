@@ -16,7 +16,6 @@
 
 package controllers.clientDeclarationJourney
 
-import connectors.RegistrationConnector
 import controllers.actions.ClientIdentifierAction
 import logging.Logging
 import models.IntermediaryDetails
@@ -25,6 +24,7 @@ import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import queries.IntermediaryDetailsQuery
 import repositories.SessionRepository
+import services.PendingRegistrationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 
 import javax.inject.Inject
@@ -32,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ClientJourneyStartController @Inject()(
                                               clientIdentify: ClientIdentifierAction,
-                                              registrationConnector: RegistrationConnector,
+                                              pendingRegistrationService: PendingRegistrationService,
                                               sessionRepository: SessionRepository,
                                               val controllerComponents: MessagesControllerComponents,
                                             )(implicit executionContext: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging {
@@ -40,7 +40,7 @@ class ClientJourneyStartController @Inject()(
   def onPageLoad(waypoints: Waypoints, uniqueUrlCode: String): Action[AnyContent] = clientIdentify.async {
     implicit request =>
 
-      registrationConnector.getPendingRegistration(uniqueUrlCode).flatMap {
+      pendingRegistrationService.getPendingRegistration(uniqueUrlCode, request.userId).flatMap {
         case Right(savedPendingRegistration) =>
 
           for {

@@ -17,32 +17,35 @@
 package controllers
 
 import base.SpecBase
-import connectors.RegistrationConnector
 import models.responses.InternalServerError
-import models.{BusinessContactDetails, IntermediaryDetails, SavedPendingRegistration}
+import models.{BusinessContactDetails, ClientBusinessName, IntermediaryDetails, SavedPendingRegistrationWithUserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
-import pages.BusinessContactDetailsPage
+import org.scalatestplus.mockito.MockitoSugar.mock
+import pages.{BusinessContactDetailsPage, ClientBusinessNamePage}
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import services.PendingRegistrationService
 import utils.FutureSyntax.FutureOps
 
 class ClientEmailUpdatedControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
-  private val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
+  private val savedPendingRegistration: SavedPendingRegistrationWithUserAnswers = arbitrarySavedPendingRegistrationWithUserAnswers.arbitrary.sample.value
     .copy(intermediaryDetails = IntermediaryDetails(intermediaryNumber, intermediaryName))
 
   override val journeyId: String = savedPendingRegistration.journeyId
 
   val newEmailAddress: String = "new@email.com"
 
-  val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
+  private val mockPendingRegistrationService: PendingRegistrationService = mock[PendingRegistrationService]
+
+  private val clientBusinessName: ClientBusinessName = ClientBusinessName(vatCustomerInfo.organisationName.value)
 
   override def beforeEach(): Unit = {
-    reset(mockRegistrationConnector)
+    reset(mockPendingRegistrationService)
   }
 
   "ClientEmailUpdated Controller" - {
@@ -51,16 +54,17 @@ class ClientEmailUpdatedControllerSpec extends SpecBase with MockitoSugar with B
 
       val updatedBusinessContactDetails = businessContactDetails.copy(emailAddress = newEmailAddress)
 
-      val updatedUserAnswers = savedPendingRegistration.userAnswers
+      val userAnswers = emptyUserAnswers
+        .set(ClientBusinessNamePage, clientBusinessName).success.value
         .set(BusinessContactDetailsPage, updatedBusinessContactDetails).success.value
 
-      val updatedPendingReg = savedPendingRegistration.copy(userAnswers = updatedUserAnswers)
+      val updatedPendingReg = savedPendingRegistration.copy(userAnswers = userAnswers)
 
       val application = applicationBuilder(userAnswers = Some(emptyUserAnswers))
-        .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+        .overrides(bind[PendingRegistrationService].toInstance(mockPendingRegistrationService))
         .build()
 
-      when(mockRegistrationConnector.getPendingRegistration(eqTo(journeyId))(any()))
+      when(mockPendingRegistrationService.getPendingRegistration(eqTo(journeyId), any())(any()))
         .thenReturn(Right(updatedPendingReg).toFuture)
 
       running(application) {
@@ -70,17 +74,17 @@ class ClientEmailUpdatedControllerSpec extends SpecBase with MockitoSugar with B
 
         status(result) mustEqual OK
         contentAsString(result) must include(newEmailAddress)
-        verify(mockRegistrationConnector, times(1)).getPendingRegistration(eqTo(journeyId))(any())
+        verify(mockPendingRegistrationService, times(1)).getPendingRegistration(eqTo(journeyId), eqTo(userAnswersId))(any())
       }
     }
 
     "must throw an exception and log an error when the connector fails to return a pending registration" in {
 
       val application = applicationBuilder(userAnswers = Some(emptyUserAnswers))
-        .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+        .overrides(bind[PendingRegistrationService].toInstance(mockPendingRegistrationService))
         .build()
 
-      when(mockRegistrationConnector.getPendingRegistration(eqTo(journeyId))(any()))
+      when(mockPendingRegistrationService.getPendingRegistration(eqTo(journeyId), eqTo(userAnswersId))(any()))
         .thenReturn(Left(InternalServerError).toFuture)
 
       running(application) {
@@ -99,11 +103,11 @@ class ClientEmailUpdatedControllerSpec extends SpecBase with MockitoSugar with B
       val wrongRegistration = savedPendingRegistration
         .copy(intermediaryDetails = IntermediaryDetails("wrong-intermediary", intermediaryName))
 
-      when(mockRegistrationConnector.getPendingRegistration(eqTo(journeyId))(any()))
+      when(mockPendingRegistrationService.getPendingRegistration(eqTo(journeyId), eqTo(userAnswersId))(any()))
         .thenReturn(Right(wrongRegistration).toFuture)
 
       val application = applicationBuilder(userAnswers = Some(emptyUserAnswers))
-        .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+        .overrides(bind[PendingRegistrationService].toInstance(mockPendingRegistrationService))
         .build()
 
       running(application) {
@@ -114,7 +118,7 @@ class ClientEmailUpdatedControllerSpec extends SpecBase with MockitoSugar with B
         status(result) `mustEqual` SEE_OTHER
         redirectLocation(result).value mustEqual controllers.routes.AccessDeniedController.onPageLoad().url
 
-        verify(mockRegistrationConnector, times(1)).getPendingRegistration(any())(any())
+        verify(mockPendingRegistrationService, times(1)).getPendingRegistration(any(), any())(any())
       }
     }
   }

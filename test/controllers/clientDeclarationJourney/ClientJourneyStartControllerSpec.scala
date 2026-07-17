@@ -17,10 +17,9 @@
 package controllers.clientDeclarationJourney
 
 import base.SpecBase
-import connectors.RegistrationConnector
 import controllers.clientDeclarationJourney
 import models.responses.NotFound
-import models.{BusinessContactDetails, ClientBusinessName, IntermediaryDetails, SavedPendingRegistration, UserAnswers}
+import models.{BusinessContactDetails, ClientBusinessName, IntermediaryDetails, SavedPendingRegistrationWithUserAnswers, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -30,6 +29,7 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import queries.IntermediaryDetailsQuery
+import services.PendingRegistrationService
 import utils.FutureSyntax.FutureOps
 
 class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
@@ -48,8 +48,8 @@ class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with B
 
   val completeUserAnswers: UserAnswers = incompleteUserAnswers.set(BusinessContactDetailsPage, businessContactDetails).success.value
 
-  private def savedPendingRegistration(userAnswers: UserAnswers): SavedPendingRegistration =
-    SavedPendingRegistration(
+  private def savedPendingRegistration(userAnswers: UserAnswers): SavedPendingRegistrationWithUserAnswers =
+    SavedPendingRegistrationWithUserAnswers(
       journeyId = incompleteUserAnswers.journeyId,
       uniqueUrlCode = generate6DigitCode(),
       userAnswers = userAnswers,
@@ -60,9 +60,9 @@ class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with B
 
   private def clientJourneyStartOnPageLoad(uniqueUrlCode: String): String = clientDeclarationJourney.routes.ClientJourneyStartController.onPageLoad(waypoints, uniqueUrlCode).url
 
-  val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
+  private val mockPendingRegistrationService = mock[PendingRegistrationService]
 
-  override def beforeEach(): Unit = reset(mockRegistrationConnector)
+  override def beforeEach(): Unit = reset(mockPendingRegistrationService)
 
   "ClientJourneyStartController" - {
 
@@ -70,14 +70,14 @@ class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with B
 
       "return redirect to the clientCodeEntryController with enriched userAnswers with valid url" in {
 
-        val testSavedPendingRegistration: SavedPendingRegistration = savedPendingRegistration(completeUserAnswers)
+        val testSavedPendingRegistration: SavedPendingRegistrationWithUserAnswers = savedPendingRegistration(completeUserAnswers)
         val testUniqueUrl = testSavedPendingRegistration.uniqueUrlCode
 
-        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
+        when(mockPendingRegistrationService.getPendingRegistration(any(), any())(any()))
           .thenReturn(Right(testSavedPendingRegistration).toFuture)
 
         val application = applicationBuilder(userAnswers = None)
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .overrides(bind[PendingRegistrationService].toInstance(mockPendingRegistrationService))
           .build()
 
         running(application) {
@@ -88,7 +88,7 @@ class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with B
           status(result) mustEqual SEE_OTHER
 
           redirectLocation(result).value mustEqual clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(EmptyWaypoints, uniqueUrlCode = testUniqueUrl).url
-          verify(mockRegistrationConnector, times(1)).getPendingRegistration(eqTo(testUniqueUrl))(any())
+          verify(mockPendingRegistrationService, times(1)).getPendingRegistration(eqTo(testUniqueUrl), any())(any())
         }
       }
 
@@ -97,11 +97,11 @@ class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with B
         val testSavedPendingRegistration = savedPendingRegistration(completeUserAnswers)
         val testUniqueUrl = testSavedPendingRegistration.uniqueUrlCode
 
-        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
+        when(mockPendingRegistrationService.getPendingRegistration(any(), any())(any()))
           .thenReturn(Right(testSavedPendingRegistration).toFuture)
 
         val application = applicationBuilder(userAnswers = Some(completeUserAnswers))
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .overrides(bind[PendingRegistrationService].toInstance(mockPendingRegistrationService))
           .build()
 
         running(application) {
@@ -111,17 +111,17 @@ class ClientJourneyStartControllerSpec extends SpecBase with MockitoSugar with B
 
           status(result) mustEqual SEE_OTHER
           redirectLocation(result).value mustEqual clientDeclarationJourney.routes.ClientCodeEntryController.onPageLoad(waypoints, uniqueUrlCode = testUniqueUrl).url
-          verify(mockRegistrationConnector, times(1)).getPendingRegistration(eqTo(testUniqueUrl))(any())
+          verify(mockPendingRegistrationService, times(1)).getPendingRegistration(eqTo(testUniqueUrl), any())(any())
         }
       }
 
       "return error when uniqueUrlCode is not valid" in {
 
-        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
+        when(mockPendingRegistrationService.getPendingRegistration(any(), any())(any()))
           .thenReturn(Left(NotFound).toFuture)
 
         val application = applicationBuilder(userAnswers = None)
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .overrides(bind[PendingRegistrationService].toInstance(mockPendingRegistrationService))
           .build()
 
         running(application) {

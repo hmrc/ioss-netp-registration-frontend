@@ -17,13 +17,12 @@
 package controllers
 
 import config.FrontendAppConfig
-import connectors.RegistrationConnector
 import controllers.actions.*
 import logging.Logging
 import pages.Waypoints
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import services.{PendingRegistrationService, RegistrationService}
+import services.PendingRegistrationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.ApplicationCompleteView
 
@@ -45,7 +44,7 @@ class ApplicationCompleteController @Inject()(
     implicit request =>
       getClientCompanyName(waypoints) { clientCompanyName =>
 
-        pendingRegistrationService.getPendingRegistration(request.userAnswers.journeyId).flatMap {
+        pendingRegistrationService.getPendingRegistration(request.userAnswers.journeyId, request.userId).flatMap {
           case Right(savedPendingRegistration) =>
             val clientCodeEntryUrl =
               s"${frontendAppConfig.clientCodeEntryHost}${frontendAppConfig.clientCodeEntryUrl}/${savedPendingRegistration.uniqueUrlCode}"

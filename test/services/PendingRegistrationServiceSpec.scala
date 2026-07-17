@@ -18,28 +18,39 @@ package services
 
 import base.SpecBase
 import connectors.RegistrationConnector
-import models.{IntermediaryDetails, SavedPendingRegistration}
+import models.{IntermediaryDetails, SavedPendingRegistration, SavedPendingRegistrationWithUserAnswers, UserAnswers}
 import models.etmp.EtmpIdType.*
+import models.responses.InternalServerError
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{never, verify, when}
 import org.scalatestplus.mockito.MockitoSugar.mock
+import pages.ClientVatNumberPage
+import play.api.libs.json.Json
 import play.api.mvc.Results.Redirect
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class PendingRegistrationDuplicateCheckServiceSpec extends SpecBase {
+class PendingRegistrationServiceSpec extends SpecBase {
 
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
 
   private implicit val hc: HeaderCarrier = new HeaderCarrier()
+
+  private val pendingRegistrationWithUserAnswers: SavedPendingRegistrationWithUserAnswers =
+    arbitrarySavedPendingRegistrationWithUserAnswers.arbitrary.sample.value
+    .copy(intermediaryDetails = IntermediaryDetails(intermediaryNumber, intermediaryName), journeyId = journeyId)
 
   private val pendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
     .copy(intermediaryDetails = IntermediaryDetails(intermediaryNumber, intermediaryName), journeyId = journeyId)
 
   private val anotherIntermediaryNumber = "IN9001234569"
   private val anotherIntermediaryName = "Another Intermediary Company Name"
+  private val anotherPendingRegistrationWithUserAnswers: SavedPendingRegistrationWithUserAnswers =
+    arbitrarySavedPendingRegistrationWithUserAnswers.arbitrary.sample.value
+    .copy(intermediaryDetails = IntermediaryDetails(anotherIntermediaryNumber, anotherIntermediaryName), journeyId = journeyId)
+
   private val anotherPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
     .copy(intermediaryDetails = IntermediaryDetails(anotherIntermediaryNumber, anotherIntermediaryName), journeyId = journeyId)
 
@@ -201,6 +212,103 @@ class PendingRegistrationDuplicateCheckServiceSpec extends SpecBase {
 
         result mustBe None
       }
+    }
+  }
+
+  "getPendingRegistration" - {
+
+    "must return the pending registration with user answers when no VAT number is present" in {
+
+      val savedRegistration = pendingRegistration.copy(userAnswersData = Json.obj())
+
+      when(mockRegistrationConnector.getPendingRegistration(journeyId)(hc)) thenReturn Right(savedRegistration).toFuture
+
+      val service = new PendingRegistrationService(mockRegistrationConnector)
+
+      val result = service.getPendingRegistration(journeyId, userAnswersId).futureValue
+
+      val expectedUserAnswers = UserAnswers(
+        id = userAnswersId,
+        journeyId = savedRegistration.journeyId,
+        data = savedRegistration.userAnswersData,
+        vatInfo = None,
+      ).copy(lastUpdated = result.toOption.value.userAnswers.lastUpdated)
+
+      result mustBe Right(
+        SavedPendingRegistrationWithUserAnswers(
+          journeyId = savedRegistration.journeyId,
+          uniqueUrlCode = savedRegistration.uniqueUrlCode,
+          userAnswers = expectedUserAnswers,
+          lastUpdated = savedRegistration.lastUpdated,
+          uniqueActivationCode = savedRegistration.uniqueActivationCode,
+          intermediaryDetails = savedRegistration.intermediaryDetails
+        )
+      )
+
+      verify(mockRegistrationConnector, never).getVatCustomerInfo(any())(any())
+    }
+
+    "must add VAT information when the user answers contain a VAT number" in {
+
+      val vatInfo = arbitraryVatCustomerInfo.arbitrary.sample.value
+
+      val answers = UserAnswers(
+        userAnswersId,
+        journeyId,
+        Json.obj(),
+        None
+      ).set(ClientVatNumberPage, vatNumber).success.value
+
+      val savedRegistration = pendingRegistration.copy(userAnswersData = answers.data)
+
+      when(mockRegistrationConnector.getPendingRegistration(journeyId)(hc)) thenReturn Right(savedRegistration).toFuture
+
+      when(mockRegistrationConnector.getVatCustomerInfo(vatNumber)(hc)) thenReturn Right(vatInfo).toFuture
+
+      val service = new PendingRegistrationService(mockRegistrationConnector)
+
+      val result = service.getPendingRegistration(journeyId, userAnswersId).futureValue
+
+      result.value.userAnswers.vatInfo mustBe Some(vatInfo)
+    }
+
+    "must return the VAT lookup error when VAT information cannot be retrieved" in {
+
+      val errorResponse = InternalServerError
+
+      val answers = UserAnswers(
+        userAnswersId,
+        journeyId,
+        Json.obj(),
+        None
+      ).set(ClientVatNumberPage, vatNumber).success.value
+
+      val savedRegistration = pendingRegistration.copy(userAnswersData = answers.data)
+
+      when(mockRegistrationConnector.getPendingRegistration(journeyId)(hc)) thenReturn Right(savedRegistration).toFuture
+
+      when(mockRegistrationConnector.getVatCustomerInfo(vatNumber)(hc)) thenReturn Left(errorResponse).toFuture
+
+      val service = new PendingRegistrationService(mockRegistrationConnector)
+
+      service
+        .getPendingRegistration(journeyId, userAnswersId)
+        .futureValue mustBe Left(errorResponse)
+    }
+
+    "must fail when the pending registration cannot be retrieved" in {
+
+      val errorResponse = InternalServerError
+
+      when(mockRegistrationConnector.getPendingRegistration(journeyId)(hc)) thenReturn Left(errorResponse).toFuture
+
+      val service = new PendingRegistrationService(mockRegistrationConnector)
+
+      val exception = service.getPendingRegistration(journeyId, userAnswersId).failed.futureValue
+
+      exception mustBe a[IllegalStateException]
+
+      exception.getMessage mustBe s"Unable to retrieve pending registration for journey ID or URL code $journeyId"
     }
   }
 }

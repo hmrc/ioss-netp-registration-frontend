@@ -84,7 +84,7 @@ class DeclarationController @Inject()(
           registrationConnector.submitPendingRegistration(pendingRegistrationRequest).flatMap {
             case Right(submittedRegistration) =>
               
-              getClientEmail(waypoints, submittedRegistration.userAnswers) { clientEmail =>
+              getClientEmail(waypoints, request.userAnswers) { clientEmail =>
                 sendEmail(submittedRegistration, clientEmail, clientCompanyName, intermediaryName)
 
                 form.bindFromRequest().fold(

@@ -18,7 +18,6 @@ package models
 
 import config.Constants.pendingRegistrationTTL
 import formats.Format.dateFormatter
-import models.domain.VatCustomerInfo
 import play.api.libs.json.*
 
 import java.time.{Instant, LocalDateTime, ZoneId}
