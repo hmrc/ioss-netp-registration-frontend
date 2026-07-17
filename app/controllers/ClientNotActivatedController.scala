@@ -17,7 +17,6 @@
 package controllers
 
 import config.FrontendAppConfig
-import connectors.RegistrationConnector
 import controllers.actions.*
 import logging.Logging
 import models.{BusinessContactDetails, UserAnswers}
@@ -26,6 +25,7 @@ import javax.inject.Inject
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientHasVatNumberPage, ClientVatNumberPage, JourneyRecoveryPage, Waypoints}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import services.PendingRegistrationService
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import viewmodels.CheckVatDetailsViewModel
@@ -42,7 +42,7 @@ class ClientNotActivatedController @Inject()(
                                        override val messagesApi: MessagesApi,
                                        cc: AuthenticatedControllerComponents,
                                        val controllerComponents: MessagesControllerComponents,
-                                       registrationConnector: RegistrationConnector,
+                                       pendingRegistrationService: PendingRegistrationService,
                                        frontendAppConfig: FrontendAppConfig,
                                        view: ClientNotActivatedView
                                      )(implicit ec: ExecutionContext)
@@ -51,8 +51,10 @@ class ClientNotActivatedController @Inject()(
   def onPageLoad(waypoints: Waypoints, journeyId: String): Action[AnyContent] = (cc.actionBuilder andThen cc.identify).async {
     implicit request =>
 
-      registrationConnector.getPendingRegistration(journeyId).map {
+      pendingRegistrationService.getPendingRegistration(journeyId, request.userId).map {
         case Right(pendingRegistration) =>
+          println("i'm here1")
+          println(s"pendingRegistration: $pendingRegistration")
 
           if (pendingRegistration.intermediaryDetails.intermediaryNumber == request.intermediaryNumber) {
 
@@ -75,17 +77,21 @@ class ClientNotActivatedController @Inject()(
               pendingRegistration.userAnswers.vatInfo match {
 
                 case Some(vatCustomerInfo) =>
+                  println("i'm here2")
                   val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatCustomerInfo)
 
                   Ok(view(waypoints, Some(viewModel), registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage, dashboardUrl))
 
                 case None =>
+                  println("i'm here3")
                   Redirect(JourneyRecoveryPage.route(waypoints).url)
               }
             } else {
+              println("i'm here4")
               Ok(view(waypoints, None, registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage, dashboardUrl))
             }
           } else {
+            println("i'm here5")
             Redirect(controllers.routes.AccessDeniedController.onPageLoad().url)
           }
 

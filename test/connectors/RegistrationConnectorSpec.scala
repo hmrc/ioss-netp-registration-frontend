@@ -18,7 +18,7 @@ package connectors
 
 import base.SpecBase
 import com.github.tomakehurst.wiremock.client.WireMock.*
-import models.{PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
+import models.{PendingRegistrationRequest, SavedPendingRegistration, SavedPendingRegistrationWithUserAnswers, UserAnswers}
 import models.domain.VatCustomerInfo
 import models.etmp.EtmpIdType.*
 import models.etmp.amend.{AmendRegistrationResponse, EtmpAmendRegistrationRequest}
@@ -844,11 +844,9 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
       val savedPendingRegistrationWithOldEmail: SavedPendingRegistration =
         savedPendingRegistration.copy(
-          userAnswers = savedPendingRegistration.userAnswers.copy(
-            data = Json.obj(
-              "businessContactDetails" -> Json.obj(
-                "emailAddress" -> oldEmail
-              )
+          userAnswersData = Json.obj(
+            "businessContactDetails" -> Json.obj(
+              "emailAddress" -> oldEmail
             )
           )
         )
@@ -859,11 +857,9 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
         val updatedPendingRegistration =
           savedPendingRegistrationWithOldEmail.copy(
-            userAnswers = savedPendingRegistrationWithOldEmail.userAnswers.copy(
-              data = Json.obj(
-                "businessContactDetails" -> Json.obj(
-                  "emailAddress" -> newEmail
-                )
+            userAnswersData = Json.obj(
+              "businessContactDetails" -> Json.obj(
+                "emailAddress" -> newEmail
               )
             )
           )

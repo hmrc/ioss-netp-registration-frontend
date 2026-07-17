@@ -17,9 +17,8 @@
 package controllers
 
 import base.SpecBase
-import connectors.RegistrationConnector
 import models.responses.InternalServerError
-import models.{BusinessContactDetails, IntermediaryDetails, SavedPendingRegistration, UserAnswers}
+import models.{BusinessContactDetails, IntermediaryDetails, SavedPendingRegistrationWithUserAnswers, UserAnswers}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -28,19 +27,20 @@ import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientHasVatNum
 import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import services.PendingRegistrationService
 import utils.FutureSyntax.FutureOps
 
 
 class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
-  private val mockRegistrationConnector = mock[RegistrationConnector]
+  private val mockPendingRegistrationService = mock[PendingRegistrationService]
 
   def generate6DigitCode(): String = {
     util.Random.alphanumeric.filter(_.isUpper).take(6).mkString
   }
 
-  private def savedPendingRegistration(userAnswers: UserAnswers): SavedPendingRegistration =
-    SavedPendingRegistration(
+  private def savedPendingRegistration(userAnswers: UserAnswers): SavedPendingRegistrationWithUserAnswers =
+    SavedPendingRegistrationWithUserAnswers(
       journeyId = journeyId,
       uniqueUrlCode = generate6DigitCode(),
       userAnswers = userAnswers,
@@ -54,7 +54,7 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
                                       isBasedInUk: Boolean = true,
                                       hasVat: Boolean = true,
                                       intermediaryNumber: String
-                                    ): SavedPendingRegistration = {
+                                    ): SavedPendingRegistrationWithUserAnswers = {
     val ua = emptyUserAnswers
       .set(BusinessContactDetailsPage, businessContactDetails).success.value
       .set(BusinessBasedInUKPage, isBasedInUk).success.value
@@ -69,7 +69,7 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
   }
 
   override def beforeEach(): Unit = {
-    reset(mockRegistrationConnector)
+    reset(mockPendingRegistrationService)
   }
 
   "ClientNotActivated Controller" - {
@@ -80,11 +80,11 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
 
         val registration = buildSavedRegistration(intermediaryNumber = intermediaryNumber)
 
-        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
+        when(mockPendingRegistrationService.getPendingRegistration(any(), any())(any()))
           .thenReturn(Right(registration).toFuture)
 
         val app = applicationBuilder(userAnswers = None)
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .overrides(bind[PendingRegistrationService].toInstance(mockPendingRegistrationService))
           .build()
 
         running(app) {
@@ -94,7 +94,7 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
 
           status(result) mustEqual OK
 
-          verify(mockRegistrationConnector, times(1)).getPendingRegistration(any())(any())
+          verify(mockPendingRegistrationService, times(1)).getPendingRegistration(any(), any())(any())
         }
       }
 
@@ -102,11 +102,11 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
 
         val registration = buildSavedRegistration(hasVat = false, intermediaryNumber = intermediaryNumber)
 
-        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
+        when(mockPendingRegistrationService.getPendingRegistration(any(), any())(any()))
           .thenReturn(Right(registration).toFuture)
 
         val app = applicationBuilder(userAnswers = None)
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .overrides(bind[PendingRegistrationService].toInstance(mockPendingRegistrationService))
           .build()
 
         running(app) {
@@ -116,7 +116,7 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
 
           status(result) mustEqual OK
 
-          verify(mockRegistrationConnector, times(1)).getPendingRegistration(any())(any())
+          verify(mockPendingRegistrationService, times(1)).getPendingRegistration(any(), any())(any())
         }
       }
 
@@ -124,11 +124,11 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
 
         val registration = buildSavedRegistration(isBasedInUk = false, hasVat = false, intermediaryNumber = intermediaryNumber)
 
-        when(mockRegistrationConnector.getPendingRegistration(any())(any()))
+        when(mockPendingRegistrationService.getPendingRegistration(any(), any())(any()))
           .thenReturn(Right(registration).toFuture)
 
         val app = applicationBuilder(userAnswers = None)
-          .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+          .overrides(bind[PendingRegistrationService].toInstance(mockPendingRegistrationService))
           .build()
 
         running(app) {
@@ -148,11 +148,11 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
 
       val registration = buildSavedRegistration(intermediaryNumber = "wrong-intermediary")
 
-      when(mockRegistrationConnector.getPendingRegistration(any())(any()))
+      when(mockPendingRegistrationService.getPendingRegistration(any(), any())(any()))
         .thenReturn(Right(registration).toFuture)
 
       val app = applicationBuilder(userAnswers = None)
-        .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+        .overrides(bind[PendingRegistrationService].toInstance(mockPendingRegistrationService))
         .build()
 
       running(app) {
@@ -163,17 +163,17 @@ class ClientNotActivatedControllerSpec extends SpecBase with MockitoSugar with B
         status(result) mustEqual SEE_OTHER
         redirectLocation(result).value mustEqual controllers.routes.AccessDeniedController.onPageLoad().url
 
-        verify(mockRegistrationConnector, times(1)).getPendingRegistration(any())(any())
+        verify(mockPendingRegistrationService, times(1)).getPendingRegistration(any(), any())(any())
       }
     }
 
     "must throw an exception when the connector fails to return pending registrations" in {
 
-      when(mockRegistrationConnector.getPendingRegistration(any())(any()))
+      when(mockPendingRegistrationService.getPendingRegistration(any(), any())(any()))
         .thenReturn(Left(InternalServerError).toFuture)
 
       val app = applicationBuilder(userAnswers = None)
-        .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+        .overrides(bind[PendingRegistrationService].toInstance(mockPendingRegistrationService))
         .build()
 
       running(app) {

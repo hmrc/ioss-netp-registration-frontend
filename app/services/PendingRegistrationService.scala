@@ -17,11 +17,12 @@
 package services
 
 import connectors.RegistrationConnector
+import logging.Logging
 import models.domain.VatCustomerInfo
 import models.{SavedPendingRegistration, SavedPendingRegistrationWithUserAnswers, UserAnswers}
 import models.etmp.EtmpIdType
 import models.responses.ErrorResponse
-import pages.Waypoints
+import pages.{ClientVatNumberPage, Waypoints}
 import play.api.mvc.Result
 import play.api.mvc.Results.Redirect
 import uk.gov.hmrc.http.HeaderCarrier
@@ -31,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class PendingRegistrationService @Inject()(
                                             registrationConnector: RegistrationConnector
-                                          )(implicit ec: ExecutionContext) {
+                                          )(implicit ec: ExecutionContext) extends Logging {
 
   def checkPendingRegistrationDuplication(
                                            idType: EtmpIdType,
@@ -53,27 +54,31 @@ class PendingRegistrationService @Inject()(
     }
   }
 
-  def getPendingRegistration(journeyIdOrUrlCode: String)(implicit hc: HeaderCarrier): Future[Either[ErrorResponse, SavedPendingRegistrationWithUserAnswers]] = {
+  def getPendingRegistration(journeyIdOrUrlCode: String, userId: String)(implicit hc: HeaderCarrier): Future[Either[ErrorResponse, SavedPendingRegistrationWithUserAnswers]] = {
 
       registrationConnector.getPendingRegistration(journeyIdOrUrlCode).flatMap {
         case Right(pendingRegistration) =>
-          toSavedPendingRegistrationWithUserAnswers(pendingRegistration)
+          toSavedPendingRegistrationWithUserAnswers(pendingRegistration, userId)
         case _ =>
-          ??? // TODO throw error + log
+          val message: String = s"Unable to retrieve pending registration for journey ID or URL code $journeyIdOrUrlCode"
+          logger.error(message)
+          val exception: IllegalStateException = new IllegalStateException(message)
+          throw exception
       }
   }
 
   private def toSavedPendingRegistrationWithUserAnswers(
                                                          savedPendingRegistration: SavedPendingRegistration,
+                                                         userId: String
                                                        )(implicit hc: HeaderCarrier): Future[Either[ErrorResponse, SavedPendingRegistrationWithUserAnswers]] = {
     val userAnswers = UserAnswers(
-      "", // TODO set same as journey - might need request
+      userId,
       savedPendingRegistration.journeyId,
       savedPendingRegistration.userAnswersData,
       None
     )
 
-    val maybeVatNumber = Option("123467890") // TODO get from userAnswers -- user.get(UKVatNumberPage)
+    val maybeVatNumber = userAnswers.get(ClientVatNumberPage)
 
     maybeVatNumber match {
       case Some(vatNumber) =>
@@ -87,7 +92,12 @@ class PendingRegistrationService @Inject()(
               savedPendingRegistration.uniqueActivationCode,
               savedPendingRegistration.intermediaryDetails
             ))
-          case Left(errorResponse) => Left(errorResponse) // TODO maybe log
+          case Left(errorResponse) =>
+            logger.warn(
+              s"Unable to retrieve VAT customer information for journey " +
+                s"[${savedPendingRegistration.journeyId}]: $errorResponse"
+            )
+            Left(errorResponse)
         }
       case _ =>
         Future.successful(
@@ -101,7 +111,29 @@ class PendingRegistrationService @Inject()(
           )
         ))
     }
+  }
 
+  def updateClientEmailAddress(
+                                journeyId: String,
+                                newEmailAddress: String,
+                                userId: String
+                              )(implicit hc: HeaderCarrier): Future[Either[ErrorResponse, SavedPendingRegistrationWithUserAnswers]] = {
+    registrationConnector
+      .updateClientEmailAddress(journeyId, newEmailAddress)
+      .flatMap {
+        case Right(savedPendingRegistration) =>
+          toSavedPendingRegistrationWithUserAnswers(
+            savedPendingRegistration,
+            userId
+          )
 
+        case Left(errorResponse) =>
+          logger.error(
+            s"Unable to update client email address for journeyId " +
+              s"[$journeyId]: $errorResponse"
+          )
+
+          Future.successful(Left(errorResponse))
+      }
   }
 }
