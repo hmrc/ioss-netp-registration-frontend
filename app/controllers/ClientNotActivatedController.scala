@@ -53,8 +53,6 @@ class ClientNotActivatedController @Inject()(
 
       pendingRegistrationService.getPendingRegistration(journeyId, request.userId).map {
         case Right(pendingRegistration) =>
-          println("i'm here1")
-          println(s"pendingRegistration: $pendingRegistration")
 
           if (pendingRegistration.intermediaryDetails.intermediaryNumber == request.intermediaryNumber) {
 
@@ -77,21 +75,17 @@ class ClientNotActivatedController @Inject()(
               pendingRegistration.userAnswers.vatInfo match {
 
                 case Some(vatCustomerInfo) =>
-                  println("i'm here2")
                   val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatCustomerInfo)
 
                   Ok(view(waypoints, Some(viewModel), registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage, dashboardUrl))
 
                 case None =>
-                  println("i'm here3")
                   Redirect(JourneyRecoveryPage.route(waypoints).url)
               }
             } else {
-              println("i'm here4")
               Ok(view(waypoints, None, registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage, dashboardUrl))
             }
           } else {
-            println("i'm here5")
             Redirect(controllers.routes.AccessDeniedController.onPageLoad().url)
           }
 
