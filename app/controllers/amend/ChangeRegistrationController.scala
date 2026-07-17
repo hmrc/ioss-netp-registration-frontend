@@ -70,6 +70,7 @@ class ChangeRegistrationController @Inject()(
       val waypoints = EmptyWaypoints.setNextWaypoint(Waypoint(thisPage, CheckMode, ChangeRegistrationPage.urlFragment))
 
       val clientBasedInUk = request.userAnswers.get(BusinessBasedInUKPage).getOrElse(false)
+      val hasUkVatNumber = request.userAnswers.get(ClientHasVatNumberPage).contains(true)
       val clientHasUkAddress: Option[Country] = request.userAnswers.get(ClientCountryBasedPage)
       val countryIsUk: Boolean = clientHasUkAddress match
         case Some(someCountry) => someCountry.code.startsWith(ukCountryCodeAreaPrefix)
@@ -136,6 +137,11 @@ class ChangeRegistrationController @Inject()(
               ClientBusinessAddressSummary.row(waypoints, request.userAnswers, thisPage)
             } else {
               VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, request.userAnswers, thisPage)
+            },
+            if (clientBasedInUk && hasUkVatNumber) {
+              VatRegistrationDetailsSummary.rowPartOfVatUkGroup(waypoints, request.userAnswers, thisPage)
+            } else {
+              None
             }
           ).flatten
         )

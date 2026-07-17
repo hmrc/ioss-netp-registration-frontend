@@ -25,7 +25,7 @@ import models.audit.{DeclarationSigningAuditModel, DeclarationSigningAuditType}
 import models.emails.EmailSendingResult.EMAIL_NOT_SENT
 import models.requests.DataRequest
 import models.responses.UnexpectedResponseStatus
-import models.{BusinessContactDetails, ClientBusinessName, PendingRegistrationRequest, SavedPendingRegistration}
+import models.{BusinessContactDetails, ClientBusinessName, PendingRegistrationRequest, SavedPendingRegistration, SavedPendingRegistrationWithUserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.{doNothing, times, verify, when}
@@ -149,7 +149,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
         val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
 
         val savedPendingRegWithUserAnswers: SavedPendingRegistration = savedPendingRegistration.copy(
-          userAnswers = userAnswers
+          userAnswersData = userAnswers.data
         )
 
         val application =
@@ -219,7 +219,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
         val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
 
         val savedPendingRegWithUserAnswers: SavedPendingRegistration = savedPendingRegistration.copy(
-          userAnswers = userAnswers
+          userAnswersData = userAnswers.data
         )
 
         val application =
@@ -284,7 +284,7 @@ class DeclarationControllerSpec extends SpecBase with MockitoSugar with BeforeAn
         val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
 
         val savedPendingRegWithUserAnswers: SavedPendingRegistration = savedPendingRegistration.copy(
-          userAnswers = userAnswers
+          userAnswersData = userAnswers.data
         )
 
         when(mockRegistrationConnector.getIntermediaryVatCustomerInfo()(any()))

@@ -21,7 +21,7 @@ import connectors.RegistrationConnector
 import controllers.{clientDeclarationJourney, routes}
 import forms.clientDeclarationJourney.ClientCodeEntryFormProvider
 import models.responses.NotFound
-import models.{BusinessContactDetails, ClientBusinessName, IntermediaryDetails, SavedPendingRegistration, UserAnswers}
+import models.{BusinessContactDetails, ClientBusinessName, IntermediaryDetails, SavedPendingRegistrationWithUserAnswers, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -60,8 +60,8 @@ class ClientCodeEntryControllerSpec extends SpecBase with MockitoSugar with Befo
     .set(EmailWasSentQuery, true).success.value
 
 
-  private val savedPendingRegistration: SavedPendingRegistration =
-    SavedPendingRegistration(
+  private val savedPendingRegistration: SavedPendingRegistrationWithUserAnswers =
+    SavedPendingRegistrationWithUserAnswers(
       journeyId = completeUserAnswers.journeyId,
       uniqueUrlCode = generate6DigitCode(),
       userAnswers = completeUserAnswers,

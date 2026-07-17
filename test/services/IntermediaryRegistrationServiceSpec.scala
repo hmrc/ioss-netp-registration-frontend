@@ -19,6 +19,7 @@ package services
 import base.SpecBase
 import connectors.RegistrationConnector
 import models.domain.VatCustomerInfo
+import models.etmp.intermediary.IntermediaryVatCustomerInfo
 import models.responses.RegistrationNotFound
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -34,7 +35,7 @@ class IntermediaryRegistrationServiceSpec extends SpecBase {
 
   private implicit val hc: HeaderCarrier = new HeaderCarrier()
 
-  private val vatCustomerInfo: VatCustomerInfo = arbitraryVatCustomerInfo.arbitrary.sample.value
+  private val vatCustomerInfo: IntermediaryVatCustomerInfo = arbitraryIntermediaryVatCustomerInfo.arbitrary.sample.value
 
   "IntermediaryRegistrationService" - {
 

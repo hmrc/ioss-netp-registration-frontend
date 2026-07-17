@@ -37,7 +37,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import queries.{ActiveTraderResultQuery, PreviousUnfinishedRegistration}
 import repositories.SessionRepository
-import services.{SaveAndComeBackService, PendingRegistrationDuplicateCheckService}
+import services.{SaveAndComeBackService, PendingRegistrationService}
 import services.core.CoreRegistrationValidationService
 import testutils.CreateMatchResponse.createMatchResponse
 import utils.FutureSyntax.FutureOps
@@ -66,7 +66,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
   private val mockCoreRegistrationValidationService: CoreRegistrationValidationService = mock[CoreRegistrationValidationService]
   private val mockSaveAndComeBackService = mock[SaveAndComeBackService]
   private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
-  private val mockPendingRegistrationDuplicateCheckService = mock[PendingRegistrationDuplicateCheckService]
+  private val mockPendingRegistrationDuplicateCheckService = mock[PendingRegistrationService]
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockCoreRegistrationValidationService)
@@ -117,7 +117,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
       when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(), any(), any())(any(), any())) thenReturn Future.successful(None)
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(updatedAnswers))
@@ -125,7 +125,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
             bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
-            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+            bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -154,7 +154,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
       when(mockSaveAndComeBackService.checkForPreviousUnfinishedSavedRegJourney(any(), any(), any())(any(), any())) thenReturn Future.successful(Some(updatedAnswers))
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
       
       val application =
         applicationBuilder(userAnswers = Some(updatedAnswers))
@@ -162,7 +162,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
             bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
-            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+            bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -198,7 +198,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = false,
@@ -216,7 +216,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+            bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -247,7 +247,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = false,
@@ -263,7 +263,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+            bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -297,7 +297,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val activeTraderResult: ActiveTraderResult = ActiveTraderResult(
         isReversal = true,
@@ -315,7 +315,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+            bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -347,14 +347,14 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
       val mockSessionRepository = mock[SessionRepository]
 
       when(mockSessionRepository.set(any())) thenReturn true.toFuture
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(any(), any(), any(), any())(any())) thenReturn Future.successful(None)
 
       val application =
         applicationBuilder(userAnswers = Some(updatedAnswers))
           .overrides(
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+            bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -441,7 +441,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
 
       val pendingRedirect = Redirect(controllers.routes.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad())
 
-      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistration(eqTo(FTR), eqTo(taxReference), any(), eqTo(waypoints))(any())) thenReturn
+      when(mockPendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(eqTo(FTR), eqTo(taxReference), any(), eqTo(waypoints))(any())) thenReturn
         Future.successful(Some(pendingRedirect))
 
       val application =
@@ -450,7 +450,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
             bind[SessionRepository].toInstance(mockSessionRepository),
             bind[RegistrationConnector].toInstance(mockRegistrationConnector),
             bind[CoreRegistrationValidationService].toInstance(mockCoreRegistrationValidationService),
-            bind[PendingRegistrationDuplicateCheckService].toInstance(mockPendingRegistrationDuplicateCheckService)
+            bind[PendingRegistrationService].toInstance(mockPendingRegistrationDuplicateCheckService)
           )
           .build()
 
@@ -466,7 +466,7 @@ class ClientTaxReferenceControllerSpec extends SpecBase with MockitoSugar with B
           controllers.routes.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad().url
 
         verify(mockPendingRegistrationDuplicateCheckService, times(1))
-          .checkPendingRegistration(eqTo(FTR), eqTo(taxReference), any(), eqTo(waypoints))(any())
+          .checkPendingRegistrationDuplication(eqTo(FTR), eqTo(taxReference), any(), eqTo(waypoints))(any())
 
         verifyNoInteractions(mockCoreRegistrationValidationService)
         verifyNoInteractions(mockRegistrationConnector)

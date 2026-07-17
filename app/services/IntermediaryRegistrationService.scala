@@ -17,7 +17,7 @@
 package services
 
 import connectors.RegistrationConnector
-import models.domain.VatCustomerInfo
+import models.etmp.intermediary.IntermediaryVatCustomerInfo
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.Inject
@@ -27,7 +27,7 @@ class IntermediaryRegistrationService @Inject()(
                                          registrationConnector: RegistrationConnector
                                        )(implicit ec: ExecutionContext) {
 
-  def getIntermediaryRegistration()(implicit hc: HeaderCarrier): Future[Option[VatCustomerInfo]] = {
+  def getIntermediaryRegistration()(implicit hc: HeaderCarrier): Future[Option[IntermediaryVatCustomerInfo]] = {
       registrationConnector.getIntermediaryVatCustomerInfo().map {
         case Right(vatInfo) => Some(vatInfo)
         case Left(error) => None

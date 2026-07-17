@@ -43,6 +43,7 @@ index.guidance = Welcome to your new frontend. Please see the README file for a 
 checkYourAnswers.title = Check your answers
 checkYourAnswers.heading = Check your answers
 checkYourAnswers.vatRegistrationDetails.heading = Registration Details
+checkYourAnswers.vatRegistrationDetails.partOfVatGroup = UK VAT group
 checkYourAnswers.details.heading = Import One Stop Shop details
 
 journeyRecovery.continue.title = Sorry, there is a problem with the service
@@ -205,6 +206,7 @@ checkVatDetails.yes = Yes
 checkVatDetails.wrongAccount = No, I want to register a different business
 checkVatDetails.info.p1 = If your client''s name or address are incorrect, they will need to change them from their business tax account.
 checkVatDetails.address = Principal place of business address
+checkVatDetails.partOfVatGroup = UK VAT group
 
 useOtherAccount.title = Sign in with a different Government Gateway user ID
 useOtherAccount.heading = Sign in with a different Government Gateway user ID

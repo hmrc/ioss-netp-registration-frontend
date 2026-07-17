@@ -31,7 +31,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.AmendWaypoints.AmendWaypointsOps
 import utils.FutureSyntax.FutureOps
 import views.html.ClientUtrNumberView
-import services.{PendingRegistrationDuplicateCheckService, SaveAndComeBackService}
+import services.{PendingRegistrationService, SaveAndComeBackService}
 
 import java.time.Clock
 import javax.inject.Inject
@@ -45,7 +45,7 @@ class ClientUtrNumberController @Inject()(
                                            coreRegistrationValidationService: CoreRegistrationValidationService,
                                            clock: Clock,
                                            saveAndComeBackService: SaveAndComeBackService,
-                                           pendingRegistrationDuplicateCheckService: PendingRegistrationDuplicateCheckService,
+                                           pendingRegistrationDuplicateCheckService: PendingRegistrationService,
                                          )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with SetActiveTraderResult with Logging {
 
@@ -71,7 +71,7 @@ class ClientUtrNumberController @Inject()(
           BadRequest(view(formWithErrors, waypoints)).toFuture,
 
         value =>
-          pendingRegistrationDuplicateCheckService.checkPendingRegistration(UTR, value, request.intermediaryNumber, waypoints).flatMap {
+          pendingRegistrationDuplicateCheckService.checkPendingRegistrationDuplication(UTR, value, request.intermediaryNumber, waypoints).flatMap {
             case Some(pendingRegistration) =>
               pendingRegistration.toFuture
             case None =>

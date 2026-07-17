@@ -18,12 +18,12 @@ package connectors
 
 import base.SpecBase
 import com.github.tomakehurst.wiremock.client.WireMock.*
-import models.{PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
+import models.{PendingRegistrationRequest, SavedPendingRegistration, SavedPendingRegistrationWithUserAnswers, UserAnswers}
 import models.domain.VatCustomerInfo
 import models.etmp.EtmpIdType.*
 import models.etmp.amend.{AmendRegistrationResponse, EtmpAmendRegistrationRequest}
 import models.etmp.display.RegistrationWrapper
-import models.etmp.intermediary.IntermediaryRegistrationWrapper
+import models.etmp.intermediary.{IntermediaryRegistrationWrapper, IntermediaryVatCustomerInfo}
 import models.iossRegistration.IossEtmpDisplayRegistration
 import models.ossRegistration.{OssExcludedTrader, OssRegistration}
 import models.responses.*
@@ -143,7 +143,7 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
         running(application) {
           val connector: RegistrationConnector = application.injector.instanceOf[RegistrationConnector]
 
-          val vatInfo: VatCustomerInfo = intermediaryVatCustomerInfo
+          val vatInfo: IntermediaryVatCustomerInfo = intermediaryVatCustomerInfo
 
           val responseBody = Json.toJson(vatInfo).toString()
 
@@ -844,11 +844,9 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
       val savedPendingRegistrationWithOldEmail: SavedPendingRegistration =
         savedPendingRegistration.copy(
-          userAnswers = savedPendingRegistration.userAnswers.copy(
-            data = Json.obj(
-              "businessContactDetails" -> Json.obj(
-                "emailAddress" -> oldEmail
-              )
+          userAnswersData = Json.obj(
+            "businessContactDetails" -> Json.obj(
+              "emailAddress" -> oldEmail
             )
           )
         )
@@ -859,11 +857,9 @@ class RegistrationConnectorSpec extends SpecBase with WireMockHelper {
 
         val updatedPendingRegistration =
           savedPendingRegistrationWithOldEmail.copy(
-            userAnswers = savedPendingRegistrationWithOldEmail.userAnswers.copy(
-              data = Json.obj(
-                "businessContactDetails" -> Json.obj(
-                  "emailAddress" -> newEmail
-                )
+            userAnswersData = Json.obj(
+              "businessContactDetails" -> Json.obj(
+                "emailAddress" -> newEmail
               )
             )
           )
