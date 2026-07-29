@@ -570,6 +570,7 @@ clientEmailUpdated.p1 = We have sent the activation code to <span class="govuk-!
 clientEmailUpdated.link = <a class="govuk-link" href="{0}">Return to your account</a>
 
 changeRegistration.title = Change {0} registration
+changeRegistration.reviewRegistrationDetails.title = Review {0} registration
 changeRegistration.heading = Change {0} registration
 changeRegistration.reviewRegistrationDetails.heading = Review {0} registration
 changeRegistration.reference = IOSS number: {0}

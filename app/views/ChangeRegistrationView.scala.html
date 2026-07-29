@@ -35,7 +35,14 @@
 
 @(waypoints: Waypoints, companyName: String, iossNum: String, list: SummaryList, ilist: SummaryList, isValid: Boolean, isExcluded: Boolean, maybeExclusion: Option[EtmpExclusion], exclusionDeadline: Option[String], noAmendments: Boolean, clientListUrl: String, reviewRegistrationDetails: Boolean)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = titleNoForm(messages("changeRegistration.title",companyName )), showBackLink = false) {
+@titleText = @{
+    reviewRegistrationDetails match {
+        case true => messages("changeRegistration.reviewRegistrationDetails.title", companyName)
+        case _ => messages("changeYourRegistration.title", companyName)
+    }
+}
+
+@layout(pageTitle = titleNoForm(titleText), showBackLink = false) {
 
     @if(!isValid) {
         @govukWarningText(WarningText(
@@ -78,7 +85,7 @@
             <p class="govuk-body">@messages("changeRegistration.reviewRegistrationDetails")</p>
             @formHelper(action = controllers.amend.routes.ChangeRegistrationController.onSubmit(waypoints, incompletePrompt = false)) {
                 @govukButton(
-                    ButtonViewModel(messages("site.confirm"))
+                    ButtonViewModel(messages("site.confirm")).withAttribute(("id", "submit"))
                 )
             }
         } else {
