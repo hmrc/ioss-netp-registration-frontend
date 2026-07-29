@@ -88,7 +88,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
   private val registrationWrapperWithoutExclusions: RegistrationWrapper =
     this.registrationWrapper.copy(
       etmpDisplayRegistration =
-        this.registrationWrapper.etmpDisplayRegistration.copy(exclusions = Seq.empty)
+        this.registrationWrapper.etmpDisplayRegistration.copy(exclusions = Seq.empty, adminUse = EtmpAdminUse(changeDate = Some(LocalDateTime.now(stubClockAtArbitraryDate))))
     )
 
   val existingPreviousRegistrations: Seq[PreviousRegistration] = Gen.listOfN(2, arbitraryPreviousRegistration.arbitrary).sample.value
