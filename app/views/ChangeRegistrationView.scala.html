@@ -29,10 +29,11 @@
         govukErrorSummary: GovukErrorSummary,
         govukInput: GovukInput,
         button: CancelAmendRegistrationButton,
-        govukWarningText: GovukWarningText
+        govukWarningText: GovukWarningText,
+        govukButton: GovukButton,
 )
 
-@(waypoints: Waypoints, companyName: String, iossNum: String, list: SummaryList, ilist: SummaryList, isValid: Boolean, isExcluded: Boolean, maybeExclusion: Option[EtmpExclusion], exclusionDeadline: Option[String], noAmendments: Boolean, clientListUrl: String)(implicit request: Request[_], messages: Messages)
+@(waypoints: Waypoints, companyName: String, iossNum: String, list: SummaryList, ilist: SummaryList, isValid: Boolean, isExcluded: Boolean, maybeExclusion: Option[EtmpExclusion], exclusionDeadline: Option[String], noAmendments: Boolean, clientListUrl: String, reviewRegistrationDetails: Boolean)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("changeRegistration.title",companyName )), showBackLink = false) {
 
@@ -43,8 +44,11 @@
         ))
     }
 
-    <h1 class="govuk-heading-xl govuk-!-margin-0">@messages("changeRegistration.heading", companyName)</h1>
-
+    @if(reviewRegistrationDetails) {
+        <h1 class="govuk-heading-xl govuk-!-margin-0">@messages("changeRegistration.reviewRegistrationDetails.heading", companyName)</h1>
+    } else {
+        <h1 class="govuk-heading-xl govuk-!-margin-0">@messages("changeRegistration.heading", companyName)</h1>
+    }
     <p class="govuk-caption-l govuk-!-margin-bottom-6">@messages("changeRegistration.intermediaryNumber", iossNum)</p>
 
     @maybeExclusion.map { exclusion =>
@@ -70,14 +74,23 @@
     
 
     @if(isValid) {
-        @if(noAmendments) {
-            <p class="govuk-body">@messages("changeRegistration.noAmendments")</p>
-            <p class="govuk-body">@Html(messages("changeRegistration.returnToListOfClients", clientListUrl))</p>
-        
-        } else {
-            <p class="govuk-body">@messages("changeRegistration.info.p1")</p>
+        @if(reviewRegistrationDetails) {
+            <p class="govuk-body">@messages("changeRegistration.reviewRegistrationDetails")</p>
             @formHelper(action = controllers.amend.routes.ChangeRegistrationController.onSubmit(waypoints, incompletePrompt = false)) {
-                @button("site.confirm", CancelAmendRegistrationPage.route(waypoints).url, waypoints)
+                @govukButton(
+                    ButtonViewModel(messages("site.confirm"))
+                )
+            }
+        } else {
+            @if(noAmendments) {
+                <p class="govuk-body">@messages("changeRegistration.noAmendments")</p>
+                <p class="govuk-body">@Html(messages("changeRegistration.returnToListOfClients", clientListUrl))</p>
+        
+            } else {
+                <p class="govuk-body">@messages("changeRegistration.info.p1")</p>
+                @formHelper(action = controllers.amend.routes.ChangeRegistrationController.onSubmit(waypoints, incompletePrompt = false)) {
+                    @button("site.confirm", CancelAmendRegistrationPage.route(waypoints).url, waypoints)
+                }
             }
         }
     } else {
