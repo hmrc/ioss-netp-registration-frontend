@@ -80,4 +80,6 @@ class FrontendAppConfig @Inject()(configuration: Configuration) {
   val iossJSLGuidancePageUrl: String = configuration.get[String]("urls.iossJSLGuidancePageUrl")
 
   val version7Enabled: Boolean = configuration.get[Boolean]("features.version7")
+
+  val registrationReviewEnabled: Boolean = configuration.get[Boolean]("features.registration-review-enabled")
 }

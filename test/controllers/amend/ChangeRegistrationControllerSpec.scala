@@ -21,6 +21,7 @@ import config.Constants.maxSchemes
 import config.FrontendAppConfig
 import models.audit.{NetpAmendRegistrationAuditModel, RegistrationAuditType, SubmissionResult}
 import models.domain.{PreviousRegistration, PreviousSchemeDetails, VatCustomerInfo}
+import models.etmp.{EtmpAdminUse, EtmpTradingName}
 import models.etmp.amend.AmendRegistrationResponse
 import models.vatEuDetails.EuDetails
 import models.etmp.display.{EtmpDisplayRegistration, RegistrationWrapper}
@@ -87,7 +88,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
   private val registrationWrapperWithoutExclusions: RegistrationWrapper =
     this.registrationWrapper.copy(
       etmpDisplayRegistration =
-        this.registrationWrapper.etmpDisplayRegistration.copy(exclusions = Seq.empty)
+        this.registrationWrapper.etmpDisplayRegistration.copy(exclusions = Seq.empty, adminUse = EtmpAdminUse(changeDate = Some(LocalDateTime.now(stubClockAtArbitraryDate))))
     )
 
   val existingPreviousRegistrations: Seq[PreviousRegistration] = Gen.listOfN(2, arbitraryPreviousRegistration.arbitrary).sample.value
@@ -240,7 +241,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 maybeExclusion= None,
                 exclusionDeadline = None,
                 noAmendments = true,
-                config.clientListUrl
+                config.clientListUrl,
+                reviewRegistrationDetails = false
               )(request, messages(application)).toString
           }
         }
@@ -287,7 +289,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 maybeExclusion= None,
                 exclusionDeadline = None,
                 noAmendments = true,
-                config.clientListUrl
+                config.clientListUrl,
+                reviewRegistrationDetails = false
               )(request, messages(application)).toString
           }
         }
@@ -333,7 +336,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               maybeExclusion= None,
               exclusionDeadline = None,
               noAmendments = true,
-              config.clientListUrl
+              config.clientListUrl,
+              reviewRegistrationDetails = false
             )(request, messages(application)).toString
           }
         }
@@ -380,7 +384,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
                 maybeExclusion= None,
                 exclusionDeadline = None,
                 noAmendments = true,
-                config.clientListUrl
+                config.clientListUrl,
+                reviewRegistrationDetails = false
               )(request, messages(application)).toString
           }
         }
@@ -441,7 +446,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               maybeExclusion = Some(exclusionWithinDeadline),
               exclusionDeadline = expectedDeadline,
               noAmendments = true,
-              config.clientListUrl
+              config.clientListUrl,
+              reviewRegistrationDetails = false
             )(request, messages(application)).toString
           }
         }
@@ -500,7 +506,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               maybeExclusion = Some(expiredExclusion),
               exclusionDeadline = None,
               noAmendments = true,
-              config.clientListUrl
+              config.clientListUrl,
+              reviewRegistrationDetails = false
             )(request, messages(application)).toString
           }
         }
@@ -559,7 +566,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               maybeExclusion = Some(hmrcExclusion),
               exclusionDeadline = None,
               noAmendments = true,
-              config.clientListUrl
+              config.clientListUrl,
+              reviewRegistrationDetails = false
             )(request, messages(application)).toString
           }
         }
@@ -617,7 +625,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               maybeExclusion = None,
               exclusionDeadline = None,
               noAmendments = true,
-              config.clientListUrl
+              config.clientListUrl,
+              reviewRegistrationDetails = false
             )(request, messages(application)).toString
           }
         }
@@ -671,8 +680,67 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
               maybeExclusion = None,
               exclusionDeadline = None,
               noAmendments = false,
-              config.clientListUrl
+              config.clientListUrl,
+              reviewRegistrationDetails = false
             )(request, messages(application)).toString
+          }
+        }
+
+        "A NETP registration details are over two years old" in {
+
+          val oldChangeDate = LocalDateTime.now(stubClockAtArbitraryDate).minusYears(2).minusDays(1)
+
+          val originalRegistration = registrationWrapper.copy(
+            etmpDisplayRegistration = registrationWrapper.etmpDisplayRegistration.copy(
+              tradingNames = Seq(EtmpTradingName("Original trading name")),
+              exclusions = List.empty,
+              adminUse = EtmpAdminUse(changeDate = Some(oldChangeDate))
+            )
+          )
+
+          when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn ukBasedCompleteUserAnswersWithoutVatInfo.toFuture
+
+          val application = applicationBuilder(
+            userAnswers = Some(ukBasedCompleteUserAnswersWithoutVatInfo),
+            registrationWrapper = Some(originalRegistration)
+          )
+            .overrides(bind[RegistrationService].toInstance(mockRegistrationService))
+            .build()
+
+          running(application) {
+
+            val request = FakeRequest(GET, controllers.amend.routes.ChangeRegistrationController.onPageLoad().url)
+
+            val config = application.injector.instanceOf[FrontendAppConfig]
+
+            implicit val msgs: Messages = messages(application)
+
+            val result = route(application, request).value
+
+            val view = application.injector.instanceOf[ChangeRegistrationView]
+
+            val registrationList = SummaryListViewModel(rows = getUkBasedWithoutVatNumRegistrationDetailsList(ukBasedCompleteUserAnswersWithoutVatInfo))
+
+            val importOneStopShopDetailsList = SummaryListViewModel(
+              rows = getImportOneStopShopDetailsSummaryList(ukBasedCompleteUserAnswersWithoutVatInfo, existingPreviousRegistrations)
+            )
+
+            status(result) mustBe OK
+            contentAsString(result) mustBe
+              view(
+                waypoints,
+                companyName,
+                iossNumber,
+                registrationList,
+                importOneStopShopDetailsList,
+                isValid = false,
+                isExcluded = false,
+                maybeExclusion= None,
+                exclusionDeadline = None,
+                noAmendments = true,
+                config.clientListUrl,
+                reviewRegistrationDetails = true
+              )(request, messages(application)).toString
           }
         }
       }
