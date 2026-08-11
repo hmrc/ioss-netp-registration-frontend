@@ -78,38 +78,41 @@ class PendingRegistrationService @Inject()(
       None
     )
 
+    def buildRegistration(
+                           answers: UserAnswers
+                         ): SavedPendingRegistrationWithUserAnswers =
+      SavedPendingRegistrationWithUserAnswers(
+        savedPendingRegistration.journeyId,
+        savedPendingRegistration.uniqueUrlCode,
+        answers,
+        savedPendingRegistration.lastUpdated,
+        savedPendingRegistration.uniqueActivationCode,
+        savedPendingRegistration.intermediaryDetails
+      )
+
+
     val maybeVatNumber = userAnswers.get(ClientVatNumberPage)
 
     maybeVatNumber match {
       case Some(vatNumber) =>
         registrationConnector.getVatCustomerInfo(vatNumber).map {
           case Right(vatInfo) =>
-            Right(SavedPendingRegistrationWithUserAnswers(
-              savedPendingRegistration.journeyId,
-              savedPendingRegistration.uniqueUrlCode,
-              userAnswers.copy(vatInfo = Some(vatInfo)),
-              savedPendingRegistration.lastUpdated,
-              savedPendingRegistration.uniqueActivationCode,
-              savedPendingRegistration.intermediaryDetails
+            Right(
+              buildRegistration(userAnswers.copy(vatInfo = Some(vatInfo))
             ))
+
           case Left(errorResponse) =>
             logger.warn(
               s"Unable to retrieve VAT customer information for journey " +
-                s"[${savedPendingRegistration.journeyId}]: $errorResponse"
+                s"[${savedPendingRegistration.journeyId}]: $errorResponse" +
+                s"Continuing without VAT information."
             )
-            Left(errorResponse)
+            Right(buildRegistration(userAnswers))
         }
       case _ =>
         Future.successful(
-          Right(SavedPendingRegistrationWithUserAnswers(
-            savedPendingRegistration.journeyId,
-            savedPendingRegistration.uniqueUrlCode,
-            userAnswers,
-            savedPendingRegistration.lastUpdated,
-            savedPendingRegistration.uniqueActivationCode,
-            savedPendingRegistration.intermediaryDetails
-          )
-        ))
+          Right(buildRegistration(userAnswers))
+        )
     }
   }
 

@@ -291,9 +291,10 @@ class PendingRegistrationServiceSpec extends SpecBase {
 
       val service = new PendingRegistrationService(mockRegistrationConnector)
 
-      service
-        .getPendingRegistration(journeyId, userAnswersId)
-        .futureValue mustBe Left(errorResponse)
+      val result =
+        service.getPendingRegistration(journeyId, userAnswersId).futureValue
+
+      result.value.userAnswers.vatInfo mustBe None
     }
 
     "must fail when the pending registration cannot be retrieved" in {
