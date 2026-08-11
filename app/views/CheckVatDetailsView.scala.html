@@ -67,7 +67,7 @@
                     }
                 } else None
 
-                val maybePartOfVatGroup = if (isBasedInUk) {
+                val maybePartOfVatGroup = if (isBasedInUk || hasVatNumber) {
                     viewModel.map { model =>
                         SummaryListRow(
                             key = Key(content = Text(messages("checkVatDetails.partOfVatGroup"))),

@@ -139,7 +139,7 @@ class ChangeRegistrationController @Inject()(
             } else {
               VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, request.userAnswers, thisPage)
             },
-            if (clientBasedInUk && hasUkVatNumber) {
+            if (clientBasedInUk || hasUkVatNumber) {
               VatRegistrationDetailsSummary.rowPartOfVatUkGroup(waypoints, request.userAnswers, thisPage)
             } else {
               None

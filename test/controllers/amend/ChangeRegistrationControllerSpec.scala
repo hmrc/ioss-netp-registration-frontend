@@ -298,7 +298,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
         "A NETP Has a Non Uk based address and Vat Info" in {
 
-          when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn ukBasedCompleteUserAnswersWithoutVatInfo.toFuture
+          when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn nonUkBasedCompleteUserAnswersWithVatInfo.toFuture
 
           val application = applicationBuilder(
             userAnswers = Some(nonUkBasedCompleteUserAnswersWithVatInfo),
@@ -898,7 +898,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       ClientBusinessNameSummary.row(waypoints, answers, amendYourAnswersPage),
       VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, answers, amendYourAnswersPage, false),
       VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, answers, amendYourAnswersPage),
-      ClientBusinessAddressSummary.row(waypoints, answers, amendYourAnswersPage)
+      ClientBusinessAddressSummary.row(waypoints, answers, amendYourAnswersPage),
+      VatRegistrationDetailsSummary.rowPartOfVatUkGroup(waypoints, answers, amendYourAnswersPage)
     ).flatten
   }
 
