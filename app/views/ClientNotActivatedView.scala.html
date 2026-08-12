@@ -68,8 +68,19 @@
                     )
                 }
             } else None
+
+            val maybePartOfVatGroup = if (isBasedInUk || hasVatNumber) {
+                viewModel.map { model =>
+                    SummaryListRow(
+                        key = Key(content = Text(messages("checkVatDetails.partOfVatGroup"))),
+                        value = Value(content = HtmlContent(model.partOfVatGroup))
+                    )
+                }
+            } else {
+                None
+            }
             
-            val rowsWithAddress = summaryList.rows ++ maybeAddressRow.toSeq
+            val rowsWithAddress = summaryList.rows ++ maybeAddressRow.toSeq ++ maybePartOfVatGroup.toSeq
             
             govukSummaryList(summaryList.copy(rows = rowsWithAddress))
         }

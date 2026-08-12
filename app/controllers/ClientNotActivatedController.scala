@@ -71,21 +71,25 @@ class ClientNotActivatedController @Inject()(
             val redirectToUpdateClientEmailAddressPage = s"${frontendAppConfig.redirectToUpdateClientEmailAddressPage}/${pendingRegistration.journeyId}"
             val dashboardUrl = frontendAppConfig.intermediaryYourAccountUrl
 
-            if (isBasedInUk && hasVatNumber) {
+            if (hasVatNumber) {
               pendingRegistration.userAnswers.vatInfo match {
 
                 case Some(vatCustomerInfo) =>
+                  println(s"here 1")
                   val viewModel = CheckVatDetailsViewModel(ukVatNumber, vatCustomerInfo)
 
                   Ok(view(waypoints, Some(viewModel), registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage, dashboardUrl))
 
                 case None =>
+                  println(s"here 2")
                   Redirect(JourneyRecoveryPage.route(waypoints).url)
               }
             } else {
+              println(s"here 3")
               Ok(view(waypoints, None, registrationSummaryList, clientDetailsSummaryList, clientCompanyName, isBasedInUk, hasVatNumber, emailAddress, clientCodeEntryUrl, activationExpiryDate, redirectToUpdateClientEmailAddressPage, dashboardUrl))
             }
           } else {
+            println(s"here 4")
             Redirect(controllers.routes.AccessDeniedController.onPageLoad().url)
           }
 
