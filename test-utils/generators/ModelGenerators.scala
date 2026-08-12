@@ -133,10 +133,12 @@ trait ModelGenerators extends EitherValues with EtmpModelGenerators {
         organisationName <- Gen.alphaStr
         individualName <- Gen.alphaStr
         singleMarketIndicator <- arbitrary[Boolean]
+        partOfVatGroup <- arbitrary[Boolean]
       } yield {
         VatCustomerInfo(
           desAddress = desAddress,
           registrationDate = registrationDate,
+          partOfVatGroup = partOfVatGroup,
           organisationName = Some(organisationName),
           individualName = Some(individualName),
           singleMarketIndicator = singleMarketIndicator,
@@ -247,6 +249,24 @@ trait ModelGenerators extends EitherValues with EtmpModelGenerators {
         uniqueActivationCode = UUID.randomUUID().toString
       } yield {
         SavedPendingRegistration(
+          journeyId = userAnswers.journeyId,
+          uniqueUrlCode = uniqueUrlCode,
+          userAnswersData = userAnswers.data,
+          lastUpdated = userAnswers.lastUpdated,
+          uniqueActivationCode = uniqueActivationCode,
+          intermediaryDetails = IntermediaryDetails("IM123456789", "IntermediaryName"))
+      }
+    }
+  }
+
+  implicit lazy val arbitrarySavedPendingRegistrationWithUserAnswers: Arbitrary[SavedPendingRegistrationWithUserAnswers] = {
+    Arbitrary {
+      for {
+        userAnswers <- arbitraryUserAnswers.arbitrary
+        uniqueUrlCode = UUID.randomUUID().toString
+        uniqueActivationCode = UUID.randomUUID().toString
+      } yield {
+        SavedPendingRegistrationWithUserAnswers(
           journeyId = userAnswers.journeyId,
           uniqueUrlCode = uniqueUrlCode,
           userAnswers = userAnswers,

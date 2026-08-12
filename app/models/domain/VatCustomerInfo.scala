@@ -24,6 +24,7 @@ import java.time.LocalDate
 case class VatCustomerInfo(
                             desAddress: DesAddress,
                             registrationDate: LocalDate,
+                            partOfVatGroup: Boolean,
                             organisationName: Option[String],
                             individualName: Option[String],
                             singleMarketIndicator: Boolean,

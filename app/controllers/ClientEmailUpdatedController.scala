@@ -17,7 +17,6 @@
 package controllers
 
 import config.FrontendAppConfig
-import connectors.RegistrationConnector
 import controllers.actions.*
 import logging.Logging
 
@@ -25,6 +24,7 @@ import javax.inject.Inject
 import play.api.i18n.{I18nSupport, MessagesApi}
 import pages.{BusinessContactDetailsPage, Waypoints}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import services.PendingRegistrationService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.ClientEmailUpdatedView
 
@@ -35,7 +35,7 @@ class ClientEmailUpdatedController @Inject()(
                                               cc: AuthenticatedControllerComponents,
                                               val controllerComponents: MessagesControllerComponents,
                                               frontendAppConfig: FrontendAppConfig,
-                                              registrationConnector: RegistrationConnector,
+                                              pendingRegistrationService: PendingRegistrationService,
                                               view: ClientEmailUpdatedView
                                             )(implicit ec: ExecutionContext)
   extends FrontendBaseController with I18nSupport with Logging with GetOrganisationOrBusinessName {
@@ -43,7 +43,7 @@ class ClientEmailUpdatedController @Inject()(
   def onPageLoad(waypoints: Waypoints, journeyId: String): Action[AnyContent] = cc.identify.async {
     implicit request =>
 
-      registrationConnector.getPendingRegistration(journeyId).map {
+      pendingRegistrationService.getPendingRegistration(journeyId, request.userId).map {
         case Right(pendingRegistration) =>
 
           if (pendingRegistration.intermediaryDetails.intermediaryNumber == request.intermediaryNumber) {

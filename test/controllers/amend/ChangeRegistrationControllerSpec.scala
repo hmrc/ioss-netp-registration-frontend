@@ -53,7 +53,7 @@ import services.{AuditService, RegistrationService}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
-import viewmodels.checkAnswers.*
+import viewmodels.checkAnswers.{VatRegistrationDetailsSummary, *}
 import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
 import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
 import viewmodels.govuk.SummaryListFluency
@@ -81,7 +81,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       organisationName = Some("Company name"),
       individualName = None,
       singleMarketIndicator = true,
-      deregistrationDecisionDate = None
+      deregistrationDecisionDate = None,
+      partOfVatGroup = false
     )
   }
 
@@ -297,7 +298,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
         "A NETP Has a Non Uk based address and Vat Info" in {
 
-          when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn ukBasedCompleteUserAnswersWithoutVatInfo.toFuture
+          when(mockRegistrationService.toUserAnswers(any(), any())) thenReturn nonUkBasedCompleteUserAnswersWithVatInfo.toFuture
 
           val application = applicationBuilder(
             userAnswers = Some(nonUkBasedCompleteUserAnswersWithVatInfo),
@@ -882,7 +883,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       BusinessBasedInUKSummary.rowWithoutAction(waypoints, answers),
       ClientHasVatNumberSummary.rowWithoutAction(waypoints, answers),
       ClientVatNumberSummary.rowWithoutAction(waypoints, answers),
-      VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, answers, amendYourAnswersPage)
+      VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, answers, amendYourAnswersPage),
+      VatRegistrationDetailsSummary.rowPartOfVatUkGroup(waypoints, answers, amendYourAnswersPage)
     ).flatten
   }
 
@@ -896,7 +898,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       ClientBusinessNameSummary.row(waypoints, answers, amendYourAnswersPage),
       VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, answers, amendYourAnswersPage, false),
       VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, answers, amendYourAnswersPage),
-      ClientBusinessAddressSummary.row(waypoints, answers, amendYourAnswersPage)
+      ClientBusinessAddressSummary.row(waypoints, answers, amendYourAnswersPage),
+      VatRegistrationDetailsSummary.rowPartOfVatUkGroup(waypoints, answers, amendYourAnswersPage)
     ).flatten
   }
 
@@ -978,7 +981,8 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       BusinessBasedInUKSummary.rowWithoutAction(waypoints, answers),
       ClientHasVatNumberSummary.rowWithoutAction(waypoints, answers),
       ClientVatNumberSummary.rowWithoutAction(waypoints, answers),
-      VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, answers, amendYourAnswersPage)
+      VatRegistrationDetailsSummary.changeRegBusinessAddressRow(waypoints, answers, amendYourAnswersPage),
+      VatRegistrationDetailsSummary.rowPartOfVatUkGroup(waypoints, answers, amendYourAnswersPage)
     ).flatten
   }
 

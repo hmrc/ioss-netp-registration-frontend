@@ -18,8 +18,7 @@ package controllers
 
 import base.SpecBase
 import config.FrontendAppConfig
-import connectors.RegistrationConnector
-import models.SavedPendingRegistration
+import models.{SavedPendingRegistration, SavedPendingRegistrationWithUserAnswers}
 import models.responses.InternalServerError
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
@@ -28,14 +27,15 @@ import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
+import services.PendingRegistrationService
 import utils.FutureSyntax.FutureOps
 import views.html.ApplicationCompleteView
 
 class ApplicationCompleteControllerSpec extends SpecBase {
 
-  private val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
+  private val mockPendingRegistrationService: PendingRegistrationService = mock[PendingRegistrationService]
 
-  private val savedPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
+  private val savedPendingRegistration: SavedPendingRegistrationWithUserAnswers = arbitrarySavedPendingRegistrationWithUserAnswers.arbitrary.sample.value
   private val clientName: String = savedPendingRegistration.userAnswers.vatInfo.flatMap(_.organisationName).value
   private val activationExpiryDate = savedPendingRegistration.activationExpiryDate
 
@@ -50,11 +50,11 @@ class ApplicationCompleteControllerSpec extends SpecBase {
       val application = applicationBuilder(userAnswers = Some(savedPendingRegistration.userAnswers))
         .overrides(
           bind[SessionRepository].toInstance(mockSessionRepository),
-            bind[RegistrationConnector].toInstance(mockRegistrationConnector)
+          bind[PendingRegistrationService].toInstance(mockPendingRegistrationService)
         )
         .build()
 
-      when(mockRegistrationConnector.getPendingRegistration(any())(any())) thenReturn Right(savedPendingRegistration).toFuture
+      when(mockPendingRegistrationService.getPendingRegistration(any(), any())(any())) thenReturn Right(savedPendingRegistration).toFuture
 
       running(application) {
         val request = FakeRequest(GET, routes.ApplicationCompleteController.onPageLoad().url)
@@ -69,7 +69,7 @@ class ApplicationCompleteControllerSpec extends SpecBase {
 
         status(result) `mustBe` OK
         contentAsString(result) `mustBe` view(clientName, clientDeclarationLink, savedPendingRegistration.uniqueUrlCode, activationExpiryDate, config.intermediaryYourAccountUrl)(request, messages(application)).toString
-        verify(mockRegistrationConnector, times(1)).getPendingRegistration(eqTo(savedPendingRegistration.journeyId))(any())
+        verify(mockPendingRegistrationService, times(1)).getPendingRegistration(eqTo(savedPendingRegistration.journeyId), eqTo(userAnswersId))(any())
         verify(mockSessionRepository, times(1)).clear(eqTo(userAnswersId))
       }
     }
@@ -77,10 +77,10 @@ class ApplicationCompleteControllerSpec extends SpecBase {
     "must throw an Exception when there is an error retrieving saved pending registration from the backend" in {
 
       val application = applicationBuilder(userAnswers = Some(savedPendingRegistration.userAnswers))
-        .overrides(bind[RegistrationConnector].toInstance(mockRegistrationConnector))
+        .overrides(bind[PendingRegistrationService].toInstance(mockPendingRegistrationService))
         .build()
 
-      when(mockRegistrationConnector.getPendingRegistration(any())(any())) thenReturn Left(InternalServerError).toFuture
+      when(mockPendingRegistrationService.getPendingRegistration(any(), any())(any())) thenReturn Left(InternalServerError).toFuture
 
       running(application) {
         val request = FakeRequest(GET, routes.ApplicationCompleteController.onPageLoad().url)

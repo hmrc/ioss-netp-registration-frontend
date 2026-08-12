@@ -17,14 +17,13 @@
 package controllers
 
 import config.Constants.emailAlertQueuePriority
-import connectors.RegistrationConnector
 import controllers.actions.*
 import forms.UpdateClientEmailAddressFormProvider
 import logging.Logging
 import pages.{BusinessContactDetailsPage, UpdateClientEmailAddressPage, Waypoints}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import services.EmailService
+import services.{EmailService, PendingRegistrationService}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
 import views.html.UpdateClientEmailAddressView
@@ -37,7 +36,7 @@ class UpdateClientEmailAddressController @Inject()(
                                                     cc: AuthenticatedControllerComponents,
                                                     formProvider: UpdateClientEmailAddressFormProvider,
                                                     val controllerComponents: MessagesControllerComponents,
-                                                    registrationConnector: RegistrationConnector,
+                                                    pendingRegistrationService: PendingRegistrationService,
                                                     emailService: EmailService,
                                                     view: UpdateClientEmailAddressView
                                                   )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with GetOrganisationOrBusinessName with Logging {
@@ -47,7 +46,7 @@ class UpdateClientEmailAddressController @Inject()(
   def onPageLoad(waypoints: Waypoints, journeyId: String): Action[AnyContent] = (cc.actionBuilder andThen cc.identify).async {
     implicit request =>
 
-      registrationConnector.getPendingRegistration(journeyId).map {
+      pendingRegistrationService.getPendingRegistration(journeyId, request.userId).map {
         case Right(savedPendingRegistrations) =>
 
           if (savedPendingRegistrations.intermediaryDetails.intermediaryNumber == request.intermediaryNumber) {
@@ -79,7 +78,7 @@ class UpdateClientEmailAddressController @Inject()(
   def onSubmit(waypoints: Waypoints, journeyId: String): Action[AnyContent] = (cc.actionBuilder andThen cc.identify).async {
     implicit request =>
 
-      registrationConnector.getPendingRegistration(journeyId).flatMap {
+      pendingRegistrationService.getPendingRegistration(journeyId, request.userId).flatMap {
         case Right(savedPendingRegistration) =>
 
           if (savedPendingRegistration.intermediaryDetails.intermediaryNumber == request.intermediaryNumber) {
@@ -92,7 +91,7 @@ class UpdateClientEmailAddressController @Inject()(
                 BadRequest(view(formWithErrors, waypoints, journeyId, clientCompanyName, emailAddress)).toFuture,
 
               value =>
-                registrationConnector.updateClientEmailAddress(journeyId, value).map {
+                pendingRegistrationService.updateClientEmailAddress(journeyId, value, request.userId).map {
                   case Right(updatedClient) =>
 
                     val intermediaryName = updatedClient.intermediaryDetails.intermediaryName

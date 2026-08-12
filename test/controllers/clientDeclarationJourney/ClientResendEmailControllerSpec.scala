@@ -23,7 +23,7 @@ import controllers.{clientDeclarationJourney, routes}
 import models.domain.VatCustomerInfo
 import models.emails.EmailSendingResult
 import models.responses.{RegistrationNotFound, UnexpectedResponseStatus}
-import models.{BusinessContactDetails, ClientBusinessName, IntermediaryDetails, SavedPendingRegistration, UserAnswers}
+import models.{BusinessContactDetails, ClientBusinessName, IntermediaryDetails, SavedPendingRegistration, SavedPendingRegistrationWithUserAnswers, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
@@ -64,7 +64,7 @@ class ClientResendEmailControllerSpec extends SpecBase with MockitoSugar with Be
   private val testSavedPendingRegistration = SavedPendingRegistration(
     journeyId = "test-journey-id",
     uniqueUrlCode = testUniqueUrlCode,
-    userAnswers = baseUserAnswers,
+    userAnswersData = baseUserAnswers.data,
     lastUpdated = testLastUpdated,
     uniqueActivationCode = testActivationCode,
     intermediaryDetails = intermediaryDetails
