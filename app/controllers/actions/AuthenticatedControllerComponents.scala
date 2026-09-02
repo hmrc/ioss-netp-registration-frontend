@@ -53,6 +53,8 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
   def checkExcludedIntermediary: CheckExcludedIntermediaryFilterProvider
 
   def checkIntermediaryAccess: CheckIntermediaryAccessFilterProvider
+  
+  def vatGroupFilter: VatGroupFilterProvider
 
   def identifyAndGetData(inAmend: Boolean = false, checkAmendAccess: Option[Page] = None): ActionBuilder[DataRequest, AnyContent] = {
     val baseActions = identifyAndGetOptionalData(inAmend, checkAmendAccess) andThen
@@ -108,5 +110,6 @@ case class DefaultAuthenticatedControllerComponents @Inject()(
                                                                requireRegistration: RegistrationRequiredAction,
                                                                checkAmendAccess: CheckAmendPageAccessFilter,
                                                                checkExcludedIntermediary: CheckExcludedIntermediaryFilterProvider,
-                                                               checkIntermediaryAccess: CheckIntermediaryAccessFilterProvider
+                                                               checkIntermediaryAccess: CheckIntermediaryAccessFilterProvider,
+                                                               vatGroupFilter: VatGroupFilterProvider
                                                              ) extends AuthenticatedControllerComponents

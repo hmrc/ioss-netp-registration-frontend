@@ -18,6 +18,7 @@ package pages.vatEuDetails
 
 import controllers.vatEuDetails.routes
 import models.{Index, UserAnswers}
+import pages.website.WebsitePage
 import pages.{NonEmptyWaypoints, Page, Waypoints}
 import play.api.mvc.Call
 import queries.euDetails.DeriveNumberOfEuRegistrations
@@ -31,6 +32,7 @@ case class DeleteEuDetailsPage(countryIndex: Index)  extends Page {
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
     answers.get(DeriveNumberOfEuRegistrations) match {
       case Some(n) if n > 0 => AddEuDetailsPage()
+      case _ if answers.vatInfo.exists(_.partOfVatGroup) => WebsitePage(Index(0))
       case _ => HasFixedEstablishmentPage
     }
   }
@@ -38,6 +40,7 @@ case class DeleteEuDetailsPage(countryIndex: Index)  extends Page {
   override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page = {
     answers.get(DeriveNumberOfEuRegistrations) match {
       case Some(n) if n > 0 => AddEuDetailsPage()
+      case _ if answers.vatInfo.exists(_.partOfVatGroup) => WebsitePage(Index(0))
       case _ => HasFixedEstablishmentPage
     }
   }
