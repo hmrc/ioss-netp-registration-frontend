@@ -82,6 +82,26 @@ class DeleteEuDetailsControllerSpec extends SpecBase with MockitoSugar {
       }
     }
 
+    "must redirect to Access Denied when the client is part of a VAT group" in {
+
+      val vatGroupAnswers = updatedAnswers.copy(
+        vatInfo = updatedAnswers.vatInfo.map(_.copy(partOfVatGroup = true))
+      )
+
+      val application = applicationBuilder(userAnswers = Some(vatGroupAnswers)).build()
+
+      running(application) {
+
+        val request = FakeRequest(GET, deleteEuDetailsRoute)
+
+        val result = route(application, request).value
+
+        status(result) mustBe SEE_OTHER
+
+        redirectLocation(result) mustBe Some(controllers.routes.AccessDeniedController.onPageLoad().url)
+      }
+    }
+
     "must remove the record and redirect to the next page when the user answers Yes" in {
 
       val mockSessionRepository = mock[SessionRepository]
