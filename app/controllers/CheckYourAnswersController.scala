@@ -22,8 +22,10 @@ import controllers.actions.*
 import logging.Logging
 import models.CheckMode
 import pages.*
+import pages.vatEuDetails.HasFixedEstablishmentPage
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import queries.euDetails.AllEuDetailsQuery
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.CompletionChecks
 import utils.FutureSyntax.FutureOps
@@ -51,7 +53,15 @@ class CheckYourAnswersController @Inject()(
     implicit request =>
 
       val thisPage = CheckYourAnswersPage
-      val userAnswers = request.userAnswers
+      val userAnswers = if (request.userAnswers.vatInfo.exists(_.partOfVatGroup)) {
+        (for {
+          withoutHasFixedEstablishments <- request.userAnswers.remove(HasFixedEstablishmentPage)
+          withoutEuDetails <- withoutHasFixedEstablishments.remove(AllEuDetailsQuery)
+        } yield withoutEuDetails).get
+      } else {
+        request.userAnswers
+      }
+
       val hasUkVatNumber = userAnswers.get(ClientHasVatNumberPage).contains(true)
       val isUKBased = userAnswers.get(BusinessBasedInUKPage).contains(true)
 
