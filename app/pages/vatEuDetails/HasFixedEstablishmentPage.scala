@@ -18,7 +18,7 @@ package pages.vatEuDetails
 
 import controllers.vatEuDetails.routes
 import models.{Index, UserAnswers}
-import pages.{JourneyRecoveryPage, NonEmptyWaypoints, Page, QuestionPage, RecoveryOps, Waypoints}
+import pages.{CheckYourAnswersPage, JourneyRecoveryPage, NonEmptyWaypoints, Page, QuestionPage, RecoveryOps, Waypoints}
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 import pages.website.WebsitePage
@@ -46,7 +46,7 @@ case object HasFixedEstablishmentPage extends QuestionPage[Boolean] {
       case (Some(true), Some(euDetails)) if euDetails.nonEmpty => AddEuDetailsPage()
       case (Some(true), _) => EuCountryPage(Index(0))
       case (Some(false), Some(euDetails)) if euDetails.nonEmpty => DeleteAllEuDetailsPage
-      case (Some(false), _) => JourneyRecoveryPage
+      case (Some(false), _) => CheckYourAnswersPage
       case _ => JourneyRecoveryPage
     }
 }
