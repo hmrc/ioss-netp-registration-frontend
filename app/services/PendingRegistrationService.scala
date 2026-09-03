@@ -100,14 +100,19 @@ class PendingRegistrationService @Inject()(
       case Some(vatNumber) =>
         registrationConnector.getVatCustomerInfo(vatNumber).map {
           case Right(vatInfo) =>
-            
+
             val refreshedAnswers = userAnswers.copy(vatInfo = Some(vatInfo))
             val answers = if (vatInfo.partOfVatGroup) {
               removeFixedEstablishmentAnswers(refreshedAnswers).get
             } else {
-              refreshedAnswers
+              refreshedAnswers.get(HasFixedEstablishmentPage) match {
+                case Some(_) =>
+                  refreshedAnswers
+                case None =>
+                  refreshedAnswers.set(HasFixedEstablishmentPage, false).get
+              }
             }
-            
+
             Right(buildRegistration(answers))
 
           case Left(errorResponse) =>
@@ -148,7 +153,7 @@ class PendingRegistrationService @Inject()(
           Future.successful(Left(errorResponse))
       }
   }
-  
+
   private def removeFixedEstablishmentAnswers(userAnswers: UserAnswers): Try[UserAnswers] = {
     for {
       withoutHasFixedEstablishments <- userAnswers.remove(HasFixedEstablishmentPage)
