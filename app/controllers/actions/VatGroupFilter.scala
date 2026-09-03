@@ -17,10 +17,9 @@
 package controllers.actions
 
 import controllers.routes
-import models.Index
 import models.requests.DataRequest
 import play.api.mvc.{ActionFilter, Result}
-import play.api.mvc.Results.{NotFound, Redirect}
+import play.api.mvc.Results.Redirect
 import utils.FutureSyntax.FutureOps
 
 import javax.inject.Inject
@@ -30,7 +29,7 @@ class VatGroupFilter()(implicit val executionContext: ExecutionContext) extends 
 
   override protected def filter[A](request: DataRequest[A]): Future[Option[Result]] = {
     if(request.userAnswers.vatInfo.exists(_.partOfVatGroup)) {
-      Some(Redirect(routes.UnauthorisedController.onPageLoad())).toFuture
+      Some(Redirect(routes.AccessDeniedController.onPageLoad())).toFuture
     } else {
       None.toFuture
     }

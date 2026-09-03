@@ -31,9 +31,13 @@ object EuDetailsCompletionChecks {
   private val query = AllEuDetailsQuery
 
   def isEuDetailsDefined()(implicit requests: DataRequest[AnyContent]): Boolean = {
-    requests.userAnswers.get(HasFixedEstablishmentPage).exists {
-      case true => requests.userAnswers.get(query).exists(_.nonEmpty)
-      case false => requests.userAnswers.get(query).getOrElse(List.empty).isEmpty
+    if (requests.userAnswers.vatInfo.exists(_.partOfVatGroup)) {
+      true
+    } else {
+      requests.userAnswers.get(HasFixedEstablishmentPage).exists {
+        case true => requests.userAnswers.get(query).exists(_.nonEmpty)
+        case false => requests.userAnswers.get(query).getOrElse(List.empty).isEmpty
+      }
     }
   }
 

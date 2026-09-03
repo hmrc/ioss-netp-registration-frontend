@@ -38,18 +38,11 @@ class PendingRegistrationServiceSpec extends SpecBase {
 
   private implicit val hc: HeaderCarrier = new HeaderCarrier()
 
-  private val pendingRegistrationWithUserAnswers: SavedPendingRegistrationWithUserAnswers =
-    arbitrarySavedPendingRegistrationWithUserAnswers.arbitrary.sample.value
-    .copy(intermediaryDetails = IntermediaryDetails(intermediaryNumber, intermediaryName), journeyId = journeyId)
-
   private val pendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
     .copy(intermediaryDetails = IntermediaryDetails(intermediaryNumber, intermediaryName), journeyId = journeyId)
 
   private val anotherIntermediaryNumber = "IN9001234569"
   private val anotherIntermediaryName = "Another Intermediary Company Name"
-  private val anotherPendingRegistrationWithUserAnswers: SavedPendingRegistrationWithUserAnswers =
-    arbitrarySavedPendingRegistrationWithUserAnswers.arbitrary.sample.value
-    .copy(intermediaryDetails = IntermediaryDetails(anotherIntermediaryNumber, anotherIntermediaryName), journeyId = journeyId)
 
   private val anotherPendingRegistration: SavedPendingRegistration = arbitrarySavedPendingRegistration.arbitrary.sample.value
     .copy(intermediaryDetails = IntermediaryDetails(anotherIntermediaryNumber, anotherIntermediaryName), journeyId = journeyId)

@@ -44,7 +44,7 @@ class HasFixedEstablishmentController @Inject()(
   protected val controllerComponents: MessagesControllerComponents = cc
   
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] =
-    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(HasFixedEstablishmentPage)).async {
+    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(HasFixedEstablishmentPage), restrictFromPartOfVatGroup = true).async {
     implicit request =>
 
       val form: Form[Boolean] = formProvider()
@@ -57,7 +57,7 @@ class HasFixedEstablishmentController @Inject()(
       Ok(view(preparedForm, waypoints)).toFuture
   }
 
-  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend).async {
+  def onSubmit(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend, restrictFromPartOfVatGroup = true).async {
     implicit request =>
 
       val form: Form[Boolean] = formProvider()

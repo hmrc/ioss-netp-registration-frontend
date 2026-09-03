@@ -45,7 +45,7 @@ class RegistrationTypeController @Inject()(
   protected val controllerComponents: MessagesControllerComponents = cc
 
   def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] =
-    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(RegistrationTypePage(countryIndex))).async {
+    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(RegistrationTypePage(countryIndex)), restrictFromPartOfVatGroup = true).async {
     implicit request =>
 
       getCountryWithIndex(waypoints, countryIndex) { country =>
@@ -60,7 +60,8 @@ class RegistrationTypeController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend).async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] =
+    cc.identifyAndGetData(inAmend = waypoints.inAmend, restrictFromPartOfVatGroup = true).async {
     implicit request =>
 
       getCountryWithIndex(waypoints, countryIndex) { country =>

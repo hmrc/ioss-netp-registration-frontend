@@ -44,8 +44,11 @@ class TradingNameAndBusinessAddressController @Inject()(
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] =
-    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(TradingNameAndBusinessAddressPage(countryIndex))).async {
+  def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData(
+    waypoints.inAmend,
+    checkAmendAccess = Some(TradingNameAndBusinessAddressPage(countryIndex)),
+    restrictFromPartOfVatGroup = true
+  ).async {
     implicit request =>
 
       getCountryWithIndex(waypoints, countryIndex) { country =>
@@ -61,7 +64,8 @@ class TradingNameAndBusinessAddressController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend).async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] =
+    cc.identifyAndGetData(inAmend = waypoints.inAmend, restrictFromPartOfVatGroup = true).async {
     implicit request =>
 
       getCountryWithIndex(waypoints: Waypoints, countryIndex: Index) { country =>

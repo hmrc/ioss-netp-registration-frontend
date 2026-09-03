@@ -110,8 +110,12 @@ class RegistrationService @Inject()(
         Try(hasPreviousEuRegistrationsUA)
       }
 
-      hasFixedEstablishment <- previousEuRegistrationsUA.set(HasFixedEstablishmentPage, schemeDetails.euRegistrationDetails.nonEmpty)
-      euFixedEstablishmentUA <- if (schemeDetails.euRegistrationDetails.nonEmpty) {
+      hasFixedEstablishment <- if (!previousEuRegistrationsUA.vatInfo.exists(_.partOfVatGroup)) {
+        previousEuRegistrationsUA.set(HasFixedEstablishmentPage, schemeDetails.euRegistrationDetails.nonEmpty)
+      } else {
+        Try(previousEuRegistrationsUA)
+      }
+      euFixedEstablishmentUA <- if (!previousEuRegistrationsUA.vatInfo.exists(_.partOfVatGroup) && schemeDetails.euRegistrationDetails.nonEmpty) {
         hasFixedEstablishment.set(AllEuDetailsQuery, convertEuFixedEstablishmentDetails(schemeDetails.euRegistrationDetails).toList)
       } else {
         Try(hasFixedEstablishment)

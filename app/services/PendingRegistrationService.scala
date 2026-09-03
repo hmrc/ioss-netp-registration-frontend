@@ -22,13 +22,16 @@ import models.domain.VatCustomerInfo
 import models.{SavedPendingRegistration, SavedPendingRegistrationWithUserAnswers, UserAnswers}
 import models.etmp.EtmpIdType
 import models.responses.ErrorResponse
+import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.{ClientVatNumberPage, Waypoints}
 import play.api.mvc.Result
 import play.api.mvc.Results.Redirect
+import queries.euDetails.AllEuDetailsQuery
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 class PendingRegistrationService @Inject()(
                                             registrationConnector: RegistrationConnector
@@ -97,9 +100,15 @@ class PendingRegistrationService @Inject()(
       case Some(vatNumber) =>
         registrationConnector.getVatCustomerInfo(vatNumber).map {
           case Right(vatInfo) =>
-            Right(
-              buildRegistration(userAnswers.copy(vatInfo = Some(vatInfo))
-            ))
+            
+            val refreshedAnswers = userAnswers.copy(vatInfo = Some(vatInfo))
+            val answers = if (vatInfo.partOfVatGroup) {
+              removeFixedEstablishmentAnswers(refreshedAnswers).get
+            } else {
+              refreshedAnswers
+            }
+            
+            Right(buildRegistration(answers))
 
           case Left(errorResponse) =>
             logger.warn(
@@ -138,5 +147,12 @@ class PendingRegistrationService @Inject()(
 
           Future.successful(Left(errorResponse))
       }
+  }
+  
+  private def removeFixedEstablishmentAnswers(userAnswers: UserAnswers): Try[UserAnswers] = {
+    for {
+      withoutHasFixedEstablishments <- userAnswers.remove(HasFixedEstablishmentPage)
+      withoutEuDetails <- withoutHasFixedEstablishments.remove(AllEuDetailsQuery)
+    } yield withoutEuDetails
   }
 }

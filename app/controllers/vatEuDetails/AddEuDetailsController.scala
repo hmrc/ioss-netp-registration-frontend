@@ -52,7 +52,7 @@ class AddEuDetailsController @Inject()(
   private val form: Form[Boolean] = formProvider()
 
   def onPageLoad(waypoints: Waypoints): Action[AnyContent] =
-    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(AddEuDetailsPage())).async {
+    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(AddEuDetailsPage()), restrictFromPartOfVatGroup = true).async {
     implicit request =>
 
       getDerivedItems(waypoints, DeriveNumberOfEuRegistrations) { numberOfEuRegistrations =>
@@ -71,7 +71,8 @@ class AddEuDetailsController @Inject()(
       }
   }
 
-  def onSubmit(waypoints: Waypoints, incompletePromptShown: Boolean): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
+  def onSubmit(waypoints: Waypoints, incompletePromptShown: Boolean): Action[AnyContent] =
+    cc.identifyAndGetData(waypoints.inAmend, restrictFromPartOfVatGroup = true).async {
     implicit request =>
 
       withCompleteDataAsync[EuDetails](

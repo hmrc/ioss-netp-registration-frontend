@@ -19,10 +19,9 @@ package controllers.actions
 import base.SpecBase
 import models.UserAnswers
 import models.domain.VatCustomerInfo
-import models.requests.{ClientOptionalDataRequest, DataRequest}
+import models.requests.DataRequest
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
-import pages.clientDeclarationJourney.ClientCodeEntryPage
 import play.api.mvc.Result
 import play.api.mvc.Results.Redirect
 import play.api.test.FakeRequest
@@ -40,7 +39,7 @@ class VatGroupFilterSpec extends SpecBase with MockitoSugar with BeforeAndAfterE
 
     "should return None and allow the customer to progress when vat group is false" in {
 
-      val dataRequest = DataRequest(FakeRequest(), "id", basicUserAnswersWithVatInfo)
+      val dataRequest = DataRequest(FakeRequest(), "id", basicUserAnswersWithVatInfo, intermediaryNumber, None, None)
 
       val action = new Harness()
 
@@ -64,13 +63,13 @@ class VatGroupFilterSpec extends SpecBase with MockitoSugar with BeforeAndAfterE
 
       val userAnswers = basicUserAnswersWithVatInfo.copy(vatInfo = Some(vatGroupVatCustomerInfo))
 
-      val dataRequest = DataRequest(FakeRequest(), "id", userAnswers)
+      val dataRequest = DataRequest(FakeRequest(), "id", userAnswers, intermediaryNumber, None, None)
 
       val action = new Harness()
 
       val result = action.callFilter(dataRequest).futureValue
 
-      result mustBe Some(Redirect(controllers.routes.UnauthorisedController.onPageLoad()))
+      result mustBe Some(Redirect(controllers.routes.AccessDeniedController.onPageLoad()))
     }
   }
 }
