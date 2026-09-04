@@ -18,7 +18,7 @@ package connectors
 
 import base.SpecBase
 import com.github.tomakehurst.wiremock.client.WireMock.*
-import models.{PendingRegistrationRequest, SavedPendingRegistration, SavedPendingRegistrationWithUserAnswers, UserAnswers}
+import models.{PendingRegistrationRequest, SavedPendingRegistration, UserAnswers}
 import models.domain.VatCustomerInfo
 import models.etmp.EtmpIdType.*
 import models.etmp.amend.{AmendRegistrationResponse, EtmpAmendRegistrationRequest}

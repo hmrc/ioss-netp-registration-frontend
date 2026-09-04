@@ -53,14 +53,28 @@ trait AuthenticatedControllerComponents extends MessagesControllerComponents {
   def checkExcludedIntermediary: CheckExcludedIntermediaryFilterProvider
 
   def checkIntermediaryAccess: CheckIntermediaryAccessFilterProvider
+  
+  def vatGroupFilter: VatGroupFilterProvider
 
-  def identifyAndGetData(inAmend: Boolean = false, checkAmendAccess: Option[Page] = None): ActionBuilder[DataRequest, AnyContent] = {
+  def identifyAndGetData(
+                          inAmend: Boolean = false,
+                          checkAmendAccess: Option[Page] = None,
+                          restrictFromPartOfVatGroup: Boolean = false
+                        ): ActionBuilder[DataRequest, AnyContent] = {
+
     val baseActions = identifyAndGetOptionalData(inAmend, checkAmendAccess) andThen
       requireData(inAmend)
 
-      (inAmend, checkAmendAccess) match {
-      case (true, Some(page)) => baseActions andThen this.checkAmendAccess(page)
-      case _ => baseActions
+    val actionsWithVatGroupCheck =
+      if (restrictFromPartOfVatGroup) {
+        baseActions andThen vatGroupFilter()
+      } else {
+        baseActions
+      }
+
+    (inAmend, checkAmendAccess) match {
+      case (true, Some(page)) => actionsWithVatGroupCheck andThen this.checkAmendAccess(page)
+      case _ => actionsWithVatGroupCheck
     }
   }
 
@@ -108,5 +122,6 @@ case class DefaultAuthenticatedControllerComponents @Inject()(
                                                                requireRegistration: RegistrationRequiredAction,
                                                                checkAmendAccess: CheckAmendPageAccessFilter,
                                                                checkExcludedIntermediary: CheckExcludedIntermediaryFilterProvider,
-                                                               checkIntermediaryAccess: CheckIntermediaryAccessFilterProvider
+                                                               checkIntermediaryAccess: CheckIntermediaryAccessFilterProvider,
+                                                               vatGroupFilter: VatGroupFilterProvider
                                                              ) extends AuthenticatedControllerComponents

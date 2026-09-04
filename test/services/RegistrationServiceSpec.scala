@@ -130,27 +130,63 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
 
     "must convert from RegistrationWrapper to UserAnswers" - {
 
-      "when client is UK based with Vat Info" in {
+      "when client is UK based with Vat Info" - {
 
-        val ukCountryCode: String = "GB"
+        "when part of VAT group" in {
 
-        val ukRegistrationWrapper: RegistrationWrapper = registrationWrapper
-          .copy(vatInfo = Some(registrationWrapper.vatInfo.get.
-            copy(desAddress = registrationWrapper.vatInfo.get.desAddress
-              .copy(countryCode = ukCountryCode)
-            )),
-            etmpDisplayRegistration = registrationWrapper.etmpDisplayRegistration
-              .copy(
-                customerIdentification = EtmpDisplayCustomerIdentification(VRN, registrationWrapper.etmpDisplayRegistration.customerIdentification.idValue),
-                otherAddress = None
-              )
-          )
+          val ukCountryCode: String = "GB"
 
-        val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector, mockAppConfig)
+          val ukRegistrationWrapper: RegistrationWrapper = registrationWrapper
+            .copy(vatInfo = Some(registrationWrapper.vatInfo.get.
+              copy(
+                partOfVatGroup = true,
+                desAddress = registrationWrapper.vatInfo.get.desAddress.copy(countryCode = ukCountryCode)
+              )),
+              etmpDisplayRegistration = registrationWrapper.etmpDisplayRegistration
+                .copy(
+                  customerIdentification = EtmpDisplayCustomerIdentification(VRN, registrationWrapper.etmpDisplayRegistration.customerIdentification.idValue),
+                  otherAddress = None
+                )
+            )
 
-        val result = service.toUserAnswers(userAnswersId, ukRegistrationWrapper).futureValue
+          val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector, mockAppConfig)
 
-        result `mustBe` convertedUserAnswers(ukRegistrationWrapper).copy(lastUpdated = result.lastUpdated, journeyId = result.journeyId)
+          val result = service.toUserAnswers(userAnswersId, ukRegistrationWrapper).futureValue
+
+          result.get(HasFixedEstablishmentPage) mustBe None
+
+          result `mustBe` convertedUserAnswers(ukRegistrationWrapper)
+            .remove(HasFixedEstablishmentPage)
+            .flatMap(_.remove(AllEuDetailsQuery))
+            .success
+            .value.copy(lastUpdated = result.lastUpdated, journeyId = result.journeyId)
+
+        }
+
+        "when not part of VAT group" in {
+
+          val ukCountryCode: String = "GB"
+
+          val ukRegistrationWrapper: RegistrationWrapper = registrationWrapper
+            .copy(vatInfo = Some(registrationWrapper.vatInfo.get.
+              copy(
+                partOfVatGroup = false,
+                desAddress = registrationWrapper.vatInfo.get.desAddress.copy(countryCode = ukCountryCode)
+              )),
+              etmpDisplayRegistration = registrationWrapper.etmpDisplayRegistration
+                .copy(
+                  customerIdentification = EtmpDisplayCustomerIdentification(VRN, registrationWrapper.etmpDisplayRegistration.customerIdentification.idValue),
+                  otherAddress = None
+                )
+            )
+
+          val service = new RegistrationService(stubClockAtArbitraryDate, mockRegistrationConnector, mockAppConfig)
+
+          val result = service.toUserAnswers(userAnswersId, ukRegistrationWrapper).futureValue
+
+          result `mustBe` convertedUserAnswers(ukRegistrationWrapper).copy(lastUpdated = result.lastUpdated, journeyId = result.journeyId)
+
+        }
       }
 
       "when client is UK based without Vat Info" in {
@@ -179,7 +215,9 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
 
         val nonUkRegistrationWrapper = registrationWrapper.copy(
           vatInfo = Some(registrationWrapper.vatInfo.get.
-            copy(desAddress = registrationWrapper.vatInfo.get.desAddress
+            copy(
+              partOfVatGroup = false,
+              desAddress = registrationWrapper.vatInfo.get.desAddress
               .copy(countryCode = nonUkCountryCode)
             )),
           etmpDisplayRegistration = registrationWrapper.etmpDisplayRegistration

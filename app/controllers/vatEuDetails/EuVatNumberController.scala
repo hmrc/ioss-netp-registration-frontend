@@ -48,7 +48,7 @@ class EuVatNumberController @Inject()(
   protected val controllerComponents: MessagesControllerComponents = cc
 
   def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] =
-    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(EuVatNumberPage(countryIndex))).async {
+    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(EuVatNumberPage(countryIndex)), restrictFromPartOfVatGroup = true).async {
       implicit request =>
 
         getCountryWithIndex(waypoints, countryIndex) { country =>
@@ -68,7 +68,8 @@ class EuVatNumberController @Inject()(
         }
     }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] = cc.identifyAndGetData(inAmend = waypoints.inAmend).async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] =
+    cc.identifyAndGetData(inAmend = waypoints.inAmend, restrictFromPartOfVatGroup = true).async {
     implicit request =>
 
       getCountryWithIndex(waypoints, countryIndex) { country =>

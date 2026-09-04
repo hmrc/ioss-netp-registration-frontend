@@ -18,7 +18,6 @@ package services
 
 import base.SpecBase
 import connectors.RegistrationConnector
-import models.domain.VatCustomerInfo
 import models.etmp.intermediary.IntermediaryVatCustomerInfo
 import models.responses.RegistrationNotFound
 import org.mockito.ArgumentMatchers.any

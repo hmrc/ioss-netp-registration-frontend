@@ -98,6 +98,27 @@ class CheckEuDetailsAnswersControllerSpec extends SpecBase with MockitoSugar wit
       }
     }
 
+    "must redirect to Access Denied when the client is part of a VAT group" in {
+
+      val vatGroupAnswers = answers.copy(
+        vatInfo = answers.vatInfo.map(_.copy(partOfVatGroup = true))
+      )
+
+      val application = applicationBuilder(userAnswers = Some(vatGroupAnswers)).build()
+
+      running(application) {
+        implicit val msgs: Messages = messages(application)
+
+        val request = FakeRequest(GET, checkEuDetailsAnswersRoute)
+
+        val result = route(application, request).value
+
+        status(result) mustBe SEE_OTHER
+
+        redirectLocation(result) mustBe Some(controllers.routes.AccessDeniedController.onPageLoad().url)
+      }
+    }
+
     "must redirect to the next page when valid data is submitted" in {
 
       val mockSessionRepository = mock[SessionRepository]

@@ -18,7 +18,7 @@ package controllers
 
 import base.SpecBase
 import config.FrontendAppConfig
-import models.{SavedPendingRegistration, SavedPendingRegistrationWithUserAnswers}
+import models.SavedPendingRegistrationWithUserAnswers
 import models.responses.InternalServerError
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}

@@ -18,12 +18,15 @@ package pages.previousRegistrations
 
 import controllers.previousRegistrations.routes
 import models.{Country, Index, UserAnswers}
+import pages.amend.ChangeRegistrationPage
 import pages.vatEuDetails.HasFixedEstablishmentPage
-import pages.{AddItemPage, Page, QuestionPage, RecoveryOps, Waypoints}
+import pages.website.WebsitePage
+import pages.{AddItemPage, CheckYourAnswersPage, NonEmptyWaypoints, Page, QuestionPage, RecoveryOps, Waypoints}
 import play.api.libs.json.{JsObject, JsPath}
 import play.api.mvc.Call
 import queries.Derivable
 import queries.previousRegistrations.DeriveNumberOfPreviousRegistrations
+import utils.AmendWaypoints.AmendWaypointsOps
 
 object AddPreviousRegistrationPage {
   val normalModeUrlFragment: String = "previous-schemes-overview"
@@ -64,7 +67,36 @@ case class AddPreviousRegistrationPage(override val index: Option[Index] = None)
               .map(n => PreviousEuCountryPage(Index(n)))
               .orRecover
           }
+      case false if answers.vatInfo.exists(_.partOfVatGroup) => WebsitePage(Index(0))
       case false => HasFixedEstablishmentPage
+    }.orRecover
+  }
+
+  override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page = {
+    answers.get(this).map {
+      case true =>
+        index
+          .map { i =>
+            if (i.position + 1 < Country.euCountries.size) {
+              PreviousEuCountryPage(Index(i.position + 1))
+            } else if (waypoints.inAmend) {
+              ChangeRegistrationPage
+            } else {
+              CheckYourAnswersPage
+            }
+          }
+          .getOrElse {
+            answers
+              .get(deriveNumberOfItems)
+              .map(n => PreviousEuCountryPage(Index(n)))
+              .orRecover
+          }
+
+      case false if waypoints.inAmend =>
+        ChangeRegistrationPage
+
+      case false  =>
+        CheckYourAnswersPage
     }.orRecover
   }
 

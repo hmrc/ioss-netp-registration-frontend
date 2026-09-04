@@ -44,7 +44,7 @@ class CheckEuDetailsAnswersController @Inject()(
   protected val controllerComponents: MessagesControllerComponents = cc
 
   def onPageLoad(waypoints: Waypoints, countryIndex: Index): Action[AnyContent] =
-    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(CheckEuDetailsAnswersPage(countryIndex))).async {
+    cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(CheckEuDetailsAnswersPage(countryIndex)), restrictFromPartOfVatGroup = true).async {
     implicit request =>
       getCountryWithIndex(waypoints, countryIndex) {
         country =>
@@ -72,7 +72,8 @@ class CheckEuDetailsAnswersController @Inject()(
 
   }
 
-  def onSubmit(waypoints: Waypoints, countryIndex: Index, incompletePromptShown: Boolean): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend).async {
+  def onSubmit(waypoints: Waypoints, countryIndex: Index, incompletePromptShown: Boolean): Action[AnyContent] =
+    cc.identifyAndGetData(waypoints.inAmend, restrictFromPartOfVatGroup = true).async {
     implicit request =>
 
       withCompleteDataModel[EuDetails](
