@@ -1,0 +1,58 @@
+@*
+ * Copyright 2026 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import components.ButtonGroup
+@import models.vatEuDetails.EuDetails
+
+@this(
+        layout: templates.Layout,
+        formHelper: FormWithCSRF,
+        button: ButtonGroup,
+        govukTable: GovukTable
+)
+
+@(euDetails: Seq[EuDetails],  waypoints : Waypoints, iossNumber: String)(implicit request: Request[_], messages: Messages)
+
+@layout(pageTitle = titleNoForm(messages("deleteAllFixedEstablishment.title"))) {
+
+    <h1 class="govuk-heading-l">@messages("deleteAllFixedEstablishment.heading")</h1>
+
+    <p class="govuk-body">@messages("deleteAllFixedEstablishment.paragraph")</p>
+
+    @govukTable(Table(
+        rows = euDetails.map { details =>
+            Seq(
+                TableRow(
+                    content = HtmlContent(details.euCountry.name),
+                    classes = "vat-country"
+                ),
+                TableRow(
+                    content = Text(
+                        details.tradingNameAndBusinessAddress
+                        .map(_.tradingName.name)
+                        .getOrElse("")
+                    )
+                )
+            )
+        }
+    ))
+    
+    <p class="govuk-body">@Html(messages("deleteAllFixedEstablishment.contactUs"))</p>
+    
+    @formHelper(action = routes.DeleteAllFixedEstablishmentController.onSubmit(waypoints, iossNumber)) {
+        @button("site.continue", routes.DeleteAllFixedEstablishmentController.onPageLoad(waypoints, iossNumber).url, waypoints)
+    }
+}

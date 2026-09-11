@@ -243,3 +243,9 @@ GET         /access-denied                                                  cont
 GET         /client-registration-pending-with-another-intermediary          controllers.ClientRegistrationPendingWithAnotherIntermediaryController.onPageLoad()
 
 GET         /client-registration-pending-with-our-service/:journeyId        controllers.ClientRegistrationPendingWithOurServiceController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, journeyId: String)
+
+GET        /delete-all-fixed-establishment/:iossNumber                      controllers.DeleteAllFixedEstablishmentController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints, iossNumber: String)
+POST       /delete-all-fixed-establishment/:iossNumber                      controllers.DeleteAllFixedEstablishmentController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints, iossNumber: String)
+
+GET        /removing-clients-fixed-establishment-details                    controllers.RemovingClientsFixedEstablishmentDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST       /removing-clients-fixed-establishment-details                    controllers.RemovingClientsFixedEstablishmentDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)

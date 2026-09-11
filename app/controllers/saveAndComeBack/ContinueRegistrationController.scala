@@ -21,9 +21,11 @@ import controllers.SetActiveTraderResult
 import controllers.actions.*
 import forms.saveAndComeBack.ContinueRegistrationFormProvider
 import logging.Logging
+import models.Index
 import models.domain.VatCustomerInfo
 import models.requests.DataRequest
 import models.saveAndComeBack.{ContinueRegistration, TaxReferenceInformation}
+import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.{ClientVatNumberPage, SavedProgressPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -101,12 +103,23 @@ class ContinueRegistrationController @Inject()(
         value1 =>
           (value1, request.userAnswers.get(SavedProgressPage)) match {
             case (ContinueRegistration.Continue, Some(url)) =>
-              coreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(waypoints).flatMap {
-                case Some(redirectResult) =>
-                  deleteAndRedirect(taxReferenceInformation, redirectResult)
 
-                case None =>
-                  Redirect(Call(GET, url)).toFuture
+              val isPartOfVatGroup = request.userAnswers.vatInfo.exists(_.partOfVatGroup)
+              val hasFixedEstablishments = request.userAnswers.get(HasFixedEstablishmentPage).contains(true)
+              val savedOnHasFixedEstablishmentPage = url == HasFixedEstablishmentPage.route(waypoints).url
+
+              if (isPartOfVatGroup && hasFixedEstablishments) {
+                Redirect(controllers.routes.RemovingClientsFixedEstablishmentDetailsController.onPageLoad(waypoints).url).toFuture
+              } else if (isPartOfVatGroup && savedOnHasFixedEstablishmentPage) {
+                Redirect(controllers.website.routes.WebsiteController.onPageLoad(waypoints, Index(0))).toFuture
+              } else {
+                coreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(waypoints).flatMap {
+                  case Some(redirectResult) =>
+                    deleteAndRedirect(taxReferenceInformation, redirectResult)
+
+                  case None =>
+                    Redirect(Call(GET, url)).toFuture
+                }
               }
 
             case (ContinueRegistration.Delete, _) =>
