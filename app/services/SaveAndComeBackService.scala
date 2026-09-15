@@ -19,11 +19,11 @@ package services
 import connectors.{RegistrationConnector, SaveForLaterConnector}
 import logging.Logging
 import models.domain.VatCustomerInfo
-import models.etmp.EtmpIdType.{FTR, UTR, NINO, VRN}
+import models.etmp.EtmpIdType.{FTR, NINO, UTR, VRN}
 import models.etmp.EtmpIdType
 import models.requests.{DataRequest, OptionalDataRequest}
 import models.saveAndComeBack.*
-import models.{SavedUserAnswers, UserAnswers}
+import models.{SaveForLaterRequest, SavedUserAnswers, UserAnswers}
 import pages.{ClientBusinessNamePage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, ContinueRegistrationSelectionPage, QuestionPage, Waypoints}
 import play.api.libs.json.JsObject
 import uk.gov.hmrc.http.HeaderCarrier
@@ -258,5 +258,22 @@ class SaveAndComeBackService @Inject()(
     }
   }
 
+  def updateSavedUserAnswers(userAnswers: UserAnswers, intermediaryNumber: String)(implicit hc: HeaderCarrier): Future[Unit] = {
+
+    val saveForLaterRequest = SaveForLaterRequest(userAnswers, intermediaryNumber)
+
+    saveForLaterConnector.submit(saveForLaterRequest).map {
+      case Right(_) => ()
+
+      case Left(error) =>
+        val message =
+          s"Received an unexpected error when updating saved user answers " +
+            s"for journey ID: ${userAnswers.journeyId}. Errors: $error"
+
+        val exception = new Exception(message)
+        logger.error(exception.getMessage, exception)
+        throw exception
+    }
+  }
 }
 

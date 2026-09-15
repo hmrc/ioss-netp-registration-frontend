@@ -24,8 +24,11 @@ import models.etmp.EtmpIdType.{FTR, NINO, UTR, VRN}
 import models.requests.{DataRequest, OptionalDataRequest}
 import models.responses.{InternalServerError, NotFound, VatCustomerNotFound}
 import models.saveAndComeBack.{MultipleRegistrations, NoRegistrations, SingleRegistration, TaxReferenceInformation}
-import models.{ClientBusinessName, SavedUserAnswers, UserAnswers}
-import org.mockito.Mockito.when
+import models.{ClientBusinessName, SaveForLaterRequest, SavedUserAnswers, UserAnswers}
+import org.apache.pekko.Done
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{reset, verify, when}
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.mockito.MockitoSugar
@@ -37,7 +40,7 @@ import utils.FutureSyntax.FutureOps
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
-class SaveAndComeBackServiceSpec extends AnyFreeSpec with MockitoSugar with SpecBase with TableDrivenPropertyChecks {
+class SaveAndComeBackServiceSpec extends AnyFreeSpec with MockitoSugar with SpecBase with TableDrivenPropertyChecks with BeforeAndAfterEach {
 
   private implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
   private implicit val dataRequest: DataRequest[_] = mock[DataRequest[_]]
@@ -50,6 +53,10 @@ class SaveAndComeBackServiceSpec extends AnyFreeSpec with MockitoSugar with Spec
   val testSaveAndComeBackService: SaveAndComeBackService = SaveAndComeBackService(
     registrationConnector = mockRegistrationConnector,
     saveForLaterConnector = mockSaveForLaterConnector)(ec)
+
+  override def beforeEach(): Unit = {
+    reset(mockRegistrationConnector, mockSaveForLaterConnector)
+  }
 
   "SaveAndComeBackService" - {
     ".determineTaxReference" - {
@@ -597,6 +604,41 @@ class SaveAndComeBackServiceSpec extends AnyFreeSpec with MockitoSugar with Spec
         }
         result.getMessage mustEqual "User answers must include company name if Vat Customer Info was not provided"
       }
+    }
+  }
+
+  ".updateSavedUserAnswers" - {
+
+    "should successfully update saved user answers" in {
+
+      val userAnswers = emptyUserAnswers
+
+      val expectedRequest = SaveForLaterRequest(userAnswers, intermediaryNumber)
+
+      when(mockSaveForLaterConnector.submit(eqTo(expectedRequest))(any())) thenReturn Future.successful(Right(Done))
+
+      val result = testSaveAndComeBackService.updateSavedUserAnswers(userAnswers, intermediaryNumber)
+
+      result.futureValue mustEqual()
+
+      verify(mockSaveForLaterConnector).submit(eqTo(expectedRequest))(any())
+    }
+
+    "should return a failed future when updating saved user answers fails" in {
+
+      val userAnswers = emptyUserAnswers
+
+      val expectedRequest = SaveForLaterRequest(userAnswers, intermediaryNumber)
+
+      val error = InternalServerError
+
+      when(mockSaveForLaterConnector.submit(eqTo(expectedRequest))(any())) thenReturn Future.successful(Left(error))
+
+      val exception = testSaveAndComeBackService.updateSavedUserAnswers(userAnswers, intermediaryNumber).failed.futureValue
+
+      exception.getMessage mustEqual s"Received an unexpected error when updating saved user answers " + s"for journey ID: ${userAnswers.journeyId}. Errors: $error"
+
+      verify(mockSaveForLaterConnector).submit(eqTo(expectedRequest))(any())
     }
   }
 }

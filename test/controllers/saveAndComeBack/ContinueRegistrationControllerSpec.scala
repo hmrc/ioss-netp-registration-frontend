@@ -19,18 +19,19 @@ package controllers.saveAndComeBack
 import base.SpecBase
 import controllers.routes as normalRoutes
 import forms.saveAndComeBack.ContinueRegistrationFormProvider
-import models.UserAnswers
+import models.{Index, UserAnswers}
 import models.domain.VatCustomerInfo
 import models.saveAndComeBack.ContinueRegistration.{Continue, Delete}
 import models.saveAndComeBack.TaxReferenceInformation
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.{ArgumentCaptor, Mockito}
+import org.mockito.Mockito.{times, verify, verifyNoInteractions, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures.*
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers.*
 import org.scalatestplus.mockito.MockitoSugar
+import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.{ClientVatNumberPage, SavedProgressPage}
 import play.api.inject.bind
 import play.api.mvc.Result
@@ -234,6 +235,79 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
         val ukVrn: String = arbitraryVrn.arbitrary.sample.value.vrn
 
         "ans the value is Continue" - {
+
+          "should redirect to removing fixed establishment details when client is part of a VAT group and has fixed establishments" in {
+
+            val answers = emptyUserAnswersWithVatInfo.copy(
+              vatInfo = emptyUserAnswersWithVatInfo.vatInfo.map(_.copy(partOfVatGroup = true))
+            )
+              .set(ClientVatNumberPage, ukVrn).success.value
+              .set(SavedProgressPage, continueUrl.get(OnlyRelative).url).success.value
+              .set(HasFixedEstablishmentPage, true).success.value
+
+
+            when(mockSaveAndComeBackService.determineTaxReference(any())).thenReturn(genericTaxReference)
+
+            val application = applicationBuilder(userAnswers = Some(answers))
+              .overrides(
+                bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
+                bind[CoreSavedAnswersRevalidationService].toInstance(mockCoreSavedAnswersRevalidationService)
+              )
+              .build()
+
+            running(application) {
+
+              val request = FakeRequest(POST, continueOnSubmitRoute).withFormUrlEncodedBody("value" -> Continue.toString)
+
+              val result = route(application, request).value
+
+              status(result) mustBe SEE_OTHER
+
+              redirectLocation(result).value mustBe controllers.routes.RemovingClientsFixedEstablishmentDetailsController.onPageLoad(waypoints).url
+
+              verify(mockSaveAndComeBackService, times(1)).determineTaxReference(any())
+
+              verifyNoInteractions(mockCoreSavedAnswersRevalidationService)
+            }
+
+          }
+
+          "should Redirect to website page if part of vat group and saved progress on HasFixedEstablishmentPage" in {
+
+            val savedUrl = controllers.vatEuDetails.routes.HasFixedEstablishmentController.onPageLoad(waypoints).url
+
+            HasFixedEstablishmentPage.route(waypoints).url mustBe savedUrl
+
+            val answers = emptyUserAnswersWithVatInfo
+              .copy(
+                vatInfo = emptyUserAnswersWithVatInfo.vatInfo.map(
+                  _.copy(partOfVatGroup = true)
+                )
+              )
+              .set(ClientVatNumberPage, ukVrn).success.value
+              .set(SavedProgressPage, savedUrl).success.value
+
+            when(mockSaveAndComeBackService.determineTaxReference(any())) thenReturn genericTaxReference
+
+            when(mockCoreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(any())(any(), any())) thenReturn None.toFuture
+
+            val application = applicationBuilder(userAnswers = Some(answers))
+              .overrides(
+                bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
+                bind[CoreSavedAnswersRevalidationService].toInstance(mockCoreSavedAnswersRevalidationService)
+              )
+              .build()
+
+            running(application) {
+
+              val request = FakeRequest(POST, continueOnSubmitRoute).withFormUrlEncodedBody("value" -> Continue.toString)
+
+              val result = route(application, request).value
+
+              status(result) mustBe SEE_OTHER
+              redirectLocation(result).value mustBe controllers.website.routes.WebsiteController.onPageLoad(waypoints, Index(0)).url
+            }
+          }
 
           "should get the continue url and direct to the correct view when core validation is successful" in {
 

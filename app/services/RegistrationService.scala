@@ -282,7 +282,7 @@ class RegistrationService @Inject()(
     }.toList
   }
 
-  private def convertEuFixedEstablishmentDetails(etmpEuRegistrationDetails: Seq[EtmpDisplayEuRegistrationDetails]): Seq[EuDetails] = {
+  def convertEuFixedEstablishmentDetails(etmpEuRegistrationDetails: Seq[EtmpDisplayEuRegistrationDetails]): Seq[EuDetails] = {
     for {
       etmpDisplayEuRegistrationDetails <- etmpEuRegistrationDetails
     } yield {
