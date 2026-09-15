@@ -14,12 +14,10 @@
  * limitations under the License.
  *@
 
-@import components.ButtonGroup
-
 @this(
         layout: templates.Layout,
         formHelper: FormWithCSRF,
-        button: components.ButtonGroup
+        govukButton: GovukButton,
 )
 
 @(clientName: String, waypoints : Waypoints)(implicit request: Request[_], messages: Messages)
@@ -31,6 +29,8 @@
     <p class="govuk-body">@messages("removingClientsFixedEstablishmentDetails.paragraph", clientName)</p>
 
     @formHelper(action = routes.RemovingClientsFixedEstablishmentDetailsController.onSubmit(waypoints)) {
-        @button("site.continue", routes.RemovingClientsFixedEstablishmentDetailsController.onPageLoad(waypoints).url, waypoints)
+        @govukButton(
+            ButtonViewModel(messages("site.continue")).withAttribute("id", "continue")
+        )
     }
 }

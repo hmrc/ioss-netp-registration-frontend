@@ -14,13 +14,12 @@
  * limitations under the License.
  *@
 
-@import components.ButtonGroup
 @import models.vatEuDetails.EuDetails
 
 @this(
         layout: templates.Layout,
         formHelper: FormWithCSRF,
-        button: ButtonGroup,
+        govukButton: GovukButton,
         govukTable: GovukTable
 )
 
@@ -53,6 +52,8 @@
     <p class="govuk-body">@Html(messages("deleteAllFixedEstablishment.contactUs"))</p>
     
     @formHelper(action = routes.DeleteAllFixedEstablishmentController.onSubmit(waypoints, iossNumber)) {
-        @button("site.continue", routes.DeleteAllFixedEstablishmentController.onPageLoad(waypoints, iossNumber).url, waypoints)
+        @govukButton(
+            ButtonViewModel(messages("site.continue")).withAttribute("id", "continue")
+        )
     }
 }
