@@ -249,3 +249,9 @@ POST       /delete-all-fixed-establishment/:iossNumber                      cont
 
 GET        /removing-clients-fixed-establishment-details                    controllers.RemovingClientsFixedEstablishmentDetailsController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
 POST       /removing-clients-fixed-establishment-details                    controllers.RemovingClientsFixedEstablishmentDetailsController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+
+GET        /saved-progress-expired-vrn-date                                 controllers.saveAndComeBack.SavedProgressExpiredVrnDateController.onPageLoad()
+
+GET        /saved-progress-client-already-registered                        controllers.saveAndComeBack.SavedProgressClientAlreadyRegisteredController.onPageLoad()
+
+GET        /saved-progress-quarantined/:quarantinedEffectiveDate            controllers.saveAndComeBack.SavedProgressQuarantinedController.onPageLoad(quarantinedEffectiveDate: String)
