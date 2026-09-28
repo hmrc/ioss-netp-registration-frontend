@@ -16,7 +16,8 @@
 
 package services.core
 
-import controllers.{SetActiveTraderResult, routes}
+import controllers.SetActiveTraderResult
+import controllers.saveAndComeBack.routes as s4lRoutes
 import jakarta.inject.Inject
 import logging.Logging
 import models.Country
@@ -27,7 +28,7 @@ import models.requests.DataRequest
 import models.vatEuDetails.EuDetails
 import pages.previousRegistrations.PreviouslyRegisteredPage
 import pages.vatEuDetails.HasFixedEstablishmentPage
-import pages.{ClientCountryBasedPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, Waypoints}
+import pages.{ClientCountryBasedPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage}
 import play.api.libs.json.OFormat.oFormatFromReadsAndOWrites
 import play.api.libs.json.Reads
 import play.api.mvc.Result
@@ -48,8 +49,8 @@ class CoreSavedAnswersRevalidationService @Inject()(
                                                      clock: Clock
                                                    )(implicit ec: ExecutionContext) extends SetActiveTraderResult with Logging {
 
-  def checkAndValidateSavedUserAnswers(waypoints: Waypoints)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
-    checkClientDetails(waypoints).flatMap {
+  def checkAndValidateSavedUserAnswers()(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
+    checkClientDetails().flatMap {
       case None =>
         checkEuDetails().flatMap {
           case None =>
@@ -62,10 +63,10 @@ class CoreSavedAnswersRevalidationService @Inject()(
     }
   }
 
-  private def checkClientDetails(waypoints: Waypoints)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
+  private def checkClientDetails()(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
     request.userAnswers.get(ClientVatNumberPage) match {
       case Some(value) =>
-        revalidateUKVrn(waypoints, Vrn(value))
+        revalidateUKVrn(Vrn(value))
 
       case _ =>
         request.userAnswers.get(ClientUtrNumberPage) match {
@@ -124,9 +125,9 @@ class CoreSavedAnswersRevalidationService @Inject()(
     }
   }
 
-  private def revalidateUKVrn(waypoints: Waypoints, ukVrn: Vrn)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
+  private def revalidateUKVrn(ukVrn: Vrn)(implicit hc: HeaderCarrier, request: DataRequest[_]): Future[Option[Result]] = {
     if (checkVrnExpired(request.userAnswers.vatInfo)) {
-      Some(Redirect(routes.ExpiredVrnDateController.onPageLoad(waypoints).url)).toFuture
+      Some(Redirect(s4lRoutes.SavedProgressExpiredVrnDateController.onPageLoad().url)).toFuture
     } else {
       coreRegistrationValidationService.searchUkVrn(ukVrn).flatMap { maybeActiveMatch =>
         activeMatchRedirectUrl(maybeActiveMatch)
@@ -260,13 +261,13 @@ class CoreSavedAnswersRevalidationService @Inject()(
         setActiveTraderResultAndRedirect(
           activeMatch = activeMatch,
           sessionRepository = sessionRepository,
-          redirect = controllers.routes.ClientAlreadyRegisteredController.onPageLoad()
+          redirect = s4lRoutes.SavedProgressClientAlreadyRegisteredController.onPageLoad()
         ).flatMap { result =>
           Some(result).toFuture
         }
 
       case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
-        Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(activeMatch.memberState, activeMatch.getEffectiveDate).url)).toFuture
+        Some(Redirect(s4lRoutes.SavedProgressQuarantinedController.onPageLoad(activeMatch.getEffectiveDate).url)).toFuture
 
       case _ => None.toFuture
     }

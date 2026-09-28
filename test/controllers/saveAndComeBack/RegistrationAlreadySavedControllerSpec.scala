@@ -150,7 +150,7 @@ class RegistrationAlreadySavedControllerSpec extends AnyFreeSpec with MockitoSug
 
             val tupleReturn: Tuple3[String, String, EtmpIdType] = ("MockCompanyName", "MockTaxRef", VRN)
             when(mockSaveAndComeBackService.retrieveTaxRef(any())) thenReturn tupleReturn
-            when(mockCoreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(any())(any(), any())) thenReturn Some(redirectResult).toFuture
+            when(mockCoreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers()(any(), any())) thenReturn Some(redirectResult).toFuture
             when(mockSaveAndComeBackService.deleteSavedUserAnswers(any())(any(), any())) thenReturn Future.successful(())
 
             running(application) {
@@ -162,7 +162,7 @@ class RegistrationAlreadySavedControllerSpec extends AnyFreeSpec with MockitoSug
               status(result) `mustBe` SEE_OTHER
               redirectLocation(result).value mustBe redirectLocation(redirectResult.toFuture).value
               verify(mockSaveAndComeBackService, times(1)).retrieveTaxRef(any())
-              verify(mockCoreSavedAnswersRevalidationService, times(1)).checkAndValidateSavedUserAnswers(any())(any(), any())
+              verify(mockCoreSavedAnswersRevalidationService, times(1)).checkAndValidateSavedUserAnswers()(any(), any())
             }
           }
 
@@ -178,7 +178,7 @@ class RegistrationAlreadySavedControllerSpec extends AnyFreeSpec with MockitoSug
 
             val tupleReturn: Tuple3[String, String, EtmpIdType] = ("MockCompanyName", "MockTaxRef", VRN)
             when(mockSaveAndComeBackService.retrieveTaxRef(any())) thenReturn tupleReturn
-            when(mockCoreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(any())(any(), any())) thenReturn None.toFuture
+            when(mockCoreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers()(any(), any())) thenReturn None.toFuture
 
             running(application) {
               val request = FakeRequest(POST, RegistrationAlreadySavedOnSubmitRoute)
@@ -189,7 +189,7 @@ class RegistrationAlreadySavedControllerSpec extends AnyFreeSpec with MockitoSug
               status(result) `mustBe` SEE_OTHER
               RedirectUrl(redirectLocation(result).value) mustBe continueUrl
               verify(mockSaveAndComeBackService, times(1)).retrieveTaxRef(any())
-              verify(mockCoreSavedAnswersRevalidationService, times(1)).checkAndValidateSavedUserAnswers(any())(any(), any())
+              verify(mockCoreSavedAnswersRevalidationService, times(1)).checkAndValidateSavedUserAnswers()(any(), any())
             }
           }
         }

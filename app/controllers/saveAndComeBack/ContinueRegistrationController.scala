@@ -113,7 +113,7 @@ class ContinueRegistrationController @Inject()(
               } else if (isPartOfVatGroup && savedOnHasFixedEstablishmentPage) {
                 Redirect(controllers.website.routes.WebsiteController.onPageLoad(waypoints, Index(0))).toFuture
               } else {
-                coreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(waypoints).flatMap {
+                coreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers().flatMap {
                   case Some(redirectResult) =>
                     deleteAndRedirect(taxReferenceInformation, redirectResult)
 

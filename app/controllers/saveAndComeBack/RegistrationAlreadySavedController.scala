@@ -87,7 +87,7 @@ class RegistrationAlreadySavedController @Inject()(
               (value1, previousUserAnswers.get(SavedProgressPage)) match {
                 case (ContinueRegistration.Continue, Some(url)) =>
                   cc.sessionRepository.set(previousUserAnswers)
-                    coreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(waypoints).flatMap {
+                    coreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers().flatMap {
                       case Some(redirectResult) =>
                         deleteAndRedirect(previousUserAnswers.journeyId, redirectResult)
 

@@ -1,4 +1,4 @@
-/*
+@*
  * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,25 +12,18 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *@
 
-package pages
+@this(
+        layout: templates.Layout,
+        govukButton: GovukButton
+)
 
-import controllers.routes
-import models.UserAnswers
-import play.api.mvc.Call
+@(quarantinedExpirationDate: String)(implicit request: Request[_], messages: Messages)
 
-case class RemovingClientsFixedEstablishmentDetailsPage() extends Page {
+@layout(pageTitle = titleNoForm(messages("savedProgressQuarantined.title"))) {
 
-  override def route(waypoints: Waypoints): Call = {
-    routes.RemovingClientsFixedEstablishmentDetailsController.onPageLoad(waypoints)
-  }
+    <h1 class="govuk-heading-l">@messages("savedProgressQuarantined.heading")</h1>
 
-  override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page = {
-    ContinueRegistrationSelectionPage
-  }
-
-  override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page = {
-    ContinueRegistrationSelectionPage
-  }
+    <p class="govuk-body">@messages("savedProgressQuarantined.p1", quarantinedExpirationDate)</p>
 }
