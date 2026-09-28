@@ -16,6 +16,7 @@
 
 package controllers.saveAndComeBack
 
+import config.FrontendAppConfig
 import controllers.actions.*
 import formats.Format.dateFormatter
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -25,16 +26,18 @@ import views.html.saveAndComeBack.SavedProgressQuarantinedView
 
 import java.time.LocalDate
 import javax.inject.Inject
+import scala.concurrent.ExecutionContext
 
 class SavedProgressQuarantinedController @Inject()(
                                                     override val messagesApi: MessagesApi,
                                                     cc: AuthenticatedControllerComponents,
+                                                    frontendAppConfig: FrontendAppConfig,
                                                     view: SavedProgressQuarantinedView
-                                                  ) extends FrontendBaseController with I18nSupport {
+                                                  )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad(quarantinedEffectiveDate: String): Action[AnyContent] = (cc.actionBuilder andThen cc.identify) {
+  def onPageLoad(quarantinedEffectiveDate: String): Action[AnyContent] = (cc.actionBuilder andThen cc.identify).async {
     implicit request =>
 
       val quarantinedExpirationDate: String = LocalDate
@@ -42,6 +45,10 @@ class SavedProgressQuarantinedController @Inject()(
         .plusYears(2)
         .format(dateFormatter)
       
-      Ok(view(quarantinedExpirationDate))
+      for {
+        _ <- cc.sessionRepository.clear(request.userId)
+      } yield {
+        Ok(view(quarantinedExpirationDate, frontendAppConfig.intermediaryYourAccountUrl))
+      }
   }
 }

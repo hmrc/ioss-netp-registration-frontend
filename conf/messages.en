@@ -677,11 +677,14 @@ savedProgressExpiredVrnDate.title = You can no longer register this client
 savedProgressExpiredVrnDate.heading = You can no longer register this client
 savedProgressExpiredVrnDate.p1 = The VAT number you provided for your client has expired.
 savedProgressExpiredVrnDate.p2 = They will need to apply for a new VAT number or register with a different tax identifier type.
+savedProgressExpiredVrnDate.returnToYourAccount = <a class="govuk-link" href={0}>Return to your account</a>
 
 savedProgressClientAlreadyRegistered.title = You can no longer register this client
 savedProgressClientAlreadyRegistered.heading = You can no longer register this client
 savedProgressClientAlreadyRegistered.p1 = Their VAT number is already registered on an Import One Stop Shop service.
+savedProgressClientAlreadyRegistered.returnToYourAccount = <a class="govuk-link" href={0}>Return to your account</a>
 
 savedProgressQuarantined.title = You can no longer register this client
 savedProgressQuarantined.heading = You can no longer register this client
 savedProgressQuarantined.p1 = Their business is blocked from using or registering for Import One Stop Shop services until {0}
+savedProgressQuarantined.returnToYourAccount = <a class="govuk-link" href={0}>Return to your account</a>

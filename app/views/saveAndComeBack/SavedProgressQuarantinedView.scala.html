@@ -15,15 +15,16 @@
  *@
 
 @this(
-        layout: templates.Layout,
-        govukButton: GovukButton
+        layout: templates.Layout
 )
 
-@(quarantinedExpirationDate: String)(implicit request: Request[_], messages: Messages)
+@(quarantinedExpirationDate: String, yourAccountUrl: String)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("savedProgressQuarantined.title"))) {
 
     <h1 class="govuk-heading-l">@messages("savedProgressQuarantined.heading")</h1>
 
     <p class="govuk-body">@messages("savedProgressQuarantined.p1", quarantinedExpirationDate)</p>
+
+    <p class="govuk-body govuk-!-margin-top-8">@Html(messages("savedProgressQuarantined.returnToYourAccount", yourAccountUrl))</p>
 }

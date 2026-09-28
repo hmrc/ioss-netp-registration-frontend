@@ -17,27 +17,43 @@
 package controllers.saveAndComeBack
 
 import base.SpecBase
+import config.FrontendAppConfig
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{times, verify, when}
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.inject.bind
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
+import repositories.SessionRepository
+import utils.FutureSyntax.FutureOps
 import views.html.saveAndComeBack.SavedProgressExpiredVrnDateView
 
-class SavedProgressExpiredVrnDateControllerSpec extends SpecBase {
+class SavedProgressExpiredVrnDateControllerSpec extends SpecBase with MockitoSugar {
 
   "SavedProgressExpiredVrnDate Controller" - {
 
     "must return OK and the correct view for a GET" in {
 
-      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
+      val mockSessionRepository: SessionRepository = mock[SessionRepository]
+
+      when(mockSessionRepository.clear(any())) thenReturn true.toFuture
+
+      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers))
+        .overrides(bind[SessionRepository].toInstance(mockSessionRepository))
+        .build()
 
       running(application) {
         val request = FakeRequest(GET, routes.SavedProgressExpiredVrnDateController.onPageLoad().url)
 
         val result = route(application, request).value
 
+        val config = application.injector.instanceOf[FrontendAppConfig]
+
         val view = application.injector.instanceOf[SavedProgressExpiredVrnDateView]
 
         status(result) `mustBe` OK
-        contentAsString(result) `mustBe` view()(request, messages(application)).toString
+        contentAsString(result) `mustBe` view(config.intermediaryYourAccountUrl)(request, messages(application)).toString
+        verify(mockSessionRepository, times(1)).clear(eqTo(userAnswersId))
       }
     }
   }

@@ -18,7 +18,7 @@
         layout: templates.Layout
 )
 
-@()(implicit request: Request[_], messages: Messages)
+@(yourAccountUrl: String)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("savedProgressExpiredVrnDate.title"))) {
 
@@ -27,4 +27,6 @@
     <p class="govuk-body">@messages("savedProgressExpiredVrnDate.p1")</p>
 
     <p class="govuk-body">@messages("savedProgressExpiredVrnDate.p2")</p>
+
+    <p class="govuk-body govuk-!-margin-top-8">@Html(messages("savedProgressExpiredVrnDate.returnToYourAccount", yourAccountUrl))</p>
 }

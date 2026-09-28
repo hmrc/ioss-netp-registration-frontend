@@ -18,11 +18,13 @@
         layout: templates.Layout
 )
 
-@()(implicit request: Request[_], messages: Messages)
+@(yourAccountUrl: String)(implicit request: Request[_], messages: Messages)
 
 @layout(pageTitle = titleNoForm(messages("savedProgressClientAlreadyRegistered.title"))) {
 
     <h1 class="govuk-heading-l">@messages("savedProgressClientAlreadyRegistered.heading")</h1>
 
     <p class="govuk-body">@messages("savedProgressClientAlreadyRegistered.p1")</p>
+
+    <p class="govuk-body govuk-!-margin-top-8">@Html(messages("savedProgressClientAlreadyRegistered.returnToYourAccount", yourAccountUrl))</p>
 }

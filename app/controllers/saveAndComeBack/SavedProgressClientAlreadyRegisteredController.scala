@@ -16,6 +16,7 @@
 
 package controllers.saveAndComeBack
 
+import config.FrontendAppConfig
 import controllers.actions.*
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -23,17 +24,24 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import views.html.saveAndComeBack.SavedProgressClientAlreadyRegisteredView
 
 import javax.inject.Inject
+import scala.concurrent.ExecutionContext
 
 class SavedProgressClientAlreadyRegisteredController @Inject()(
                                                                 override val messagesApi: MessagesApi,
                                                                 cc: AuthenticatedControllerComponents,
+                                                                frontendAppConfig: FrontendAppConfig,
                                                                 view: SavedProgressClientAlreadyRegisteredView
-                                                              ) extends FrontendBaseController with I18nSupport {
+                                                              )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
   protected val controllerComponents: MessagesControllerComponents = cc
 
-  def onPageLoad: Action[AnyContent] = (cc.actionBuilder andThen cc.identify) {
+  def onPageLoad: Action[AnyContent] = (cc.actionBuilder andThen cc.identify).async {
     implicit request =>
-      Ok(view())
+
+      for {
+        _ <- cc.sessionRepository.clear(request.userId)
+      } yield {
+        Ok(view(frontendAppConfig.intermediaryYourAccountUrl))
+      }
   }
 }
