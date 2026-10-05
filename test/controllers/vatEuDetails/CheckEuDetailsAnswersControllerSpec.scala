@@ -30,10 +30,10 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryList
+import utils.FutureSyntax.FutureOps
 import viewmodels.checkAnswers.vatEuDetails.*
 import viewmodels.govuk.SummaryListFluency
 import views.html.vatEuDetails.CheckEuDetailsAnswersView
-import utils.FutureSyntax.FutureOps
 
 import scala.concurrent.Future
 
@@ -107,7 +107,6 @@ class CheckEuDetailsAnswersControllerSpec extends SpecBase with MockitoSugar wit
       val application = applicationBuilder(userAnswers = Some(vatGroupAnswers)).build()
 
       running(application) {
-        implicit val msgs: Messages = messages(application)
 
         val request = FakeRequest(GET, checkEuDetailsAnswersRoute)
 

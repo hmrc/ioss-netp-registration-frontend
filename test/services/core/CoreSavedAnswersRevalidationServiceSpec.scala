@@ -17,7 +17,7 @@
 package services.core
 
 import base.SpecBase
-import controllers.routes
+import controllers.saveAndComeBack.routes
 import models.PreviousScheme.{IOSSWI, OSSNU, OSSU}
 import models.PreviousSchemeType.{IOSS, OSS}
 import models.core.{Match, TraderId}
@@ -123,7 +123,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         val service: CoreSavedAnswersRevalidationService =
           new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-        val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+        val result = service.checkAndValidateSavedUserAnswers().futureValue
 
         result `mustBe` None
         verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(activeVrn))(any(), any())
@@ -137,7 +137,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
         intercept[IllegalStateException] {
-          service.checkAndValidateSavedUserAnswers(waypoints)
+          service.checkAndValidateSavedUserAnswers()
         }.getMessage `mustBe` errorMessage
       }
 
@@ -163,9 +163,9 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val service: CoreSavedAnswersRevalidationService =
             new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-          val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+          val result = service.checkAndValidateSavedUserAnswers().futureValue
 
-          result `mustBe` Some(Redirect(routes.ExpiredVrnDateController.onPageLoad(waypoints).url))
+          result `mustBe` Some(Redirect(routes.SavedProgressExpiredVrnDateController.onPageLoad().url))
           verifyNoInteractions(mockCoreRegistrationValidationService)
         }
 
@@ -192,7 +192,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val service: CoreSavedAnswersRevalidationService =
             new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-          val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+          val result = service.checkAndValidateSavedUserAnswers().futureValue
 
           val activeTrader = ActiveTraderResult(
             isReversal = activeMatch.exclusionStatusCode.contains(-1),
@@ -202,7 +202,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val expectedUserAnswers: UserAnswers = request.userAnswers
             .set(ActiveTraderResultQuery, activeTrader).success.value
 
-          result `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+          result `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
           verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(activeVrn))(any(), eqTo(dataRequest))
           verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
         }
@@ -223,7 +223,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val service: CoreSavedAnswersRevalidationService =
             new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-          val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+          val result = service.checkAndValidateSavedUserAnswers().futureValue
 
           result `mustBe` None
           verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(nonActiveVrn))(any(), eqTo(dataRequest))
@@ -255,7 +255,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val service: CoreSavedAnswersRevalidationService =
             new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-          val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+          val result = service.checkAndValidateSavedUserAnswers().futureValue
 
           val activeTrader = ActiveTraderResult(
             isReversal = activeMatch.exclusionStatusCode.contains(-1),
@@ -265,7 +265,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val expectedUserAnswers: UserAnswers = request.userAnswers
             .set(ActiveTraderResultQuery, activeTrader).success.value
 
-          result `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+          result `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
           verify(mockCoreRegistrationValidationService, times(1)).searchTraderId(eqTo(activeUtr))(any(), eqTo(dataRequest))
           verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
         }
@@ -286,7 +286,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val service: CoreSavedAnswersRevalidationService =
             new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-          val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+          val result = service.checkAndValidateSavedUserAnswers().futureValue
 
           result `mustBe` None
           verify(mockCoreRegistrationValidationService, times(1)).searchTraderId(eqTo(nonActiveUtr))(any(), eqTo(dataRequest))
@@ -318,7 +318,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val service: CoreSavedAnswersRevalidationService =
             new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-          val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+          val result = service.checkAndValidateSavedUserAnswers().futureValue
 
           val activeTrader = ActiveTraderResult(
             isReversal = activeMatch.exclusionStatusCode.contains(-1),
@@ -328,7 +328,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val expectedUserAnswers: UserAnswers = request.userAnswers
             .set(ActiveTraderResultQuery, activeTrader).success.value
 
-          result `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+          result `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
           verify(mockCoreRegistrationValidationService, times(1)).searchTraderId(eqTo(activeNino))(any(), eqTo(dataRequest))
           verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
         }
@@ -349,7 +349,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val service: CoreSavedAnswersRevalidationService =
             new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-          val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+          val result = service.checkAndValidateSavedUserAnswers().futureValue
 
           result `mustBe` None
           verify(mockCoreRegistrationValidationService, times(1)).searchTraderId(eqTo(nonActiveNino))(any(), eqTo(dataRequest))
@@ -384,7 +384,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val service: CoreSavedAnswersRevalidationService =
             new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-          val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+          val result = service.checkAndValidateSavedUserAnswers().futureValue
 
           val activeTrader = ActiveTraderResult(
             isReversal = activeMatch.exclusionStatusCode.contains(-1),
@@ -394,7 +394,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val expectedUserAnswers: UserAnswers = request.userAnswers
             .set(ActiveTraderResultQuery, activeTrader).success.value
 
-          result `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+          result `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
           verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(activeClientTaxReference), eqTo(activeMatch.memberState))(any(), eqTo(dataRequest))
           verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
         }
@@ -417,7 +417,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val service: CoreSavedAnswersRevalidationService =
             new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-          val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+          val result = service.checkAndValidateSavedUserAnswers().futureValue
 
           result `mustBe` None
           verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(nonActiveClientTaxReference), eqTo(country.code))(any(), eqTo(dataRequest))
@@ -441,7 +441,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
           intercept[IllegalStateException] {
-            service.checkAndValidateSavedUserAnswers(waypoints)
+            service.checkAndValidateSavedUserAnswers()
           }.getMessage `mustBe` errorMessage
 
           verifyNoInteractions(mockCoreRegistrationValidationService)
@@ -490,7 +490,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             val service: CoreSavedAnswersRevalidationService =
               new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-            val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+            val result = service.checkAndValidateSavedUserAnswers().futureValue
 
             result `mustBe` None
             verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(ukVrn))(any(), any())
@@ -545,7 +545,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             val service: CoreSavedAnswersRevalidationService =
               new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-            val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+            val result = service.checkAndValidateSavedUserAnswers().futureValue
 
             val activeTrader = ActiveTraderResult(
               isReversal = activeMatch.exclusionStatusCode.contains(-1),
@@ -555,7 +555,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             val expectedUserAnswers: UserAnswers = updatedUserAnswers
               .set(ActiveTraderResultQuery, activeTrader).success.value
 
-            result `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+            result `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
             verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(ukVrn))(any(), any())
             verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVrn), eqTo(country1.code))(any(), any())
             verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(country2.code))(any(), any())
@@ -644,7 +644,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             val service: CoreSavedAnswersRevalidationService =
               new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-            val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+            val result = service.checkAndValidateSavedUserAnswers().futureValue
 
             result `mustBe` None
             verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(clientTaxRefence), eqTo(clientCountry.code))(any(), any())
@@ -679,7 +679,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               val service: CoreSavedAnswersRevalidationService =
                 new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-              val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+              val result = service.checkAndValidateSavedUserAnswers().futureValue
 
               result `mustBe` None
               verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(clientTaxRefence), eqTo(clientCountry.code))(any(), any())
@@ -713,11 +713,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               val service: CoreSavedAnswersRevalidationService =
                 new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-              val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+              val result = service.checkAndValidateSavedUserAnswers().futureValue
 
-              result `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-                countryCode = quarantinedMatch.memberState,
-                exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+              result `mustBe` Some(Redirect(routes.SavedProgressQuarantinedController.onPageLoad(
+                quarantinedEffectiveDate = quarantinedMatch.getEffectiveDate
               ).url))
               verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(clientTaxRefence), eqTo(clientCountry.code))(any(), any())
               verify(mockCoreRegistrationValidationService, times(2)).searchScheme(any(), any(), any(), any())(any(), any())
@@ -753,7 +752,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               val service: CoreSavedAnswersRevalidationService =
                 new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-              val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+              val result = service.checkAndValidateSavedUserAnswers().futureValue
 
               val activeTrader = ActiveTraderResult(
                 isReversal = activeMatch.exclusionStatusCode.contains(-1),
@@ -763,7 +762,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               val expectedUserAnswers: UserAnswers = request.userAnswers
                 .set(ActiveTraderResultQuery, activeTrader).success.value
 
-              result `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+              result `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
               verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(clientTaxRefence), eqTo(clientCountry.code))(any(), any())
               verify(mockCoreRegistrationValidationService, times(4)).searchScheme(any(), any(), any(), any())(any(), any())
               verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
@@ -794,11 +793,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               val service: CoreSavedAnswersRevalidationService =
                 new CoreSavedAnswersRevalidationService(mockCoreRegistrationValidationService, mockSessionRepository, stubClockAtArbitraryDate)
 
-              val result = service.checkAndValidateSavedUserAnswers(waypoints).futureValue
+              val result = service.checkAndValidateSavedUserAnswers().futureValue
 
-              result `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-                countryCode = quarantinedMatch.memberState,
-                exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+              result `mustBe` Some(Redirect(routes.SavedProgressQuarantinedController.onPageLoad(
+                quarantinedEffectiveDate = quarantinedMatch.getEffectiveDate
               ).url))
               verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(clientTaxRefence), eqTo(clientCountry.code))(any(), any())
               verify(mockCoreRegistrationValidationService, times(1)).searchScheme(any(), any(), any(), any())(any(), any())
@@ -819,7 +817,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateUKVrn"))
 
-        val result = service invokePrivate privateMethodCall(waypoints, vrn, hc, dataRequest)
+        val result = service invokePrivate privateMethodCall(vrn, hc, dataRequest)
 
         result.futureValue `mustBe` None
         verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(vrn))(any(), any())
@@ -844,9 +842,9 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateUKVrn"))
 
-        val result = service invokePrivate privateMethodCall(waypoints, vrn, hc, dataRequest)
+        val result = service invokePrivate privateMethodCall(vrn, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(Redirect(routes.ExpiredVrnDateController.onPageLoad().url))
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressExpiredVrnDateController.onPageLoad().url))
         verifyNoInteractions(mockCoreRegistrationValidationService)
       }
 
@@ -871,7 +869,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateUKVrn"))
 
-        val result = service invokePrivate privateMethodCall(waypoints, vrn, hc, dataRequest)
+        val result = service invokePrivate privateMethodCall(vrn, hc, dataRequest)
 
         result.futureValue `mustBe` None
         verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(vrn))(any(), any())
@@ -894,7 +892,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val privateMethodCall = PrivateMethod[Future[Option[String]]](Symbol("revalidateUKVrn"))
 
-        val result = service invokePrivate privateMethodCall(waypoints, activeVrn, hc, dataRequest)
+        val result = service invokePrivate privateMethodCall(activeVrn, hc, dataRequest)
 
         val activeTrader = ActiveTraderResult(
           isReversal = activeMatch.exclusionStatusCode.contains(-1),
@@ -904,7 +902,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         val expectedUserAnswers: UserAnswers = request.userAnswers
           .set(ActiveTraderResultQuery, activeTrader).success.value
 
-        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
         verify(mockCoreRegistrationValidationService, times(1)).searchUkVrn(eqTo(activeVrn))(any(), any())
         verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
       }
@@ -956,7 +954,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         val expectedUserAnswers: UserAnswers = request.userAnswers
           .set(ActiveTraderResultQuery, activeTrader).success.value
 
-        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
         verify(mockCoreRegistrationValidationService, times(1)).searchTraderId(eqTo(ukReferenceNumber))(any(), any())
         verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
       }
@@ -979,9 +977,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val result = service invokePrivate privateMethodCall(ukReferenceNumber, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-          countryCode = quarantinedMatch.memberState,
-          exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressQuarantinedController.onPageLoad(
+          quarantinedEffectiveDate = quarantinedMatch.getEffectiveDate
         ).url))
         verify(mockCoreRegistrationValidationService, times(1)).searchTraderId(eqTo(ukReferenceNumber))(any(), any())
       }
@@ -1036,7 +1033,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         val expectedUserAnswers: UserAnswers = request.userAnswers
           .set(ActiveTraderResultQuery, activeTrader).success.value
 
-        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
         verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(foreignTaxReference), eqTo(countryCode))(any(), any())
         verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
       }
@@ -1062,9 +1059,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val result = service invokePrivate privateMethodCall(foreignTaxReference, countryCode, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-          countryCode = quarantinedMatch.memberState,
-          exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressQuarantinedController.onPageLoad(
+          quarantinedEffectiveDate = quarantinedMatch.getEffectiveDate
         ).url))
         verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(foreignTaxReference), eqTo(countryCode))(any(), any())
       }
@@ -1120,7 +1116,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         val expectedUserAnswers: UserAnswers = request.userAnswers
           .set(ActiveTraderResultQuery, activeTrader).success.value
 
-        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(countryCode))(any(), any())
         verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
       }
@@ -1146,9 +1142,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val result = service invokePrivate privateMethodCall(euTaxReference, countryCode, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-          countryCode = quarantinedMatch.memberState,
-          exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressQuarantinedController.onPageLoad(
+          quarantinedEffectiveDate = quarantinedMatch.getEffectiveDate
         ).url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(countryCode))(any(), any())
       }
@@ -1204,7 +1199,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         val expectedUserAnswers: UserAnswers = request.userAnswers
           .set(ActiveTraderResultQuery, activeTrader).success.value
 
-        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVrn), eqTo(countryCode))(any(), any())
         verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
       }
@@ -1230,9 +1225,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val result = service invokePrivate privateMethodCall(euVrn, countryCode, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-          countryCode = quarantinedMatch.memberState,
-          exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressQuarantinedController.onPageLoad(
+          quarantinedEffectiveDate = quarantinedMatch.getEffectiveDate
         ).url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVrn), eqTo(countryCode))(any(), any())
       }
@@ -1343,7 +1337,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         val expectedUserAnswers: UserAnswers = updatedUserAnswers
           .set(ActiveTraderResultQuery, activeTrader).success.value
 
-        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVrn), eqTo(country1.code))(any(), eqTo(dataRequest))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(country2.code))(any(), eqTo(dataRequest))
         verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
@@ -1397,9 +1391,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val result = service invokePrivate privateMethodCall(list, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-          countryCode = quarantinedMatch.memberState,
-          exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressQuarantinedController.onPageLoad(
+          quarantinedEffectiveDate = quarantinedMatch.getEffectiveDate
         ).url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVrn), eqTo(country1.code))(any(), eqTo(dataRequest))
         verifyNoMoreInteractions(mockCoreRegistrationValidationService)
@@ -1467,7 +1460,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         val expectedUserAnswers: UserAnswers = request.userAnswers
           .set(ActiveTraderResultQuery, activeTrader).success.value
 
-        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVatNumber), eqTo(euCountry.code))(any(), any())
         verifyNoMoreInteractions(mockCoreRegistrationValidationService)
         verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
@@ -1499,9 +1492,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val result = service invokePrivate privateMethodCall(euDetails, Some(euVatNumber), hc, dataRequest)
 
-        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-          countryCode = quarantinedMatch.memberState,
-          exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressQuarantinedController.onPageLoad(
+          quarantinedEffectiveDate = quarantinedMatch.getEffectiveDate
         ).url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuVrn(eqTo(euVatNumber), eqTo(euCountry.code))(any(), any())
         verifyNoMoreInteractions(mockCoreRegistrationValidationService)
@@ -1543,7 +1535,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         val expectedUserAnswers: UserAnswers = request.userAnswers
           .set(ActiveTraderResultQuery, activeTrader).success.value
 
-        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(euCountry.code))(any(), any())
         verifyNoMoreInteractions(mockCoreRegistrationValidationService)
         verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
@@ -1576,9 +1568,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val result = service invokePrivate privateMethodCall(euDetails, None, hc, dataRequest)
 
-        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-          countryCode = quarantinedMatch.memberState,
-          exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressQuarantinedController.onPageLoad(
+          quarantinedEffectiveDate = quarantinedMatch.getEffectiveDate
         ).url))
         verify(mockCoreRegistrationValidationService, times(1)).searchEuTaxId(eqTo(euTaxReference), eqTo(euCountry.code))(any(), any())
         verifyNoMoreInteractions(mockCoreRegistrationValidationService)
@@ -1705,9 +1696,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
             val result = service invokePrivate privateMethodCall(allPreviousRegistrations, None, hc, dataRequest)
 
-            result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-              countryCode = quarantinedMatch.memberState,
-              exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+            result.futureValue `mustBe` Some(Redirect(routes.SavedProgressQuarantinedController.onPageLoad(
+              quarantinedEffectiveDate = quarantinedMatch.getEffectiveDate
             ).url))
             verify(mockCoreRegistrationValidationService, times(6)).searchScheme(any(), any(), any(), any())(any(), any())
           }
@@ -1744,7 +1734,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
             val expectedUserAnswers: UserAnswers = request.userAnswers
               .set(ActiveTraderResultQuery, activeTrader).success.value
 
-            result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+            result.futureValue `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
             verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
               eqTo(previousSchemeNumber),
               eqTo(allPreviousRegistrations.head.previousSchemesDetails.value.head.previousScheme.value),
@@ -1780,9 +1770,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
             val result = service invokePrivate privateMethodCall(Seq(previousRegistration1, previousRegistration2), Some(requestIntermediaryNumber), hc, dataRequest)
 
-            result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-              countryCode = quarantinedMatch.memberState,
-              exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+            result.futureValue `mustBe` Some(Redirect(routes.SavedProgressQuarantinedController.onPageLoad(
+              quarantinedEffectiveDate = quarantinedMatch.getEffectiveDate
             ).url))
             verify(mockCoreRegistrationValidationService, times(4)).searchScheme(any(), any(), any(), any())(any(), any())
           }
@@ -1898,9 +1887,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
           val result = service invokePrivate privateMethodCall(countryCode, allPreviousSchemeDetails, None, hc, dataRequest)
 
-          result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-            countryCode = quarantinedMatch.memberState,
-            exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+          result.futureValue `mustBe` Some(Redirect(routes.SavedProgressQuarantinedController.onPageLoad(
+            quarantinedEffectiveDate = quarantinedMatch.getEffectiveDate
           ).url))
           verify(mockCoreRegistrationValidationService, times(2)).searchScheme(any(), any(), any(), eqTo(countryCode))(any(), any())
         }
@@ -1937,7 +1925,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
           val expectedUserAnswers: UserAnswers = request.userAnswers
             .set(ActiveTraderResultQuery, activeTrader).success.value
 
-          result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+          result.futureValue `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
           verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
             eqTo(previousSchemeNumber),
             eqTo(allPreviousSchemeDetails.head.previousScheme.value),
@@ -1967,9 +1955,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
           val result = service invokePrivate privateMethodCall(countryCode, allPreviousSchemeDetails, Some(requestIntermediaryNumber), hc, dataRequest)
 
-          result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-            countryCode = quarantinedMatch.memberState,
-            exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+          result.futureValue `mustBe` Some(Redirect(routes.SavedProgressQuarantinedController.onPageLoad(
+            quarantinedEffectiveDate = quarantinedMatch.getEffectiveDate
           ).url))
           verify(mockCoreRegistrationValidationService, times(1)).searchScheme(
             eqTo(previousSchemeNumber),
@@ -2021,7 +2008,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
         val expectedUserAnswers: UserAnswers = request.userAnswers
           .set(ActiveTraderResultQuery, activeTrader).success.value
 
-        result.futureValue `mustBe` Some(Redirect(routes.ClientAlreadyRegisteredController.onPageLoad().url))
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressClientAlreadyRegisteredController.onPageLoad().url))
         verify(mockSessionRepository, times(1)).set(eqTo(expectedUserAnswers))
       }
 
@@ -2041,9 +2028,8 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
         val result = service invokePrivate privateMethodCall(Some(quarantinedMatch), dataRequest)
 
-        result.futureValue `mustBe` Some(Redirect(routes.OtherCountryExcludedAndQuarantinedController.onPageLoad(
-          countryCode = quarantinedMatch.memberState,
-          exclusionEffectiveDate = quarantinedMatch.getEffectiveDate
+        result.futureValue `mustBe` Some(Redirect(routes.SavedProgressQuarantinedController.onPageLoad(
+          quarantinedEffectiveDate = quarantinedMatch.getEffectiveDate
         ).url))
       }
     }

@@ -19,12 +19,12 @@ package controllers.saveAndComeBack
 import base.SpecBase
 import controllers.routes as normalRoutes
 import forms.saveAndComeBack.ContinueRegistrationFormProvider
-import models.{Index, UserAnswers}
 import models.domain.VatCustomerInfo
 import models.saveAndComeBack.ContinueRegistration.{Continue, Delete}
 import models.saveAndComeBack.TaxReferenceInformation
+import models.{Index, UserAnswers}
 import org.mockito.ArgumentMatchers.any
-import org.mockito.{ArgumentCaptor, Mockito}
+import org.mockito.Mockito
 import org.mockito.Mockito.{times, verify, verifyNoInteractions, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures.*
@@ -289,7 +289,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
 
             when(mockSaveAndComeBackService.determineTaxReference(any())) thenReturn genericTaxReference
 
-            when(mockCoreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(any())(any(), any())) thenReturn None.toFuture
+            when(mockCoreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers()(any(), any())) thenReturn None.toFuture
 
             val application = applicationBuilder(userAnswers = Some(answers))
               .overrides(
@@ -315,7 +315,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
               .set(ClientVatNumberPage, ukVrn).success.value
               .set(SavedProgressPage, continueUrl.get(OnlyRelative).url).success.value
 
-            when(mockCoreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(any())(any(), any())) thenReturn None.toFuture
+            when(mockCoreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers()(any(), any())) thenReturn None.toFuture
             when(mockSaveAndComeBackService.determineTaxReference(any())) thenReturn genericTaxReference
 
             val application = applicationBuilder(userAnswers = Some(answers))
@@ -335,7 +335,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
               status(result) `mustBe` SEE_OTHER
               RedirectUrl(redirectLocation(result).value) `mustBe` continueUrl
               verify(mockSaveAndComeBackService, times(1)).determineTaxReference(any())
-              verify(mockCoreSavedAnswersRevalidationService, times(1)).checkAndValidateSavedUserAnswers(any())(any(), any())
+              verify(mockCoreSavedAnswersRevalidationService, times(1)).checkAndValidateSavedUserAnswers()(any(), any())
             }
           }
 
@@ -348,7 +348,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
               .set(SavedProgressPage, continueUrl.get(OnlyRelative).url).success.value
 
             when(mockSaveAndComeBackService.determineTaxReference(any())) thenReturn genericTaxReference
-            when(mockCoreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(any())(any(), any())) thenReturn Some(redirectResult).toFuture
+            when(mockCoreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers()(any(), any())) thenReturn Some(redirectResult).toFuture
             when(mockSaveAndComeBackService.deleteSavedUserAnswers(any())(any(), any())) thenReturn ().toFuture
 
             val application = applicationBuilder(userAnswers = Some(answers))
@@ -369,7 +369,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
               redirectLocation(result).value `mustBe` redirectLocation(redirectResult.toFuture).value
               verify(mockSaveAndComeBackService, times(1)).determineTaxReference(any())
               verify(mockSaveAndComeBackService, times(1)).deleteSavedUserAnswers(any())(any(), any())
-              verify(mockCoreSavedAnswersRevalidationService, times(1)).checkAndValidateSavedUserAnswers(any())(any(), any())
+              verify(mockCoreSavedAnswersRevalidationService, times(1)).checkAndValidateSavedUserAnswers()(any(), any())
             }
           }
 
@@ -387,7 +387,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
               .set(SavedProgressPage, continueUrl.get(OnlyRelative).url).success.value
 
             when(mockSaveAndComeBackService.determineTaxReference(any())) thenReturn genericTaxReference
-            when(mockCoreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(any())(any(), any())) thenReturn Some(redirectResult).toFuture
+            when(mockCoreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers()(any(), any())) thenReturn Some(redirectResult).toFuture
             when(mockSaveAndComeBackService.deleteSavedUserAnswers(any())(any(), any())) thenReturn ().toFuture
 
             val application = applicationBuilder(userAnswers = Some(answers))
@@ -408,7 +408,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
               redirectLocation(result).value `mustBe` redirectLocation(redirectResult.toFuture).value
               verify(mockSaveAndComeBackService, times(1)).determineTaxReference(any())
               verify(mockSaveAndComeBackService, times(1)).deleteSavedUserAnswers(any())(any(), any())
-              verify(mockCoreSavedAnswersRevalidationService, times(1)).checkAndValidateSavedUserAnswers(any())(any(), any())
+              verify(mockCoreSavedAnswersRevalidationService, times(1)).checkAndValidateSavedUserAnswers()(any(), any())
             }
           }
 
@@ -423,7 +423,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
               .set(SavedProgressPage, continueUrl.get(OnlyRelative).url).success.value
 
             when(mockSaveAndComeBackService.determineTaxReference(any())) thenReturn genericTaxReference
-            when(mockCoreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers(any())(any(), any())) thenReturn Some(redirectResult).toFuture
+            when(mockCoreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers()(any(), any())) thenReturn Some(redirectResult).toFuture
             when(mockSaveAndComeBackService.deleteSavedUserAnswers(any())(any(), any())) thenReturn ().toFuture
 
             val application = applicationBuilder(userAnswers = Some(answers))
@@ -444,7 +444,7 @@ class ContinueRegistrationControllerSpec extends SpecBase with MockitoSugar with
               redirectLocation(result).value `mustBe` redirectLocation(redirectResult.toFuture).value
               verify(mockSaveAndComeBackService, times(1)).determineTaxReference(any())
               verify(mockSaveAndComeBackService, times(1)).deleteSavedUserAnswers(any())(any(), any())
-              verify(mockCoreSavedAnswersRevalidationService, times(1)).checkAndValidateSavedUserAnswers(any())(any(), any())
+              verify(mockCoreSavedAnswersRevalidationService, times(1)).checkAndValidateSavedUserAnswers()(any(), any())
             }
           }
         }
