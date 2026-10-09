@@ -653,7 +653,7 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
 
           "when it is an OSS scheme" - {
 
-            "must return None when an active match is found" in {
+            "must allow the user to continue when an active match is found" in {
 
               val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
@@ -684,9 +684,10 @@ class CoreSavedAnswersRevalidationServiceSpec extends SpecBase with BeforeAndAft
               result `mustBe` None
               verify(mockCoreRegistrationValidationService, times(1)).searchForeignTaxReference(eqTo(clientTaxRefence), eqTo(clientCountry.code))(any(), any())
               verify(mockCoreRegistrationValidationService, times(6)).searchScheme(any(), any(), any(), any())(any(), any())
+              verify(mockSessionRepository, never).set(any())
             }
 
-            "must return the corresponding URL when a quarantined match is found" in {
+            "must redirect to quarantined when a quarantined match is found" in {
 
               val request = DataRequest(FakeRequest("GET", "/"), vrn.vrn, updatedUserAnswers, requestIntermediaryNumber, None)
 
