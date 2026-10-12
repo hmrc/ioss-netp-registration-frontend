@@ -20,7 +20,7 @@ import controllers.SetActiveTraderResult
 import controllers.saveAndComeBack.routes as s4lRoutes
 import jakarta.inject.Inject
 import logging.Logging
-import models.Country
+import models.{Country, PreviousScheme}
 import models.core.Match
 import models.domain.VatCustomerInfo
 import models.previousRegistrations.*
@@ -221,12 +221,12 @@ class CoreSavedAnswersRevalidationService @Inject()(
           intermediaryNumber = intermediaryNumber,
           countryCode = countryCode
         ).flatMap { maybeActiveMatch =>
-          activeMatchRedirectUrl(maybeActiveMatch).flatMap {
-            case Some(urlString) =>
-              Some(urlString).toFuture
 
-            case _ =>
-              revalidatePreviousSchemeDetails(countryCode, remaining, intermediaryNumber)
+          previousSchemeRedirect(previousScheme, maybeActiveMatch).flatMap {
+            case Some(result) =>
+              Some(result).toFuture
+            case None =>
+              revalidatePreviousSchemeDetails(countryCode,remaining, intermediaryNumber)
           }
         }
 
@@ -234,6 +234,26 @@ class CoreSavedAnswersRevalidationService @Inject()(
         revalidatePreviousSchemeDetails(countryCode, remaining, intermediaryNumber)
 
       case Nil => None.toFuture
+    }
+  }
+
+  private def previousSchemeRedirect(previousScheme: PreviousScheme, maybeMatch: Option[Match])(implicit request: DataRequest[_]): Future[Option[Result]] = {
+
+    maybeMatch match {
+      case Some(activeMatch) if activeMatch.isQuarantinedTrader(clock) =>
+        Some(Redirect(s4lRoutes.SavedProgressQuarantinedController.onPageLoad(activeMatch.getEffectiveDate).url)).toFuture
+
+      case Some(activeMatch) if isIOSS(previousScheme) && activeMatch.isActiveTrader(clock) =>
+        setActiveTraderResultAndRedirect(activeMatch, sessionRepository, s4lRoutes.SavedProgressClientAlreadyRegisteredController.onPageLoad()).map(Some(_))
+      case _ =>
+        None.toFuture
+    }
+  }
+
+  private def isIOSS(scheme: PreviousScheme): Boolean = {
+    scheme match {
+      case PreviousScheme.IOSSWOI | PreviousScheme.IOSSWI => true
+      case _ => false
     }
   }
 
