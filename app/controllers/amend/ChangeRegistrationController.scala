@@ -187,16 +187,8 @@ class ChangeRegistrationController @Inject()(
 
           val isValid: Boolean = validate(frontendAppConfig.version7Enabled)(request.request)
           val noAmendments = originalUserAnswers.data == userAnswersWithoutOriginalRegistration.data
-          val changeDate = request.registrationWrapper.etmpDisplayRegistration.adminUse.changeDate
-          val reviewRegistrationDetails = changeDate.exists(_.isBefore(LocalDateTime.now(clock).minusYears(2)))
 
-          val registrationDueForReview: Boolean = if (frontendAppConfig.registrationReviewEnabled) {
-            reviewRegistrationDetails
-          } else {
-            false
-          }
-
-          Ok(view(waypoints, companyName, request.iossNumber, registrationDetailsList, importOneStopShopDetailsList, isValid, isExcluded, maybeExclusion, exclusionDeadline, noAmendments, frontendAppConfig.clientListUrl, registrationDueForReview))
+          Ok(view(waypoints, companyName, request.iossNumber, registrationDetailsList, importOneStopShopDetailsList, isValid, isExcluded, maybeExclusion, exclusionDeadline, noAmendments, frontendAppConfig.clientListUrl))
 
         }
       }(request.request)
