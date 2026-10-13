@@ -49,7 +49,7 @@ import viewmodels.previousRegistrations.{PreviousRegistrationSummary, Previously
 import views.html.ChangeRegistrationView
 
 import javax.inject.Inject
-import java.time.{Clock, LocalDate, LocalDateTime}
+import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
 class ChangeRegistrationController @Inject()(
@@ -57,8 +57,7 @@ class ChangeRegistrationController @Inject()(
                                               view: ChangeRegistrationView,
                                               registrationService: RegistrationService,
                                               auditService: AuditService,
-                                              frontendAppConfig: FrontendAppConfig,
-                                              clock: Clock
+                                              frontendAppConfig: FrontendAppConfig
                                             )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientCompanyName with CompletionChecks {
 
   protected val controllerComponents: MessagesControllerComponents = cc
