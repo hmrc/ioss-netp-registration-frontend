@@ -50,7 +50,7 @@ object RegistrationData extends SpecBase {
     commencementDate = LocalDate.now.format(eisDateFormatter),
     euRegistrationDetails = Seq(etmpEuRegistrationDetails),
     previousEURegistrationDetails = Seq(etmpEuPreviousRegistrationDetails),
-    websites = Some(Seq(arbitrary[EtmpWebsite].sample.value)),
+    websites = Seq(arbitrary[EtmpWebsite].sample.value),
     contactName = arbitrary[String].sample.value,
     businessTelephoneNumber = arbitrary[String].sample.value,
     businessEmailId = arbitrary[String].sample.value,

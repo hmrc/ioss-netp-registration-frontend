@@ -187,7 +187,7 @@ class EtmpRegistrationRequestSpec extends SpecBase {
           commencementDate = LocalDate.now(stubClockAtArbitraryDate).format(eisDateFormatter),
           euRegistrationDetails = etmpEuRegistrationDetails,
           previousEURegistrationDetails = etmpPreviousEuRegistrationDetails,
-          websites = Some(convertToEtmpWebsite),
+          websites = convertToEtmpWebsite,
           contactName = genBusinessContactDetails.fullName,
           businessTelephoneNumber = genBusinessContactDetails.telephoneNumber,
           businessEmailId = genBusinessContactDetails.emailAddress,

@@ -76,7 +76,7 @@ trait EtmpCommonRegistrationRequest extends EtmpEuRegistrations with EtmpPreviou
       commencementDate = commencementDate.format(eisDateFormatter),
       euRegistrationDetails = getEuTaxRegistrations(answers),
       previousEURegistrationDetails = getPreviousRegistrationDetails(answers),
-      websites = Some(getWebsites(answers, frontendAppConfig)),
+      websites = getWebsites(answers, frontendAppConfig),
       contactName = businessContactDetails.fullName,
       businessTelephoneNumber = businessContactDetails.telephoneNumber,
       businessEmailId = businessContactDetails.emailAddress,

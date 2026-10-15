@@ -378,7 +378,7 @@ trait EtmpModelGenerators {
         commencementDate <- arbitrary[LocalDate].map(_.toString)
         euRegistrationDetails <- Gen.listOfN(2, arbitraryEtmpEuRegistrationDetails.arbitrary)
         previousEURegistrationDetails <- Gen.listOfN(2, arbitraryEtmpPreviousEuRegistrationDetails.arbitrary)
-        websites <- Gen.option(Gen.listOfN(2, arbitraryEtmpWebsite.arbitrary))
+        websites <- Gen.listOfN(2, arbitraryEtmpWebsite.arbitrary)
         contactName <- Gen.alphaStr
         businessTelephoneNumber <- Gen.numStr
         businessEmailId <- Gen.alphaStr
