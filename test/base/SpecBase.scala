@@ -80,7 +80,7 @@ trait SpecBase
     .set(BusinessBasedInUKPage, true).success.value
     .set(ClientHasVatNumberPage, true).success.value
     .set(ClientVatNumberPage, "123456789").success.value
-    .set(HasTradingNamePage, false).success.value
+    .set(HasNoOtherTradingNamesPage, true).success.value
     .set(BusinessContactDetailsPage, BusinessContactDetails("fullName", "555999111", "test@test.com")).success.value
     .set(HasFixedEstablishmentPage, false).success.value
     .set(PreviouslyRegisteredPage, false).success.value

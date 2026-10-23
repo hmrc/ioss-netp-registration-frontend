@@ -18,9 +18,9 @@ package controllers.tradingNames
 
 import controllers.GetClientCompanyName
 import controllers.actions.*
-import forms.tradingNames.HasTradingNameFormProvider
+import forms.tradingNames.HasNoOtherTradingNamesFormProvider
 import pages.Waypoints
-import pages.tradingNames.HasTradingNamePage
+import pages.tradingNames.HasNoOtherTradingNamesPage
 import play.api.Logging
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -29,30 +29,30 @@ import queries.tradingNames.AllTradingNamesQuery
 import repositories.SessionRepository
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import utils.FutureSyntax.FutureOps
-import views.html.tradingNames.HasTradingNameView
+import views.html.tradingNames.HasNoOtherTradingNamesView
 import utils.AmendWaypoints.AmendWaypointsOps
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
-class HasTradingNameController @Inject()(
-                                         override val messagesApi: MessagesApi,
-                                         sessionRepository: SessionRepository,
-                                         cc: AuthenticatedControllerComponents,
-                                         val controllerComponents: MessagesControllerComponents,
-                                         formProvider: HasTradingNameFormProvider,
-                                         view: HasTradingNameView
+class HasNoOtherTradingNamesController @Inject()(
+                                                  override val messagesApi: MessagesApi,
+                                                  sessionRepository: SessionRepository,
+                                                  cc: AuthenticatedControllerComponents,
+                                                  val controllerComponents: MessagesControllerComponents,
+                                                  formProvider: HasNoOtherTradingNamesFormProvider,
+                                                  view: HasNoOtherTradingNamesView
                                  )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport with Logging with GetClientCompanyName {
 
   val form: Form[Boolean] = formProvider()
 
-  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(HasTradingNamePage)).async {
+  def onPageLoad(waypoints: Waypoints): Action[AnyContent] = cc.identifyAndGetData(waypoints.inAmend, checkAmendAccess = Some(HasNoOtherTradingNamesPage)).async {
     implicit request =>
 
       getClientCompanyName(waypoints) {
         companyName =>
-          val preparedForm = request.userAnswers.get(HasTradingNamePage) match {
+          val preparedForm = request.userAnswers.get(HasNoOtherTradingNamesPage) match {
             case None => form
             case Some(value) => form.fill(value)
           }
@@ -80,9 +80,9 @@ class HasTradingNameController @Inject()(
                 }
               for {
                 cleanedAnswers <- Future.fromTry(cleanedAnswersTry)
-                updatedAnswers <- Future.fromTry(cleanedAnswers.set(HasTradingNamePage, value))
+                updatedAnswers <- Future.fromTry(cleanedAnswers.set(HasNoOtherTradingNamesPage, value))
                 _ <- sessionRepository.set(updatedAnswers)
-              } yield Redirect(HasTradingNamePage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
+              } yield Redirect(HasNoOtherTradingNamesPage.navigate(waypoints, request.userAnswers, updatedAnswers).route)
           )
       }
   }

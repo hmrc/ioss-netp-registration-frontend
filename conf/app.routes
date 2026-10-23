@@ -78,8 +78,8 @@ GET         /vat-number-not-found                                           cont
 GET         /cannot-use-this-service                                        controllers.CannotUseNotAnIntermediaryController.onPageLoad()
 
 # Trading name section
-GET         /have-trading-name                                              controllers.tradingNames.HasTradingNameController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
-POST        /have-trading-name                                              controllers.tradingNames.HasTradingNameController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
+GET         /have-no-other-trading-names                                    controllers.tradingNames.HasNoOtherTradingNamesController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints)
+POST        /have-no-other-trading-names                                    controllers.tradingNames.HasNoOtherTradingNamesController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints)
 
 GET         /trading-name/:index                                            controllers.tradingNames.TradingNameController.onPageLoad(waypoints: Waypoints ?= EmptyWaypoints,  index: Index)
 POST        /trading-name/:index                                            controllers.tradingNames.TradingNameController.onSubmit(waypoints: Waypoints ?= EmptyWaypoints,  index: Index)

@@ -16,7 +16,7 @@
 
 @import controllers.tradingNames.routes
 @import pages.Waypoints
-@import pages.tradingNames.HasTradingNamePage
+@import pages.tradingNames.HasNoOtherTradingNamesPage
 @import views.html.components.ButtonGroup
 
 @this(
@@ -29,9 +29,9 @@
 
 @(form: Form[_], waypoints: Waypoints, companyName: String)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle = title(form, messages("hasTradingName.title", companyName))) {
+@layout(pageTitle = title(form, messages("hasNoOtherTradingNames.title", companyName))) {
 
-    @formHelper(action = routes.HasTradingNameController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
+    @formHelper(action = routes.HasNoOtherTradingNamesController.onSubmit(waypoints), Symbol("autoComplete") -> "off") {
 
         @if(form.errors.nonEmpty) {
             @govukErrorSummary(ErrorSummaryViewModel(form))
@@ -40,10 +40,10 @@
         @govukRadios(
             RadiosViewModel.yesNo(
                 field = form("value"),
-                legend = LegendViewModel(messages("hasTradingName.heading", companyName)).asPageHeading()
+                legend = LegendViewModel(messages("hasNoOtherTradingNames.heading", companyName)).asPageHeading()
             )
         )
 
-        @button("site.continue", HasTradingNamePage.route(waypoints).url, waypoints)
+        @button("site.continue", HasNoOtherTradingNamesPage.route(waypoints).url, waypoints)
     }
 }

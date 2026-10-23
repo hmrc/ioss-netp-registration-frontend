@@ -268,7 +268,7 @@ class CheckAmendPageAccessFilterSpec extends SpecBase with MockitoSugar with Bef
         filter.shouldBlockPage(Some(basicUserAnswersWithVatInfo), ClientBusinessNamePage, true) mustBe true
 
         filter.shouldBlockPage(Some(basicUserAnswersWithVatInfo), TradingNamePage(Index(0)), true) mustBe true
-        filter.shouldBlockPage(Some(basicUserAnswersWithVatInfo), HasTradingNamePage, true) mustBe true
+        filter.shouldBlockPage(Some(basicUserAnswersWithVatInfo), HasNoOtherTradingNamesPage, true) mustBe true
         filter.shouldBlockPage(Some(basicUserAnswersWithVatInfo), AddTradingNamePage(), true) mustBe true
         filter.shouldBlockPage(Some(basicUserAnswersWithVatInfo), DeleteAllTradingNamesPage, true) mustBe true
         filter.shouldBlockPage(Some(basicUserAnswersWithVatInfo), DeleteTradingNamePage(Index(0)), true) mustBe true

@@ -31,7 +31,7 @@ import utils.CompletionChecks
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
 import viewmodels.checkAnswers.*
-import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
+import viewmodels.checkAnswers.tradingNames.{HasNoOtherTradingNamesSummary, TradingNameSummary}
 import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
 import viewmodels.govuk.summarylist.*
 import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
@@ -84,7 +84,7 @@ class CheckYourAnswersController @Inject()(
         ).flatten
       )
 
-      val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(userAnswers, waypoints, thisPage)
+      val maybeHasNoOtherTradingNamesSummaryRow = HasNoOtherTradingNamesSummary.row(userAnswers, waypoints, thisPage)
       val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, userAnswers, thisPage)
       val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.row(userAnswers, waypoints, thisPage)
       val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(userAnswers, Seq.empty, waypoints, thisPage)
@@ -97,11 +97,11 @@ class CheckYourAnswersController @Inject()(
 
       val list = SummaryListViewModel(
         rows = Seq(
-          maybeHasTradingNameSummaryRow.map { hasTradingNameSummaryRow =>
+          maybeHasNoOtherTradingNamesSummaryRow.map { hasNoOtherTradingNamesSummaryRow =>
             if (tradingNameSummaryRow.nonEmpty) {
-              hasTradingNameSummaryRow.withCssClass("govuk-summary-list__row--no-border")
+              hasNoOtherTradingNamesSummaryRow.withCssClass("govuk-summary-list__row--no-border")
             } else {
-              hasTradingNameSummaryRow
+              hasNoOtherTradingNamesSummaryRow
             }
           },
           tradingNameSummaryRow,

@@ -31,7 +31,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendBaseController
 import viewmodels.CheckVatDetailsViewModel
 import viewmodels.checkAnswers.{BusinessBasedInUKSummary, BusinessContactDetailsSummary, ClientBusinessAddressSummary, ClientBusinessNameSummary, ClientCountryBasedSummary, ClientHasUtrNumberSummary, ClientHasVatNumberSummary, ClientTaxReferenceSummary, ClientUtrNumberSummary, ClientVatNumberSummary, ClientsNinoNumberSummary}
 import views.html.ClientNotActivatedView
-import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
+import viewmodels.checkAnswers.tradingNames.{HasNoOtherTradingNamesSummary, TradingNameSummary}
 import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
 import viewmodels.govuk.summarylist.*
 import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
@@ -126,7 +126,7 @@ class ClientNotActivatedController @Inject()(
                                     userAnswers: UserAnswers)
                                     (implicit messages: Messages): SummaryList =
 
-    val maybeHasTradingNameSummaryRow = HasTradingNameSummary.rowWithoutAction(userAnswers, waypoints)
+    val maybeHasTradingNameSummaryRow = HasNoOtherTradingNamesSummary.rowWithoutAction(userAnswers, waypoints)
 
     val tradingNameSummaryRow = TradingNameSummary.checkAnswersRowWithoutAction(waypoints, userAnswers)
     val previouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.rowWithoutAction(userAnswers, waypoints)

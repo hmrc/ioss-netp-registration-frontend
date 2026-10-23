@@ -29,7 +29,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatestplus.mockito.MockitoSugar.mock
 import pages.previousRegistrations.PreviouslyRegisteredPage
-import pages.tradingNames.HasTradingNamePage
+import pages.tradingNames.HasNoOtherTradingNamesPage
 import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientHasVatNumberPage, ClientVatNumberPage}
 import play.api.libs.json.{JsError, JsSuccess, Json}
@@ -121,7 +121,7 @@ class EtmpRegistrationRequestSpec extends SpecBase {
         .set(BusinessBasedInUKPage, true).success.value
         .set(ClientHasVatNumberPage, true).success.value
         .set(ClientVatNumberPage, "123456789").success.value
-        .set(HasTradingNamePage, true).success.value
+        .set(HasNoOtherTradingNamesPage, false).success.value
         .set(AllTradingNamesQuery, tradingNames).success.value
         .set(PreviouslyRegisteredPage, true).success.value
         .set(AllPreviousRegistrationsQuery, previousEuRegistrations).success.value

@@ -38,7 +38,7 @@ import views.html.amend.AmendCompleteView
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
 import viewmodels.checkAnswers.*
-import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
+import viewmodels.checkAnswers.tradingNames.{HasNoOtherTradingNamesSummary, TradingNameSummary}
 import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
 import viewmodels.govuk.all.SummaryListViewModel
 import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
@@ -74,7 +74,7 @@ class AmendCompleteController @Inject()(
           getTaxReferenceDetailsRows(originalRegistration) ++
           getClientBusinessNameRows(originalRegistration) ++
           getPrinciplePlaceOfBusinessDetailsRows(originalRegistration) ++
-          getHasTradingNameRows(originalRegistration) ++
+          getHasNoOtherTradingNamesRows(originalRegistration) ++
           getTradingNameRows(originalRegistration) ++
           getHasPreviouslyRegistered(originalRegistration) ++
           getPreviouslyRegisteredRows(originalRegistration) ++
@@ -87,19 +87,19 @@ class AmendCompleteController @Inject()(
       ).flatten
     )
 
-  private def getHasTradingNameRows(originalRegistration: EtmpDisplayRegistration)
+  private def getHasNoOtherTradingNamesRows(originalRegistration: EtmpDisplayRegistration)
                                    (implicit request: AuthenticatedMandatoryRegistrationRequest[_]): Seq[Option[SummaryListRow]] = {
 
     val originalAnswers = originalRegistration.tradingNames
     val amendedAnswers = request.userAnswers.get(AllTradingNamesQuery).getOrElse(List.empty)
-    val hasChangedToNo = amendedAnswers.isEmpty && originalAnswers.nonEmpty
-    val hasChangedToYes = amendedAnswers.nonEmpty && originalAnswers.nonEmpty || originalAnswers.isEmpty
+    val hasChangedToNo = amendedAnswers.nonEmpty && originalAnswers.nonEmpty || originalAnswers.isEmpty
+    val hasChangedToYes = amendedAnswers.isEmpty && originalAnswers.nonEmpty 
     val notAmended = amendedAnswers.nonEmpty && originalAnswers.nonEmpty || amendedAnswers.isEmpty && originalAnswers.isEmpty
 
     if (notAmended) {
       Seq.empty
     } else if (hasChangedToNo || hasChangedToYes) {
-      Seq(HasTradingNameSummary.amendedRow(request.userAnswers))
+      Seq(HasNoOtherTradingNamesSummary.amendedRow(request.userAnswers))
     } else {
       Seq.empty
     }

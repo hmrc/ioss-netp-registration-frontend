@@ -26,7 +26,7 @@ import org.scalacheck.Gen
 import org.scalatestplus.mockito.MockitoSugar
 import pages.*
 import pages.previousRegistrations.PreviouslyRegisteredPage
-import pages.tradingNames.{HasTradingNamePage, TradingNamePage}
+import pages.tradingNames.{HasNoOtherTradingNamesPage, TradingNamePage}
 import pages.vatEuDetails.*
 import pages.website.WebsitePage
 import play.api.mvc.AnyContent
@@ -64,7 +64,7 @@ class CompletionChecksSpec extends SpecBase with MockitoSugar {
     .set(ClientTaxReferencePage, taxReference).success.value
     .set(ClientBusinessNamePage, clientBusinessName).success.value
     .set(ClientBusinessAddressPage, businessAddress).success.value
-    .set(HasTradingNamePage, true).success.value
+    .set(HasNoOtherTradingNamesPage, false).success.value
     .set(TradingNamePage(tradingNameIndex), tradingName).success.value
     .set(PreviouslyRegisteredPage, false).success.value
     .set(HasFixedEstablishmentPage, true).success.value

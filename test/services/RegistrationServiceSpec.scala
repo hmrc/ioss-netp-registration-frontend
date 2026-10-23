@@ -35,9 +35,9 @@ import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.prop.TableDrivenPropertyChecks.forAll
 import org.scalatestplus.mockito.MockitoSugar.mock
 import pages.previousRegistrations.PreviouslyRegisteredPage
-import pages.tradingNames.HasTradingNamePage
+import pages.tradingNames.HasNoOtherTradingNamesPage
 import pages.vatEuDetails.HasFixedEstablishmentPage
-import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage, ClientBusinessNamePage, ClientCountryBasedPage, ClientHasUtrNumberPage, ClientHasVatNumberPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage}
+import pages.*
 import play.api.test.Helpers.running
 import queries.AllWebsites
 import queries.euDetails.AllEuDetailsQuery
@@ -473,7 +473,7 @@ class RegistrationServiceSpec extends SpecBase with WireMockHelper with BeforeAn
     }
 
     val userAnswersPreCountry: UserAnswers = addBusinessDetailsUA
-      .set(HasTradingNamePage, convertedTradingNamesUA.nonEmpty).success.value
+      .set(HasNoOtherTradingNamesPage, convertedTradingNamesUA.isEmpty).success.value
       .set(AllTradingNamesQuery, convertedTradingNamesUA.toList).success.value
       .set(PreviouslyRegisteredPage, convertedPreviousEuRegistrationDetails.nonEmpty).success.value
       .set(AllPreviousRegistrationsQuery, convertedPreviousEuRegistrationDetails.toList).success.value

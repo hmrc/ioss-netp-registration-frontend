@@ -20,7 +20,7 @@ import config.FrontendAppConfig
 import formats.Format.eisDateFormatter
 import models.{BusinessContactDetails, Country, UserAnswers}
 import pages.*
-import pages.tradingNames.HasTradingNamePage
+import pages.tradingNames.HasNoOtherTradingNamesPage
 import queries.AllWebsites
 import queries.tradingNames.AllTradingNamesQuery
 import services.etmp.{EtmpEuRegistrations, EtmpPreviousRegistrationsRequest}
@@ -86,8 +86,8 @@ trait EtmpCommonRegistrationRequest extends EtmpEuRegistrations with EtmpPreviou
   }
 
   def getTradingNames(answers: UserAnswers): List[EtmpTradingName] = {
-    answers.get(HasTradingNamePage) match {
-      case Some(true) =>
+    answers.get(HasNoOtherTradingNamesPage) match {
+      case Some(false) =>
         answers.get(AllTradingNamesQuery) match {
           case Some(tradingNames) =>
             for {
@@ -99,7 +99,7 @@ trait EtmpCommonRegistrationRequest extends EtmpEuRegistrations with EtmpPreviou
             throw exception
         }
 
-      case Some(false) =>
+      case Some(true) =>
         List.empty
 
       case None =>

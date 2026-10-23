@@ -29,7 +29,7 @@ import models.etmp.{EtmpIdType, EtmpOtherAddress, EtmpPreviousEuRegistrationDeta
 import models.vatEuDetails.{EuDetails, RegistrationType, TradingNameAndBusinessAddress}
 import models.{BusinessContactDetails, ClientBusinessName, Country, InternationalAddress, TradingName, UserAnswers, Website}
 import pages.previousRegistrations.PreviouslyRegisteredPage
-import pages.tradingNames.HasTradingNamePage
+import pages.tradingNames.HasNoOtherTradingNamesPage
 import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage, ClientBusinessNamePage, ClientCountryBasedPage, ClientHasUtrNumberPage, ClientHasVatNumberPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage}
 import queries.AllWebsites
@@ -96,11 +96,11 @@ class RegistrationService @Inject()(
 
       taxIdUA <- getTaxIdentifierAndNum(withVatFlag, registrationWrapper.etmpDisplayRegistration.customerIdentification)
 
-      hasTradingNamesUA <- taxIdUA.set(HasTradingNamePage, etmpTradingNames.nonEmpty)
+      hasNoOtherTradingNamessUA <- taxIdUA.set(HasNoOtherTradingNamesPage, etmpTradingNames.isEmpty)
       tradingNamesUA <- if (etmpTradingNames.nonEmpty) {
-        hasTradingNamesUA.set(AllTradingNamesQuery, convertTradingNames(etmpTradingNames).toList)
+        hasNoOtherTradingNamessUA.set(AllTradingNamesQuery, convertTradingNames(etmpTradingNames).toList)
       } else {
-        Try(hasTradingNamesUA)
+        Try(hasNoOtherTradingNamessUA)
       }
 
       hasPreviousEuRegistrationsUA <- tradingNamesUA.set(PreviouslyRegisteredPage, maybePreviousEuRegistrationDetails.exists(_.registrationNumber.nonEmpty))

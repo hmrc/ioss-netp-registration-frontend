@@ -85,7 +85,7 @@ class CheckAmendPageAccessFilter @Inject()(
 
   private def tradingNameBlocked = Seq(
     TradingNamePage(Index(0)),
-    HasTradingNamePage,
+    HasNoOtherTradingNamesPage,
     AddTradingNamePage(),
     DeleteAllTradingNamesPage,
     DeleteTradingNamePage(Index(0)),
