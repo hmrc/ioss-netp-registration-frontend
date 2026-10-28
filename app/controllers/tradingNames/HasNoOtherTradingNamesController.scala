@@ -73,7 +73,7 @@ class HasNoOtherTradingNamesController @Inject()(
 
             value =>
               val cleanedAnswersTry =
-                if (!value && !waypoints.inCheck && !waypoints.inAmend) {
+                if (value && !waypoints.inCheck && !waypoints.inAmend) {
                   request.userAnswers.remove(AllTradingNamesQuery)
                 } else {
                   Success(request.userAnswers)
