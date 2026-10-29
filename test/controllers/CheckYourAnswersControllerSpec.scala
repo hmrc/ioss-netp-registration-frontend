@@ -20,7 +20,7 @@ import base.SpecBase
 import models.{BusinessContactDetails, CheckMode, Index, TradingName, UserAnswers, Website}
 import pages.*
 import pages.previousRegistrations.PreviouslyRegisteredPage
-import pages.tradingNames.{HasTradingNamePage, TradingNamePage}
+import pages.tradingNames.{HasNoOtherTradingNamesPage, TradingNamePage}
 import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.website.WebsitePage
 import play.api.i18n.Messages
@@ -43,7 +43,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency {
     .set(ClientVatNumberPage, vatNumber).success.value
 
   private val completeUserAnswers: UserAnswers = updatedAnswersWithVatInfo
-    .set(HasTradingNamePage, true).success.value
+    .set(HasNoOtherTradingNamesPage, false).success.value
     .set(TradingNamePage(Index(0)), TradingName("Test trading name")).success.value
     .set(PreviouslyRegisteredPage, false).success.value
     .set(WebsitePage(Index(0)), Website("www.test-website.com")).success.value
@@ -84,7 +84,7 @@ class CheckYourAnswersControllerSpec extends SpecBase with SummaryListFluency {
         "with incomplete data" in {
 
           val missingAnswers = emptyUserAnswers
-            .set(HasTradingNamePage, true).success.value
+            .set(HasNoOtherTradingNamesPage, false).success.value
 
           val application = applicationBuilder(userAnswers = Some(missingAnswers)).build()
 

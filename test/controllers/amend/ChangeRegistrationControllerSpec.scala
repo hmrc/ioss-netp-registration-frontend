@@ -36,7 +36,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import pages.amend.ChangeRegistrationPage
 import pages.previousRegistrations.PreviouslyRegisteredPage
-import pages.tradingNames.HasTradingNamePage
+import pages.tradingNames.HasNoOtherTradingNamesPage
 import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.{BusinessBasedInUKPage, BusinessContactDetailsPage, ClientBusinessAddressPage, ClientBusinessNamePage, ClientCountryBasedPage, ClientHasUtrNumberPage, ClientHasVatNumberPage, ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, EmptyWaypoints, Waypoint, Waypoints}
 import play.api.i18n.Messages
@@ -53,8 +53,8 @@ import services.{AuditService, RegistrationService}
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import utils.FutureSyntax.FutureOps
 import viewmodels.WebsiteSummary
-import viewmodels.checkAnswers.{VatRegistrationDetailsSummary, *}
-import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
+import viewmodels.checkAnswers.*
+import viewmodels.checkAnswers.tradingNames.{HasNoOtherTradingNamesSummary, TradingNameSummary}
 import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
 import viewmodels.govuk.SummaryListFluency
 import viewmodels.govuk.all.SummaryListViewModel
@@ -134,7 +134,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       .set(BusinessBasedInUKPage, true).success.value
       .set(ClientHasVatNumberPage, true).success.value
       .set(ClientVatNumberPage, "GB123456").success.value
-      .set(HasTradingNamePage, true).success.value
+      .set(HasNoOtherTradingNamesPage, false).success.value
       .set(AllTradingNamesQuery, List(TradingName("Some Trading Name"))).success.value
       .set(PreviouslyRegisteredPage, true).success.value
       .set(AllPreviousRegistrationsQuery, List(previousRegistrationDetails)).success.value
@@ -149,7 +149,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       .set(ClientHasVatNumberPage, true).success.value
       .set(ClientVatNumberPage, "GB123456").success.value
       .set(ClientCountryBasedPage, arbitraryCountry.arbitrary.sample.value).success.value
-      .set(HasTradingNamePage, true).success.value
+      .set(HasNoOtherTradingNamesPage, false).success.value
       .set(AllTradingNamesQuery, List(TradingName("Some Trading Name"))).success.value
       .set(PreviouslyRegisteredPage, true).success.value
       .set(AllPreviousRegistrationsQuery, List(previousRegistrationDetails)).success.value
@@ -163,7 +163,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       .set(BusinessBasedInUKPage, true).success.value
       .set(ClientHasUtrNumberPage, true).success.value
       .set(ClientUtrNumberPage, "UTR_NUM_1").success.value
-      .set(HasTradingNamePage, true).success.value
+      .set(HasNoOtherTradingNamesPage, false).success.value
       .set(AllTradingNamesQuery, List(TradingName("Some Trading Name"))).success.value
       .set(PreviouslyRegisteredPage, true).success.value
       .set(AllPreviousRegistrationsQuery, List(previousRegistrationDetails)).success.value
@@ -179,7 +179,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
       .set(BusinessBasedInUKPage, false).success.value
       .set(ClientCountryBasedPage, arbitraryCountry.arbitrary.sample.value).success.value
       .set(ClientTaxReferencePage, "FTR_NUM_1").success.value
-      .set(HasTradingNamePage, true).success.value
+      .set(HasNoOtherTradingNamesPage, false).success.value
       .set(AllTradingNamesQuery, List(TradingName("Some Trading Name"))).success.value
       .set(PreviouslyRegisteredPage, true).success.value
       .set(AllPreviousRegistrationsQuery, List(previousRegistrationDetails)).success.value
@@ -863,7 +863,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
   private def getImportOneStopShopDetailsSummaryList(answers: UserAnswers, previousRegistrations: Seq[PreviousRegistration])
                                                     (implicit msgs: Messages): Seq[SummaryListRow] = {
-    val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(answers, waypoints, amendYourAnswersPage)
+    val maybeHasTradingNameSummaryRow = HasNoOtherTradingNamesSummary.row(answers, waypoints, amendYourAnswersPage)
     val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, answers, amendYourAnswersPage)
     val formattedHasTradingNameSummary = maybeHasTradingNameSummaryRow.map { nonOptHasTradingNameSummaryRow =>
       if (tradingNameSummaryRow.nonEmpty) {
@@ -921,7 +921,7 @@ class ChangeRegistrationControllerSpec extends SpecBase with SummaryListFluency 
 
   private def getImportOneStopShopDetailsListExcluded(answers: UserAnswers, previousRegistrations: Seq[PreviousRegistration])
                                                      (implicit msgs: Messages): Seq[SummaryListRow] = {
-    val maybeHasTradingNameSummaryRow = HasTradingNameSummary.rowWithoutAction(answers, waypoints)
+    val maybeHasTradingNameSummaryRow = HasNoOtherTradingNamesSummary.rowWithoutAction(answers, waypoints)
     val tradingNameSummaryRow = TradingNameSummary.checkAnswersRowWithoutAction(waypoints, answers)
     val formattedHasTradingNameSummary = maybeHasTradingNameSummaryRow.map { nonOptHasTradingNameSummaryRow =>
       if (tradingNameSummaryRow.nonEmpty) {

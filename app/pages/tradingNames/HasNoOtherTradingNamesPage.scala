@@ -26,29 +26,29 @@ import play.api.mvc.Call
 import queries.tradingNames.AllTradingNamesQuery
 import utils.AmendWaypoints.AmendWaypointsOps
 
-case object HasTradingNamePage extends QuestionPage[Boolean] {
+case object HasNoOtherTradingNamesPage extends QuestionPage[Boolean] {
 
   override def path: JsPath = JsPath \ toString
 
   override def toString: String = "hasTradingName"
 
   override def route(waypoints: Waypoints): Call = {
-    routes.HasTradingNameController.onPageLoad(waypoints)
+    routes.HasNoOtherTradingNamesController.onPageLoad(waypoints)
   }
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
     answers.get(this).map {
-      case true => TradingNamePage(Index(0))
-      case false => PreviouslyRegisteredPage
+      case true => PreviouslyRegisteredPage
+      case false => TradingNamePage(Index(0))
     }.orRecover
 
   override protected def nextPageCheckMode(waypoints: NonEmptyWaypoints, answers: UserAnswers): Page = {
     (answers.get(this), answers.get(AllTradingNamesQuery)) match {
-      case (Some(true), Some(tradingNames)) if tradingNames.nonEmpty => AddTradingNamePage()
-      case (Some(true), _) => TradingNamePage(Index(0))
-      case (Some(false), Some(tradingNames)) if tradingNames.nonEmpty => DeleteAllTradingNamesPage
-      case (Some(false), _) if waypoints.inAmend => ChangeRegistrationPage
-      case (Some(false), _) => PreviouslyRegisteredPage
+      case (Some(false), Some(tradingNames)) if tradingNames.nonEmpty => AddTradingNamePage()
+      case (Some(false), _) => TradingNamePage(Index(0))
+      case (Some(true), Some(tradingNames)) if tradingNames.nonEmpty => DeleteAllTradingNamesPage
+      case (Some(true), _) if waypoints.inAmend => ChangeRegistrationPage
+      case (Some(true), _) => PreviouslyRegisteredPage
       case _ => JourneyRecoveryPage
     }
   }

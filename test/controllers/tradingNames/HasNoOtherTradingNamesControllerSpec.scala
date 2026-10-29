@@ -17,12 +17,12 @@
 package controllers.tradingNames
 
 import base.SpecBase
-import forms.tradingNames.HasTradingNameFormProvider
+import forms.tradingNames.HasNoOtherTradingNamesFormProvider
 import models.UserAnswers
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatestplus.mockito.MockitoSugar
-import pages.tradingNames.HasTradingNamePage
+import pages.tradingNames.HasNoOtherTradingNamesPage
 import pages.{EmptyWaypoints, JourneyRecoveryPage, Waypoints}
 import play.api.data.Form
 import play.api.inject.bind
@@ -30,18 +30,18 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import repositories.SessionRepository
 import utils.FutureSyntax.FutureOps
-import views.html.tradingNames.HasTradingNameView
+import views.html.tradingNames.HasNoOtherTradingNamesView
 
-class HasTradingNameControllerSpec extends SpecBase with MockitoSugar {
+class HasNoOtherTradingNamesControllerSpec extends SpecBase with MockitoSugar {
 
   private val waypoints: Waypoints = EmptyWaypoints
 
   private val registeredCompanyName = "Company name"
 
-  val formProvider = new HasTradingNameFormProvider()
+  val formProvider = new HasNoOtherTradingNamesFormProvider()
   val form: Form[Boolean] = formProvider()
 
-  lazy val hasTradingNameRoute: String = routes.HasTradingNameController.onPageLoad(waypoints).url
+  lazy val hasNoOtherTradingNamesRoute: String = routes.HasNoOtherTradingNamesController.onPageLoad(waypoints).url
 
   "HasTradingName Controller" - {
     
@@ -50,11 +50,11 @@ class HasTradingNameControllerSpec extends SpecBase with MockitoSugar {
       val application = applicationBuilder(userAnswers = Some(emptyUserAnswersWithVatInfo)).build()
 
       running(application) {
-        val request = FakeRequest(GET, hasTradingNameRoute)
+        val request = FakeRequest(GET, hasNoOtherTradingNamesRoute)
 
         val result = route(application, request).value
 
-        val view = application.injector.instanceOf[HasTradingNameView]
+        val view = application.injector.instanceOf[HasNoOtherTradingNamesView]
 
         status(result) mustEqual OK
         contentAsString(result) mustBe view(form, waypoints, registeredCompanyName)(request, messages(application)).toString
@@ -63,14 +63,14 @@ class HasTradingNameControllerSpec extends SpecBase with MockitoSugar {
 
     "must populate the view correctly on a GET when the question has previously been answered" in {
 
-      val userAnswers = emptyUserAnswersWithVatInfo.set(HasTradingNamePage, true).success.value
+      val userAnswers = emptyUserAnswersWithVatInfo.set(HasNoOtherTradingNamesPage, true).success.value
 
       val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
 
       running(application) {
-        val request = FakeRequest(GET, hasTradingNameRoute)
+        val request = FakeRequest(GET, hasNoOtherTradingNamesRoute)
 
-        val view = application.injector.instanceOf[HasTradingNameView]
+        val view = application.injector.instanceOf[HasNoOtherTradingNamesView]
 
         val result = route(application, request).value
 
@@ -95,14 +95,14 @@ class HasTradingNameControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val request =
-          FakeRequest(POST, hasTradingNameRoute)
+          FakeRequest(POST, hasNoOtherTradingNamesRoute)
             .withFormUrlEncodedBody(("value", "true"))
 
         val result = route(application, request).value
-        val expectedAnswers = testAnswersWithVatInfo.set(HasTradingNamePage, true).success.value
+        val expectedAnswers = testAnswersWithVatInfo.set(HasNoOtherTradingNamesPage, true).success.value
 
         status(result) mustEqual SEE_OTHER
-        redirectLocation(result).value mustBe HasTradingNamePage.navigate(waypoints, emptyUserAnswersWithVatInfo, expectedAnswers).url
+        redirectLocation(result).value mustBe HasNoOtherTradingNamesPage.navigate(waypoints, emptyUserAnswersWithVatInfo, expectedAnswers).url
         verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }
@@ -126,14 +126,14 @@ class HasTradingNameControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val request =
-          FakeRequest(POST, hasTradingNameRoute)
+          FakeRequest(POST, hasNoOtherTradingNamesRoute)
             .withFormUrlEncodedBody(("value", "true"))
 
         val result = route(application, request).value
-        val expectedAnswers = userAnswers.set(HasTradingNamePage, true).success.value
+        val expectedAnswers = userAnswers.set(HasNoOtherTradingNamesPage, true).success.value
 
         status(result) mustBe SEE_OTHER
-        redirectLocation(result).value mustBe HasTradingNamePage.navigate(waypoints, userAnswers, expectedAnswers).url
+        redirectLocation(result).value mustBe HasNoOtherTradingNamesPage.navigate(waypoints, userAnswers, expectedAnswers).url
         verify(mockSessionRepository, times(1)).set(eqTo(expectedAnswers))
       }
     }
@@ -144,12 +144,12 @@ class HasTradingNameControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val request =
-          FakeRequest(POST, hasTradingNameRoute)
+          FakeRequest(POST, hasNoOtherTradingNamesRoute)
             .withFormUrlEncodedBody(("value", ""))
 
         val boundForm = form.bind(Map("value" -> ""))
 
-        val view = application.injector.instanceOf[HasTradingNameView]
+        val view = application.injector.instanceOf[HasNoOtherTradingNamesView]
 
         val result = route(application, request).value
 
@@ -163,7 +163,7 @@ class HasTradingNameControllerSpec extends SpecBase with MockitoSugar {
       val application = applicationBuilder(userAnswers = None).build()
 
       running(application) {
-        val request = FakeRequest(GET, hasTradingNameRoute)
+        val request = FakeRequest(GET, hasNoOtherTradingNamesRoute)
 
         val result = route(application, request).value
 
@@ -178,7 +178,7 @@ class HasTradingNameControllerSpec extends SpecBase with MockitoSugar {
 
       running(application) {
         val request =
-          FakeRequest(POST, hasTradingNameRoute)
+          FakeRequest(POST, hasNoOtherTradingNamesRoute)
             .withFormUrlEncodedBody(("value", "true"))
 
         val result = route(application, request).value

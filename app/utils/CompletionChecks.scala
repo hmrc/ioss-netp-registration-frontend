@@ -19,7 +19,7 @@ package utils
 import models.Index
 import models.requests.DataRequest
 import pages.*
-import pages.tradingNames.HasTradingNamePage
+import pages.tradingNames.HasNoOtherTradingNamesPage
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{AnyContent, Result}
 import queries.AllWebsites
@@ -90,7 +90,7 @@ trait CompletionChecks {
       incompleteClientUtrNumberRedirect(waypoints),
       incompleteClientsNinoNumberRedirect(waypoints),
       incompleteBusinessAddressRedirect(waypoints),
-      incompleteHasTradingNameRedirect(waypoints),
+      incompleteHasNoOtherTradingNamesRedirect(waypoints),
       incompleteTradingNameRedirect(waypoints),
       emptyPreviousRegistrationRedirect(waypoints),
       incompletePreviousRegistrationRedirect(waypoints),
@@ -141,15 +141,15 @@ trait CompletionChecks {
   }
 
   private def isTradingNamesValid()(implicit request: DataRequest[AnyContent]): Boolean = {
-    request.userAnswers.get(HasTradingNamePage).exists {
-      case true => request.userAnswers.get(AllTradingNamesQuery).getOrElse(List.empty).nonEmpty
-      case false => request.userAnswers.get(AllTradingNamesQuery).getOrElse(List.empty).isEmpty
+    request.userAnswers.get(HasNoOtherTradingNamesPage).exists {
+      case true => request.userAnswers.get(AllTradingNamesQuery).getOrElse(List.empty).isEmpty
+      case false => request.userAnswers.get(AllTradingNamesQuery).getOrElse(List.empty).nonEmpty
     }
   }
 
-  private def incompleteHasTradingNameRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
-    if (request.userAnswers.get(HasTradingNamePage).isEmpty) {
-      Some(Redirect(HasTradingNamePage.route(waypoints)))
+  private def incompleteHasNoOtherTradingNamesRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
+    if (request.userAnswers.get(HasNoOtherTradingNamesPage).isEmpty) {
+      Some(Redirect(HasNoOtherTradingNamesPage.route(waypoints)))
     } else {
       None
     }
@@ -157,18 +157,18 @@ trait CompletionChecks {
 
 
   private def incompleteTradingNameRedirect(waypoints: Waypoints)(implicit request: DataRequest[AnyContent]): Option[Result] = {
-    request.userAnswers.get(HasTradingNamePage) match {
-      case Some(true) =>
+    request.userAnswers.get(HasNoOtherTradingNamesPage) match {
+      case Some(false) =>
         val tradingNames = request.userAnswers.get(AllTradingNamesQuery).getOrElse(Nil)
         if (tradingNames.isEmpty) {
           Some(Redirect(controllers.tradingNames.routes.TradingNameController.onPageLoad(waypoints, Index(0))))
         } else {
           None
         }
-      case Some(false) =>
+      case Some(true) =>
         val tradingNames = request.userAnswers.get(AllTradingNamesQuery).getOrElse(Nil)
         if (tradingNames.nonEmpty) {
-          Some(Redirect(HasTradingNamePage.route(waypoints)))
+          Some(Redirect(HasNoOtherTradingNamesPage.route(waypoints)))
         } else {
           None
         }

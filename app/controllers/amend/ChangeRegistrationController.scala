@@ -242,7 +242,7 @@ class ChangeRegistrationController @Inject()(
   private def getTradingNameRows(answers: UserAnswers, waypoints: Waypoints, changePage: ChangeRegistrationPage.type, isExcluded: Boolean)(implicit messages: Messages) = {
 
     if (isExcluded) {
-      val maybeExcludedHasTradingNameSummaryRow = HasTradingNameSummary.rowWithoutAction(answers, waypoints)
+      val maybeExcludedHasTradingNameSummaryRow = HasNoOtherTradingNamesSummary.rowWithoutAction(answers, waypoints)
       val excludedTradingNameSummaryRow = TradingNameSummary.checkAnswersRowWithoutAction(waypoints, answers)
       val formattedHasTradingNameSummary = maybeExcludedHasTradingNameSummaryRow.map { nonOptHasTradingNameSummaryRow =>
         if (excludedTradingNameSummaryRow.nonEmpty) {
@@ -253,7 +253,7 @@ class ChangeRegistrationController @Inject()(
       }
       (formattedHasTradingNameSummary, excludedTradingNameSummaryRow)
     } else {
-      val maybeHasTradingNameSummaryRow = HasTradingNameSummary.row(answers, waypoints, changePage)
+      val maybeHasTradingNameSummaryRow = HasNoOtherTradingNamesSummary.row(answers, waypoints, changePage)
       val tradingNameSummaryRow = TradingNameSummary.checkAnswersRow(waypoints, answers, changePage)
 
       val formattedHasTradingNameSummary = maybeHasTradingNameSummaryRow.map { nonOptHasTradingNameSummaryRow =>

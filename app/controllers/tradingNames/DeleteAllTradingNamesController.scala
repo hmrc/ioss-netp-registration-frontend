@@ -19,7 +19,7 @@ package controllers.tradingNames
 import controllers.actions.*
 import forms.tradingNames.DeleteAllTradingNamesFormProvider
 import pages.Waypoints
-import pages.tradingNames.{DeleteAllTradingNamesPage, HasTradingNamePage}
+import pages.tradingNames.{DeleteAllTradingNamesPage, HasNoOtherTradingNamesPage}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -66,7 +66,7 @@ class DeleteAllTradingNamesController @Inject()(
             doRemoveItems = value,
             sessionRepository = sessionRepository,
             query = AllTradingNamesQuery,
-            hasItems = HasTradingNamePage,
+            hasItems = HasNoOtherTradingNamesPage,
             deleteAllItemsPage = DeleteAllTradingNamesPage
           )
           

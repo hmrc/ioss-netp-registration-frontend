@@ -19,7 +19,7 @@ package pages
 import controllers.routes
 import models.UserAnswers
 import models.checkVatDetails.CheckVatDetails
-import pages.tradingNames.HasTradingNamePage
+import pages.tradingNames.HasNoOtherTradingNamesPage
 import play.api.libs.json.JsPath
 import play.api.mvc.Call
 
@@ -40,6 +40,6 @@ case class CheckVatDetailsPage() extends CheckAnswersPage with QuestionPage[Chec
     routes.CheckVatDetailsController.onPageLoad(waypoints)
 
   override protected def nextPageNormalMode(waypoints: Waypoints, answers: UserAnswers): Page =
-    HasTradingNamePage
+    HasNoOtherTradingNamesPage
 
 }

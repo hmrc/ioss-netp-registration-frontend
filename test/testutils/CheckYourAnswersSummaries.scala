@@ -22,7 +22,7 @@ import play.api.i18n.Messages
 import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.SummaryListRow
 import viewmodels.WebsiteSummary
 import viewmodels.checkAnswers.*
-import viewmodels.checkAnswers.tradingNames.{HasTradingNameSummary, TradingNameSummary}
+import viewmodels.checkAnswers.tradingNames.{HasNoOtherTradingNamesSummary, TradingNameSummary}
 import viewmodels.checkAnswers.vatEuDetails.{EuDetailsSummary, HasFixedEstablishmentSummary}
 import viewmodels.govuk.SummaryListFluency
 import viewmodels.previousRegistrations.{PreviousRegistrationSummary, PreviouslyRegisteredSummary}
@@ -63,7 +63,7 @@ object CheckYourAnswersSummaries extends SummaryListFluency {
   def getCYASummaryList(waypoints: Waypoints, answers: UserAnswers, sourcePage: CheckAnswersPage)
                        (implicit msgs: Messages): Seq[SummaryListRow] = {
 
-    val hasTradingNameSummaryRow: Option[SummaryListRow] = HasTradingNameSummary.row(answers, waypoints, sourcePage)
+    val hasTradingNameSummaryRow: Option[SummaryListRow] = HasNoOtherTradingNamesSummary.row(answers, waypoints, sourcePage)
     val tradingNameSummaryRow: Option[SummaryListRow] = TradingNameSummary.checkAnswersRow(waypoints, answers, sourcePage)
     val hasPreviouslyRegisteredSummaryRow = PreviouslyRegisteredSummary.row(answers, waypoints, sourcePage)
     val previousRegistrationSummaryRow = PreviousRegistrationSummary.checkAnswersRow(answers, Seq.empty, waypoints, sourcePage)
