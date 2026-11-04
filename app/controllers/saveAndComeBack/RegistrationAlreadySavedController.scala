@@ -20,11 +20,13 @@ import controllers.SetActiveTraderResult
 import controllers.actions.*
 import forms.saveAndComeBack.ContinueRegistrationFormProvider
 import logging.Logging
+import models.Index
 import models.UserAnswers
 import models.etmp.EtmpIdType
 import models.etmp.EtmpIdType.{FTR, NINO, UTR, VRN}
 import models.requests.DataRequest
 import models.saveAndComeBack.ContinueRegistration
+import pages.vatEuDetails.HasFixedEstablishmentPage
 import pages.{ClientTaxReferencePage, ClientUtrNumberPage, ClientVatNumberPage, ClientsNinoNumberPage, SavedProgressPage, Waypoints}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -86,13 +88,26 @@ class RegistrationAlreadySavedController @Inject()(
             value1 =>
               (value1, previousUserAnswers.get(SavedProgressPage)) match {
                 case (ContinueRegistration.Continue, Some(url)) =>
-                  cc.sessionRepository.set(previousUserAnswers)
+
+                  val isPartOfVatGroup = previousUserAnswers.vatInfo.exists(_.partOfVatGroup)
+                  val hasFixedEstablishments = previousUserAnswers.get(HasFixedEstablishmentPage).contains(true)
+                  val savedOnHasFixedEstablishmentPage = url == HasFixedEstablishmentPage.route(waypoints).url
+                  
+                  if (isPartOfVatGroup && hasFixedEstablishments) {
+                    Redirect(controllers.routes.RemovingClientsFixedEstablishmentDetailsController.onPageLoad(waypoints).url).toFuture
+                  } else if (isPartOfVatGroup && savedOnHasFixedEstablishmentPage) {
+                    Redirect(
+                      controllers.website.routes.WebsiteController
+                        .onPageLoad(waypoints, Index(0))
+                    ).toFuture
+                  } else {
                     coreSavedAnswersRevalidationService.checkAndValidateSavedUserAnswers().flatMap {
                       case Some(redirectResult) =>
                         deleteAndRedirect(previousUserAnswers.journeyId, redirectResult)
 
                       case None =>
                         Redirect(Call(GET, url)).toFuture
+                    }
                   }
 
 
