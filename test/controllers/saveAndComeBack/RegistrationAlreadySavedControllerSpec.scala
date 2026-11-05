@@ -25,12 +25,13 @@ import models.etmp.EtmpIdType.{FTR, NINO, UTR, VRN}
 import models.saveAndComeBack.ContinueRegistration
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito.{times, verify, verifyNoInteractions, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.mockito.MockitoSugar
-import pages.{BusinessBasedInUKPage, SavedProgressPage}
+import pages.vatEuDetails.HasFixedEstablishmentPage
+import pages.{BusinessBasedInUKPage, EmptyWaypoints, SavedProgressPage}
 import play.api.inject.bind
 import play.api.mvc.Result
 import play.api.mvc.Results.Redirect
@@ -135,6 +136,41 @@ class RegistrationAlreadySavedControllerSpec extends AnyFreeSpec with MockitoSug
     ".onSubmit" - {
       "when a valid form is submitted as continue" - {
         ",User Answers has all required values" - {
+
+          "should redirect to removing fixed establishment details when client is part of a VAT group and has fixed establishments" in {
+            val previousUserAnswers = userAnswersWithAllRequiredFields.get(PreviousUnfinishedRegistration).value
+
+            val updatedPreviousUserAnswers = previousUserAnswers.copy(vatInfo = emptyUserAnswersWithVatInfo.vatInfo.map(_.copy(partOfVatGroup = true)))
+              .set(HasFixedEstablishmentPage, true).success.value
+
+            val updatedUserAnswers = userAnswersWithAllRequiredFields.set(PreviousUnfinishedRegistration, updatedPreviousUserAnswers).success.value
+
+            val application = applicationBuilder(userAnswers = Some(updatedUserAnswers))
+              .overrides(
+                bind[SaveAndComeBackService].toInstance(mockSaveAndComeBackService),
+                bind[CoreSavedAnswersRevalidationService].toInstance(mockCoreSavedAnswersRevalidationService)
+              )
+              .build()
+
+            val tupleReturn: Tuple3[String, String, EtmpIdType] = ("MockCompanyName", "MockTaxRef", VRN)
+
+            when(mockSaveAndComeBackService.retrieveTaxRef(any())).thenReturn(tupleReturn)
+
+            running(application) {
+              val request = FakeRequest(POST, RegistrationAlreadySavedOnSubmitRoute)
+                .withFormUrlEncodedBody(("value", ContinueRegistration.Continue.toString))
+
+              val result = route(application, request).value
+
+              status(result) mustBe SEE_OTHER
+
+              redirectLocation(result).value mustBe controllers.routes.RemovingClientsFixedEstablishmentDetailsController.onPageLoad(EmptyWaypoints).url
+
+              verify(mockSaveAndComeBackService, times(1)).retrieveTaxRef(any())
+
+              verifyNoInteractions(mockCoreSavedAnswersRevalidationService)
+            }
+          }
 
           "and checkAndValidateSavedUserAnswers returns SOME" +
             "delete the saved instance from the database and redirect to where the journey was last saved" in {
