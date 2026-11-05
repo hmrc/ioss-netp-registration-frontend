@@ -88,11 +88,11 @@ class RegistrationAlreadySavedController @Inject()(
             value1 =>
               (value1, previousUserAnswers.get(SavedProgressPage)) match {
                 case (ContinueRegistration.Continue, Some(url)) =>
-
+                  cc.sessionRepository.set(previousUserAnswers)
                   val isPartOfVatGroup = previousUserAnswers.vatInfo.exists(_.partOfVatGroup)
                   val hasFixedEstablishments = previousUserAnswers.get(HasFixedEstablishmentPage).contains(true)
                   val savedOnHasFixedEstablishmentPage = url == HasFixedEstablishmentPage.route(waypoints).url
-                  
+
                   if (isPartOfVatGroup && hasFixedEstablishments) {
                     Redirect(controllers.routes.RemovingClientsFixedEstablishmentDetailsController.onPageLoad(waypoints).url).toFuture
                   } else if (isPartOfVatGroup && savedOnHasFixedEstablishmentPage) {
