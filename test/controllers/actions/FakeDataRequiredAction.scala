@@ -16,8 +16,9 @@
 
 package controllers.actions
 
+import config.FrontendAppConfig
 import connectors.RegistrationConnector
-import controllers.actions.FakeDataRequiredAction.mockRegistrationConnector
+import controllers.actions.FakeDataRequiredAction.{mockFrontendAppConfig, mockRegistrationConnector}
 import controllers.routes
 import models.UserAnswers
 import models.etmp.display.RegistrationWrapper
@@ -36,7 +37,7 @@ case class FakeDataRequiredActionImpl(
                                        registrationWrapper: RegistrationWrapper,
                                        isInAmendMode: Boolean
                                      )
-  extends DataRequiredActionImpl(mockRegistrationConnector, isInAmendMode)(ExecutionContext.Implicits.global) {
+  extends DataRequiredActionImpl(mockRegistrationConnector, isInAmendMode, mockFrontendAppConfig)(ExecutionContext.Implicits.global) {
 
   override protected def refine[A](request: OptionalDataRequest[A]): Future[Either[Result, DataRequest[A]]] = {
     dataToReturn match {
@@ -62,7 +63,7 @@ class FakeDataRequiredAction(
                               dataToReturn: Option[UserAnswers],
                               intermediaryNumber: String,
                               registrationWrapper: RegistrationWrapper
-                            ) extends DataRequiredAction(mock[RegistrationConnector])(ExecutionContext.Implicits.global) {
+                            ) extends DataRequiredAction(mockRegistrationConnector, mockFrontendAppConfig)(ExecutionContext.Implicits.global) {
 
   override def apply(isInAmendMode: Boolean): DataRequiredActionImpl = {
     FakeDataRequiredActionImpl(dataToReturn, intermediaryNumber, registrationWrapper, isInAmendMode)
@@ -72,4 +73,5 @@ class FakeDataRequiredAction(
 object FakeDataRequiredAction {
 
   val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
+  val mockFrontendAppConfig: FrontendAppConfig = mock[FrontendAppConfig]
 }
