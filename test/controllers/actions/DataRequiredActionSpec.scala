@@ -17,11 +17,12 @@
 package controllers.actions
 
 import base.SpecBase
+import config.FrontendAppConfig
 import connectors.RegistrationConnector
 import models.requests.{DataRequest, OptionalDataRequest}
 import models.responses.NotFound
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.{reset, times, verify, verifyNoInteractions, when}
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Result
@@ -37,13 +38,14 @@ import scala.concurrent.Future
 class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAfterEach {
 
   private val mockRegistrationConnector = mock[RegistrationConnector]
+  private val mockFrontendAppConfig: FrontendAppConfig = mock[FrontendAppConfig]
   private val registrationWrapper = arbitraryRegistrationWrapper.arbitrary.sample.value
 
   override def beforeEach(): Unit = {
     reset(mockRegistrationConnector)
   }
 
-  class Harness(isInAmendMode: Boolean) extends DataRequiredActionImpl(mockRegistrationConnector, isInAmendMode) {
+  class Harness(isInAmendMode: Boolean) extends DataRequiredActionImpl(mockRegistrationConnector, isInAmendMode, mockFrontendAppConfig) {
     def callRefine[A](request: OptionalDataRequest[A]): Future[Either[Result, DataRequest[A]]] = refine(request)
   }
 
@@ -154,6 +156,29 @@ class DataRequiredActionSpec extends SpecBase with MockitoSugar with BeforeAndAf
 
         verify(mockRegistrationConnector, times(1))
           .displayRegistrationNetp(eqTo(iossNumber))(any())
+      }
+
+      "must redirect to Client List URL when answers are not present" in {
+
+        when(mockFrontendAppConfig.clientListUrl) thenReturn "/test"
+
+        val action = new Harness(isInAmendMode = true)
+        val request = OptionalDataRequest(
+          FakeRequest(),
+          userAnswersId,
+          None,
+          Some(intermediaryNumber),
+          Enrolments(Set.empty)
+        )
+
+        val result = action.callRefine(request).futureValue
+
+        result.isLeft mustBe true
+        val redirect = result.left.value.toFuture
+        status(redirect) mustBe SEE_OTHER
+        redirectLocation(redirect).value mustBe "/test"
+
+        verifyNoInteractions(mockRegistrationConnector)
       }
 
       "must throw RuntimeException when displayRegistrationNetp fails" in {

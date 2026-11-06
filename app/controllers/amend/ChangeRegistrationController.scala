@@ -117,7 +117,7 @@ class ChangeRegistrationController @Inject()(
             } else {
               ClientTaxReferenceSummary.row(waypoints, request.userAnswers, thisPage)
             },
-            if (!hasEtmpOtherAddress.isDefined) {
+            if (hasEtmpOtherAddress.isEmpty) {
               VatRegistrationDetailsSummary.changeRegVatBusinessNameRow(waypoints, request.userAnswers, thisPage, clientBasedInUk)
             } else if (isExcluded) {
               ClientBusinessNameSummary.rowWithoutAction(waypoints, request.userAnswers)
