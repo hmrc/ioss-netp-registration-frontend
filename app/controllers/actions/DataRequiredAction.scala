@@ -16,6 +16,7 @@
 
 package controllers.actions
 
+import config.FrontendAppConfig
 import connectors.RegistrationConnector
 import controllers.routes
 import logging.Logging
@@ -27,13 +28,15 @@ import play.api.mvc.{ActionRefiner, Result}
 import queries.IossNumberQuery
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
+import utils.FutureSyntax.FutureOps
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class DataRequiredActionImpl @Inject()(
                                         registrationConnector: RegistrationConnector,
-                                        isInAmendMode: Boolean
+                                        isInAmendMode: Boolean,
+                                        frontendAppConfig: FrontendAppConfig
                                       )(implicit val executionContext: ExecutionContext)
   extends ActionRefiner[OptionalDataRequest, DataRequest] with Logging {
 
@@ -46,7 +49,11 @@ class DataRequiredActionImpl @Inject()(
 
     request.userAnswers match {
       case None =>
-        Future.successful(Left(Redirect(routes.JourneyRecoveryController.onPageLoad())))
+        if(isInAmendMode) {
+          Left(Redirect(frontendAppConfig.clientListUrl)).toFuture
+        } else {
+          Left(Redirect(routes.JourneyRecoveryController.onPageLoad())).toFuture
+        }
 
       case Some(data) =>
         val eventualMaybeRegistrationWrapper: Future[Option[RegistrationWrapper]] = {
@@ -62,10 +69,10 @@ class DataRequiredActionImpl @Inject()(
               case Left(error: ErrorResponse) =>
                 Future.failed(new RuntimeException(s"Failed to retrieve registration whilst in amend mode: ${error.body}"))
               case Right(registrationWrapper: RegistrationWrapper) =>
-                Future.successful(Some(registrationWrapper))
+                Some(registrationWrapper).toFuture
             }
           } else {
-            Future.successful(None)
+            None.toFuture
           }
         }
 
@@ -84,10 +91,11 @@ class DataRequiredActionImpl @Inject()(
 }
 
 class DataRequiredAction @Inject()(
-                                    registrationConnector: RegistrationConnector
+                                    registrationConnector: RegistrationConnector,
+                                    frontendAppConfig: FrontendAppConfig
                                   )(implicit ec: ExecutionContext) {
 
   def apply(isInAmendMode: Boolean = false): ActionRefiner[OptionalDataRequest, DataRequest] = {
-    new DataRequiredActionImpl(registrationConnector, isInAmendMode)
+    new DataRequiredActionImpl(registrationConnector, isInAmendMode, frontendAppConfig)
   }
 }
