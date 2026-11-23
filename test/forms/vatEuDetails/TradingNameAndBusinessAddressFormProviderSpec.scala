@@ -171,12 +171,22 @@ class TradingNameAndBusinessAddressFormProviderSpec extends StringFieldBehaviour
     val invalidKey: String = "tradingNameAndBusinessAddress.error.postCode.invalid"
     val maxLength: Int = 40
     val validData: String = "75023 CEDEX 01"
+    val otherValidData = "AB-1234(567)"
 
     behave like fieldThatBindsValidData(
       form,
       fieldName,
       validData
     )
+
+    "other valid data" - {
+
+      behave like fieldThatBindsValidData(
+        form,
+        fieldName,
+        otherValidData
+      )
+    }
 
     behave like fieldWithMaxLength(
       form,

@@ -141,7 +141,7 @@ class ClientDeclarationController @Inject()(
   private def getIntermediaryName(waypoints: Waypoints, userAnswers: UserAnswers)(block: String => Future[Result]): Future[Result] = {
     userAnswers.get(IntermediaryDetailsQuery).map { intermediaryDetails =>
       block(intermediaryDetails.intermediaryName)
-    }.getOrElse(Redirect(JourneyRecoveryPage.route(waypoints)).toFuture)
+    }.getOrElse(Redirect(ClientJourneyRecoveryPage.route(waypoints)).toFuture)
 
   }
 
