@@ -26,7 +26,7 @@ import models.audit.DeclarationSigningAuditType.CreateClientDeclaration
 import models.requests.ClientOptionalDataRequest
 import models.responses.etmp.EtmpEnrolmentResponse
 import pages.{ClientBusinessNamePage, ErrorSubmittingRegistrationPage, JourneyRecoveryPage, Waypoints}
-import pages.clientDeclarationJourney.ClientDeclarationPage
+import pages.clientDeclarationJourney.{ClientDeclarationPage, ClientJourneyRecoveryPage}
 import play.api.data.Form
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
