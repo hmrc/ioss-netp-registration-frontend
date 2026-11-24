@@ -157,7 +157,7 @@ class ClientDeclarationControllerSpec extends SpecBase with MockitoSugar with Be
           val result = route(application, request).value
 
           status(result) mustEqual SEE_OTHER
-          redirectLocation(result).value mustEqual routes.JourneyRecoveryController.onPageLoad().url
+          redirectLocation(result).value mustEqual controllers.clientDeclarationJourney.routes.ClientJourneyRecoveryController.onPageLoad().url
         }
       }
 

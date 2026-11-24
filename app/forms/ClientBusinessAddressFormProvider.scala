@@ -18,7 +18,7 @@ package forms
 
 import javax.inject.Inject
 import forms.mappings.Mappings
-import forms.validation.Validation.{commonTextPattern, postcodePattern}
+import forms.validation.Validation.{commonTextPattern, postcodeCleanerPattern, postcodePattern}
 import models.{Country, InternationalAddress}
 import play.api.data.Form
 import play.api.data.Forms.*
@@ -44,6 +44,11 @@ class ClientBusinessAddressFormProvider @Inject() extends Mappings {
         .verifying(regexp(commonTextPattern, "clientBusinessAddress.error.stateOrRegion.format"))),
 
       "postCode" -> optional(text("clientBusinessAddress.error.postCode.required")
+        .transform[String](value =>
+          val trimmed = value.trim
+          trimmed.replaceAll(postcodeCleanerPattern, ""),
+          identity
+        )
         .verifying(firstError(
           maxLength(40, "clientBusinessAddress.error.postCode.length"),
           regexp(postcodePattern, "clientBusinessAddress.error.postCode.invalid")))

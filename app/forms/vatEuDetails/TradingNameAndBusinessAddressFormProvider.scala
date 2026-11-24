@@ -18,7 +18,7 @@ package forms.vatEuDetails
 
 
 import forms.mappings.Mappings
-import forms.validation.Validation.{commonTextPattern, postcodePattern}
+import forms.validation.Validation.{commonTextPattern, postcodeCleanerPattern, postcodePattern}
 import models.vatEuDetails.TradingNameAndBusinessAddress
 import models.{Country, InternationalAddress, TradingName}
 import play.api.data.Form
@@ -48,6 +48,11 @@ class TradingNameAndBusinessAddressFormProvider @Inject() extends Mappings {
         .verifying(maxLength(35, "tradingNameAndBusinessAddress.error.stateOrRegion.length"))
         .verifying(regexp(commonTextPattern, "tradingNameAndBusinessAddress.error.stateOrRegion.format"))),
       "postCode" -> optional(text("tradingNameAndBusinessAddress.error.postCode.required")
+        .transform[String](value =>
+          val trimmed = value.trim
+          trimmed.replaceAll(postcodeCleanerPattern, ""),
+          identity
+        )
         .verifying(firstError(
           maxLength(40, "tradingNameAndBusinessAddress.error.postCode.length"),
           regexp(postcodePattern, "tradingNameAndBusinessAddress.error.postCode.invalid"))))
