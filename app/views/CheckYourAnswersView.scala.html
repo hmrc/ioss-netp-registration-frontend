@@ -17,14 +17,15 @@
 @import pages.{CheckYourAnswersPage, Waypoints}
 @import uk.gov.hmrc.govukfrontend.views.html.components.GovukWarningText
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.warningtext.WarningText
-@import views.html.components.ButtonGroup
+@import views.html.components.{ButtonGroup, PrintPage}
 
 @this(
     formHelper: FormWithCSRF,
     layout: templates.Layout,
     govukSummaryList: GovukSummaryList,
     govukWarningText: GovukWarningText,
-    button: ButtonGroup
+    button: ButtonGroup,
+    printPage: PrintPage
 )
 
 @(waypoints: Waypoints, vatDetailsList: SummaryList, list: SummaryList, isValid: Boolean)(implicit request: Request[_], messages: Messages)
@@ -39,6 +40,8 @@
     }
 
     <h1 class="govuk-heading-xl">@messages("checkYourAnswers.heading")</h1>
+
+    @printPage()
 
     <h2 class="govuk-heading-m">@messages("checkYourAnswers.vatRegistrationDetails.heading")</h2>
 

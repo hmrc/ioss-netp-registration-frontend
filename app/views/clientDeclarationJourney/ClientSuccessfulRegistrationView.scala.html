@@ -14,9 +14,12 @@
  * limitations under the License.
  *@
 
+@import components.PrintPage
+
 @this(
         layout: templates.Layout,
-        govukButton: GovukButton
+        govukButton: GovukButton,
+        printPage: PrintPage
 )
 
 @(thing: String)(
@@ -31,6 +34,8 @@ messages: Messages)
   <div class="govuk-panel__body"> @Html(messages("clientSuccessfulRegistration.text")) @Html(messages(thing))</div>
 
  </div>
+
+ @printPage()
 
  <p class="govuk-body">
   @Html(messages("clientSuccessfulRegistration.info.1"))
