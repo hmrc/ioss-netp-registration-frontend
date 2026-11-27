@@ -44,7 +44,7 @@
                 field = form("value"),
                 label = LabelViewModel(messages("previousOssNumber.heading", countryWithValidationDetails.country.name)).asPageHeading()
             )
-            .withWidth(Full)
+            .withWidth(Fixed20)
             .withHint(HintViewModel(
                 previousSchemeHintText match {
                     case PreviousSchemeHintText.OssUnion =>

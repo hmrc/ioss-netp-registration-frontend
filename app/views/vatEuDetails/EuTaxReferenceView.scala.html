@@ -44,7 +44,7 @@
         field = form("value"),
         label = LabelViewModel(messages("euTaxReference.heading", country.name)).asPageHeading()
       )
-      .withWidth(Full)
+      .withWidth(Fixed20)
     )
 
     @button("site.continue", EuTaxReferencePage(countryIndex).route(waypoints).url, waypoints)

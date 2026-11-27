@@ -359,8 +359,8 @@ checkPreviousSchemeAnswers.error.required = Select yes if you want to add anothe
 checkPreviousSchemeAnswers.addAnother = Add another scheme registration from {0}?
 checkPreviousSchemeAnswers.maximumReached = You have added details for every scheme in {0}
 
-previousOssNumber.title = Enter your client''s previous registration number for {0}
-previousOssNumber.heading = Enter your client''s previous registration number for {0}
+previousOssNumber.title = Enter your client''s previous OSS registration number for {0}
+previousOssNumber.heading = Enter your client''s previous OSS registration number for {0}
 previousOssNumber.hint.default = This will start with {0} or EU, for example {0}{1}
 previousOssNumber.checkYourAnswersLabel = previousOssNumber
 previousOssNumber.hint.union = This will start with {0}, for example {0}{1}
