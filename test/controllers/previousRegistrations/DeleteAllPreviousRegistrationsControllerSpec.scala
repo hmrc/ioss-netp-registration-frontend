@@ -21,6 +21,7 @@ import controllers.previousRegistrations.routes as previousRegistrationsRoutes
 import controllers.routes
 import forms.previousRegistrations.DeleteAllPreviousRegistrationsFormProvider
 import models.domain.PreviousSchemeNumbers
+import models.etmp.EtmpExclusionReason.{FailsToComply, Reversal}
 import models.etmp.display.RegistrationWrapper
 import models.{CheckMode, Country, Index, UserAnswers}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
@@ -176,18 +177,21 @@ class DeleteAllPreviousRegistrationsControllerSpec extends SpecBase with Mockito
 
     "inAmend" - {
 
-      "must not be able to delete all existing previous registrations when manually navigating to this page" in {
+      "must be able to delete all existing previous registrations when manually navigating to this page and a reversal exception does not exist" in {
 
         val amendWaypoints = EmptyWaypoints
           .setNextWaypoint(Waypoint(ChangeRegistrationPage, CheckMode, ChangeRegistrationPage.urlFragment))
 
         lazy val deleteAllPreviousRegistrationsInAmendRoute: String = previousRegistrationsRoutes.DeleteAllPreviousRegistrationsController.onPageLoad(amendWaypoints).url
 
-        val registrationWrapper: RegistrationWrapper = arbitraryRegistrationWrapper.arbitrary.sample.value
+        val registrationWrapperWithoutReversal: RegistrationWrapper = registrationWrapper
+          .copy(etmpDisplayRegistration = registrationWrapper.etmpDisplayRegistration
+          .copy(exclusions = Seq(registrationWrapper.etmpDisplayRegistration.exclusions.head
+          .copy(exclusionReason = FailsToComply))))
 
         val application = applicationBuilder(
           userAnswers = Some(basicUserAnswersWithVatInfo),
-          registrationWrapper = Some(registrationWrapper)
+          registrationWrapper = Some(registrationWrapperWithoutReversal)
         ).build()
 
         running(application) {
@@ -198,6 +202,37 @@ class DeleteAllPreviousRegistrationsControllerSpec extends SpecBase with Mockito
           status(result) mustBe SEE_OTHER
           redirectLocation(result).value mustBe
             controllers.amend.routes.ChangeRegistrationController.onPageLoad().url
+        }
+      }
+
+      "must not be able to delete all existing previous registrations when manually navigating to this page and a reversal exception exists" in {
+
+        val errorMessage: String = "Cannot invoke this action whilst in amend mode"
+
+        val amendWaypoints = EmptyWaypoints
+          .setNextWaypoint(Waypoint(ChangeRegistrationPage, CheckMode, ChangeRegistrationPage.urlFragment))
+
+        lazy val deleteAllPreviousRegistrationsInAmendRoute: String = previousRegistrationsRoutes.DeleteAllPreviousRegistrationsController.onPageLoad(amendWaypoints).url
+
+        val registrationWrapperWithReversal: RegistrationWrapper = registrationWrapper
+          .copy(etmpDisplayRegistration = registrationWrapper.etmpDisplayRegistration
+          .copy(exclusions = Seq(registrationWrapper.etmpDisplayRegistration.exclusions.head
+          .copy(exclusionReason = Reversal))))
+
+        val application = applicationBuilder(
+          userAnswers = Some(basicUserAnswersWithVatInfo),
+          registrationWrapper = Some(registrationWrapperWithReversal)
+        ).build()
+
+        running(application) {
+          val request = FakeRequest(GET, deleteAllPreviousRegistrationsInAmendRoute)
+
+          val result = route(application, request).value
+
+          whenReady(result.failed) { exp =>
+            exp `mustBe` a[InvalidAmendModeOperationException]
+            exp.getMessage `mustBe` errorMessage
+          }
         }
       }
     }

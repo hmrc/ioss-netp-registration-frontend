@@ -14,10 +14,13 @@
  * limitations under the License.
  *@
 
+@import views.html.components.PrintPage
+
 @this(
         layout: templates.Layout,
         govukButton: GovukButton,
-        govukSummaryList: GovukSummaryList
+        govukSummaryList: GovukSummaryList,
+        printPage: PrintPage
 )
 
 @(feedbackLink: String, intermediaryYourAccountUrl: String, amendedList: SummaryList)(implicit request: Request[_], messages: Messages)
@@ -33,6 +36,8 @@
             }
         </div>
     </div>
+
+    @printPage()
 
     @if(amendedList.rows.nonEmpty) {
         <div class="govuk-body">@messages("amendComplete.info")</div>

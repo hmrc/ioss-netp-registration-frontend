@@ -15,7 +15,7 @@
  *@
 
 @import viewmodels.InputWidth._
-@import components.CancelAmendRegistrationButton
+@import components.{CancelAmendRegistrationButton, PrintPage}
 @import uk.gov.hmrc.govukfrontend.views.html.components.GovukWarningText
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.warningtext.WarningText
 @import pages.amend.CancelAmendRegistrationPage
@@ -31,6 +31,7 @@
         button: CancelAmendRegistrationButton,
         govukWarningText: GovukWarningText,
         govukButton: GovukButton,
+        printPage: PrintPage
 )
 
 @(waypoints: Waypoints, companyName: String, iossNum: String, list: SummaryList, ilist: SummaryList, isValid: Boolean, isExcluded: Boolean, maybeExclusion: Option[EtmpExclusion], exclusionDeadline: Option[String], noAmendments: Boolean, clientListUrl: String)(implicit request: Request[_], messages: Messages)
@@ -45,6 +46,8 @@
     }
 
     <h1 class="govuk-heading-xl govuk-!-margin-0">@messages("changeRegistration.heading", companyName)</h1>
+
+    @printPage()
 
     <p class="govuk-caption-l govuk-!-margin-bottom-6">@messages("changeRegistration.intermediaryNumber", iossNum)</p>
 
